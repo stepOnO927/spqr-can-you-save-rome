@@ -1,10 +1,10 @@
 // Cloud-only diagnostic playthroughs. Report observed state, not invented stories.
 import assert from 'node:assert/strict';
-import {newGame,tick,forecastEconomy,issueMilitaryOrder,recruit,sendInquiry,setTax} from '../engine.js?v=faces-born-portrait-1';
-import {configureStartingDifficulty} from '../difficulty.js?v=faces-born-portrait-1';
-import {chooseAmbition,ambitionStatus} from '../history-wheels.js?v=faces-born-portrait-1';
-import {newHanGame,tick as tickHan} from '../han/engine.js?v=faces-born-portrait-1';
-import {choose as chooseHanAmbition,status as hanAmbitionStatus} from '../han/ambitions.js?v=faces-born-portrait-1';
+import {newGame,tick,forecastEconomy,issueMilitaryOrder,recruit,sendInquiry,setTax} from '../engine.js?v=faces-dynastic-leads-1';
+import {configureStartingDifficulty} from '../difficulty.js?v=faces-dynastic-leads-1';
+import {chooseAmbition,ambitionStatus} from '../history-wheels.js?v=faces-dynastic-leads-1';
+import {newHanGame,tick as tickHan} from '../han/engine.js?v=faces-dynastic-leads-1';
+import {choose as chooseHanAmbition,status as hanAmbitionStatus} from '../han/ambitions.js?v=faces-dynastic-leads-1';
 
 const date=s=>s.year*12+s.month;
 function roman(side,months,seed,{autoplay=false,difficulty='standard',aiLevel=null}={}){

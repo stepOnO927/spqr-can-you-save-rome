@@ -17,7 +17,7 @@ import {roll,clamp,log,advanceDate,monthIndex} from './util.js?v=han-1';
 import {CULTURAL_NAME_POOLS,ensureFieldCommanders} from './field-identities.js';
 import {ensureHanPortraitSeed,ensureHanPortraitSeeds} from './court-portrait.js';
 import {ensureForeignRulers,advanceForeignRulers,rulerGovernanceFactor} from './rulers.js';
-import {initialize as initializeAmbition,advance as advanceAmbition} from './ambitions.js?v=faces-born-portrait-1';
+import {initialize as initializeAmbition,advance as advanceAmbition} from './ambitions.js?v=faces-dynastic-leads-1';
 
 export const DLC_ID='mandate-of-heaven',SAVE_VERSION='han-1';
 export const SCENARIOS={

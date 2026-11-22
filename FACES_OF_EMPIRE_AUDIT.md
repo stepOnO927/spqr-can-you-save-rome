@@ -6,6 +6,14 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Main through `95a1f4d6` is integrated. Delivered character intelligence now
+feeds health investigations and foreign family contacts through one shared
+lead list; the new contact browser smoke is retained. Roman–Han trade and
+embassy actions now close after victory, peaceful victory, or defeat while
+historical eastern reports remain readable. The focused regressions pass
+29/29 and the complete local `npm test` suite passes. Cloud workflow
+verification for this update is pending.
+
 Main through `7eb1ab85` is integrated. It adds two more individual portrait
 sets per sex for campaign-born children, their three life stages, and a
 versioned old-save migration that preserves earlier portrait claims. The

@@ -1,10 +1,10 @@
-import {isDeliveredReport} from './person-knowledge.js?v=faces-born-portrait-1';
-import {CHARACTER_CATALOG,ageRange} from './characters.js?v=faces-born-portrait-1';
-import {startDynasticWar} from './civil-war.js?v=faces-born-portrait-1';
+import {reportedPeople,isDeliveredReport} from './person-knowledge.js?v=faces-dynastic-leads-1';
+import {CHARACTER_CATALOG,ageRange} from './characters.js?v=faces-dynastic-leads-1';
+import {startDynasticWar} from './civil-war.js?v=faces-dynastic-leads-1';
 import {ROUTES} from './data.js?v=phase-x-1';
 import {STARTING_COMMANDERS,FACTION_NAME_CULTURE,NAME_POOLS,factionNameStyle,generateFictionalName,generateFictionalChildName} from './fictional-names.js?v=faces-wheels-1';
 import {portraitSeedFor,assignBornPortrait,assignCourtPortrait} from './portrait-registry.js?v=missing-fate-privacy-1';
-import {visiblePersonName,storedCorrespondentName} from './person-knowledge.js?v=faces-born-portrait-1';
+import {visiblePersonName,storedCorrespondentName} from './person-knowledge.js?v=faces-dynastic-leads-1';
 
 // Family records are campaign facts. The encyclopedia remains an independent
 // account of documented history. In particular, names never establish kinship.
@@ -204,7 +204,7 @@ export function reportedDynasticContacts(s,viewer=s.player){
  initializeDynasties(s);const contacts=[];
  for(const [faction,k] of Object.entries(s.knowledge?.[viewer]||{})){
   if(faction===viewer||faction==='rebels')continue;
-  const ids=[...(k.reportedLeaders||[]),...(k.reports||[]).filter(r=>isDeliveredReport(s,r)).flatMap(r=>['leaders','claimants'].includes(r.kind)?r.leaders||[]:['age','health','location'].includes(r.kind)&&r.character?[r.character]:[])];
+  const ids=reportedPeople(s,viewer,faction);
   for(const id of new Set(ids))if(CHARACTER_CATALOG[id])contacts.push({id,faction});
  }
  return contacts;

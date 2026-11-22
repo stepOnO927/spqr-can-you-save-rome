@@ -1,4 +1,4 @@
-import {snapshotFictionalCatalog,restoreFictionalCatalog} from './characters.js?v=faces-born-portrait-1';
+import {snapshotFictionalCatalog,restoreFictionalCatalog} from './characters.js?v=faces-dynastic-leads-1';
 // A one-use transfer between views in the same tab; saved game slots are untouched.
 export const HANDOFF_KEY = 'spqr-view-handoff-v1';
 

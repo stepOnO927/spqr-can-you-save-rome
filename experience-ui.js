@@ -1,5 +1,5 @@
 import {DIRECTIONS,refreshExperience,tutorialStep,tutorialLessons,recommendations,objectives,setDirection,setGuide,replayLesson,recordExperience} from './experience.js?v=saved-age-merge-1';
-import {AMBITIONS,availableAmbitions,ambitionStatus,chooseAmbition,initializeWheels,AMBITION_CHANGE_COST} from './history-wheels.js?v=faces-born-portrait-1';
+import {AMBITIONS,availableAmbitions,ambitionStatus,chooseAmbition,initializeWheels,AMBITION_CHANGE_COST} from './history-wheels.js?v=faces-dynastic-leads-1';
 
 let open='';
 const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

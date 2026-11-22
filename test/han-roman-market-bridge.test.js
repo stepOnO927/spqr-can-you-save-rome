@@ -1,14 +1,40 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=faces-born-portrait-1';
-import {attachHanWorld,hanWorld,advanceHanWorld,romanView,buyEasternImport} from '../han/world.js?v=faces-born-portrait-1';
+import {newGame,upgradeSave} from '../engine.js?v=faces-dynastic-leads-1';
+import {attachHanWorld,hanWorld,advanceHanWorld,romanView,buyEasternImport,sendEmbassyToSeres} from '../han/world.js?v=faces-dynastic-leads-1';
 import {placeEasternTrade,advanceEasternMarkets} from '../han/markets.js?v=faces-wheels-1';
 import {advanceDate} from '../han/util.js?v=han-1';
-import {eastPanel} from '../han/east-ui.js?v=faces-born-portrait-1';
+import {eastPanel} from '../han/east-ui.js?v=faces-dynastic-leads-1';
 import {setRelation} from '../han/frontier.js?v=han-1';
 import {propose} from '../han/frontier.js?v=han-1';
 import {proposeAgreement} from '../agreements.js?v=agreement-courier-1';
 import {postTradeSale,advanceMarketAI,advanceMarkets} from '../trade-markets.js?v=faces-wheels-1';
+
+test('concluded Roman campaigns keep eastern records but cannot buy cargo or dispatch envoys',()=>{
+ for(const ending of ['defeat','victory','peacefulVictory']){
+  let s=newGame('caesar');attachHanWorld(s,{seed:21});
+  s.regions.find(r=>r.id==='syria').owner='caesar';s.factions.caesar.treasury=200;
+  const w=hanWorld(s),id=`eastern-shipment:${ending}`,gate=w.state.tradeMarkets.regions.mediterranean_gate.goods.silk;
+  w.state.tradeMarkets.shipments.push({id,buyer:'external',seller:'han',destination:'mediterranean_gate',commodity:'silk',quantity:1,price:7,status:'delivered'});
+  gate.stock++;w.known.firstLive={year:s.year,month:s.month};
+  assert.equal(romanView(s).availableImports.some(x=>x.id===id),true);
+  assert.equal(romanView(s).conditions.ok,true);
+  s[ending]=true;s=upgradeSave(structuredClone(s));
+  const beforeCash=s.factions.caesar.treasury,beforeStock=hanWorld(s).state.tradeMarkets.regions.mediterranean_gate.goods.silk.stock;
+  assert.deepEqual(romanView(s).availableImports,[]);
+  assert.equal(romanView(s).conditions.active,false);
+  assert.equal(sendEmbassyToSeres(s).ok,false);
+  assert.equal(buyEasternImport(s,id,'syria').reason,'finalized');
+  assert.equal(s.factions.caesar.treasury,beforeCash);
+  assert.equal(hanWorld(s).state.tradeMarkets.regions.mediterranean_gate.goods.silk.stock,beforeStock);
+  assert.equal(hanWorld(s).embassy,null);
+  assert.equal(hanWorld(s).bridge.settled[id],undefined);
+  assert.match(eastPanel(s,{lang:0}),/Eastern records remain available/);
+  assert.match(eastPanel(s,{lang:1}),/东方档案仍可查阅/);
+  assert.match(eastPanel(s,{lang:0}),/Reported ruler/);
+  assert.doesNotMatch(eastPanel(s,{lang:0}),/data-east-buy=/);
+ }
+});
 
 test('the attached eastern world trades autonomously without publishing private orders to Rome',()=>{
  const s=newGame('caesar');attachHanWorld(s,{seed:82});const h=hanWorld(s).state;

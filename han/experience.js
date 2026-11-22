@@ -4,7 +4,7 @@ import {treeFor,focusState,focusStatus} from './focus.js?v=han-1';
 import {neighbours} from './military.js?v=han-1';
 import {atWar,treaty} from './frontier.js?v=han-1';
 import {OFFICES,FACTIONS} from './data.js?v=han-1';
-import {initialize as initializeAmbition,status as ambitionStatus} from './ambitions.js?v=faces-born-portrait-1';
+import {initialize as initializeAmbition,status as ambitionStatus} from './ambitions.js?v=faces-dynastic-leads-1';
 
 const L=(en,zh)=>[en,zh],now=s=>s.year*12+s.month;
 export const DIRECTIONS={administration:L('Court and administration','朝廷与行政'),trade:L('Trade and diplomacy','贸易与外交'),frontier:L('Frontier readiness','边疆战备')};

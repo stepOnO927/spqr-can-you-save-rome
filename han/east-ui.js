@@ -1,8 +1,8 @@
 // The East as Rome knows it: a map coloured from the latest merchant report
 // and a panel of dispatches. Nothing here reads the live Han simulation.
 import {REGIONS,FACTIONS,ZHOU,THEATERS} from './data.js?v=han-1';
-import {drawMap,CAMERAS,MODES} from './map.js?v=faces-born-portrait-1';
-import {romanView,EMBASSY_COST,EMBASSY_MONTHS} from './world.js?v=faces-born-portrait-1';
+import {drawMap,CAMERAS,MODES} from './map.js?v=faces-dynastic-leads-1';
+import {romanView,EMBASSY_COST,EMBASSY_MONTHS} from './world.js?v=faces-dynastic-leads-1';
 import {COMMODITIES} from '../market-goods.js?v=faces-wheels-1';
 
 const esc=x=>String(x??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -27,6 +27,7 @@ export function eastPanel(s,{lang=0,selected=null}={}){
  const sn=v.snapshot,r=selected&&REGIONS.find(x=>x.id===selected);
  const c=v.conditions;
  return `<div class="panel-heading"><span class="eyebrow">SERES · 赛里斯</span><h2>${lang?'东方传闻':'Reports from the East'}</h2></div>
+ ${c.active?'':`<p class="hint">${lang?'战役已结束；东方档案仍可查阅，但不能再遣使或购买商货。':'Campaign ended. Eastern records remain available, but envoys and cargo purchases are closed.'}</p>`}
  <p class="hint">${v.embassy?.status==='returned'?(lang?'使节已回报汉廷见闻；商旅消息仍经安息与康居辗转传来，抵达时可能已经过时。':'The envoys have reported from the Han court. Merchant news still travels through Parthia and Kangju and may be outdated on arrival.'):(lang?'罗马对赛里斯（汉朝）尚无直接接触。下列消息都由安息与康居商人辗转带来，抵达时已过去数年，可能有误。':'Rome has no direct contact with the Seres (the Han) yet. Everything below came through Parthian and Kangju merchants; it is years old when it arrives and may be wrong.')}</p>
  <p class="hint"><a href="./han/" target="_blank" rel="noopener">${lang?'另开丝路诸国独立战役（单独存档）':'Play an independent Silk Road campaign (separate save)'}</a></p>
  <div class="rule-block"><h3>${lang?'最新的东方概况':'Latest account of the East'}</h3>

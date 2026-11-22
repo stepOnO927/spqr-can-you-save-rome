@@ -6,7 +6,7 @@ page.on('pageerror',error=>errors.push(error.message));
 try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','en'));
  await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
- await page.evaluate(async()=>{const {newGame,tick}=await import('/engine.js?v=faces-born-portrait-1'),{sendLetter}=await import('/epistulae.js?v=faces-born-portrait-1'),s=newGame('caesar');sendLetter(s,{senderInstitution:'caesar',senderFaction:'caesar',recipient:'caesar',category:'government',subject:['Measured treasury note','实际国库简报'],body:['The treasury report is ready.','国库报告已备妥。'],options:['acknowledge']});tick(s);sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state:s}))});
+ await page.evaluate(async()=>{const {newGame,tick}=await import('/engine.js?v=faces-dynastic-leads-1'),{sendLetter}=await import('/epistulae.js?v=faces-dynastic-leads-1'),s=newGame('caesar');sendLetter(s,{senderInstitution:'caesar',senderFaction:'caesar',recipient:'caesar',category:'government',subject:['Measured treasury note','实际国库简报'],body:['The treasury report is ready.','国库报告已备妥。'],options:['acknowledge']});tick(s);sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state:s}))});
  await page.reload({waitUntil:'domcontentloaded'});await page.locator('#mail-open').click();assert.match(await page.locator('.mailbox').innerText(),/Measured treasury note/);
  await page.locator('[data-mail-filter="government"]').click();assert.match(await page.locator('.mail-letter').innerText(),/The treasury report is ready/);
  await page.locator('[data-mail-reply="acknowledge"]').first().click();assert.match(await page.locator('.mail-letter').innerText(),/Replied/);

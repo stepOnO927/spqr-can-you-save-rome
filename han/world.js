@@ -6,7 +6,7 @@
 // power. Rome learns about the East only through merchant reports carried
 // along the Silk Road and through Parthia: every report is years old when it
 // arrives, and Rome starts with nothing but an old account.
-import {newHanGame,tick as hanTick,loadHanSave} from './engine.js?v=faces-born-portrait-1';
+import {newHanGame,tick as hanTick,loadHanSave} from './engine.js?v=faces-dynastic-leads-1';
 import {REGIONS,FACTIONS} from './data.js?v=han-1';
 import {isLiuClan} from './dynasty.js?v=han-1';
 import {initializeMarkets} from '../trade-markets.js?v=faces-wheels-1';
@@ -23,6 +23,7 @@ const EAST_PORTS=['syria','egypt','anatolia','achaia'];
 const EASTERN_RELAY_MARKETS={parthia:'ctesiphon',media:'ecbatana'};
 const historicalRomanExports=s=>Object.fromEntries((s.markets?.transactions||[]).filter(tx=>tx.shipment&&['caesar','senate'].includes(tx.seller)&&tx.buyer==='parthia'&&EASTERN_RELAY_MARKETS[tx.destination]).map(tx=>[tx.shipment,{status:'legacy'}]));
 const PLAYER_IMPORT_PRIORITY_MONTHS=3;
+const campaignClosed=s=>!!(s.defeat||s.victory||s.peacefulVictory);
 
 export const hanWorld=s=>s.world?.[DLC_KEY]||null;
 export function attachHanWorld(s,{seed=null}={}){
@@ -99,8 +100,9 @@ function importAtPort(s,w,cargo,port){
  return {ok:true,receipt};
 }
 export function buyEasternImport(s,shipmentId,portId){
+ if(campaignClosed(s))return {ok:false,reason:'finalized'};
  const w=hanWorld(s),port=s.regions.find(r=>r.id===portId);
- if(!w||s.defeat||!port||port.owner!==s.player)return {ok:false,reason:'port'};
+ if(!w||!port||port.owner!==s.player)return {ok:false,reason:'port'};
  const cargo=w.state.tradeMarkets?.shipments?.find(x=>x.id===shipmentId);
  if(!cargo)return {ok:false,reason:'unavailable'};
  return importAtPort(s,w,cargo,port);
@@ -161,7 +163,7 @@ export const EMBASSY_COST=80,EMBASSY_MONTHS=30;
 export function embassyConditions(s){
  const w=hanWorld(s);if(!w)return {ok:false};
  const parthia=s.regions.some(r=>r.owner==='parthia');const atWar=(s.wars||[]).some(x=>x.includes(s.player)&&x.includes('parthia'));
- const c={reports:!!w.known.firstLive,parthia:parthia&&!atWar,treasury:(s.factions[s.player]?.treasury||0)>=EMBASSY_COST,idle:!w.embassy};
+ const c={active:!campaignClosed(s),reports:!!w.known.firstLive,parthia:parthia&&!atWar,treasury:(s.factions[s.player]?.treasury||0)>=EMBASSY_COST,idle:!w.embassy};
  return {...c,ok:Object.values(c).every(Boolean)};
 }
 export function sendEmbassyToSeres(s){
@@ -174,6 +176,6 @@ export function upgradeHanWorld(s){const w=hanWorld(s);if(!w)return;w.state=load
 export function romanView(s){const w=hanWorld(s);if(!w)return null;
  const ports=EAST_PORTS.filter(id=>s.regions.find(r=>r.id===id)?.owner===s.player),goods=w.state.tradeMarkets?.regions?.mediterranean_gate?.goods||{};
  const rivalPort=EAST_PORTS.some(id=>{const owner=s.regions.find(r=>r.id===id)?.owner;return owner&&owner!==s.player&&['caesar','senate'].includes(owner)});
- const availableImports=ports.length?(w.state.tradeMarkets?.shipments||[]).filter(x=>x.buyer==='external'&&x.destination==='mediterranean_gate'&&x.status==='delivered'&&!ensureBridge(w).settled[x.id]&&COMMODITIES[x.commodity]&&Number.isSafeInteger(x.quantity)&&x.quantity>0&&Number.isSafeInteger(x.price)&&x.price>=0&&goods[x.commodity]?.stock>=x.quantity).map(x=>({id:x.id,commodity:x.commodity,quantity:x.quantity,price:x.price,merchantId:x.merchantId||null,merchantName:w.state.persons?.[x.merchantId]?.name||null,rivalBidIn:rivalPort&&Number.isSafeInteger(x.deliveredAt)?Math.max(0,PLAYER_IMPORT_PRIORITY_MONTHS-(mi(s.year,s.month)-x.deliveredAt)):null,ports})):[];
+ const availableImports=ports.length&&!campaignClosed(s)?(w.state.tradeMarkets?.shipments||[]).filter(x=>x.buyer==='external'&&x.destination==='mediterranean_gate'&&x.status==='delivered'&&!ensureBridge(w).settled[x.id]&&COMMODITIES[x.commodity]&&Number.isSafeInteger(x.quantity)&&x.quantity>0&&Number.isSafeInteger(x.price)&&x.price>=0&&goods[x.commodity]?.stock>=x.quantity).map(x=>({id:x.id,commodity:x.commodity,quantity:x.quantity,price:x.price,merchantId:x.merchantId||null,merchantName:w.state.persons?.[x.merchantId]?.name||null,rivalBidIn:rivalPort&&Number.isSafeInteger(x.deliveredAt)?Math.max(0,PLAYER_IMPORT_PRIORITY_MONTHS-(mi(s.year,s.month)-x.deliveredAt)):null,ports})):[];
  return {snapshot:w.known.snapshot,dispatches:w.known.dispatches,silkCargoes:w.known.silkCargoes,imports:Object.values(w.bridge?.settled||{}).filter(x=>x.status==='delivered'&&x.owner===s.player).slice(-8).reverse(),exports:Object.values(w.bridge?.romanExports||{}).filter(x=>x.status==='transferred'&&x.seller===s.player).slice(-8).reverse(),availableImports,embassy:w.embassy?{...w.embassy}:null,conditions:embassyConditions(s)};
 }

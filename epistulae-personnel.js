@@ -1,5 +1,5 @@
-import {CHARACTER_CATALOG} from './characters.js?v=faces-born-portrait-1';
-import {createFictionalPerson,recordLifeEvent} from './dynasties.js?v=faces-born-portrait-1';
+import {CHARACTER_CATALOG} from './characters.js?v=faces-dynastic-leads-1';
+import {createFictionalPerson,recordLifeEvent} from './dynasties.js?v=faces-dynastic-leads-1';
 
 const date=s=>s.year*12+s.month;
 const pair=(a,b)=>[a,b].sort().join(':');
