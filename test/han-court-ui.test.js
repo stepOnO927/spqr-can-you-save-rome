@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import {newHanGame,loadHanSave,serialize,generateOfficial,tick} from '../han/engine.js';
 import {hanCourtHtml} from '../han/court-ui.js';
 import {courtPortraitSrc} from '../han/court-portrait.js';
-import {appoint,dismiss,startAudit,answerPolicyAdvice,courtAllies,edictSupport,issueEdict} from '../han/court.js';
+import {appoint,dismiss,startAudit,answerPolicyAdvice,courtAllies,edictSupport,issueEdict,advanceMinisterInvestigations} from '../han/court.js';
 import {log} from '../han/util.js';
 
 const MINISTERS=['shi-gao','xiao-wangzhi','hong-gong','yu-dingguo','chen-wannian','liu-xiang','zhou-kan','shi-xian','feng-fengshi','gan-yanshou','chen-tang','feng-liao'];
@@ -36,6 +36,29 @@ test('serving ministers form saved alliances that support edicts and hinder audi
  tick(s);assert.deepEqual(s.court.alliances[0].ended,{year:s.year,month:s.month});
  const old=structuredClone(s);delete old.court.alliances;
  assert.deepEqual(loadHanSave(serialize(old)).court.alliances,[]);
+});
+
+test('the censor independently opens a paid investigation from court politics, not hidden corruption',()=>{
+ const s=newHanGame('han',{seed:500,start:'roman'});for(let i=0;i<17;i++)tick(s);
+ assert.equal(appoint(s,'yushi','zhou-kan').ok,true);
+ const direct=structuredClone(s);direct.month=7;
+ const treasury=direct.factions.han.treasury,opened=advanceMinisterInvestigations(direct);
+ assert.equal(opened.ok,true);assert.equal(opened.audit.target,'shi-gao');
+ assert.equal(opened.audit.initiatorId,'zhou-kan');assert.equal(direct.factions.han.treasury,treasury-15);
+ assert.equal(advanceMinisterInvestigations(direct),undefined,'one censor cannot spend twice on an open case');
+ const uncorrupt=structuredClone(s);uncorrupt.persons['shi-gao'].corruption=0;
+ const noCensor=structuredClone(s);noCensor.court.offices.yushi=null;noCensor.persons['zhou-kan'].office=null;
+ tick(s);tick(uncorrupt);tick(noCensor);
+ assert.equal(s.court.audits.at(-1).target,'shi-gao');
+ assert.equal(uncorrupt.court.audits.at(-1).target,'shi-gao');
+ assert.equal(noCensor.court.audits.length,0);
+ assert.match(hanCourtHtml(s,0,'shi-gao'),/requests an investigation/);
+ assert.match(hanCourtHtml(s,1,'shi-gao'),/提请稽查/);
+ for(let i=0;i<4;i++)tick(s);
+ assert.notEqual(s.court.audits.at(-1).status,'open');
+ const restored=loadHanSave(serialize(s));
+ assert.equal(restored.court.audits.at(-1).initiatorId,'zhou-kan');
+ assert.equal(restored.court.audits.at(-1).status,s.court.audits.at(-1).status);
 });
 
 test('twelve opening officials have individual portraits and bilingual profiles without hidden attributes',()=>{

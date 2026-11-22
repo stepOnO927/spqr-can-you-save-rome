@@ -230,13 +230,23 @@ function advancePolicyAdvice(s){
 }
 
 // ---------- audits & corruption (evidence only) ----------
-export function startAudit(s,targetId,{owner='han'}={}){
+export function startAudit(s,targetId,{owner='han',initiatorId=null}={}){
  const t=s.persons[targetId];if(!t||!t.alive||t.faction!==owner)return {ok:false,reason:'invalid'};
+ if(initiatorId&&(!inCourt(s,initiatorId)||s.court.offices.yushi!==initiatorId||initiatorId===targetId))return {ok:false,reason:'initiator'};
  if(s.court.audits.some(a=>a.target===targetId&&a.status==='open'))return {ok:false,reason:'already'};
  const cost=15;if(s.factions[owner].treasury<cost)return {ok:false,reason:'cost'};s.factions[owner].treasury-=cost;
- const a={id:s.court.nextId++,target:targetId,evidence:0,months:0,status:'open',interfered:false};s.court.audits.push(a);
+ const a={id:s.court.nextId++,target:targetId,evidence:0,months:0,status:'open',interfered:false,started:{year:s.year,month:s.month}};if(initiatorId)a.initiatorId=initiatorId;s.court.audits.push(a);
  if(!Array.isArray(t.career))t.career=[];
- log(s,['An investigation of %NAME% begins.','开始稽查%NAME%。'],{who:targetId,kind:'audit'});return {ok:true,audit:a};
+ log(s,initiatorId?['%NAME% requests an investigation of %NAME2%; 15 spent from the treasury.','%NAME%提请稽查%NAME2%；国库支出15。']:['An investigation of %NAME% begins.','开始稽查%NAME%。'],{who:initiatorId||targetId,who2:initiatorId?targetId:null,kind:'audit',audit:a.id});return {ok:true,audit:a};
+}
+export function advanceMinisterInvestigations(s){
+ if(s.month!==7||!Number.isInteger(s.stats?.startMonth)||monthIndex(s)-s.stats.startMonth<18||s.factions.han.treasury<90||s.court.audits.some(a=>a.status==='open'))return;
+ const inspector=officeHolder(s,'yushi');if(!inspector||inspector.competence<60||inspector.loyalty<50||!inspector.courtFaction)return;
+ const recent=a=>a.started&&monthIndex(s)-(a.started.year*12+a.started.month)<24;
+ if(s.court.audits.some(a=>a.initiatorId===inspector.id&&recent(a)))return;
+ const candidates=Object.values(s.court.offices).filter(id=>id&&inCourt(s,id)&&id!==inspector.id&&s.persons[id].courtFaction&&s.persons[id].courtFaction!==inspector.courtFaction&&(s.court.control[id]||0)>=35&&!s.court.audits.some(a=>a.target===id&&recent(a)));
+ candidates.sort((a,b)=>(s.court.control[b]||0)-(s.court.control[a]||0)||a.localeCompare(b));
+ if(candidates[0])return startAudit(s,candidates[0],{initiatorId:inspector.id});
 }
 function advanceAudits(s){
  const inspector=officeHolder(s,'yushi');const skill=inspector?inspector.competence:30;
@@ -529,6 +539,7 @@ export function advanceCourt(s){
  enforceDynasticInvariants(s,{log:(t,m)=>log(s,t,{...m,kind:'throne'})});
  computeMandate(s);
  advanceCourtAlliances(s);
+ advanceMinisterInvestigations(s);
  advancePolicyAdvice(s);
 }
 export {STATIC_REGIONS};

@@ -6,6 +6,16 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+The Han chief censor can now independently open a treasury-funded inquiry
+after a rival minister gains visible court control. Selection uses office,
+political group, and court influence, not the target's secret corruption.
+Cases create evidence and a real finding through the existing audit system;
+the initiator and target appear in both career records, including after a
+save. A deterministic simulation regression covers cost, secrecy, outcome,
+and migration, and a browser smoke covers appointment, automatic initiation,
+and bilingual save/load. The full local simulation suite passes 1,264/1,264;
+GitHub verification is pending.
+
 Main through `d96bd3a7` is integrated. Administrative appointments now
 require a confirmed age of at least 25, including in the expanded Han-aware
 office system. Main's bilingual explanation, regression test, and browser
