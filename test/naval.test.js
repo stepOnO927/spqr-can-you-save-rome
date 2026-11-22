@@ -818,6 +818,28 @@ test('AI stages a transport fleet at an isolated army port and waits for embarka
  tick(live);assert.equal(live.armies.find(a=>a.id==='italy').region,'italiaS');
  tick(live);assert.equal(live.armies.find(a=>a.id==='italy').region,'t075','the ordered fleet carries the army across the sea');
 });
+test('a solvent AI replaces missing transport capacity for an actual coastal army',()=>{
+ const s=newGrandGame('egypt'),army=s.armies.find(a=>a.id==='italy'),fleet=s.naval.fleets.find(f=>f.id==='senate-adriatic');
+ army.region='italiaS';s.regions.find(r=>r.id==='t075').owner='caesar';
+ fleet.ships.transport=1;fleet.sailors-=70;
+ assert.equal(previewMarch(s,army.id,'t075').ok,false,'one transport cannot carry the existing levy');
+ advanceNaval(s);
+ assert.equal(s.naval.queues.find(q=>q.port==='italiaS')?.type,'transport','shipbuilding responds to the real lift shortage');
+ assert.equal(fleet.order,null,'the assigned fleet waits for its additional transport');
+ const restored=upgradeSave(JSON.parse(JSON.stringify(s))),repaired=restored.naval.fleets.find(f=>f.id===fleet.id);
+ for(let month=0;month<3;month++){restored.month++;advanceNaval(restored)}
+ assert.equal(repaired.ships.transport,2,'the new hull joins the fleet after paid construction time');
+ assert.equal(previewMarch(restored,army.id,'t075').ok,true,'the same army can now order a real crossing');
+ assert.equal(moveArmy(restored,army.id,'t075').ok,true);
+ assert.equal(repaired.order?.kind,'transport','the added hull serves an actual military order');
+ const peaceful=newGrandGame('egypt');peaceful.armies.find(a=>a.id==='italy').region='italiaS';peaceful.naval.fleets.find(f=>f.id==='senate-adriatic').ships.transport=1;
+ advanceNaval(peaceful);
+ assert.ok(!peaceful.naval.queues.some(q=>q.owner==='senate'&&q.type==='transport'),'the AI does not build invasion transports for a peaceful coast');
+ const cashPoor=newGrandGame('egypt'),poorFleet=cashPoor.naval.fleets.find(f=>f.id==='senate-adriatic');
+ cashPoor.armies.find(a=>a.id==='italy').region='italiaS';cashPoor.regions.find(r=>r.id==='t075').owner='caesar';
+ poorFleet.ships.transport=1;cashPoor.factions.senate.treasury=35;advanceNaval(cashPoor);
+ assert.ok(!cashPoor.naval.queues.some(q=>q.owner==='senate'&&q.type==='transport'),'a cash-poor command does not spend its last money on new lift');
+});
 test('AI takes an available land route instead of stalling at a sea link without transports',()=>{
  const s=newGrandGame('caesar');
  for(const r of s.regions)if(r.id!=='t036'&&r.owner==='caesar')r.owner='senate';

@@ -725,7 +725,23 @@ function issueCoordinatedPursuit(s,owner,plan){
  }
  return {ok:true};
 }
+function aiTransportShipbuilding(s,owner){
+ const treasury=s.factions[owner].treasury,cashflow=aiNavalCashflow(s,owner);
+ if(treasury<100||cashflow<=0)return false;
+ const fleets=s.naval.fleets.filter(f=>f.owner===owner&&ships(f));
+ const coastalArmies=s.armies.filter(a=>a.owner===owner&&a.men>=1200&&!a.move&&!a.siege&&s.regions.some(r=>r.id===a.region&&r.owner===owner&&r.port)&&hostileSeaLanding(s,owner,a.region)).sort((a,b)=>b.men-a.men);
+ for(const army of coastalArmies){
+  if(fleets.some(f=>fleetCapacity(f,s)>=army.men))continue;
+  const candidate=fleets.filter(f=>f.port&&!f.reserve&&!f.mobilizing&&!f.order&&fleetCapacity(f,s)>0&&s.regions.some(r=>r.id===f.port&&r.owner===owner&&r.buildings?.includes('shipyard'))&&!s.naval.queues.some(q=>q.port===f.port)).sort((a,b)=>fleetCapacity(b,s)-fleetCapacity(a,s))[0];
+  const dock=candidate?.port||(!fleets.some(f=>fleetCapacity(f,s)>0)&&s.regions.find(r=>r.id===army.region&&r.buildings?.includes('shipyard'))?.id);
+  if(!dock)continue;
+  const queued=queueShip(s,owner,dock,'transport');
+  if(queued.ok){if(candidate)s.naval.queues.at(-1).aiFleetId=candidate.id;return true}
+ }
+ return false;
+}
 function aiNavalOrders(s,owner,f){
+ if(f.port&&!f.order&&s.naval.queues.some(q=>q.owner===owner&&q.aiFleetId===f.id))return;
  if(f.order?.kind==='escort'){
   const order=f.order,route=s.naval.routes.find(r=>r.id===order.target);
   const from=route&&s.regions.find(r=>r.id===route.from),to=route&&s.regions.find(r=>r.id===route.to);
@@ -865,7 +881,7 @@ for(const q of [...n.queues]){
  advanceTradeVoyages(s,log);for(const route of [...n.routes].sort((a,b)=>(a.lastDispatch?a.lastDispatch.year*12+a.lastDispatch.month:-Infinity)-(b.lastDispatch?b.lastDispatch.year*12+b.lastDispatch.month:-Infinity)))dispatchTradeVoyage(s,route,log);
  for(const f of n.fleets)if(f.order?.kind==='blockade'&&!blockadePower(f)){f.order=null;if(f.owner===s.player)log(s,'The blockade ended: the fleet lacks fit, crewed warships.','封锁已结束：舰队缺少可用且有足够水手的战船。')}
  for(const f of n.fleets){if(f.mobilizing){f.mobilizing--;if(f.mobilizing<=0){f.mobilizing=0;f.reserve=false;f.morale=Math.min(100,f.morale+2);if(f.owner===s.player)log(s,'The fleet has completed mobilization and can receive orders.','舰队完成整备，可以接受命令。')}}}
- for(const owner of Object.keys(s.factions).filter(x=>x!==s.player&&x!=='rebels')){for(const f of n.fleets.filter(x=>x.owner===owner&&ships(x)))aiNavalOrders(s,owner,f);if(s.month===1&&s.factions[owner].treasury>90&&aiNavalCashflow(s,owner)>0){const dock=s.regions.find(r=>r.owner===owner&&r.buildings?.includes('shipyard'));if(dock)queueShip(s,owner,dock.id,'light')}}
+ for(const owner of Object.keys(s.factions).filter(x=>x!==s.player&&x!=='rebels')){const transportQueued=aiTransportShipbuilding(s,owner);for(const f of n.fleets.filter(x=>x.owner===owner&&ships(x)))aiNavalOrders(s,owner,f);if(!transportQueued&&s.month===1&&s.factions[owner].treasury>90&&aiNavalCashflow(s,owner)>0){const dock=s.regions.find(r=>r.owner===owner&&r.buildings?.includes('shipyard'));if(dock)queueShip(s,owner,dock.id,'light')}}
  for(const owner of Object.keys(s.factions).filter(x=>x!==s.player&&x!=='rebels'))aiWagonOrders(s,owner);
  advanceNavalCaptives(s,log);
 }
