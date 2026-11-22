@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,estimatedStrength,upgradeSave} from '../engine.js?v=dynastic-reported-leads-1';
-import {sendCoalitionInvitation,advanceCoalitionInvitations} from '../coalition-negotiations.js?v=dynastic-reported-leads-1';
+import {newGame,estimatedStrength,upgradeSave} from '../engine.js?v=commander-name-snapshot-1';
+import {sendCoalitionInvitation,advanceCoalitionInvitations} from '../coalition-negotiations.js?v=commander-name-snapshot-1';
 import {initializeChronicle,syncChronicleDispatches} from '../chronicle.js?v=saved-age-consistency-1';
 
 function setup(){

@@ -41,6 +41,9 @@ export const reportedPersonalContact=(s,actor,own,other)=>reportedPersonalContac
 function personNameRecords(s,actor,target,id){
  const reports=s.knowledge?.[actor]?.[target]?.reports||[];
  const records=reports.filter(r=>isDeliveredReport(s,r)&&(!Number.isFinite(reportAge(s,r))||reportAge(s,r)>=0)&&namedReportSubjects(r).includes(id)&&validName(r.peopleNames?.[id])).map(r=>({name:r.peopleNames[id],year:r.observationYear??r.year,month:r.observationMonth??r.month}));
+ // A commander identification is a dated observer-owned snapshot. Older
+ // sightings lacking a saved name cannot be filled from the live catalog.
+ const k=s.knowledge?.[actor]?.[target];for(const r of [...Object.values(k?.sightings||{}),...(k?.commanderReports||[])])if(isDeliveredReport(s,r)&&r.commanderId===id&&validName(r.commanderName))records.push({name:r.commanderName,year:r.observationYear??r.year,month:r.observationMonth??r.month});
  // Only a completed meeting's own observation can supersede a dated report.
  // Legacy reportedName is the name used to address the request, not a new observation.
  for(const m of s.meetings||[]){if(!isCompletedMeeting(s,m))continue;const name=m.actor===actor&&m.targetFaction===target&&m.target===id?m.observedName:m.targetFaction===actor&&m.actor===target&&m.person===id?m.observedPersonName:null;if(validName(name))records.push({name,year:m.resolvedYear??m.year,month:m.resolvedMonth??m.month})}
