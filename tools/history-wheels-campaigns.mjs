@@ -111,8 +111,8 @@ const playerStrategySweep={};
 for(const plan of ['guard','levy_guard','peace_guard','tax_guard','tax_levy_guard','replenish_guard','replenish_levy_guard','push','push_levy','muster','muster_levy','push_guard','feint_guard','feint_replenish_guard','feint_levy_guard','travel_guard','travel_push_guard','travel_feint_guard']){
  playerStrategySweep[plan]=Array.from({length:6},(_,i)=>caesarPlayerStrategy(i+1,plan));
 }
-console.log('WHEELS_CAESAR_PLAYER_STRATEGIES '+JSON.stringify(playerStrategySweep));
 console.log('WHEELS_SEED4_LEVY_GUARD '+JSON.stringify(playerStrategySweep.levy_guard[3]));
+console.log('WHEELS_CAESAR_PLAYER_STRATEGIES '+JSON.stringify(playerStrategySweep));
 for(const plan of ['levy_guard','travel_guard']){
  const runs=playerStrategySweep[plan];
  assert.ok(runs.every(run=>run.months===36&&!run.defeat&&run.trace.at(-1).regions>=1&&run.trace.at(-1).armies>=1&&run.trace.at(-1).treasury>=0&&run.trace.at(-1).food>=0),`${plan} should preserve a supplied Roman command across all six 36-month cloud seeds`);
