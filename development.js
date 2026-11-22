@@ -199,7 +199,7 @@ const buildingEntries={
  'siege-workshop':['Massilia’s siege involved constructed galleries and towers. A local workshop shortens a siege only through the game’s actual siege calculation, at a material and upkeep cost; the source gives no universal timetable.','马赛围城中修筑了带顶通道和高塔。地方攻城作坊投入材料并支付维护费，通过游戏的真实围攻计算缩短时间；史料没有给出通用工期。'],
  metalworks:['Cato names markets for iron tools and metal vessels. A local metalworking facility reduces later construction costs in the game, without treating his list of markets as proof of one standardized factory.','加图列出铁器与金属容器的市场。地方金属加工场在游戏中降低日后建造费用，但他的市场清单不能证明存在统一标准的工厂。'],
  workshop:['Cato lists tools, pottery, rope and milling equipment sold in different places. A paid local workshop adds treasury income with upkeep; this is a model of organized craft activity, not a measured ancient profit.','加图列出各地出售的工具、陶器、绳索与磨具。付费建成的地方作坊增加国库收入并产生维护费；这是手工业组织的模型，不是古代实测利润。'],
- 'grain-mill':['Cato includes hand and donkey mills in estate equipment. A completed grain-processing facility adds game food output rather than creating grain without crops; its rate is an abstraction of processing capacity.','加图把手磨和驴力磨列入庄园器具。建成的谷物加工场增加游戏粮食产出，并不意味着没有作物也能凭空生粮；其速率是加工能力的抽象。'],
+ 'grain-mill':['Cato includes hand and donkey mills in estate equipment. A mill requires a local grain harvest; its game food output is capped by that harvest and can fall if production declines. It continues to cost upkeep.','加图把手磨和驴力磨列入庄园器具。磨坊须有当地谷物收成；游戏粮食收益受该收成限制，产量下降时也会减少。维护费仍需支付。'],
  monument:['The Scipio Barbatus tomb preserves a Republican inscription, not a template for every province. A player-written dedication adds political prestige but can lower local loyalty; the wording and effects are campaign choices.','西庇阿·巴尔巴图斯墓留有共和国铭文，却不是各行省通用范本。玩家撰写的铭文增加政治声望，也可能降低地方忠诚；文字及效果都取决于战役选择。'],
  milestone:['Plutarch describes stone distance markers along roads in Gaius Gracchus’s time. Build a local road first; the small treasury benefit models trade administration, not income produced by the stone itself.','普鲁塔克记述盖乌斯·格拉古时期沿道路设置石制里程标记。须先修建当地道路；少量国库收益模拟沿路商贸管理，并非石柱本身生财。'],
  square:['Pompeii’s Republican public spaces included a Forum and Comitium. A local square needs an urban site, materials and upkeep, then helps loyalty; the political gain is a game estimate.','庞贝共和国时期的公共空间包括广场和民会场。地方广场须位于城市，投入材料并持续维护，随后改善忠诚；政治增益属于游戏估算。'],
@@ -396,6 +396,7 @@ export function constructionCheck(s,owner,regionId,buildingId){
   if(!r||!b||r.owner!==owner)return {ok:false,reason:'owner'};
   if(!d.knownMaterial.includes(b.tech))return {ok:false,reason:'technology'};
   if(!b.terrain.includes(r.terrain))return {ok:false,reason:'terrain'};
+  if(b.id==='grain-mill'&&!(Number(r.food)>0))return {ok:false,reason:'harvest'};
   if(b.id==='mine'&&!(s.grandMap?r.resource==='metal':metalDeposits.has(r.id)))return {ok:false,reason:'deposit'};
   if(b.id==='mine'&&s.grandMap&&Number.isFinite(r.population)&&r.population<6000)return {ok:false,reason:'labor'};
   if(b.site==='coast'&&!(s.grandMap?r.port:coastalSites.has(r.id)))return {ok:false,reason:'coast'};
@@ -785,7 +786,7 @@ export function advanceDevelopment(s,log=()=>{}){
   }
 }
 export function mineMetalOutput(r){const population=r.population;return !Number.isFinite(population)?2:population>=6000?2:population>=3000?1:0}
-export function localBuildingEffects(r){const out={};for(const id of r.buildings||[]){const b=BUILDINGS.find(x=>x.id===id);if(!b)continue;for(const [k,v] of Object.entries(b.effects))out[k]=(out[k]||0)+(id==='mine'&&k==='metal'?mineMetalOutput(r):v);out.upkeep=(out.upkeep||0)+b.upkeep}return out}
+export function localBuildingEffects(r){const out={};for(const id of r.buildings||[]){const b=BUILDINGS.find(x=>x.id===id);if(!b)continue;for(const [k,v] of Object.entries(b.effects))out[k]=(out[k]||0)+(id==='mine'&&k==='metal'?mineMetalOutput(r):id==='grain-mill'&&k==='food'?Math.min(v,Math.max(0,Number(r.food)||0)):v);out.upkeep=(out.upkeep||0)+b.upkeep}return out}
 
 export const GRANARY_RESERVE_CAPACITY=24;
 const storedGrain=site=>Math.max(0,Math.min(GRANARY_RESERVE_CAPACITY,Math.floor(Number(site.grainReserve)||0)));

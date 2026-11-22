@@ -482,6 +482,35 @@ test('a mine needs local labor and produces less metal when its population falls
  assert.equal(mineMetalOutput(loaded.regions.find(site=>site.id===r.id)),1);
 });
 
+test('grain processing needs a harvest and cannot create food after crops fail or a save reloads',()=>{
+ const s=newGrandGame('caesar'),r=s.regions.find(site=>site.owner==='caesar'&&['plain','hills','urban'].includes(site.terrain)&&!site.buildings.length);
+ assert.ok(r);const d=development(s,'caesar');s.factions.caesar.treasury=500;
+ d.knownMaterial.push('grain-processing');d.materials.stone=20;d.materials.timber=20;
+ r.food=0;assert.equal(constructionCheck(s,'caesar',r.id,'grain-mill').reason,'harvest');
+ assert.equal(startConstruction(s,'caesar',r.id,'grain-mill').reason,'harvest');
+ assert.match(constructionPanel(s,'en',r),/Unavailable: no local grain harvest/);
+ assert.match(constructionPanel(s,'zh',r),/不可建：当地没有粮食收成/);
+ r.food=1;assert.equal(startConstruction(s,'caesar',r.id,'grain-mill').ok,true);
+ for(let month=0;month<3;month++)advanceDevelopment(s);
+ assert.ok(r.buildings.includes('grain-mill'));
+ const originalBuildings=r.buildings;r.buildings=[];
+ const otherBuildingFood=nationalBudget(s,'caesar').buildingFood;
+ r.buildings=originalBuildings;
+ for(const [harvest,output] of [[1,1],[2,2],[0,0],[3,2]]){
+  r.food=harvest;
+  assert.equal(localBuildingEffects(r).food,output);
+  assert.equal(localBuildingEffects(r).upkeep,1);
+  assert.equal(nationalBudget(s,'caesar').buildingFood-otherBuildingFood,output);
+ }
+ r.food=.75;assert.equal(localBuildingEffects(r).food,.75,'grand-map cells retain their fractional crop yield');
+ const loaded=upgradeSave(JSON.parse(JSON.stringify(s)));
+ const savedMill=loaded.regions.find(site=>site.id===r.id);savedMill.food=0;
+ assert.equal(localBuildingEffects(savedMill).food,0);
+ assert.equal(localBuildingEffects(savedMill).upkeep,1);
+ assert.match(constructionPanel(loaded,'en',savedMill),/Grain-Processing Facility/);
+ assert.match(constructionPanel(loaded,'zh',savedMill),/谷物加工场/);
+});
+
 test('policy adoption uses the figure whose expertise matches the actual policy',()=>{
  const s=newGrandGame('senate'),d=development(s,'senate');s.factions.senate.treasury=500;
  const cases=[
