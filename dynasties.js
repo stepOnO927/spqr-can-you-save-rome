@@ -357,7 +357,7 @@ export function resolveInheritanceDispute(s,disputeId,choice){
  const willAmount=beneficiaryAvailable?(choice==='will'?Math.floor(caseFile.estate*caseFile.share):choice==='compromise'?Math.floor(caseFile.estate*.5):0):0;
  if(beneficiaryAvailable)transferEstateShare(s,deceased,beneficiary.id,willAmount,storedCorrespondentName(beneficiary.id,caseFile.beneficiaryName));
  const rest=caseFile.estate-willAmount;
- if(heirs.length){const portion=Math.floor(rest/heirs.length);for(const heir of heirs)transferEstateShare(s,deceased,heir.id,portion);d.families[s.world.characters[caseFile.deceased].familyId].wealth+=rest-portion*heirs.length}
+ if(heirs.length){const portion=Math.floor(rest/heirs.length);for(const heir of heirs){const recordedName=caseFile.heirNames?.[heir.id]||(heir.faction===caseFile.faction?visiblePersonName(s,caseFile.faction,heir.id):storedCorrespondentName(heir.id,null));transferEstateShare(s,deceased,heir.id,portion,recordedName)}d.families[s.world.characters[caseFile.deceased].familyId].wealth+=rest-portion*heirs.length}
  else if(beneficiaryAvailable)transferEstateShare(s,deceased,beneficiary.id,rest,storedCorrespondentName(beneficiary.id,caseFile.beneficiaryName));
  else d.families[s.world.characters[caseFile.deceased].familyId].wealth+=rest;
  if(choice==='compromise'){faction.treasury-=6;faction.stability=Math.min(100,faction.stability+2)}

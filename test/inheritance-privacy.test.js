@@ -75,5 +75,7 @@ test('a contested will shows the recorded names instead of later foreign reports
  addReport(s,'caesar','egypt',{kind:'leaders',leaders:[foreign,child],source:'envoy',peopleNames:{[foreign]:['Later heir','后续受益人'],[child]:['Later child','后续子女']},observationYear:s.year,observationMonth:s.month});
  s=upgradeSave(structuredClone(s));const {renderGenealogy}=await import('../genealogy-ui.js?v=estate-records-1');let html=renderGenealogy(s,true);
  assert.match(html,/报告姓名/);assert.match(html,/外国子女/);assert.doesNotMatch(html,/后续受益人|后续子女|秘密姓名/);
- const saved=s.world.dynasties.inheritanceDisputes.at(-1);delete saved.beneficiaryName;delete saved.heirNames;html=renderGenealogy(s,true);assert.match(html,/姓名未记录/);assert.doesNotMatch(html,/后续受益人|后续子女|秘密姓名/);
+ const oldSave=upgradeSave(structuredClone(s));const saved=oldSave.world.dynasties.inheritanceDisputes.at(-1);delete saved.beneficiaryName;delete saved.heirNames;html=renderGenealogy(oldSave,true);assert.match(html,/姓名未记录/);assert.doesNotMatch(html,/后续受益人|后续子女|秘密姓名/);
+ const {resolveInheritanceDispute}=await import('../dynasties.js?v=estate-records-1');assert.ok(resolveInheritanceDispute(s,dispute.id,'heirs').ok);assert.deepEqual(s.world.dynasties.estateTransfers.at(-1).recipientName,['Foreign child','外国子女']);
+ assert.ok(resolveInheritanceDispute(oldSave,saved.id,'heirs').ok);assert.deepEqual(oldSave.world.dynasties.estateTransfers.at(-1).recipientName,['Unrecorded name','姓名未记录']);
 });
