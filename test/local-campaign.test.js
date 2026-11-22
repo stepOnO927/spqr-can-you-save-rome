@@ -75,6 +75,22 @@ test('stale neighboring control does not leak a new owner or create trade across
  assert.ok(receivedMail(state).some(letter=>letter.context?.proposal==='trade'&&letter.context.host==='armenia'&&!letter.context.accepted));
 });
 
+test('a save keeps a paid envoy after its recipient court dissolves',()=>{
+ const state=configureStartingDifficulty(newGame('caesar'),'standard',false,{localSeed:4}),city=playableLocalCities(state)[0];
+ startLocalCampaign(state,city.id);
+ assert.equal(localTradeOffer(state,'armenia'),true);
+ delete state.factions.armenia;
+ assert.equal(validPlayableCampaign(state),true);
+ const storage=new Map(),wrapper={getItem:key=>storage.get(key)??null,setItem:(key,value)=>storage.set(key,value),removeItem:key=>storage.delete(key)};
+ assert.deepEqual(importSaves({format:'spqr-save-transfer',version:1,saves:{'spqr-save-1':JSON.stringify(state)}},wrapper).imported,['spqr-save-1']);
+ const restored=upgradeSave(JSON.parse(storage.get('spqr-save-1')));
+ assert.equal(restored.localCampaign.tradeOffer.host,'armenia');
+ advanceLocalCampaign(restored);advanceLocalCampaign(restored);
+ assert.equal(restored.localCampaign.tradeOffer,null);
+ assert.equal(restored.regions.flatMap(region=>region.localEntities||[]).find(entity=>entity.id===city.id).tradeRights?.armenia,undefined);
+ assert.ok(restored.log.some(entry=>entry.en?.includes('no surviving court')));
+});
+
 test('two funded compacts count both actual shipments in one quarter',()=>{
  const state=configureStartingDifficulty(newGame('caesar'),'standard',false,{localSeed:4}),city=playableLocalCities(state)[0];
  startLocalCampaign(state,city.id);
@@ -187,6 +203,8 @@ test('save transfer rejects an invalid city diplomatic mission without changing 
  const old=JSON.parse(JSON.stringify(state));delete old.localCampaign.protectionOffer;delete old.localCampaign.independenceOffer;
  assert.equal(validPlayableCampaign(old),true);
  const corrupt=JSON.parse(JSON.stringify(state));corrupt.localCampaign.protectionOffer={host:'missing',remaining:-1};
+ assert.equal(validPlayableCampaign(corrupt),false);
+ corrupt.localCampaign.protectionOffer={host:'__proto__',remaining:1};
  assert.equal(validPlayableCampaign(corrupt),false);
  const storage=new Map(),wrapper={getItem:key=>storage.get(key)??null,setItem:(key,value)=>storage.set(key,value),removeItem:key=>storage.delete(key)};
  const result=importSaves({format:'spqr-save-transfer',version:1,saves:{'spqr-save-1':JSON.stringify(corrupt)}},wrapper);
