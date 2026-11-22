@@ -36,7 +36,7 @@ import {renderChessboard} from './chessboard-ui.js?v=missing-fate-privacy-1';
 import {configureStartingDifficulty} from './difficulty.js?v=missing-fate-privacy-1';
 import {featherAdvice} from './feather.js?v=travel-2';
 import {IDEAS,startResearch,equipIdea} from './inventions.js?v=mission-discount-1';
-import {IMPERIUM_TABS,IMPERIUM_LABELS,focusPanel,focusScreen,designerScreen,plannerPanel,planOverlay,bindImperium} from './imperium-ui.js?v=missing-fate-privacy-1';
+import {IMPERIUM_TABS,IMPERIUM_LABELS,focusPanel,focusScreen,designerScreen,plannerPanel,planOverlay,bindImperium,openFocusProject} from './imperium-ui.js?v=economic-project-3';
 import {attachHanWorld,hanWorld,sendEmbassyToSeres} from './han/world.js?v=missing-fate-privacy-1';
 import {eastMap,eastPanel,eastToolbar} from './han/east-ui.js?v=missing-fate-privacy-1';
 import {initializeExperience,recordExperience,refreshExperience} from './experience.js?v=economic-project-1';
@@ -162,15 +162,11 @@ function navigateExperience(kind,id){
  if(kind==='army'||kind==='supply'){const a=state.armies.find(x=>x.id===id&&x.owner===state.player)||state.armies.find(x=>x.owner===state.player&&x.men>0);if(a){selectedArmy=a.id;selectedRegion=a.region;tab='map';panelOpen=true}}
  else if(kind==='region'){if(state.regions.some(r=>r.id===id&&r.owner===state.player)){selectedRegion=id;tab='map';panelOpen=true}}
  else if(kind==='mail'||kind==='reply'){mailOpen=true;selectedMail=receivedMail(state).find(m=>m.id===id)?.id||receivedMail(state).find(m=>!m.archived)?.id||null;if(selectedMail)markRead(state,selectedMail)}
- else if(['focus','government','military','chronicle'].includes(kind)){tab=kind;panelOpen=true;}
+ else if(['focus','government','military','chronicle'].includes(kind)){tab=kind;panelOpen=true;if(kind==='focus'&&id)openFocusProject(state,id);}
  else if(kind==='map'){tab='map';panelOpen=true}
  else if(kind==='direction'){render();document.querySelector('#campaign-progress')?.click();return}
  else if(kind==='time'||kind==='advance'){render();document.querySelector('#step')?.focus();return}
  render();
- if(kind==='focus'&&id){
-  document.querySelector('[data-imp-open-focus]')?.click();
-  document.querySelector(`#imp-tree [data-imp-focus="${CSS.escape(id)}"]`)?.click();
- }
 }
 function render(){syncChronicleDispatches(state);
   analytics.setGameRunning(!setupOpen&&!state.defeat);
