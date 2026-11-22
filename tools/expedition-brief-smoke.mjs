@@ -28,6 +28,25 @@ try{
  await page.locator('[data-faction="caesar"]').click();
  await page.locator('[data-faction-army="xiii"]').click();
  assert.match(await page.locator('#command-detail').innerText(),/LEG-BY-LEG EXPEDITION/);
+ await page.evaluate(async()=>{
+  const {newGame}=await import('/engine.js?v=world-kings-sea-1');
+  const state=newGame('caesar'),army=state.armies.find(unit=>unit.id==='pompey');
+  army.region='sicilia';
+  const island=state.regions.find(place=>place.id==='sicilia');
+  island.supply=1;island.administrativeStatus='occupied';
+  state.world.imperium={enabled:false};state.wars=[];state.factions.senate.treasury=500;
+  localStorage.removeItem('spqr-save-2');
+  sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state}));
+ });
+ await page.goto(`${base}/map-lab/`,{waitUntil:'domcontentloaded'});
+ await page.locator('#advance').click();
+ await page.locator('#advance').click();
+ await page.locator('#save-slot').selectOption('2');
+ await page.locator('#save').click();
+ const seaSaved=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-2')));
+ const seaMove=seaSaved.armies.find(army=>army.id==='pompey').move;
+ assert.equal(seaMove?.sea,true);
+ assert.ok(['africa','italiaS'].includes(seaMove.to));
  assert.deepEqual(errors,[]);
- console.log('War Council opens the real route brief; a leg-by-leg expedition starts and survives save/load.');
+ console.log('War Council route order survives save/load; a strained AI army pays for a sea relief voyage after two map turns.');
 }finally{await browser.close()}
