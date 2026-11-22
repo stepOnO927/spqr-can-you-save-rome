@@ -1,5 +1,5 @@
 import {REGIONS,ROUTES} from './data.js?v=phase-x-1';
-import {isDeliveredReport} from './person-knowledge.js?v=commander-age-1';
+import {isDeliveredReport} from './person-knowledge.js?v=estate-courier-1';
 
 // Opening control is common campaign knowledge, not a reconstruction of the
 // current world in an old save. Later observations belong to each faction.
