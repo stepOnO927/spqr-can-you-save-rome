@@ -12,12 +12,48 @@ import {harborDossier,beginHarborDossier,corroborateHarborDossier,closeHarborDos
 import {boundaryCase,beginBoundaryCase,corroborateBoundaryCase,closeBoundaryCase} from './legal-case.js';
 import {palaceCouncil,conveneCouncil,draftCharter,settleCouncil,COUNCIL_COST} from './palace-council.js';
 import {beginCampDrill,answerCampDrill} from './camp-drill.js';
+import {beginTempleFestival,counselTempleFestival,settleTempleFestival} from './temple-festival.js';
 import {newGrandGame,tick,upgradeSave,moveArmy} from '../engine.js';
 import {sendScouts} from '../reconnaissance.js';
 import {objectiveDefinitions} from '../campaign-reports.js';
 import {evaluateAchievements,endCampaign} from '../achievement-system.js';
 
 const memory=()=>{let value=null;return {getItem:()=>value,setItem:(key,v)=>{value=v}}};
+test('Temple festival records branching civic effects, save stages and one reward',()=>{
+ const profile=loadProfile(memory());
+ assert.equal(profile.templeFestival,null);
+ assert.equal(beginTempleFestival(profile,'modest').ok,false);
+ profile.coins=1000;assert.equal(purchase(profile,'temple').ok,true);
+ const before=profile.coins;
+ assert.equal(beginTempleFestival(profile,'grand').ok,true);
+ assert.equal(profile.coins,before-45);
+ assert.equal(beginTempleFestival(profile,'grand').ok,false);
+ assert.equal(settleTempleFestival(profile,'display').ok,false);
+ const planning=importProfile(exportProfile(profile));
+ assert.equal(planning.templeFestival.status,'planning');
+ assert.equal(counselTempleFestival(planning,'consult').ok,true);
+ const ready=importProfile(exportProfile(planning));
+ assert.equal(ready.templeFestival.status,'ready');
+ assert.equal(counselTempleFestival(ready,'direct').ok,false);
+ const result=settleTempleFestival(ready,'provisions');
+ assert.equal(result.coins,50);
+ assert.deepEqual(result.effects,{people:6,reputation:4,aristocrats:1,corruption:0});
+ assert.equal(ready.politics.people,56);
+ assert.equal(ready.coins,before+5);
+ assert.ok(ready.collectibles.includes('festival-programme'));
+ assert.ok(ready.templeFestival.openedAt&&ready.templeFestival.counseledAt&&ready.templeFestival.settledAt);
+ assert.equal(settleTempleFestival(ready,'display').ok,false);
+ const settled=importProfile(exportProfile(ready));
+ assert.equal(settled.coins,before+5);
+ assert.equal(settled.rewards.filter(key=>key==='temple:rite').length,1);
+ const old=importProfile(JSON.stringify({kind:'spqr-legacy-profile',version:2,profile:{coins:700,buildings:['temple'],rewards:['temple:rite']}}));
+ assert.equal(beginTempleFestival(old,'modest').ok,true);
+ assert.equal(counselTempleFestival(old,'direct').ok,true);
+ assert.equal(settleTempleFestival(old,'display').coins,0);
+ assert.equal(old.coins,680);
+ assert.equal(old.politics.people,50);
+ assert.equal(old.politics.senate,53);
+});
 test('Triumphal Arch counts victories only and retains older wins beyond the archive cap',()=>{
  const profile=loadProfile(memory());
  profile.archive=[{id:'lost',result:'defeat',faction:'caesar',year:-48},{id:'retired',result:'retired',faction:'senate',year:-47},{id:'won',result:'victory',faction:'senate',year:-46,month:7,territories:45,summary:{method:'settlement'}}];
