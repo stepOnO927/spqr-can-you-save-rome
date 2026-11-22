@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,newDynastyScenario,upgradeSave,tick} from '../engine.js?v=world-kings-regional-types-1';
-import {CHARACTER_CATALOG} from '../characters.js?v=world-kings-regional-types-1';
+import {CHARACTER_CATALOG,ageRange} from '../characters.js?v=world-kings-regional-types-1';
 import {assignSuccession,successionModel} from '../characters.js?v=world-kings-regional-types-1';
 import {deriveGovernment,advanceGovernments,secureRegency,reformRomanGovernment,appointCoEmperor,planSuccession,validSuccessionPlan} from '../governance.js?v=world-kings-regional-types-1';
 import {initializeDynasties,createFictionalPerson,proposeMarriage,reportedDynasticContacts,offerForeignMarriage,offerFamilyAccord,requestClaimantAsylum,adoptHeir,makeWill,settleInheritance,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js?v=world-kings-regional-types-1';
@@ -12,6 +12,15 @@ import {startDynasticWar} from '../civil-war.js?v=world-kings-regional-types-1';
 import {fictionalPortraitKey} from '../portrait-registry.js?v=world-kings-regional-types-1';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
+
+test('adoption requires an age gap supported by the full historical range',()=>{
+ const s=newGame('caesar'),range=ageRange('caesar',s.year);assert.ok(range&&range[1]>range[0]);
+ const uncertainAge=range[1]-16,confirmedAge=range[0]-16;
+ const uncertain=createFictionalPerson(s,{name:['Uncertain gap','年龄差不确定'],faction:'caesar',birthYear:s.year-uncertainAge});
+ const confirmed=createFictionalPerson(s,{name:['Confirmed gap','年龄差明确'],faction:'caesar',birthYear:s.year-confirmedAge});
+ assert.equal(adoptHeir(s,'caesar',uncertain).reason,'age');
+ assert.equal(adoptHeir(s,'caesar',confirmed).ok,true);
+});
 
 test('historical relationships do not invent missing parents or spouses',()=>{
  const s=newGame();assert.equal(s.world.characters.cleopatra.familyId,s.world.characters.arsinoe.familyId);
