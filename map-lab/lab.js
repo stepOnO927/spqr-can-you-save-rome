@@ -61,7 +61,7 @@ import {localEntity,localContactQuote,offerLocalContact,localSubmissionQuote,off
 import {localDiscoveryLevel} from '../local-discovery.js?v=world-kings-command-age-1';
 import {FACTIONS} from '../data.js?v=world-kings-command-age-1';
 import {identity,factionMark} from '../identity.js?v=world-kings-command-age-1';
-import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=world-kings-command-age-1';
+import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO,characterAgeRange} from '../characters.js?v=world-kings-command-age-1';
 import {createCharacterUI} from './character-ui.js?v=world-kings-command-age-1';
 import {fictionalPortraitKey} from '../portrait-registry.js?v=world-kings-command-age-1';
 import {renderAidRequest} from '../strategic-aid-ui.js?v=world-kings-command-age-1';
