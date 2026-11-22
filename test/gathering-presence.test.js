@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=marriage-correspondence-1';
-import {sendLetter,replyToLetter,advanceMail,receivedMail,gatheringPlan} from '../epistulae.js?v=marriage-correspondence-1';
-import {mailboxHtml} from '../mail-ui.js?v=marriage-correspondence-1';
-import {createFictionalPerson} from '../dynasties.js?v=marriage-correspondence-1';
+import {newGame,upgradeSave} from '../engine.js?v=marriage-economy-merge-1';
+import {sendLetter,replyToLetter,advanceMail,receivedMail,gatheringPlan} from '../epistulae.js?v=marriage-economy-merge-1';
+import {mailboxHtml} from '../mail-ui.js?v=marriage-economy-merge-1';
+import {createFictionalPerson} from '../dynasties.js?v=marriage-economy-merge-1';
 
 function invitation(){
  const s=newGame('caesar'),host=s.world.characters['fictional:1'],guest=s.world.characters.caesar;

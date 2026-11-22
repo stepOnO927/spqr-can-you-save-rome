@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave,issueMilitaryOrder,estimatedStrength} from '../engine.js?v=marriage-correspondence-1';
-import {createPlan,assignRole,approvePlan,pausePlan,cancelPlan,editPlan,planById,plansFor,validatePath,findRoute,assessPlan,adviserCounsel,planControlled,approveRecommendation,aiBattlePlans} from '../battle-plans.js?v=marriage-correspondence-1';
-import {templatesFor,recruitFormation} from '../legion-designer.js?v=marriage-correspondence-1';
+import {newGame,tick,upgradeSave,issueMilitaryOrder,estimatedStrength} from '../engine.js?v=marriage-economy-merge-1';
+import {createPlan,assignRole,approvePlan,pausePlan,cancelPlan,editPlan,planById,plansFor,validatePath,findRoute,assessPlan,adviserCounsel,planControlled,approveRecommendation,aiBattlePlans} from '../battle-plans.js?v=marriage-economy-merge-1';
+import {templatesFor,recruitFormation} from '../legion-designer.js?v=marriage-economy-merge-1';
 import {ROUTES} from '../data.js?v=phase-x-1';
 
 const roundTrip=s=>upgradeSave(JSON.parse(JSON.stringify(s)));

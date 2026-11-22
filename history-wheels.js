@@ -1,10 +1,10 @@
 // The Wheels of History reads the existing simulation. It never resolves an
 // economy, battle, treaty or appointment of its own.
-import {sendLetter} from './epistulae.js?v=marriage-correspondence-1';
+import {sendLetter} from './epistulae.js?v=marriage-economy-merge-1';
 import {CHARACTER_CATALOG,successionModel} from './characters.js?v=succession-ui-recovery-1';
 import {reassurePerson} from './conspiracies.js?v=mutual-audience-1';
-import {focusById,treeFor} from './national-focus.js?v=marriage-correspondence-1';
-import {successionCandidates,validSuccessionPlan} from './governance.js?v=marriage-correspondence-1';
+import {focusById,treeFor} from './national-focus.js?v=marriage-economy-merge-1';
+import {successionCandidates,validSuccessionPlan} from './governance.js?v=marriage-economy-merge-1';
 import {FACTIONS} from './data.js?v=phase-x-1';
 
 const L=(en,zh)=>[en,zh];
@@ -33,11 +33,23 @@ export function chooseAmbition(s,id,options={}){
  }
  if(w.ambition===id&&id!=='custom')return true;
  if(id==='military')w.militaryBaseline={regions:s.regions.filter(r=>r.owner===s.player).length,wins:(s.battles||[]).filter(b=>(b.attacker?.owner===s.player&&b.attackerWins)||(b.defender?.owner===s.player&&!b.attackerWins)).length};
+ if(id==='economic'){
+  const owned=s.regions.filter(r=>r.owner===s.player);
+  w.economicBaseline={regions:owned.map(r=>r.id),buildings:owned.flatMap(r=>(r.buildings||[]).map(id=>`${r.id}:${id}`)),focusIds:(s.world?.nationalFocus?.[s.player]?.completed||[]).filter(fid=>focusById(s.player,fid)?.branch==='economic'),agreementIds:(s.agreements||[]).filter(a=>a.status==='active'&&a.type==='trade'&&a.parties?.includes(s.player)).map(a=>a.id)};
+ }
  const old=w.ambition;w.ambition=id;w.chosenAt={year:s.year,month:s.month};
  w.changes.push({id:`ambition:${w.nextId++}`,from:old,to:id,year:s.year,month:s.month});
  // A change of plans is visible to the court, but does not invent a resource loss.
  s.log.unshift({year:s.year,month:s.month,en:`The court adopted ${AMBITIONS[id].name[0]} as its national ambition.`,zh:`朝廷将“${AMBITIONS[id].name[1]}”定为国家野心。`,kind:'government',topic:'ambition'});
  s.log=s.log.slice(0,80);return true;
+}
+export function economicProjectStatus(s){
+ const base=initializeWheels(s).economicBaseline;if(!base)return {required:false,done:true};
+ const own=s.regions.filter(r=>r.owner===s.player),focus=s.world?.nationalFocus?.[s.player];
+ const completed=(focus?.completed||[]).some(id=>focusById(s.player,id)?.branch==='economic'&&!(base.focusIds||[]).includes(id));
+ const trade=(s.agreements||[]).some(a=>a.status==='active'&&a.type==='trade'&&a.parties?.includes(s.player)&&!(base.agreementIds||[]).includes(a.id));
+ const built=own.filter(r=>(base.regions||[]).includes(r.id)).some(r=>(r.buildings||[]).some(id=>!(base.buildings||[]).includes(`${r.id}:${id}`)));
+ return {required:true,done:completed||trade||built};
 }
 export function ambitionStatus(s){
  const w=initializeWheels(s),f=s.factions[s.player],own=s.regions.filter(r=>r.owner===s.player),forces=s.armies.filter(a=>a.owner===s.player&&a.men>0);
@@ -46,6 +58,8 @@ export function ambitionStatus(s){
  const political=(focus?.completed||[]).filter(id=>focusById(s.player,id)?.branch==='political').length;
  const cultural=(focus?.completed||[]).filter(id=>focusById(s.player,id)?.branch==='cultural').length;
  const culturalGoal=Math.min(2,(treeFor(s.player)||[]).filter(f=>f.branch==='cultural').length);
+ const project=economicProjectStatus(s),newProject=project.done;
+ const projectProgress=project.required?`${newProject?1:0}/1 project`:'existing-save goal',projectProgressZh=project.required?`项目 ${newProject?1:0}/1`:'旧版存档目标';
  const successor=validSuccessionPlan(s,s.player),successorName=successor?CHARACTER_CATALOG[successor]?.name:null;
  const meanLoyalty=own.length?Math.round(own.reduce((n,r)=>n+r.loyalty,0)/own.length):0;
  const baseline=w.militaryBaseline||{regions:own.length,wins:0};
@@ -53,7 +67,7 @@ export function ambitionStatus(s){
  const rows={
   military:{title:L('Maintain a supplied army and win a battle, gain territory or secure a settlement','保持军队补给，并赢得战斗、取得战区或达成和解'),progress:L(`${forces.length} armies · ${f.food} food · ${won} wins · ${gained} territories gained`,`${forces.length} 支军队 · 粮食 ${f.food} · 胜仗 ${won} · 新增战区 ${gained}`),done:forces.length>0&&f.food>=20&&(won>0||gained>0||!!s.victory||!!s.peacefulVictory)},
   diplomatic:{title:L('Conclude two agreements or establish durable peace','达成两项协定，或建立持久和平'),progress:L(`${agreements}/2 agreements · ${s.world?.peacefulSettlementMonths||0}/12 peace months`,`${agreements}/2 项协定 · 和平 ${s.world?.peacefulSettlementMonths||0}/12 月`),done:agreements>=2||!!s.peacefulVictory},
-  economic:{title:L('Hold 100 treasury with loyal provinces','国库达到100，同时维持行省忠诚'),progress:L(`${f.treasury}/100 treasury · ${meanLoyalty}/55 loyalty`,`国库 ${f.treasury}/100 · 忠诚度 ${meanLoyalty}/55`),done:f.treasury>=100&&meanLoyalty>=55},
+  economic:{title:L('Complete an economic focus, trade pact or building; hold 100 treasury and loyal provinces','完成经济方针、贸易协定或建筑，并维持国库与行省忠诚'),progress:L(`${f.treasury}/100 treasury · ${meanLoyalty}/55 loyalty · ${projectProgress}`,`国库 ${f.treasury}/100 · 忠诚度 ${meanLoyalty}/55 · ${projectProgressZh}`),done:f.treasury>=100&&meanLoyalty>=55&&newProject},
   reform:{title:L('Complete a political focus and stabilize the government','完成政治方针并稳定政府'),progress:L(`${political}/1 political focus · ${f.stability}/65 stability · ${f.legitimacy}/55 legitimacy`,`政治方针 ${political}/1 · 稳定度 ${f.stability}/65 · 合法性 ${f.legitimacy}/55`),done:political>0&&f.stability>=65&&f.legitimacy>=55},
   dynastic:{title:L('Designate an eligible successor and stabilize the government','指定合格继承人并稳定政府'),progress:L(`${successorName?.[0]||'No valid designation'} · ${f.stability}/65 stability · ${f.legitimacy}/60 legitimacy`,`${successorName?.[1]||'尚无有效指定'} · 稳定度 ${f.stability}/65 · 合法性 ${f.legitimacy}/60`),done:!!successor&&f.stability>=65&&f.legitimacy>=60},
   cultural:{title:L(`Complete ${culturalGoal} cultural ${culturalGoal===1?'focus':'focuses'} while maintaining stability`,`完成${culturalGoal}项文化方针并维持稳定`),progress:L(`${cultural}/${culturalGoal} cultural focuses · ${f.stability}/55 stability`,`文化方针 ${cultural}/${culturalGoal} · 稳定度 ${f.stability}/55`),done:culturalGoal>0&&cultural>=culturalGoal&&f.stability>=55},

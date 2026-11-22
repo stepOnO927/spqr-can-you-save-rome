@@ -6,7 +6,7 @@ try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
  await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
  await page.evaluate(async()=>{
-  const e=await import('/engine.js?v=marriage-correspondence-1'),c=await import('/character-system.js?v=marriage-correspondence-1');
+  const e=await import('/engine.js?v=marriage-economy-merge-1'),c=await import('/character-system.js?v=marriage-economy-merge-1');
   const s=e.newGame('caesar');s.alliances.push(['caesar','numidia']);s.agreements.push({id:'test-trade',type:'trade',status:'active',parties:['caesar','parthia'],expiresAt:s.year*12+s.month+12});
   c.addReport(s,'parthia','egypt',{kind:'health',character:'ptolemy',value:'ill',source:'spy',confidence:'unverified'});
   // Later arrival of an older forwarded claim must not replace the fresh observation.
@@ -28,7 +28,7 @@ try{
  // loading, while its arrival date is not presented as the observation date.
  await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
  await page.evaluate(async()=>{
-  const e=await import('/engine.js?v=marriage-correspondence-1'),c=await import('/character-system.js?v=marriage-correspondence-1');let result;
+  const e=await import('/engine.js?v=marriage-economy-merge-1'),c=await import('/character-system.js?v=marriage-economy-merge-1');let result;
   for(let i=0;i<60&&!result;i++){
    const s=e.newGame('caesar');s.world.intelSeed=i*99991+53;s.alliances.push(['caesar','parthia']);
    s.knowledge.parthia.egypt.reports=[{kind:'health',character:'ptolemy',value:'ill',source:'spy',confidence:'unverified'}];
