@@ -4,6 +4,7 @@ import {CHARACTER_CATALOG} from './characters.js';
 import {FACTIONS} from './data.js';
 import {religionPanel} from './local-society.js?v=9';
 import {techIllustration} from './tech-art.js?v=22';
+import {nationalBudget} from './national-budget.js?v=30';
 const materialFamilies=[
  {id:'water',name:['Water Management','水利管理'],items:['water-control','dam-engineering','reservoir-design','aqueduct-refinement','urban-drainage','sewer-improvement']},
  {id:'military',name:['Military Infrastructure','军事设施'],items:['barracks-design','stone-fortification','training-ground','supply-organization','armory-craft','siege-machinery']},
@@ -83,10 +84,19 @@ function developmentPanelContent(s,lang,branch){
 function adoptionGateText(reason,zh){
  return ({'cultural-base':enzh(zh,'originating culture territory','起源文化领土'),'local-support':enzh(zh,'local satisfaction 45+','当地满意度至少45'),'priesthood':enzh(zh,'supportive Egyptian priesthood','有影响力的埃及祭司团'),'building':enzh(zh,'owned Private Book Collection','己方私人藏书室')})[reason]||enzh(zh,'local conditions','当地条件');
 }
+function adoptionBudgetForecast(s,idea,slot,plan,zh){
+ const slots=development(s,s.player).slots[idea.category],previous=slots[slot];
+ const current=nationalBudget(s,s.player).projectedNet;
+ slots[slot]=idea.id;
+ let proposed;
+ try{proposed=nationalBudget(s,s.player).projectedNet}finally{slots[slot]=previous}
+ const signed=value=>`${value>0?'+':''}${value}`;
+ return `<small class="dev-budget-preview">${enzh(zh,'Projected treasury / month after transition','过渡完成后预计国库 / 月')}: ${signed(current)} → ${signed(proposed)}¤ · ${enzh(zh,'At current holdings and policies; adoption also costs','按当前领土与政策估算；装配另需')} ${plan.cost}¤${proposed<0?` · ${enzh(zh,'Monthly deficit at current conditions','按当前条件每月赤字')}`:''}</small>`;
+}
 function ideaChoiceCard(s,zh,d,slots,idea){
  const known=d.knownIdeas.includes(idea.id),plans=slots.map((_,index)=>ideaAdoptionPlan(s,s.player,idea.id,index));
  const reason=plan=>plan.reason==='conflict'?`${enzh(zh,'Conflicts with','与其冲突')} ${esc(IDEAS.find(i=>i.id===plan.with)?.name[zh?1:0]||plan.with)}`:plan.reason==='duplicate'?enzh(zh,'Already active in another slot','已在其他栏位生效'):plan.reason==='treasury'?enzh(zh,'Insufficient treasury','国库不足'):plan.reason==='active'?enzh(zh,'Already active','已生效'):plan.reason==='cultural-base'?enzh(zh,'Requires an owned territory of the originating culture','需要统治该理念起源文化的领土'):plan.reason==='local-support'?enzh(zh,'Local satisfaction must reach 45','当地满意度须达到45'):plan.reason==='priesthood'?enzh(zh,'Requires a supportive Egyptian priesthood with local satisfaction 45+','需要有影响力的埃及祭司团，且当地满意度至少45'):plan.reason==='building'?enzh(zh,'Build an owned Private Book Collection first','先在领土内建成私人藏书室'):d.adoption?enzh(zh,'Policy transition in progress','政策更换中'):enzh(zh,'Research first','先研究');
- const actions=plans.map((plan,index)=>`<div><button class="action" data-adopt-idea="${idea.id}" data-slot="${index}" ${plan.ok?'':'disabled'}>${slots[index]?enzh(zh,'Replace','更换'):enzh(zh,'Equip','装配')} ${index+1} · ${plan.cost}¤ / ${plan.months}${enzh(zh,'m','月')}${plan.stabilityLoss?` · ${enzh(zh,'stability','稳定度')} −${plan.stabilityLoss}`:''}</button>${plan.adviserActive?`<small>${enzh(zh,'Adviser','顾问')}: ${esc(FIGURE_ROLES[plan.specialist].name[zh?1:0])} · −1${enzh(zh,' month','个月')}</small>`:''}${known&&!plan.ok&&plan.reason!=='active'?`<small>${enzh(zh,'Slot','栏位')} ${index+1}: ${reason(plan)}</small>`:''}</div>`).join('');
+ const actions=plans.map((plan,index)=>`<div><button class="action" data-adopt-idea="${idea.id}" data-slot="${index}" ${plan.ok?'':'disabled'}>${slots[index]?enzh(zh,'Replace','更换'):enzh(zh,'Equip','装配')} ${index+1} · ${plan.cost}¤ / ${plan.months}${enzh(zh,'m','月')}${plan.stabilityLoss?` · ${enzh(zh,'stability','稳定度')} −${plan.stabilityLoss}`:''}</button>${plan.ok?adoptionBudgetForecast(s,idea,index,plan,zh):''}${plan.adviserActive?`<small>${enzh(zh,'Adviser','顾问')}: ${esc(FIGURE_ROLES[plan.specialist].name[zh?1:0])} · −1${enzh(zh,' month','个月')}</small>`:''}${known&&!plan.ok&&plan.reason!=='active'?`<small>${enzh(zh,'Slot','栏位')} ${index+1}: ${reason(plan)}</small>`:''}</div>`).join('');
  const comparisons=slots.map((oldId,index)=>{const old=IDEAS.find(i=>i.id===oldId);if(!old||old.id===idea.id)return '';const plan=plans[index];return `<details class="dev-compare"><summary>${enzh(zh,'Compare with slot','与栏位')} ${index+1}: ${esc(old.name[zh?1:0])}</summary><div class="dev-compare-grid"><div><b>${enzh(zh,'Current','当前')}</b><div class="dev-effects">${effectsText(old.effects,zh)}</div></div><div><b>${enzh(zh,'Proposed','拟装配')}</b><div class="dev-effects">${effectsText(idea.effects,zh)}</div></div></div><p>${enzh(zh,'Transition','更换代价')}: ${plan.cost}¤ · ${plan.months}${enzh(zh,' months','个月')} · ${enzh(zh,'stability','稳定度')} −${plan.stabilityLoss}</p></details>`}).join('');
  return card(idea,zh,`<div class="dev-effects">${effectsText(idea.effects,zh)}</div><p class="dev-meta">${known?enzh(zh,'Known','已掌握'):enzh(zh,'Research first','先研究')}${d.foreignOrigins[idea.id]||idea.origin&&s.player!==idea.origin?` · ${enzh(zh,'Foreign adaptation adds time','外来理念适应增加时间')}`:''}</p><div class="dev-actions">${actions}</div>${comparisons}`);
 }

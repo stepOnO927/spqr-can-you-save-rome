@@ -25,4 +25,5 @@
 .dev-lane-nav button{min-width:0;padding:6px 8px;border:1px solid #a38b65;background:#f1e6d0;color:#503b2c;font:11px/1.2 Georgia,'Noto Serif SC',serif;text-align:left;cursor:pointer}
 .dev-lane-nav button:hover,.dev-lane-nav button:focus-visible{background:#d6bc90;outline:1px solid #795439}
 .dev-tree .dev-card:focus{outline:3px solid #a66031;outline-offset:2px}
+.dev-budget-preview{display:block;margin:5px 0 2px;padding:6px 8px;border-left:3px solid #8b633b;background:#e9dcc1;color:#483525!important;font-size:11px!important;line-height:1.45!important}
 @media(max-width:700px){.inspector.research{width:min(340px,calc(100vw - 58px))}.dev-lane-nav button{flex:1 1 40%;font-size:10px}}
