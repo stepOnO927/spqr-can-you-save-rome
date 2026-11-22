@@ -50,11 +50,13 @@ assert.equal(moveArmy(convoyState,soldiers.id,'t075').ok,true);
 assert.equal(orderFleet(convoyState,'caesar',hostileFleet.id,'intercept','adriatic').ok,true);
 hostileFleet.ships={quinquereme:4,trireme:2};hostileFleet.sailors=1500;hostileFleet.hull=100;hostileFleet.morale=80;hostileFleet.supply=100;convoyState.seed=83;
 advanceNaval(convoyState);const withdrawn=convoyState.naval.reports.find(r=>r.kind==='battle');
-assert.equal(withdrawn?.winner,'caesar');assert.equal(soldiers.move,null);
+assert.equal(withdrawn?.winner,'caesar');assert.equal(soldiers.move?.returning,true);
 for(const [lang,label] of [['en',/troop voyage was aborted/],['zh',/运兵行动中止/]]){
  await page.evaluate(async({state,language})=>{const {renderNavalPanel}=await import('/map-lab/naval-ui.js');renderNavalPanel({state,lang:language,root:document.querySelector('#root'),section:'reports',onAction:()=>{},onZone:()=>{},onPort:()=>{}})},{state:convoyState,language:lang});
  const text=await page.locator('.naval-content').innerText();assert.match(text,label);assert.match(text,lang==='en'?/Army casualties: 630/:/陆军伤亡: 630/);
+ assert.match(text,lang==='en'?/returning by ship/:/正乘船返回/);
 }
+advanceNaval(convoyState);assert.equal(soldiers.move,null);assert.equal(soldiers.region,'italiaS');
 for(const [lang,label] of [['en',/A blockade needs crewed, supplied and seaworthy warships/],['zh',/封锁需要有足够水手、补给和船况的战船/]]){
  const state=newGrandGame('caesar'),fleet=state.naval.fleets.find(f=>f.id==='caesar-adriatic');fleet.ships={transport:2};fleet.sailors=140;fleet.port=null;fleet.zone='adriatic';
  await page.evaluate(async({state,language})=>{const {renderNavalPanel}=await import('/map-lab/naval-ui.js'),{orderFleet}=await import('/naval.js');renderNavalPanel({state,lang:language,root:document.querySelector('#root'),section:'fleets',onAction:(action,id,kind,target)=>action==='order'?orderFleet(state,state.player,id,kind,target):{ok:true},onZone:()=>{},onPort:()=>{}})},{state,language:lang});

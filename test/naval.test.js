@@ -695,14 +695,16 @@ test('a defeated convoy aborts the landing even while its transports still have 
  const battle=s.naval.reports.find(r=>r.kind==='battle'&&r.zone==='adriatic');
  assert.equal(battle?.winner,'caesar');
  assert.equal(convoy.ships.transport,2,'no transport sank in this encounter');
- assert.equal(unit.region,'italiaS');assert.equal(unit.move,null);assert.ok(unit.men<5200&&unit.men>4000);
+ assert.equal(unit.region,'italiaS');assert.equal(unit.move?.returning,true);assert.equal(unit.move?.transportReady,false);assert.ok(unit.men<5200&&unit.men>4000);
+ assert.equal(previewMarch(s,unit.id,'t075').ok,false,'survivors are still aboard and cannot receive another march');
  assert.equal(convoy.order?.kind,'return');assert.equal(convoy.order?.targetPort,'italiaS');
  assert.equal(battle.transportDisruptions[convoy.id].casualties,5200-unit.men);
  assert.equal(battle.transportDisruptions[convoy.id].reason,'defeat');
  const restored=upgradeSave(structuredClone(s));
  assert.deepEqual(restored.naval.reports.find(r=>r.id===battle.id).transportDisruptions,battle.transportDisruptions);
- advanceNaval(restored);assert.equal(restored.naval.fleets.find(f=>f.id===convoy.id).port,'italiaS');
- for(const [lang,label] of [['en','troop voyage was aborted'],['zh','运兵行动中止']]){
+ assert.equal(restored.armies.find(a=>a.id===unit.id).move?.returning,true);
+ advanceNaval(restored);assert.equal(restored.naval.fleets.find(f=>f.id===convoy.id).port,'italiaS');assert.equal(restored.armies.find(a=>a.id===unit.id).move,null);
+ for(const [lang,label] of [['en','returning by ship'],['zh','正乘船返回']]){
   const content={innerHTML:''},root={innerHTML:'',querySelector:()=>content,querySelectorAll:()=>[]};
   renderNavalPanel({state:restored,lang,root,section:'reports'});
   assert.match(content.innerHTML,new RegExp(label));assert.match(content.innerHTML,lang==='en'?/Army casualties/:/陆军伤亡/);
@@ -710,6 +712,76 @@ test('a defeated convoy aborts the landing even while its transports still have 
  restored.player='caesar';const content={innerHTML:''},root={innerHTML:'',querySelector:()=>content,querySelectorAll:()=>[]};
  renderNavalPanel({state:restored,lang:'en',root,section:'reports'});
  assert.doesNotMatch(content.innerHTML,/Army casualties/,'the opponent must not receive exact embarked-army losses');
+});
+test('a disrupted troop convoy diverts after losing its home port and unloads only when docked',()=>{
+ const s=newGrandGame('senate'),unit=s.armies.find(a=>a.id==='italy'),convoy=s.naval.fleets.find(f=>f.id==='senate-adriatic'),enemy=s.naval.fleets.find(f=>f.id==='caesar-adriatic');
+ unit.region='italiaS';unit.men=5200;s.regions.find(r=>r.id==='t075').owner='caesar';
+ assert.equal(moveArmy(s,unit.id,'t075').ok,true);
+ assert.equal(orderFleet(s,'caesar',enemy.id,'intercept','adriatic').ok,true);
+ enemy.ships={quinquereme:4,trireme:2};enemy.sailors=1500;enemy.hull=100;enemy.morale=80;enemy.supply=100;s.seed=83;
+ advanceNaval(s);
+ assert.equal(unit.move?.returning,true);
+ convoy.zone='ionian';convoy.order.path=seaRoute('ionian',portZone('italiaS'));
+ s.regions.find(r=>r.id==='italiaS').owner='caesar';
+ advanceNaval(s);
+ const destination=convoy.order?.targetPort||unit.region;
+ assert.notEqual(destination,'italiaS');
+ assert.ok(unit.move?.returning||unit.region===destination,'the army remains aboard until docking at the diversion port');
+ for(let month=0;month<12&&unit.move;month++)advanceNaval(s);
+ assert.equal(unit.move,null);assert.equal(unit.region,destination);
+ assert.equal(s.regions.find(r=>r.id===destination).owner,'senate');
+});
+test('a returning troop convoy waits offshore when no friendly harbor is available',()=>{
+ const s=newGrandGame('senate'),unit=s.armies.find(a=>a.id==='italy'),convoy=s.naval.fleets.find(f=>f.id==='senate-adriatic'),enemy=s.naval.fleets.find(f=>f.id==='caesar-adriatic');
+ unit.region='italiaS';unit.men=5200;s.regions.find(r=>r.id==='t075').owner='caesar';
+ assert.equal(moveArmy(s,unit.id,'t075').ok,true);
+ assert.equal(orderFleet(s,'caesar',enemy.id,'intercept','adriatic').ok,true);
+ enemy.ships={quinquereme:4,trireme:2};enemy.sailors=1500;enemy.hull=100;enemy.morale=80;enemy.supply=100;s.seed=83;
+ advanceNaval(s);
+ assert.equal(unit.move?.returning,true);
+ s.naval.fleets=s.naval.fleets.filter(f=>f.owner==='senate');
+ for(const port of s.regions.filter(r=>r.owner==='senate'&&r.port))port.owner='caesar';
+ advanceNaval(s);
+ assert.equal(unit.move?.returning,true);assert.equal(unit.move?.to,null);
+ assert.equal(convoy.port,null);assert.equal(convoy.order?.targetPort,null);
+ assert.equal(previewMarch(s,unit.id,'t075').ok,false);
+ s.regions.find(r=>r.id==='italiaS').owner='senate';
+ advanceNaval(s);
+ assert.equal(unit.move,null);assert.equal(unit.region,'italiaS');
+});
+test('the loss of every troop transport removes its embarked army and records all casualties',()=>{
+ const s=newGrandGame('senate'),unit=s.armies.find(a=>a.id==='italy'),convoy=s.naval.fleets.find(f=>f.id==='senate-adriatic'),enemy=s.naval.fleets.find(f=>f.id==='caesar-adriatic');
+ unit.region='italiaS';unit.men=5000;s.regions.find(r=>r.id==='t075').owner='caesar';
+ assert.equal(moveArmy(s,unit.id,'t075').ok,true);
+ convoy.port=null;convoy.ships={transport:1};convoy.sailors=100;convoy.hull=8;
+ enemy.port=null;enemy.zone=convoy.zone;enemy.ships={quinquereme:4};enemy.sailors=1600;enemy.hull=100;s.seed=83;
+ resolveBattle(s,convoy,enemy,convoy.zone,()=>{});
+ const outcome=s.naval.reports.find(r=>r.kind==='battle').transportDisruptions[convoy.id];
+ assert.equal(outcome.reason,'lost');assert.equal(outcome.casualties,5000);
+ assert.equal(unit.men,0);assert.equal(unit.move,null);assert.equal(convoy.order,null);
+});
+test('mutiny keeps surviving troops aboard until the convoy returns through a save reload',()=>{
+ const base=newGrandGame('senate'),unit=base.armies.find(a=>a.id==='italy'),convoy=base.naval.fleets.find(f=>f.id==='senate-adriatic');
+ base.naval.fleets=base.naval.fleets.filter(f=>f.owner==='senate');unit.region='italiaS';unit.men=5200;base.regions.find(r=>r.id==='t075').owner='caesar';
+ assert.equal(moveArmy(base,unit.id,'t075').ok,true);
+ convoy.port=null;convoy.zone='ionian';convoy.order.path=[];convoy.morale=15;base.year=-48;
+ let s,mutiny;
+ for(let seed=1;seed<300&&!mutiny;seed++){
+  const candidate=structuredClone(base);candidate.seed=seed;advanceNaval(candidate);
+  mutiny=candidate.naval.reports.find(r=>r.kind==='mutiny'&&r.transportDisruptions?.[convoy.id]);
+  if(mutiny)s=candidate;
+ }
+ assert.ok(mutiny,'a deterministic mutiny interrupts the embarked army');
+ const embarked=s.armies.find(a=>a.id===unit.id),fleet=s.naval.fleets.find(f=>f.id===convoy.id);
+ assert.equal(embarked.move?.returning,true);assert.equal(fleet.port,null);
+ assert.equal(previewMarch(s,unit.id,'t075').ok,false);
+ const restored=upgradeSave(structuredClone(s)),restoredArmy=restored.armies.find(a=>a.id===unit.id);
+ for(let month=0;month<12&&restoredArmy.move;month++)advanceNaval(restored);
+ assert.equal(restoredArmy.move,null);assert.equal(restoredArmy.region,'italiaS');
+ for(const [lang,label] of [['en','A mutiny disrupted the troop voyage'],['zh','哗变中断运兵行动']]){
+  const content={innerHTML:''},root={innerHTML:'',querySelector:()=>content,querySelectorAll:()=>[]};
+  renderNavalPanel({state:restored,lang,root,section:'reports'});assert.match(content.innerHTML,new RegExp(label));
+ }
 });
 test('AI stages a transport fleet at an isolated army port and waits for embarkation',()=>{
  const setup=()=>{

@@ -19,7 +19,7 @@ import republicanRoads from '../republican-roads.js?v=1';
 import {physicalStyle} from './physical-style.js?v=45';
 import {physicalLabels} from './physical-labels.js?v=5';
 import {ancientPlaceLabels} from './ancient-place-labels.js';
-import {newGame,newGrandGame, moveArmy, cancelMarch, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, respondCivilSettlement, sendInquiry, queueMission, setTax, warContributionPlan, collectWarContributions, emergencyProvisionsPlan, collectEmergencyProvisions, aerariumPlan, seizeAerarium, personalDiplomaticCredit,royalCourtCredit,provincialRitesCredit,researchInnovation,adoptIdea,removeIdea,cancelIdeaAdoption,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,setReligiousPolicy,purchaseMaterials,recruitFigure} from '../engine.js?v=225';
+import {newGame,newGrandGame, moveArmy, cancelMarch, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, respondCivilSettlement, sendInquiry, queueMission, setTax, warContributionPlan, collectWarContributions, emergencyProvisionsPlan, collectEmergencyProvisions, aerariumPlan, seizeAerarium, personalDiplomaticCredit,royalCourtCredit,provincialRitesCredit,researchInnovation,adoptIdea,removeIdea,cancelIdeaAdoption,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,setReligiousPolicy,purchaseMaterials,recruitFigure} from '../engine.js?v=226';
 import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation,openInscriptionEditor} from '../development-ui.js?v=60';
 import {FACTIONS} from '../data.js?v=9';
 import {cultureLabel} from '../culture-labels.js?v=1';
@@ -35,10 +35,10 @@ import {leadershipIntelligence} from './intelligence-summary.js?v=2';
 import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=9';
 import {assessment,firstHostileOnRoute,sendScouts,probePositions,delayAttack,markReconRegion,requestReinforcements,latestRecon} from '../reconnaissance.js?v=14';
 import {intelligenceHtml,afterActionHtml,fortificationText,reconSummaryHtml,reconLabel,reconDate} from '../recon-ui.js?v=13';
-import {renderNavalPanel} from './naval-ui.js?v=75';
-import {SEA_ZONES,reportedHostileFleets,toggleTradeRoute} from '../naval.js?v=53';
+import {renderNavalPanel} from './naval-ui.js?v=76';
+import {SEA_ZONES,reportedHostileFleets,toggleTradeRoute} from '../naval.js?v=54';
 import {maritimeMapIntel} from './maritime-map-intel.js?v=1';
-import {queueShip,cancelShipConstruction,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,supportPirates,dispatchWagonSupply} from '../engine.js?v=225';
+import {queueShip,cancelShipConstruction,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,supportPirates,dispatchWagonSupply} from '../engine.js?v=226';
 
 const received=receiveHandoff(sessionStorage,'atlas',upgradeSave);
 let state = received || newGrandGame();
@@ -510,7 +510,7 @@ function renderReach(unit){
 function showArmy(unit){
  activeInfo=null;activeFaction=null;activeBattle=null;activeArmy=unit.id;const kit=identity(unit.owner);document.querySelector('.selection').style.setProperty('--selection-accent',kit.accent);
  const loc=region(state,unit.region), f=state.factions[unit.owner];
- const order=unit.trainingRemaining?(lang==='zh'?'训练中':'Training'):unit.move?`${t('marching')} → ${n(region(state,unit.move.to).name)} (${unit.move.remaining} ${t('months')})`:unit.siege?`${t('siege')} (${unit.siege.remaining} ${t('months')})`:t('ready');
+ const order=unit.trainingRemaining?(lang==='zh'?'训练中':'Training'):unit.move?.returning?(lang==='zh'?'运兵舰队返航中':'Returning by sea'):unit.move?`${t('marching')} → ${n(region(state,unit.move.to).name)} (${unit.move.remaining} ${t('months')})`:unit.siege?`${t('siege')} (${unit.siege.remaining} ${t('months')})`:t('ready');
  inspect(n(unit.name),unit.owner===state.player?`${t('commander')}: ${n(unit.commander)} · ${unit.men.toLocaleString()} ${t('soldiers')}`:(lang==='zh'?`外国军队；上次报告于公元前${Math.abs(unit.year)}年${unit.month}月，当前位置和兵力未知。`:`Foreign army; last reported ${unit.month}/${Math.abs(unit.year)} BCE. Current position and strength are unknown.`));
  if(unit.owner!==state.player){document.querySelector('#lab-orders').textContent=lang==='zh'?'上次报告称这支军队属于另一势力；现状未知。':'The last report attributed this army to another faction; its current status is unknown.';if(CHARACTER_CATALOG[unit.commanderId]){const button=document.createElement('button');button.className='identity-focus-map';button.textContent=(lang==='zh'?'上次报告的指挥官：':'Reported commander: ')+n(CHARACTER_CATALOG[unit.commanderId].name)+(lang==='zh'?'（可能过时）':' (may be outdated)');button.onclick=()=>characterUI.show(unit.commanderId);document.querySelector('#command-detail').append(button)}return}
  const actualSupply=armySupply(state,unit),cutOff=encircled(state,unit);

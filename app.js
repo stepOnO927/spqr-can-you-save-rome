@@ -3,7 +3,7 @@ import {visibleLogText,visibleArmyForPlayer} from './visibility.js?v=29';
 import {identity,factionMark} from './identity.js?v=2';
 import {CHARACTER_CATALOG} from './characters.js?v=15';
 import {REGIONS,ROUTES,FACTIONS,SOURCES} from './data.js?v=9';
-import {newGame,newGrandGame,convertToGrandMap,upgradeSave,tick,moveArmy,previewMarch,recruit,trainArmy,setTax,warContributionPlan,collectWarContributions,emergencyProvisionsPlan,collectEmergencyProvisions,aerariumPlan,seizeAerarium,diplomacy,respondCivilSettlement,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,researchInnovation,adoptIdea,removeIdea,cancelIdeaAdoption,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,setReligiousPolicy,purchaseMaterials,recruitFigure} from './engine.js?v=225';
+import {newGame,newGrandGame,convertToGrandMap,upgradeSave,tick,moveArmy,previewMarch,recruit,trainArmy,setTax,warContributionPlan,collectWarContributions,emergencyProvisionsPlan,collectEmergencyProvisions,aerariumPlan,seizeAerarium,diplomacy,respondCivilSettlement,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,researchInnovation,adoptIdea,removeIdea,cancelIdeaAdoption,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,setReligiousPolicy,purchaseMaterials,recruitFigure} from './engine.js?v=226';
 import {importCampaign,downloadCampaign} from './save-files.js?v=30';
 import {loadProfile,saveProfile,recordCampaign} from './legacy/legacy-core.js?v=16';
 import {endCampaign} from './achievement-system.js?v=5';
@@ -58,7 +58,7 @@ const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
 function flash(message){toast=message;render();setTimeout(()=>{if(toast===message){toast='';render()}},3200)}
 function date(){return lang==='zh'?`公元${state.year<0?'前':'后'}${Math.abs(state.year)}年 ${state.month}月`:`${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][state.month-1]} ${Math.abs(state.year)} ${state.year<0?'BCE':'CE'}`}
 function ownArmies(){return state.armies.filter(a=>a.owner===state.player)}
-function status(a){return a.trainingRemaining?(lang==='zh'?'训练中':'Training'):a.move?`${t('marching')} → ${n(region(state,a.move.to).name)} (${a.move.remaining})`:a.siege?`${t('siege')} (${a.siege.remaining})`:t('available')}
+function status(a){return a.trainingRemaining?(lang==='zh'?'训练中':'Training'):a.move?.returning?(lang==='zh'?'运兵舰队返航中':'Returning by sea'):a.move?`${t('marching')} → ${n(region(state,a.move.to).name)} (${a.move.remaining})`:a.siege?`${t('siege')} (${a.siege.remaining})`:t('available')}
 
 function mapSvg(){const a=army(state,selectedArmy);return drawMap(state,{selectedRegion,selectedArmy,mode:mapMode,lang,view,reachable:ordering&&a?adjacent(a.region,state).map(x=>x.to):[],recentChanges:(state.campaignEvents||[]).filter(e=>e.type==='control'&&e.year===state.year&&e.month===state.month).map(e=>e.regionId)})}
 
