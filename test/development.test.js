@@ -10,11 +10,25 @@ test('road milestone encyclopedia attributes its ancient account to Plutarch',()
 });
 import {developmentPanel,ideasPanel,constructionPanel} from '../development-ui.js';
 import {edgeMonths,grandRoute,armySupply} from '../grand-operations.js';
-import {techIllustration} from '../tech-art.js';
+import {techIllustration,buildingIllustration} from '../tech-art.js';
 import {faithSatisfaction,advanceDemography,advanceReligion} from '../local-society.js';
 import {nationalBudget} from '../national-budget.js';
 import {afterActionHtml} from '../recon-ui.js';
 import {budgetHtml} from '../budget-ui.js';
+
+test('every building reference has a distinct drawing and names its cited historical source',()=>{
+ const drawings=BUILDINGS.map(buildingIllustration);
+ assert.equal(new Set(drawings).size,BUILDINGS.length);
+ for(const lang of ['en','zh']){
+  const html=developmentPanel(newGrandGame('senate'),lang,'material');
+  assert.equal((html.match(/data-building-reference=/g)||[]).length,BUILDINGS.length);
+  assert.equal((html.match(/class="dev-reference-art"/g)||[]).length,BUILDINGS.length);
+  assert.match(html,lang==='en'?/Historical source: Plutarch, Life of Caius Gracchus 7\.2/:/史料来源: Plutarch, Life of Caius Gracchus 7\.2/);
+  assert.match(html,/data-building-reference="naval-depot"/);
+  assert.match(html,/data-building-reference="coastal-fort"/);
+  assert.match(html,/data-building-reference="naval-training"/);
+ }
+});
 
 test('agreed grain-dues commutation converts only real surplus after paid adoption',()=>{
  const idea=IDEAS.find(x=>x.id==='grain-dues-commutation'),s=newGrandGame('caesar');

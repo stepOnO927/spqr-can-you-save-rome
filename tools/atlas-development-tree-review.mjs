@@ -29,4 +29,11 @@ try{
  await page.screenshot({path:`outputs/atlas-development-tree-${width}.png`});
  console.log(JSON.stringify(position));
  if(position.cardTop<position.navBottom-1||position.cardTop>=position.panelBottom)throw Error('Atlas prerequisite is obscured after navigation');
+ await page.locator('.dev-reference summary').click();
+ if(await page.locator('.dev-reference-art svg').count()!==33)throw Error('Atlas building illustrations are missing');
+ if(!await page.locator('[data-building-reference="milestone"]').textContent().then(text=>text.includes('史料来源: Plutarch, Life of Caius Gracchus 7.2')))throw Error('Atlas building source title is missing in Chinese');
+ const referenceColors=await page.locator('[data-building-reference="milestone"]').evaluate(article=>({title:getComputedStyle(article.querySelector('b')).color,description:getComputedStyle(article.querySelector('p')).color}));
+ if(referenceColors.title!=='rgb(59, 46, 33)'||referenceColors.description!=='rgb(75, 58, 41)')throw Error(`Atlas building text lacks dark contrast: ${JSON.stringify(referenceColors)}`);
+ await page.locator('[data-building-reference="milestone"]').scrollIntoViewIfNeeded();
+ await page.screenshot({path:`outputs/atlas-building-reference-${width}.png`});
 }finally{await browser.close()}

@@ -20,6 +20,14 @@ try{
  await page.locator('#entry-continue').click();
  await page.locator('[data-tab="development"]').click();
  await page.locator('.dev-tree-links path[data-from="water-control"][data-to="urban-drainage"]').waitFor();
+ await page.locator('.dev-reference summary').click();
+ const buildingArt=await page.locator('.dev-reference-art svg').evaluateAll(arts=>arts.map(art=>art.outerHTML));
+ if(buildingArt.length!==33||new Set(buildingArt).size!==33)throw Error('Building encyclopedia illustrations are missing or repeated');
+ const milestone=await page.locator('[data-building-reference="milestone"]').textContent();
+ if(!milestone.includes('Historical source: Plutarch, Life of Caius Gracchus 7.2'))throw Error('Building encyclopedia does not name the cited ancient source');
+ await page.locator('[data-building-reference="milestone"]').scrollIntoViewIfNeeded();
+ await page.screenshot({path:`outputs/development-building-reference-${width}.png`});
+ await page.locator('.dev-reference summary').click();
  const material=await page.locator('.dev-tree-links path').count();
  const materialCards=await page.locator('.dev-tree [data-tech-node]').evaluateAll(cards=>cards.map(card=>card.id));
  if(materialCards.length!==34||new Set(materialCards).size!==34)throw Error('A material was omitted or duplicated in the five families');

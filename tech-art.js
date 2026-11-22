@@ -92,3 +92,17 @@ export function techIllustration(item){
  if(!drawing)throw new Error(`Missing illustration for ${item.id}`);
  return `<svg viewBox="0 0 64 64" focusable="false" aria-hidden="true"><rect x="2" y="2" width="60" height="60" rx="2" class="tech-art-frame"/><path class="tech-art-mark" d="${drawing}"/></svg>`;
 }
+
+// Construction records show the built object rather than repeating the
+// research node. Three structures share a research family and need their own
+// drawing; the other entries keep that family's recognizable physical form.
+const buildingDrawings={
+ 'naval-depot':'M8 52h48M13 48V22l19-11 19 11v26M18 28h28M22 34h8v11h-8zm13 0h8v11h-8zM32 11v36M10 55q11-5 22 0t22 0',
+ 'coastal-fort':'M7 52h50M12 47V23h8v-8h8v8h8v-8h8v8h8v24M22 47V34h20v13M8 55q8-4 16 0t16 0t16 0',
+ 'naval-training':'M8 51h48M13 43q19 9 38 0l-6 8H19zM17 27l9 17m2-22 5 22m6-22 8 22M15 21h34M32 21V9M24 14h16'
+};
+export function buildingIllustration(building){
+ const drawing=buildingDrawings[building.id]||drawings[building.tech];
+ if(!drawing)throw new Error(`Missing building illustration for ${building.id}`);
+ return `<svg viewBox="0 0 64 64" focusable="false" aria-hidden="true"><rect x="2" y="2" width="60" height="60" rx="2" class="tech-art-frame"/><path class="tech-art-mark" d="${drawing}"/><path class="tech-art-building-corners" d="M5 16V6h10m34 52h10V48"/></svg>`;
+}

@@ -3,7 +3,7 @@ import {FIGURE_ROLES,initializeFigures,figureStatus,figureActive} from './great-
 import {CHARACTER_CATALOG} from './characters.js';
 import {FACTIONS} from './data.js';
 import {religionPanel} from './local-society.js?v=9';
-import {techIllustration} from './tech-art.js?v=22';
+import {techIllustration,buildingIllustration} from './tech-art.js?v=23';
 import {nationalBudget} from './national-budget.js?v=30';
 const materialFamilies=[
  {id:'water',name:['Water Management','水利管理'],items:['water-control','dam-engineering','reservoir-design','aqueduct-refinement','urban-drainage','sewer-improvement']},
@@ -43,7 +43,7 @@ function effectsText(e,zh){return Object.entries(e||{}).map(([key,value])=>{
  if(key==='taxReview')return `<span class="dev-effect positive">${zh?'行政融合度≥65且实行高税时，当地满意度与忠诚的月度损失各减少1':'With high taxes and integration ≥65, monthly satisfaction and loyalty losses each fall by 1'}</span><span class="dev-effect negative">${zh?'高税期间，每12处受益领土另需1国库／月的复核费用':'While taxes are high, review costs 1 treasury / month per 12 eligible territories'}</span>`;
  return `<span class="dev-effect ${(key==='upkeep'||key==='decisionDelay'||key==='healthRisk'?value>0:value<0)?'negative':'positive'}">${esc(effectNames[key]?.[zh?1:0]||key)} ${value>0?'+':value<0?'−':''}${Math.abs(value)<1?(Math.abs(value)*100).toFixed(Math.abs(value)<.01?1:0)+'%':Math.abs(value)}</span>`;
  }).join('')}
-function sourceLink(item,zh){return `<a href="${esc(item.source.url)}" target="_blank" rel="noopener noreferrer">${enzh(zh,'Background reading ↗','历史背景资料 ↗')}</a>`}
+function sourceLink(item,zh){return `<a href="${esc(item.source.url)}" target="_blank" rel="noopener noreferrer">${enzh(zh,'Historical source','史料来源')}: ${esc(item.source.title)} ↗</a>`}
 function figurePanel(s,zh){
  const figures=initializeFigures(s),owner=s.player;
  const rows=Object.entries(FIGURE_ROLES).map(([role,data])=>{
@@ -217,7 +217,7 @@ export function tradePanel(s,lang){
 }
 export function developmentPanel(s,lang,branch){
   const zh=lang==='zh';
-  const reference=branch==='material'?`<details class="dev-reference"><summary>${enzh(zh,'Building reference · costs and effects','建筑图鉴 · 费用与效果')}</summary>${BUILDINGS.map(b=>{const invention=MATERIALS.find(x=>x.id===b.tech);return `<article><b>${esc(b.name[zh?1:0])}</b><small>${esc(b.name[zh?0:1])} · ${b.cost}¤ · ${b.months}${enzh(zh,' months','个月')} · ${enzh(zh,'upkeep','维护')} ${b.upkeep}¤</small><p>${esc((b.context||invention.context)[zh?1:0])}</p><div class="dev-effects">${effectsText(b.effects,zh)}</div>${sourceLink(b.source?b:invention,zh)}</article>`}).join('')}</details>`:'';
+  const reference=branch==='material'?`<details class="dev-reference"><summary>${enzh(zh,'Building reference · costs and effects','建筑图鉴 · 费用与效果')}</summary>${BUILDINGS.map(b=>{const invention=MATERIALS.find(x=>x.id===b.tech);return `<article data-building-reference="${esc(b.id)}"><div class="dev-reference-heading"><span class="dev-reference-art" aria-hidden="true">${buildingIllustration(b)}</span><div><b>${esc(b.name[zh?1:0])}</b><small>${esc(b.name[zh?0:1])} · ${b.cost}¤ · ${b.months}${enzh(zh,' months','个月')} · ${enzh(zh,'upkeep','维护')} ${b.upkeep}¤</small></div></div><p>${esc((b.context||invention.context)[zh?1:0])}</p><div class="dev-effects">${effectsText(b.effects,zh)}</div>${sourceLink(b.source?b:invention,zh)}</article>`}).join('')}</details>`:'';
   return `<div class="dev-zoom"><span>${zh?'后续阶段':'LATER STAGES'}</span><button data-tree-pan="left" aria-label="${zh?'查看前一阶段':'Show earlier stages'}">←</button><button data-tree-pan="right" aria-label="${zh?'查看后一阶段':'Show later stages'}">→</button><span>${zh?'缩放':'ZOOM'}</span><button data-tree-zoom="out" aria-label="${zh?'缩小':'Zoom out'}">−</button><button data-tree-zoom="in" aria-label="${zh?'放大':'Zoom in'}">+</button></div>`+developmentPanelContent(s,lang,branch)+figurePanel(s,zh)+reference;
 }
 let linkResizeObserver;
