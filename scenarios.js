@@ -1,5 +1,5 @@
-import {newGame,estimatedStrength} from './engine.js?v=marriage-economy-merge-1';
-import {createFictionalPerson} from './dynasties.js?v=marriage-economy-merge-1';
+import {newGame,estimatedStrength} from './engine.js?v=family-finance-zero-1';
+import {createFictionalPerson} from './dynasties.js?v=family-finance-zero-1';
 import {formCoalition} from './coalitions.js?v=mutual-audience-1';
 import {observeDiplomacy} from './diplomatic-knowledge.js?v=diplomatic-chronicle-1';
 

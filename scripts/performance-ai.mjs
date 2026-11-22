@@ -1,6 +1,6 @@
 import {performance} from 'node:perf_hooks';
-import {newScenario} from '../scenarios.js?v=marriage-economy-merge-1';
-import {tick} from '../engine.js?v=marriage-economy-merge-1';
+import {newScenario} from '../scenarios.js?v=family-finance-zero-1';
+import {tick} from '../engine.js?v=family-finance-zero-1';
 
 const months=Number(process.env.SPQR_MONTHS||120);
 if(!Number.isInteger(months)||months<1||months>1200)throw Error('Invalid month count');

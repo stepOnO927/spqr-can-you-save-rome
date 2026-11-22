@@ -1,10 +1,10 @@
 // The Wheels of History reads the existing simulation. It never resolves an
 // economy, battle, treaty or appointment of its own.
-import {sendLetter} from './epistulae.js?v=marriage-economy-merge-1';
+import {sendLetter} from './epistulae.js?v=family-finance-zero-1';
 import {CHARACTER_CATALOG,successionModel} from './characters.js?v=succession-ui-recovery-1';
 import {reassurePerson} from './conspiracies.js?v=mutual-audience-1';
-import {focusById,treeFor} from './national-focus.js?v=marriage-economy-merge-1';
-import {successionCandidates,validSuccessionPlan} from './governance.js?v=marriage-economy-merge-1';
+import {focusById,treeFor} from './national-focus.js?v=family-finance-zero-1';
+import {successionCandidates,validSuccessionPlan} from './governance.js?v=family-finance-zero-1';
 import {FACTIONS} from './data.js?v=phase-x-1';
 
 const L=(en,zh)=>[en,zh];

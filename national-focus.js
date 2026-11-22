@@ -3,7 +3,7 @@ import {ROUTES,FACTIONS} from './data.js?v=phase-x-1';
 import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
 import {proposeAgreement} from './agreements.js?v=agreement-courier-1';
 import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=mutual-audience-1';
-import {successionCandidates} from './governance.js?v=marriage-economy-merge-1';
+import {successionCandidates} from './governance.js?v=family-finance-zero-1';
 import {reportedControl} from './control-intelligence.js?v=fort-intel-1';
 import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=mutual-audience-1';
 
