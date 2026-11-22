@@ -17,6 +17,8 @@ try{
  await page.waitForFunction(()=>window.__spqrSmokeMap.isStyleLoaded()&&window.__spqrSmokeMap.areTilesLoaded(),null,{timeout:30000});
  const local=await page.evaluate(()=>{const map=window.__spqrSmokeMap;return {zoom:map.getZoom(),hasSea:!!map.getLayer('sea-final'),hasDetailedTerrain:!!map.getLayer('land-elevation-higher'),hasNaval:!!document.querySelector('#naval'),hasPaperGrain:map.hasImage('land-grain')||map.hasImage('sea-grain')}});
  if(!local.hasSea||!local.hasDetailedTerrain||!local.hasNaval||local.hasPaperGrain)throw Error(`Deployed branch is missing expected features or still drawing decorative grain: ${JSON.stringify(local)}`);
+ const catalog=await page.evaluate(async()=>{const {IDEAS,MATERIALS}=await import('../development.js');const idea=IDEAS.find(item=>item.id==='maritime-cultural-exchange');return {english:idea?.context?.[0],chinese:idea?.context?.[1],dam:MATERIALS.find(item=>item.id==='dam-engineering')?.source?.title,reservoir:MATERIALS.find(item=>item.id==='reservoir-design')?.source?.title}});
+ if(!catalog.english?.includes('Delos, Rhodes and Alexandria')||!catalog.chinese?.includes('提洛、罗得与亚历山大里亚')||!catalog.dam?.includes('Shushtar Historical Hydraulic System')||!catalog.reservoir?.includes('Auximum water collection system'))throw Error(`Hosted development catalog is stale: ${JSON.stringify(catalog)}`);
  await page.locator('#map-mode').selectOption('terrain');
  await page.evaluate(()=>window.__spqrSmokeMap.jumpTo({center:[12.6,44.1],zoom:9.05}));
  await page.locator('#map-charting').waitFor({state:'hidden',timeout:30000});
@@ -27,5 +29,5 @@ try{
  await page.locator('#language').click();
  if(await page.locator('html').getAttribute('lang')!=='en')throw Error('English language switch failed');
  if(errors.length||missing.length)throw Error(`Hosted atlas errors: ${JSON.stringify({errors,missing})}`);
- console.log(JSON.stringify({base,local,terrain,errors,missing},null,2));
+ console.log(JSON.stringify({base,local,catalogChecked:true,terrain,errors,missing},null,2));
 }finally{await browser.close()}
