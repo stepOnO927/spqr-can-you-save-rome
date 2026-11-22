@@ -73,3 +73,36 @@ test('AI seeks an actual integrated relief point after prolonged supply strain',
   assert.equal(army.move?.to, 'cisalpine');
   assert.equal(state.world.lastSupplyRecovery[army.id], state.year * 12 + state.month);
 });
+
+test('AI follows a controlled two-leg relief route and reevaluates the destination', () => {
+  const state = newGame('senate'), army = state.armies.find(unit => unit.id === 'xiii');
+  const gaul = state.regions.find(place => place.id === 'gaul');
+  const narbo = state.regions.find(place => place.id === 'narbo');
+  army.region = gaul.id;
+  gaul.supply = 2;
+  narbo.supply = 2;
+  gaul.administrativeStatus = 'occupied';
+  narbo.administrativeStatus = 'occupied';
+  state.world.imperium = {enabled: false};
+  tick(state);
+  assert.equal(army.expeditionSupply.status, 'partial');
+  assert.equal(army.move?.to, 'narbo');
+  army.move.remaining = 1;
+  tick(state);
+  assert.equal(army.region, 'narbo');
+  assert.equal(army.expeditionSupply.status, 'partial');
+  assert.equal(army.move?.to, 'cisalpine');
+});
+
+test('AI relief route does not cross an uncontrolled theater', () => {
+  const state = newGame('senate'), army = state.armies.find(unit => unit.id === 'xiii');
+  army.region = 'gaul';
+  state.regions.find(place => place.id === 'gaul').supply = 2;
+  state.regions.find(place => place.id === 'gaul').administrativeStatus = 'occupied';
+  state.regions.find(place => place.id === 'narbo').owner = 'senate';
+  state.wars = [];
+  state.world.imperium = {enabled: false};
+  tick(state);
+  assert.equal(army.expeditionSupply.status, 'cut_off');
+  assert.equal(army.move?.to, undefined);
+});

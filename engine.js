@@ -746,6 +746,33 @@ export function aiClaimantChoice(s,actor,target){
  return [...scores].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]))[0]?.[0]||null;
 }
 
+function aiSupplyReliefStep(s,army,owner){
+  const places=new Map(s.regions.map(place=>[place.id,place]));
+  const visited=new Set([army.region]),queue=[{id:army.region,first:null,steps:0}];
+  let best=null;
+  for(let index=0;index<queue.length;index++){
+    const current=queue[index];
+    if(best&&current.steps>=best.steps)break;
+    if(current.steps>=4)continue;
+    for(const link of adjacent(current.id)){
+      // Relief columns remain on controlled land; a sea crossing needs a
+      // separate transport decision and must not be assumed by this planner.
+      if(link.sea||visited.has(link.to))continue;
+      const place=places.get(link.to);
+      if(!place||place.owner!==owner)continue;
+      visited.add(link.to);
+      const first=current.first||link.to,steps=current.steps+1;
+      if(!previewMarch(s,army.id,first).ok)continue;
+      const localLoad=s.armies.filter(unit=>unit.id!==army.id&&unit.owner===owner&&unit.region===place.id&&unit.men>0).reduce((sum,unit)=>sum+unit.men,army.men);
+      if(place.administrativeStatus==='integrated'&&localLoad<=place.supply*1000&&armyExpeditionSupply(s,{...army,region:place.id}).status==='full'){
+        if(!best||steps<best.steps||steps===best.steps&&place.supply>best.supply)best={first,steps,supply:place.supply};
+      }
+      if(steps<4)queue.push({id:place.id,first,steps});
+    }
+  }
+  return best?.first||null;
+}
+
 function aiTurn(s,owner,{autoplayPlayer=false}={}){
   const occupation=s.regions.find(r=>r.owner===owner&&r.administrativeStatus==='occupied'&&s.factions[owner]?.treasury>=45&&administrationQuote(s,r.id,owner).ok);
   if(occupation)startAdministration(s,occupation.id,owner);
@@ -822,9 +849,9 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
     const here=region(s,a.region),neighbors=adjacent(a.region).map(e=>region(s,e.to)).filter(Boolean);
     const now=s.year*12+s.month,feint=s.world.aiFeints?.[owner];
     const strained=['partial','cut_off'].includes(a.expeditionSupply?.status)&&a.expeditionSupply?.strainMonths>=(a.expeditionSupply.status==='cut_off'?1:2);
-    if(strained&&(s.world.lastSupplyRecovery?.[a.id]??-Infinity)+3<=now){
-      const relief=neighbors.filter(r=>r.owner===owner&&r.administrativeStatus==='integrated'&&s.armies.filter(unit=>unit.owner===owner&&unit.region===r.id&&unit.men>0).reduce((sum,unit)=>sum+unit.men,a.men)<=r.supply*1000&&armyExpeditionSupply(s,{...a,region:r.id}).status==='full').sort((x,y)=>y.supply-x.supply)[0];
-      if(relief&&issueMilitaryOrder(s,a.id,'move',relief.id,owner).ok){s.world.lastSupplyRecovery||={};s.world.lastSupplyRecovery[a.id]=now;continue}
+    if(strained&&(s.world.lastSupplyRecovery?.[a.id]??-Infinity)+1<=now){
+      const relief=aiSupplyReliefStep(s,a,owner);
+      if(relief&&issueMilitaryOrder(s,a.id,'move',relief,owner).ok){s.world.lastSupplyRecovery||={};s.world.lastSupplyRecovery[a.id]=now;continue}
     }
     if(feint?.army===a.id){
       if(a.region===feint.destination&&now>=feint.returnAt&&region(s,feint.origin)?.owner===owner){delete s.world.aiFeints[owner];if(issueMilitaryOrder(s,a.id,'move',feint.origin,owner).ok)continue}
