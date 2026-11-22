@@ -34,7 +34,7 @@ const takeOstiaWithSupport=process.env.SPQR_CAESAR_SUPPORT_OSTIA==='1';
 const useAerarium=process.env.SPQR_CAESAR_AERARIUM==='1';
 const seekSettlement=process.env.SPQR_CAESAR_SEEK_SETTLEMENT==='1';
 const responsiveCommand=process.env.SPQR_CAESAR_RESPONSIVE_COMMAND==='1';
-if(responsiveCommand&&(secondFront||supportItaly||westernCampaign))throw new Error('Responsive command cannot assign VIII to a separate front.');
+if(responsiveCommand&&(secondFront||supportItaly))throw new Error('Responsive command cannot assign VIII to a separate support front.');
 const journal=[],snapshots=[],seen=new Set(),grainDeliveries=[],corridor=['cisalpine','italiaN','t013','t012','t014','roma',...(seekOstia||followThrough?['t016']:[]),...(followThrough?['t017','t018','t019','t021','t022']:[])];
 const settlementAudit=[];
 let peakIrrigation=0,everHeldOstia=region(s,'t016').owner==='caesar';
@@ -162,7 +162,7 @@ for(let month=1;month<months&&!s.achievementState.finalized;month++){
    else if(takeOstiaWithSupport&&supporting.region==='t016'&&supporting.stance!=='hold')record('VIII secures Ostia',holdPosition(s,supporting.id));
   }
  }
- if(secondFront||westernCampaign){
+ if((secondFront||westernCampaign)&&mainArmyId!=='viii'){
   const western=army(s,'viii'),available=western&&western.men>=600&&!western.move&&!western.siege&&!western.reconPending&&!western.trainingRemaining;
   if(available&&region(s,western.region)?.owner==='caesar'){
    westernRouteComplete ||= western.region==='t054';
@@ -190,7 +190,8 @@ for(let month=1;month<months&&!s.achievementState.finalized;month++){
   const romeNeedsGarrison=region(s,'roma').owner!=='caesar'||!s.armies.some(a=>a.owner==='caesar'&&a.id!==legion.id&&a.region==='roma');
   const northernRoute=['roma','t014','t012'],northernIndex=northernRoute.indexOf(legion.region);
   const counterattack=defendNorthernCorridor&&heldRome&&region(s,'roma').owner==='caesar'&&northernIndex>=0;
-  const next=secureRome&&legion.region==='roma'&&region(s,'roma').owner==='caesar'?null:counterattack?(northernRoute[northernIndex+1]||null):(legion.region==='t016'&&romeNeedsGarrison&&!followThrough?'roma':legion.region==='roma'&&region(s,'t016').owner==='caesar'&&!followThrough?null:routeNext);
+  const successorFront=responsiveCommand&&mainArmyId!=='xiii'?westernFrontierStep(legion)?.id:null;
+  const next=secureRome&&legion.region==='roma'&&region(s,'roma').owner==='caesar'?null:counterattack?(northernRoute[northernIndex+1]||null):(legion.region==='t016'&&romeNeedsGarrison&&!followThrough?'roma':legion.region==='roma'&&region(s,'t016').owner==='caesar'&&!followThrough?null:routeNext||successorFront);
   if(next&&previewMarch(s,legion.id,next).ok){
    const target=region(s,next),intel=target.owner!=='caesar'?assessment(s,legion.id,next):null,report=intel?.report;
    if(!intel)record(`march ${next}`,moveArmy(s,legion.id,next));
