@@ -6,18 +6,27 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Main through `5064061b` is integrated. Foreign treaty and aid couriers expire
+when a receiving court disappears, and changing a Roman or Han national
+ambition has a displayed, saved political cost. The expansion's campaign
+progress panel retains its controls and now explains the cost in both
+languages. Focused correspondence, ambition, and module-version tests pass
+30/30, and the full local suite passes 1,258/1,258. GitHub checks for this
+merge are pending.
+
 Han loyalist and original usurper splinter forces now inherit Han cultural
 names for newly generated commanders and merchants, as the civil-war court
 and uprising already do. The field-identity regression covers generated
-loyalist commanders and saved identity; 5/5 focused tests pass. Cloud checks
-for this increment are pending.
+loyalist commanders and saved identity; 5/5 focused tests pass. All five
+GitHub checks passed for commit `d6d7a145`, including the three browser groups.
 
 Main through `d70efdbf` is integrated. Missing-person family event counts
 and detail history now hide events after contact was lost and future-dated
 events; the expansion's age-aware portraits and genealogy controls remain.
 The focused genealogy, dynasty, fictional-sovereign, and module-version checks
-pass 49/49; the full local suite passes 1,255/1,255. GitHub checks for this
-integration are pending.
+pass 49/49; the full local suite passes 1,255/1,255. The same five GitHub
+checks passed for the subsequent commit `d6d7a145`; the family dossier
+browser log confirms the missing-person flow.
 
 Main through `7eef7218` is integrated. Cross-border player marriage now
 requires a delivered envoy reply, including from the genealogy detail panel;
