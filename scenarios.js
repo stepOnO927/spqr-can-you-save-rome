@@ -1,6 +1,6 @@
-import {newGame,estimatedStrength} from './engine.js?v=commander-name-snapshot-1';
-import {createFictionalPerson} from './dynasties.js?v=commander-name-snapshot-1';
-import {formCoalition} from './coalitions.js?v=commander-name-snapshot-1';
+import {newGame,estimatedStrength} from './engine.js?v=name-disagreement-1';
+import {createFictionalPerson} from './dynasties.js?v=name-disagreement-1';
+import {formCoalition} from './coalitions.js?v=name-disagreement-1';
 import {observeDiplomacy} from './diplomatic-knowledge.js?v=diplomatic-chronicle-1';
 
 // A fictional political crisis in the 49 BCE campaign. Conditions make

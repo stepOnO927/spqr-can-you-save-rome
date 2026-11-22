@@ -1,7 +1,7 @@
-import {storedCorrespondentName} from './person-knowledge.js?v=commander-name-snapshot-1';
+import {storedCorrespondentName} from './person-knowledge.js?v=name-disagreement-1';
 import {syncChronicleDispatches} from './chronicle.js?v=saved-age-consistency-1';
 import {CHARACTER_CATALOG} from './characters.js?v=saved-age-consistency-1';
-import {initializeDynasties} from './dynasties.js?v=commander-name-snapshot-1';
+import {initializeDynasties} from './dynasties.js?v=name-disagreement-1';
 
 export function canFinalizeCampaign(s){return !!(s.victory||s.defeat||s.peacefulVictory||s.world?.dynasties?.scenario?.stage==='resolved')}
 
