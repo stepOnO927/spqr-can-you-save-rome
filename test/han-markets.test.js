@@ -6,8 +6,29 @@ import {activeEasternMerchantPrivilege,advanceEasternMarkets,advanceHanMilitaryS
 import {recruit,recruitQuote,provisionArmy} from '../han/military.js?v=han-1';
 import {advanceSilk,protectRoute,ROUTE_PROTECTION_COST} from '../han/silk-road.js?v=han-1';
 import {roll} from '../han/util.js?v=han-1';
+import {createMarketMerchant} from '../han/field-identities.js';
 
 const next=s=>{if(++s.month>12){s.month=1;s.year++}advanceEasternMarkets(s)};
+
+test('named merchant specialization chooses the carrier and survives a saved caravan',()=>{
+ let s=newHanGame('han',{seed:215});s.tradeMarkets.embeddedRoman=true;s.factions.han.treasury=1000;
+ const request={seller:'han',buyer:'han',origin:'dunhuang',destination:'changan',commodity:'silk',quantity:20};
+ s.tradeMarkets.regions.dunhuang.goods.silk.stock=50;
+ const ordinary=quoteEasternTrade(s,request);assert.equal(ordinary.ok,true,ordinary.reason);
+ const general=createMarketMerchant(s,'han','dunhuang'),specialist=createMarketMerchant(s,'han','dunhuang');
+ s.persons[general].specialization='horses';s.persons[specialist].specialization='silk';
+ s.tradeMarkets.merchants.han=[general,specialist];
+ const preferred=quoteEasternTrade(s,request);
+ assert.equal(preferred.merchantId,specialist);
+ assert.equal(preferred.merchantSpecialist,true);
+ assert.ok(preferred.transport<ordinary.transport,'cargo expertise reduces a sufficiently long caravan cost');
+ s=loadHanSave(serialize(s));
+ assert.equal(s.persons[specialist].specialization,'silk');
+ assert.equal(quoteEasternTrade(s,request).merchantId,specialist);
+ const sent=placeEasternTrade(s,request);assert.equal(sent.ok,true,sent.reason);
+ assert.equal(sent.shipment.merchantId,specialist);assert.equal(sent.shipment.merchantSpecialist,true);
+ assert.equal(loadHanSave(serialize(s)).tradeMarkets.shipments.find(x=>x.id===sent.shipment.id).merchantSpecialist,true);
+});
 
 test('grain becomes finite carried field rations, delivered before they can prevent losses',()=>{
  let s=newHanGame('han',{seed:214});s.tradeMarkets.embeddedRoman=true;

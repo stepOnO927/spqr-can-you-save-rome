@@ -6,6 +6,14 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+New eastern merchant NPCs now keep a culturally chosen cargo specialty in
+their saved profile. When merchants are equally available on a route, cargo
+expertise selects the carrier; a specialist reduces the real prepaid transport
+quote and modeled raid risk. Older merchants without this field remain valid.
+The focused identity, market, market-house, merchant-portrait, and Roman bridge
+tests pass 65/65; the full local simulation suite passes 1,267/1,267. Cloud
+checks for this addition are pending.
+
 The concluded Han campaign now rejects new caravan quotes and dispatches,
 and the eastern market tick leaves its stock, treasury, and shipment ledger
 untouched. Both languages explain the closed market. The focused defeat and

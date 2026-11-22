@@ -24,6 +24,19 @@ const POOLS={
 };
 export const CULTURAL_NAME_POOLS=Object.freeze(POOLS);
 
+// A merchant's preferred cargo is a saved business trait, not an assertion
+// about a documented person. Older merchants without one remain usable.
+const MERCHANT_SPECIALTIES={
+ han:['silk','jade','grain','iron'],xiongnu:['horses','livestock','wool'],
+ wusun:['horses','livestock','wool'],kangju:['horses','wool','copper'],
+ chorasmian:['grain','wool','copper'],yuezhi:['horses','wool','silk'],
+ sogdian:['silk','wool','jade'],bactrian:['horses','copper','wool'],
+ saka:['horses','livestock','wool'],parthian:['horses','silk','iron'],
+ western:['grain','copper','timber'],caucasian_iberian:['timber','copper','wool'],
+ caucasian_albanian:['timber','wool','grain'],oasis:['silk','horses','jade'],
+ qiang:['horses','livestock','wool'],steppe:['horses','livestock','wool']
+};
+
 export function fieldCulture(faction){
  // These courts and uprisings split from Han territory. Their newly raised
  // commanders should keep that origin even though they are not static states.
@@ -69,6 +82,6 @@ export function createMarketMerchant(s,faction,location){
  // A foreign market is the place of hiring, not evidence that the merchant
  // was born there. Generate a home in the merchant's own realm when possible.
  const homeland=s.regions.find(r=>r.owner===faction)?.id||location;
- const birth=s.year-35,person={id,name:[...name],record:'fictional',culture:[...pool.culture],faction,role:'merchant',profession:'merchant',title:['Caravan merchant','商队商人'],homeland,location,sex:'unknown',birth,death:null,alive:true,ambition:40,competence:55,loyalty:60,wealth:0,riskTolerance:[35,50,65,80][serial%4],spouse:[],history:[{year:s.year,month:s.month,kind:'entered_market',region:location}],appearanceSeed:serial*2654435761>>>0};
+ const birth=s.year-35,specialties=MERCHANT_SPECIALTIES[culture]||MERCHANT_SPECIALTIES.oasis,person={id,name:[...name],record:'fictional',culture:[...pool.culture],faction,role:'merchant',profession:'merchant',title:['Caravan merchant','商队商人'],homeland,location,sex:'unknown',birth,death:null,alive:true,ambition:40,competence:55,loyalty:60,wealth:0,specialization:specialties[serial%specialties.length],riskTolerance:[35,50,65,80][serial%4],spouse:[],history:[{year:s.year,month:s.month,kind:'entered_market',region:location}],appearanceSeed:serial*2654435761>>>0};
  s.persons[id]=person;recordBirth(s,{id,birthSurname:null,birth,sex:'unknown'});return id;
 }
