@@ -1,6 +1,19 @@
 import {claimReward} from './legacy-core.js?v=16';
 
 export const DRIVERS=['Aurelia','Titus','Livia','Marcellus'];
+const RIVALS=['Lucius','Nero','Flavia','Sabina','Claudia','Gaius','Felix','Domitia','Quintus','Valeria','Sextus','Aemilia'];
+export function selectableDrivers(eliminated=[]){
+ const gone=new Set(Array.isArray(eliminated)?eliminated:[]),available=DRIVERS.filter(name=>!gone.has(name));
+ if(available.length)return available;
+ let number=1;while(gone.has(`Replacement ${number}`))number++;
+ return [`Replacement ${number}`];
+}
+export function raceRivals(driver,eliminated=[]){
+ const unavailable=new Set([driver,...(Array.isArray(eliminated)?eliminated:[])]),chosen=[];
+ for(const name of RIVALS)if(!unavailable.has(name)&&chosen.length<4)chosen.push(name);
+ for(let number=1;chosen.length<4;number++){const name=`Reserve ${number}`;if(!unavailable.has(name))chosen.push(name)}
+ return chosen;
+}
 export function settleRace(profile,race){
  if(!race||typeof race.id!=='string'||!race.id||!Number.isInteger(race.place)||race.place<1||race.place>5||profile.rewards.includes(`race:${race.id}`))return {ok:false};
  const place=race.retired?5:race.place,payout=[0,100,60,35,15,0][place]+(race.festival&&place<=3?30:0);
@@ -9,10 +22,10 @@ export function settleRace(profile,race){
  if(race.lastDriver&&!profile.race.eliminated.includes(race.lastDriver))profile.race.eliminated.push(race.lastDriver);
  profile.collectibles=[...new Set(profile.collectibles)];profile.titles=[...new Set(profile.titles)];return {ok:true,payout};
 }
-export function startRace(canvas,hud,driver,onFinish,festival=false,raceColor='gold',track='oval',language='en'){
+export function startRace(canvas,hud,driver,onFinish,festival=false,raceColor='gold',track='oval',language='en',eliminated=[]){
  const ctx=canvas.getContext('2d'),W=canvas.width,H=canvas.height,cx=W/2,cy=H/2,rx=track==='tight'?235:260,ry=track==='tight'?112:145,TAU=Math.PI*2;
  const tr=(en,zh)=>language==='zh'?zh:en;
- const drivers=[driver,'Lucius','Nero','Flavia','Sabina'];
+ const drivers=[driver,...raceRivals(driver,eliminated)];
  const racers=drivers.map((name,i)=>({name,x:cx+rx*Math.cos(-i*.105),y:cy+ry*Math.sin(-i*.105),theta:-i*.105,progress:-i*.105,speed:0,heading:Math.PI/2-i*.08,stamina:100,durability:100,lastCollision:-1,finished:null,color:i===0&&raceColor==='blue'?'#4d82af':['#dfad4c','#b75842','#638caa','#a179a4','#6f9a72'][i]}));
  let raf=0,last=performance.now(),elapsed=0,ended=false;const keys=new Set(),down=e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','KeyW','KeyA','KeyS','KeyD'].includes(e.code)){e.preventDefault();keys.add(e.code)}},up=e=>keys.delete(e.code);
  window.addEventListener('keydown',down);window.addEventListener('keyup',up);const randomId=globalThis.crypto?.randomUUID?.()||`${Date.now()}-${Math.random()}`;

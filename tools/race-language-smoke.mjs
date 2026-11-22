@@ -21,8 +21,8 @@ try{
   catch{await route.fulfill({status:404,body:'Not found'})}
  });
  await page.addInitScript(()=>{
-  localStorage.setItem('spqr-lang','zh');
-  localStorage.setItem('spqr-legacy-profile-v1',JSON.stringify({buildings:['temple','circus']}));
+  if(!localStorage.getItem('spqr-lang'))localStorage.setItem('spqr-lang','zh');
+  if(!localStorage.getItem('spqr-legacy-profile-v1'))localStorage.setItem('spqr-legacy-profile-v1',JSON.stringify({buildings:['temple','circus'],race:{eliminated:['Lucius','Aurelia']}}));
   window.raceLabels=[];
   const old=CanvasRenderingContext2D.prototype.fillText;
   CanvasRenderingContext2D.prototype.fillText=function(label,...args){window.raceLabels.push(String(label));return old.call(this,label,...args)};
@@ -33,6 +33,10 @@ try{
   ['en','SPEED','accelerate','Top-down chariot race']
  ]){
   await page.locator('#nav-race').click();
+  assert.equal((await page.locator('#race-driver option').allTextContents()).includes('Aurelia'),false);
+  assert.doesNotMatch(await page.locator('#race-opponents').textContent(),/Lucius/);
+  assert.match(await page.locator('#race-opponents').textContent(),/Claudia/);
+  if(language==='zh')await page.screenshot({path:resolve(root,'outputs','legacy-race-roster-zh.png')});
   assert.equal(await page.locator('#race-canvas').getAttribute('aria-label'),aria);
   await page.locator('#race-start').click();
   await page.waitForFunction(word=>document.querySelector('#race-hud')?.textContent.includes(word),hudWord);
@@ -44,6 +48,14 @@ try{
    await page.locator('#nav-lang').click();
   }
  }
+ await page.locator('#nav-race').click();
+ await page.evaluate(()=>{let virtualTime=performance.now();window.requestAnimationFrame=callback=>setTimeout(()=>callback(virtualTime+=50),0);window.cancelAnimationFrame=id=>clearTimeout(id)});
+ await page.locator('#race-start').click();
+ await page.waitForFunction(()=>document.querySelector('#race-result')?.textContent.includes('5/5'),null,{timeout:30000});
+ assert.equal((await page.locator('#race-driver option').allTextContents()).includes('Titus'),false,'last-place player must leave the current roster');
+ assert.ok((await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-legacy-profile-v1')).race.eliminated)).includes('Titus'));
+ await page.reload({waitUntil:'domcontentloaded'});await page.locator('#nav-race').click();
+ assert.equal((await page.locator('#race-driver option').allTextContents()).includes('Titus'),false,'elimination must survive refresh');
  assert.deepEqual(errors,[]);
- console.log('Chariot race HUD, canvas instructions and accessibility label follow Chinese and English settings.');
+ console.log('Chariot race language, replacement rivals, last-place roster removal and reload: PASS');
 }finally{await browser.close()}

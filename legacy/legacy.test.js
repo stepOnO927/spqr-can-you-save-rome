@@ -4,7 +4,7 @@ import {loadProfile,saveProfile,exportProfile,importProfile,purchase,recordCampa
 import {archivePanelHtml} from './archive-ui.js';
 import {triumphalArchHtml} from './arch-ui.js';
 import {decidePetition,availablePetitions} from './civic.js';
-import {settleRace} from './race.js';
+import {DRIVERS,selectableDrivers,raceRivals,settleRace} from './race.js';
 import {ACTIVITIES,availableActivities,resolveActivity} from './activities.js';
 import {ARTIFACTS} from './museum.js';
 import {MUSEUM_HALLS,museumHallFor,museumPrestige,curateArtifact,removeFeaturedArtifact} from './museum-curation.js';
@@ -351,6 +351,23 @@ test('the villa case branches into delayed reprisal or relief with durable conse
 });
 test('race places, trophy, last place punishment and reward guard persist',()=>{
  const p=loadProfile(memory());const race={id:'race-test',driver:'Aurelia',place:1,lastDriver:'Lucius'};assert.equal(settleRace(p,race).payout,100);assert.ok(p.collectibles.includes('race-cup'));assert.ok(p.race.eliminated.includes('Lucius'));assert.equal(settleRace(p,race).ok,false);const last=settleRace(p,{id:'race-last',driver:'Aurelia',place:5,lastDriver:'Aurelia'});assert.equal(last.payout,0);assert.ok(p.race.eliminated.includes('Aurelia'));
+});
+test('eliminated drivers do not return in later races or after a profile reload',()=>{
+ const p=loadProfile(memory());assert.deepEqual(raceRivals('Aurelia',p.race.eliminated),['Lucius','Nero','Flavia','Sabina']);
+ assert.equal(settleRace(p,{id:'first-race',driver:'Aurelia',place:1,lastDriver:'Lucius'}).ok,true);
+ const next=raceRivals('Aurelia',p.race.eliminated);assert.deepEqual(next,['Nero','Flavia','Sabina','Claudia']);
+ for(const driver of DRIVERS)assert.equal(settleRace(p,{id:`last-${driver}`,driver,place:5,lastDriver:driver}).ok,true);
+ assert.deepEqual(selectableDrivers(p.race.eliminated),['Replacement 1']);
+ assert.equal(settleRace(p,{id:'last-replacement',driver:'Replacement 1',place:5,lastDriver:'Replacement 1'}).ok,true);
+ const restored=importProfile(exportProfile(p));assert.deepEqual(selectableDrivers(restored.race.eliminated),['Replacement 2']);
+ assert.equal(raceRivals('Replacement 2',restored.race.eliminated).includes('Lucius'),false);
+ assert.equal(new Set(raceRivals('Replacement 2',restored.race.eliminated)).size,4);
+ for(let round=0;round<20;round++){
+  const roster=raceRivals('Replacement 2',restored.race.eliminated);
+  assert.equal(roster.length,4);assert.equal(new Set(roster).size,4);
+  assert.ok(roster.every(name=>!restored.race.eliminated.includes(name)));
+  assert.equal(settleRace(restored,{id:`reserve-round-${round}`,driver:'Replacement 2',place:1,lastDriver:roster[0]}).ok,true);
+ }
 });
 test('unlocked scenario creates a distinct playable alternate history state',()=>{
  const normal=newGrandGame('senate'),s=createScenario('scenario-rubicon',newGrandGame);
