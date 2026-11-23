@@ -21,6 +21,13 @@ try{
  assert.match(await page.locator('.naval-content').innerText(),/MARITIME ARMY SUPPLY/);
  assert.match(await page.locator('.naval-content').innerText(),/three friendly land links/);
  assert.match(await page.locator('.naval-content').innerText(),/Army supply capacity 6 food/);
+ await page.locator('[data-order-kind="senate-adriatic"]').selectOption('intercept');
+ assert.match(await page.locator('[data-order-target="senate-adriatic"]').innerText(),/Sea of Marmara/);
+ assert.match(await page.locator('[data-order-target="senate-adriatic"]').innerText(),/Black Sea/);
+ await page.locator('#language').click();
+ assert.match(await page.locator('[data-order-target="senate-adriatic"]').innerText(),/马尔马拉海/);
+ assert.match(await page.locator('[data-order-target="senate-adriatic"]').innerText(),/黑海/);
+ await page.locator('#language').click();
  await page.locator('[data-order-kind="senate-adriatic"]').selectOption('supply');
  await page.locator('[data-order-target="senate-adriatic"]').selectOption('t016');
  await page.locator('[data-order="senate-adriatic"]').click();

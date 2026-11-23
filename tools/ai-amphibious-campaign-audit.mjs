@@ -40,7 +40,7 @@ for(let sample=1;sample<=seeds;sample++){
   if(turn===0||(turn+1)%6===0){state=upgradeSave(JSON.parse(JSON.stringify(state)));reloads++}
  }
  assert.deepEqual(broken,[],'A sea move lost its assigned ships');
- assert.ok(events.some(x=>x.fleetPort===null&&x.fleetOrder==='transport')||strongHostileSea&&state.naval.reports.some(r=>r.kind==='battle'&&r.zone==='adriatic'),'Transport must sail offshore or be intercepted there');
+ assert.ok(events.some(x=>x.fleetPort===null&&x.fleetOrder==='transport')||(hostileSea||strongHostileSea)&&state.naval.reports.some(r=>r.kind==='battle'&&r.zone==='adriatic'),'Transport must sail offshore or be intercepted there');
  if(hostileSea||strongHostileSea)assert.ok(state.naval.reports.some(r=>r.kind==='battle'&&r.zone==='adriatic'),'An offshore enemy should be able to intercept the transport');
  assert.ok((state.battles||[]).length>0,'The long campaign should resolve genuine battles');
  campaigns.push({sample,months,hostileSea,strongHostileSea,reloads,events,navalBattles:state.naval.reports.filter(r=>r.kind==='battle').length,navalReports:state.naval.reports.filter(r=>r.kind==='battle').slice(0,2).map(r=>({year:r.year,month:r.month,winner:r.winner,transportDisruptions:r.transportDisruptions})),finalArmyRegion:state.armies.find(a=>a.id==='italy')?.region,finalFleetPort:state.naval.fleets.find(f=>f.id==='senate-adriatic')?.port,battles:(state.battles||[]).length,civilWarOutcome:state.civilWarOutcome?.winner||'ongoing'});

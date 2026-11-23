@@ -546,7 +546,25 @@ test('a fleet mobilizing in harbor stays sheltered until it sorties',()=>{
 });
 
 test('fleets are separate from armies and move only through connected sea zones',()=>{
- const s=newGrandGame('senate'),f=s.naval.fleets.find(x=>x.owner==='senate');assert.ok(f);assert.equal(s.armies.some(a=>a.id===f.id),false);assert.equal(SEA_ZONES.length,11);assert.deepEqual(seaRoute('adriatic','aegean'),['ionian','aegean']);assert.equal(seaRoute('adriatic','nonesuch'),null);assert.equal(portZone('italiaS'),'adriatic');assert.equal(orderFleet(s,'senate',f.id,'intercept','aegean').ok,true);advanceNaval(s);assert.equal(f.zone,'ionian');advanceNaval(s);assert.equal(f.zone,'aegean')
+ const s=newGrandGame('senate'),f=s.naval.fleets.find(x=>x.owner==='senate');assert.ok(f);assert.equal(s.armies.some(a=>a.id===f.id),false);assert.equal(SEA_ZONES.length,13);assert.deepEqual(seaRoute('adriatic','aegean'),['ionian','aegean']);assert.equal(seaRoute('adriatic','nonesuch'),null);assert.equal(portZone('italiaS'),'adriatic');assert.equal(orderFleet(s,'senate',f.id,'intercept','aegean').ok,true);advanceNaval(s);assert.equal(f.zone,'ionian');advanceNaval(s);assert.equal(f.zone,'aegean')
+});
+test('Pontic harbors use the Black Sea through the Marmara passage, including older docked fleets',()=>{
+ const s=newGrandGame('senate');
+ for(const id of ['t092','bosporus','t097'])assert.equal(portZone(id),'euxine');
+ assert.deepEqual(seaRoute('aegean','euxine'),['propontis','euxine']);
+ const fleet=s.naval.fleets.find(f=>f.id==='bosporan-strait');
+ assert.equal(fleet.zone,'euxine');
+ s.naval.version=5;fleet.zone='aegean';
+ const restored=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.equal(restored.naval.version,6);
+ assert.equal(restored.naval.fleets.find(f=>f.id===fleet.id).zone,'euxine');
+ assert.equal(upgradeSave(JSON.parse(JSON.stringify(restored))).naval.fleets.find(f=>f.id===fleet.id).zone,'euxine');
+ const underway=newGrandGame('senate'),returning=underway.naval.fleets.find(f=>f.id==='bosporan-strait');
+ underway.regions.find(r=>r.id==='t091').owner='bosporus';
+ underway.naval.version=5;returning.reserve=false;returning.zone='aegean';
+ returning.order={kind:'return',targetPort:'t091',path:[]};
+ const resumed=upgradeSave(JSON.parse(JSON.stringify(underway)));
+ assert.deepEqual(resumed.naval.fleets.find(f=>f.id===returning.id).order.path,['propontis','aegean']);
 });
 test('light-only fleets use ship speed and merchant hulls set cargo capacity',()=>{
  const s=newGrandGame('senate'),f=s.naval.fleets.find(x=>x.owner==='senate');f.ships={light:2};f.sailors=130;f.zone='western';f.port=null;assert.equal(fleetSpeed(f),3);assert.equal(fleetCargoCapacity(f),0);assert.equal(orderFleet(s,'senate',f.id,'intercept','tyrrhenian').ok,true);advanceNaval(s);assert.equal(f.zone,'tyrrhenian');f.ships.merchant=2;assert.equal(fleetCargoCapacity(f),8)
@@ -828,13 +846,13 @@ test('a delivery remains in the monthly trade report when the city reaches its d
 test('older saves receive missing market vessels once without duplicating existing hulls',()=>{
  let s=newGrandGame('senate');s.naval.version=2;s.naval.fleets=s.naval.fleets.filter(f=>!f.id.startsWith('market-'));
  s=upgradeSave(structuredClone(s));const ids=s.naval.fleets.filter(f=>f.id.startsWith('market-')).map(f=>f.id);
- assert.equal(s.naval.version,5);assert.deepEqual(ids.sort(),['market-africa','market-mauretania','market-narbo','market-t114']);
+ assert.equal(s.naval.version,6);assert.deepEqual(ids.sort(),['market-africa','market-mauretania','market-narbo','market-t114']);
  s=upgradeSave(structuredClone(s));assert.deepEqual(s.naval.fleets.filter(f=>f.id.startsWith('market-')).map(f=>f.id).sort(),ids);
 });
 test('a saved Egyptian reserve separates civilian hulls once and delivers real grain',()=>{
  let s=newGrandGame('senate');s.naval.version=3;s.naval.routes=s.naval.routes.filter(r=>r.id==='egypt-italy');s.naval.pirates=[];
  const warship=s.naval.fleets.find(f=>f.id==='egypt-grain');warship.reserve=true;s.factions.senate.food=0;s.factions.egypt.food=60;
- s=upgradeSave(structuredClone(s));assert.equal(s.naval.version,5);
+ s=upgradeSave(structuredClone(s));assert.equal(s.naval.version,6);
  const civilian=s.naval.fleets.find(f=>f.owner==='egypt'&&f.id!=='egypt-grain'&&(f.ships.merchant||0)>0);
  assert.ok(civilian);assert.equal(civilian.ships.merchant,3);assert.equal(s.naval.fleets.find(f=>f.id==='egypt-grain').ships.merchant,0);
  s=upgradeSave(structuredClone(s));assert.equal(s.naval.fleets.filter(f=>f.owner==='egypt'&&(f.ships.merchant||0)>0).length,1);
@@ -852,7 +870,7 @@ test('merchant cargo and its hull survive reload, arrive by sea, and return with
  const route=s.naval.routes[0],fleet=s.naval.fleets.find(f=>f.id==='egypt-grain');fleet.ships.merchant=1;
  advanceNaval(s);assert.equal(route.last.reason,'enroute');assert.equal(fleet.ships.merchant,0);assert.equal(s.factions.egypt.food,56);assert.equal(s.factions.senate.food,0);
  assert.match(tradeCard(s,route,false),/Cargo at sea 4/);assert.match(tradeCard(s,route,true),/在途货物 4/);
- s=upgradeSave(structuredClone(s));assert.equal(s.naval.version,5);assert.equal(s.naval.voyages[0].cargo,4);assert.equal(s.naval.voyages[0].zone,'alexandrian');
+ s=upgradeSave(structuredClone(s));assert.equal(s.naval.version,6);assert.equal(s.naval.voyages[0].cargo,4);assert.equal(s.naval.voyages[0].zone,'alexandrian');
  const delivered=tradeArrival(s,route.id);assert.equal(delivered.amount,4);assert.equal(delivered.paid,4*delivered.unitPrice);assert.equal(s.factions.senate.food,4);assert.equal(s.factions.egypt.food,56);
  assert.equal(toggleTradeRoute(s,'senate',route.id).paused,true);
  for(let i=0;i<3;i++){s.month++;advanceNaval(s)}
@@ -1782,7 +1800,7 @@ test('older naval saves acquire an empty maritime supply inventory',()=>{
  assert.deepEqual(upgradeSave(old).naval.provisions,{});
  assert.deepEqual(upgradeSave(old).naval.inlandProvisions,{});
  assert.deepEqual(upgradeSave(old).naval.wagons,[]);
- assert.equal(upgradeSave(old).naval.version,5);assert.deepEqual(upgradeSave(old).naval.voyages,[]);assert.equal(upgradeSave(old).naval.nextVoyage,1);
+ assert.equal(upgradeSave(old).naval.version,6);assert.deepEqual(upgradeSave(old).naval.voyages,[]);assert.equal(upgradeSave(old).naval.nextVoyage,1);
 });
 
 test('naval report IDs stay unique after the 80-report cap and across save reloads',()=>{
