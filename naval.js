@@ -47,6 +47,7 @@ export const fleetSpeed=f=>Math.max(1,Math.min(...Object.entries(f.ships).filter
 export const fleetUpkeep=f=>Object.entries(f.ships).reduce((n,[id,count])=>n+(SHIPS[id]?.upkeep||0)*count,0);
 export const fleetUpkeepDue=f=>(f.reserve&&f.port&&fleetUpkeep(f)>0?Math.max(1,Math.ceil(fleetUpkeep(f)*.15)):fleetUpkeep(f))+(f.commanderId?1:0);
 const BLOCKADE_WARSHIPS=['light','trireme','quadrireme','quinquereme'];
+const warshipCount=f=>BLOCKADE_WARSHIPS.reduce((n,type)=>n+(f.ships[type]||0),0);
 function blockadePower(f){
  const crew=BLOCKADE_WARSHIPS.reduce((n,type)=>n+(f.ships[type]||0)*SHIPS[type].crew,0);
  if(!crew||f.sailors<crew/2||f.hull<20||f.supply<20)return 0;
@@ -504,6 +505,12 @@ export function cancelArmyTransport(s,unit){
 function recentFleetReports(s,owner){initializeNaval(s);return Object.entries(s.naval.intel[owner]||{}).filter(([,report])=>{const age=s.year*12+s.month-(report.year*12+report.month);return age>=0&&age<=4}).map(([id,report])=>({id,...report}))}
 export function reportedHostileFleets(s,owner){return recentFleetReports(s,owner).filter(report=>atWar(s,owner,report.owner))}
 export function reportedNonHostileFleets(s,owner){return recentFleetReports(s,owner).filter(report=>report.owner!==owner&&!atWar(s,owner,report.owner))}
+export function reportedTransportDanger(s,unit,destination){
+ const convoy=accessibleFleet(s,unit.owner,unit.region,unit.men),path=convoy&&seaRoute(convoy.zone,portZone(destination.id));
+ if(!path)return false;
+ const zones=new Set([convoy.zone,...path]),escortStrength=warshipCount(convoy);
+ return reportedHostileFleets(s,unit.owner).some(report=>zones.has(report.zone)&&Number.isFinite(report.range?.[1])&&report.range[1]>escortStrength*1.5);
+}
 const observe=(s,observer,seen,source)=>{if(observer===seen.owner)return;s.naval.intel[observer]||={};const count=ships(seen),trained=source==='recon'&&(activeEffects(s,observer).navalIntel||navalJobEffect(s,observer,'intelligence')),error=trained?1:2;s.naval.intel[observer][seen.id]={owner:seen.owner,zone:seen.zone,year:s.year,month:s.month,source,range:[Math.max(1,count-error),count+error],confidence:source==='recon'?(trained?'high':'medium'):'low'}};
 function normalizeNavalReportIds(naval){
  const reports=naval.reports;
@@ -778,14 +785,14 @@ function hostileSeaLanding(s,owner,origin){
 }
 function aiTransportStagingPort(s,owner,f){
  if(fleetCapacity(f,s)<1200||s.factions[owner].treasury<35)return null;
- const capacity=fleetCapacity(f,s),knownThreats=reportedHostileFleets(s,owner),fleetCount=ships(f);
+ const capacity=fleetCapacity(f,s),knownThreats=reportedHostileFleets(s,owner),escortStrength=warshipCount(f);
  return s.armies.filter(a=>a.owner===owner&&!a.move&&!a.siege&&a.men>=1200&&a.men<=capacity&&a.region!==f.port).map(a=>{
   const origin=s.regions.find(r=>r.id===a.region&&r.owner===owner&&r.port);
   if(!origin||s.naval.fleets.some(other=>other.id!==f.id&&other.owner===owner&&other.port===origin.id&&!other.reserve&&!other.mobilizing&&!other.order?.armyId&&fleetCapacity(other,s)>=a.men&&other.hull>=40&&other.supply>=20))return null;
   if(!hostileSeaLanding(s,owner,origin.id))return null;
   const path=seaRoute(f.zone,portZone(origin.id));if(!path)return null;
   const zones=new Set([f.zone,...path]);
-  if(knownThreats.some(report=>zones.has(report.zone)&&(report.range?.[1]||0)>fleetCount*1.5))return null;
+  if(knownThreats.some(report=>zones.has(report.zone)&&(report.range?.[1]||0)>escortStrength*1.5))return null;
   return {origin,score:a.men/1000-path.length*2};
  }).filter(Boolean).sort((a,b)=>b.score-a.score)[0]?.origin||null;
 }
@@ -801,18 +808,18 @@ function aiEscortTarget(s,owner,f){
  }).filter(Boolean).sort((a,b)=>b.score-a.score||a.route.id.localeCompare(b.route.id))[0]?.route||null;
 }
 function aiPursuitTarget(s,owner,f){
- const warships=(f.ships.light||0)+(f.ships.trireme||0)+(f.ships.quadrireme||0)+(f.ships.quinquereme||0);
+ const warships=warshipCount(f);
  if(!warships||f.hull<45||f.supply<30)return null;
  const month=s.year*12+s.month;
  const assigned=new Set(s.naval.fleets.filter(other=>other.id!==f.id&&other.owner===owner&&other.order?.kind==='intercept'&&other.order.reportId).map(other=>other.order.reportId));
  return reportedHostileFleets(s,owner).map(report=>{
   const age=month-(report.year*12+report.month),path=seaRoute(f.zone,report.zone);
-  if(age>2||!path||assigned.has(report.id)||!Number.isFinite(report.range?.[1])||report.range[1]>ships(f)*1.5)return null;
+  if(age>2||!path||assigned.has(report.id)||!Number.isFinite(report.range?.[1])||report.range[1]>warships*1.5)return null;
   return {report,age,distance:path.length};
  }).filter(Boolean).sort((a,b)=>a.age-b.age||a.distance-b.distance||a.report.id.localeCompare(b.report.id))[0]?.report||null;
 }
 function aiCoordinatedPursuitTarget(s,owner,lead){
- const warships=f=>(f.ships.light||0)+(f.ships.trireme||0)+(f.ships.quadrireme||0)+(f.ships.quinquereme||0);
+ const warships=warshipCount;
  const ready=f=>f.owner===owner&&!f.port&&!f.order&&!f.reserve&&!f.mobilizing&&f.hull>=45&&f.supply>=30&&warships(f)>0;
  if(!ready(lead))return null;
  const month=s.year*12+s.month;
@@ -912,7 +919,7 @@ function aiNavalOrders(s,owner,f){
  if(treasury>=wartimeReserve){const group=aiCoordinatedPursuitTarget(s,owner,f);if(group){const sent=issueCoordinatedPursuit(s,owner,group);if(sent.ok)return sent}}
  const pirate=s.naval.pirates.find(p=>p.zone===f.zone&&p.pressure>18);if(pirate&&(f.ships.trireme||f.ships.light||f.ships.quadrireme||f.ships.quinquereme))return orderFleet(s,owner,f.id,'patrol',f.zone);
  const pursuit=aiPursuitTarget(s,owner,f);if(pursuit){const order=orderFleet(s,owner,f.id,'intercept',pursuit.zone);if(order.ok)f.order.reportId=pursuit.id;return order}
- const known=reportedHostileFleets(s,owner),enemyPort=s.regions.find(r=>r.port&&atWar(s,owner,r.owner)&&seaRoute(f.zone,portZone(r.id))?.length<=1&&!known.some(x=>x.zone===portZone(r.id)&&x.range[1]>(ships(f)*1.5)));if(enemyPort&&blockadePower(f)>0&&combatPower(s,f)>4)return orderFleet(s,owner,f.id,'blockade',enemyPort.id);
+ const known=reportedHostileFleets(s,owner),enemyPort=s.regions.find(r=>r.port&&atWar(s,owner,r.owner)&&seaRoute(f.zone,portZone(r.id))?.length<=1&&!known.some(x=>x.zone===portZone(r.id)&&x.range[1]>warshipCount(f)*1.5));if(enemyPort&&blockadePower(f)>0&&combatPower(s,f)>4)return orderFleet(s,owner,f.id,'blockade',enemyPort.id);
 }
 function updatePursuitOrders(s,log){
  for(const f of s.naval.fleets){

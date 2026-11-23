@@ -1156,10 +1156,18 @@ test('AI stages a transport fleet at an isolated army port and waits for embarka
  const warned=setup();warned.naval.intel.senate={'caesar-adriatic':{owner:'caesar',zone:portZone('epirus'),year:warned.year,month:warned.month,range:[8,12],confidence:'high'}};
  advanceNaval(warned);
  assert.notEqual(warned.naval.fleets[0].order?.targetPort,'italiaS','a strong reported hostile fleet blocks staging');
+ const unescorted=setup();unescorted.naval.fleets[0].ships={transport:4};unescorted.naval.fleets[0].sailors=280;
+ unescorted.naval.intel.senate={'caesar-adriatic':{owner:'caesar',zone:portZone('epirus'),year:unescorted.year,month:unescorted.month,range:[3,5],confidence:'medium'}};
+ advanceNaval(unescorted);
+ assert.notEqual(unescorted.naval.fleets[0].order?.targetPort,'italiaS','transport hulls cannot count as escorts against a dated threat');
  const cashPoor=setup();cashPoor.factions.senate.treasury=25;advanceNaval(cashPoor);
  assert.notEqual(cashPoor.naval.fleets[0].order?.targetPort,'italiaS','a fleet without a funded voyage stays available for reserve');
  const afloat=setup();afloat.naval.fleets[0].port=null;advanceNaval(afloat);
  assert.equal(afloat.naval.fleets[0].order?.targetPort,'italiaS','an idle fleet at sea can also meet the army');
+ const contestedLanding=setup();contestedLanding.naval.fleets[0].port='italiaS';contestedLanding.naval.fleets[0].zone=portZone('italiaS');
+ contestedLanding.naval.intel.senate={'caesar-adriatic':{owner:'caesar',zone:'adriatic',year:contestedLanding.year,month:contestedLanding.month,source:'recon',range:[4,7],confidence:'medium'}};
+ aiTurn(contestedLanding,'senate');
+ assert.notEqual(contestedLanding.armies[0].move?.sea,true,'an AI army waits instead of boarding into a reported superior hostile fleet');
  const s=setup();advanceNaval(s);
  assert.equal(s.naval.fleets[0].order?.kind,'return');
  assert.equal(s.naval.fleets[0].order?.targetPort,'italiaS');
@@ -1618,12 +1626,24 @@ test('AI pursues a dated hostile fleet report through a real sea battle without 
  const unseen=setup();advanceNaval(unseen.s);assert.notEqual(unseen.hunter.order?.kind,'intercept');
  const strong=setup();strong.s.naval.intel.senate={[strong.enemy.id]:{owner:'caesar',zone:'aegean',year:strong.s.year,month:strong.s.month,source:'recon',range:[9,12],confidence:'medium'}};
  advanceNaval(strong.s);assert.notEqual(strong.hunter.order?.kind,'intercept');
+ const cargoHeavy=setup();cargoHeavy.hunter.ships={trireme:1,transport:5};cargoHeavy.hunter.sailors=530;
+ cargoHeavy.s.naval.intel.senate={[cargoHeavy.enemy.id]:{owner:'caesar',zone:'aegean',year:cargoHeavy.s.year,month:cargoHeavy.s.month,source:'recon',range:[3,5],confidence:'medium'}};
+ advanceNaval(cargoHeavy.s);assert.notEqual(cargoHeavy.hunter.order?.kind,'intercept','transport hulls cannot turn one warship into a safe pursuit force');
  const {s,hunter,enemy}=setup();s.naval.intel.senate={[enemy.id]:{owner:'caesar',zone:'aegean',year:s.year,month:s.month,source:'recon',range:[3,5],confidence:'medium'}};
  advanceNaval(s);assert.equal(hunter.order?.kind,'intercept');assert.equal(hunter.order.target,'aegean');assert.equal(hunter.order.reportId,enemy.id);
  const restored=upgradeSave(structuredClone(s)),saved=restored.naval.fleets.find(f=>f.id===hunter.id);
  assert.equal(saved.order.reportId,enemy.id);
  advanceNaval(restored);
  assert.ok(restored.naval.reports.some(r=>r.kind==='battle'&&r.participants.includes(hunter.id)&&r.participants.includes(enemy.id)));
+});
+test('AI does not count troop transports as warships when judging an enemy-port blockade',()=>{
+ const s=newGrandGame('caesar'),fleet=s.naval.fleets.find(f=>f.owner==='senate'),enemy=s.naval.fleets.find(f=>f.owner==='caesar');
+ s.factions.senate.treasury=500;s.factions.senate.food=100;s.month=4;
+ fleet.port=null;fleet.zone='adriatic';fleet.ships={trireme:2,transport:4};fleet.sailors=640;
+ for(const pirate of s.naval.pirates){pirate.pressure=0;pirate.ships=0}
+ s.naval.intel.senate={[enemy.id]:{owner:'caesar',zone:'adriatic',year:s.year,month:1,source:'recon',range:[3,5],confidence:'medium'}};
+ advanceNaval(s);
+ assert.notEqual(fleet.order?.kind,'blockade','the three-month-old report still warns against a six-hull fleet with only two warships');
 });
 test('two AI fleets coordinate against one larger reported fleet and fight together after reload',()=>{
  const s=newGrandGame('caesar'),first=s.naval.fleets.find(f=>f.owner==='senate'),second=structuredClone(first),enemy=s.naval.fleets.find(f=>f.owner==='caesar');
