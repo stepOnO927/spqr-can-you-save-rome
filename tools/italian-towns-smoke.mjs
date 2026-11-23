@@ -52,6 +52,15 @@ try{
  assert.equal(expeditionSave.regions.find(region=>region.id==='italiaS').owner,'senate');
  await page.locator('#map-mode').selectOption('expedition');
  assert.match(await page.locator('#map-mode-details').innerText(),/Corfinium/);
+ const arrivedState=structuredClone(expeditionSave),arrivedArmy=arrivedState.armies.find(army=>army.id==='viii');
+ arrivedArmy.region='italiaS';arrivedArmy.move=null;arrivedArmy.expedition.status='completed';arrivedArmy.expedition.nextIndex=arrivedArmy.expedition.nodes.length;
+ await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state})),arrivedState);
+ await page.reload({waitUntil:'domcontentloaded'});
+ await page.locator('#map-mode').selectOption('expedition');
+ assert.match(await page.locator('#map-mode-details').innerText(),/arrived, decision pending · Corfinium/);
+ await page.locator('#map-mode-details button').filter({hasText:/arrived, decision pending · Corfinium/}).click();
+ assert.match(await page.locator('#command-detail').innerText(),/LOCAL OBJECTIVE: Corfinium/);
+ assert.equal(await page.locator('#command-detail button').filter({hasText:'VIEW TOWN'}).count(),1);
  const iguvium=page.locator('.city-marker[data-city="IGUVIUM"]');
  await iguvium.waitFor({state:'visible'});
  await page.locator('[data-town-objective="iguvium"]').evaluate(node=>node.click());
