@@ -151,6 +151,7 @@ jobs:
               node tools/systems-smoke.mjs
               node tools/intelligence-partners-smoke.mjs
               node tools/archived-dossier-smoke.mjs
+              node tools/archived-leadership-summary-smoke.mjs
               node tools/archived-exchange-smoke.mjs
               node tools/trade-intelligence-smoke.mjs
               node tools/portrait-institutions-smoke.mjs
