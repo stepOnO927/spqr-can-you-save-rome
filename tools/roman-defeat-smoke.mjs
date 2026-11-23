@@ -23,11 +23,17 @@ try{
  await page.locator('[data-slot="load"]').click();
  await page.locator('#step').click();
  assert.match(await page.locator('.victory-progress').innerText(),/NO FIELD ARMY/);
+ await page.setViewportSize({width:390,height:844});
+ assert.equal(await page.locator('.victory-progress.defeat-warning').isVisible(),true,'the recovery deadline must remain visible on phones');
+ await page.setViewportSize({width:1440,height:900});
  for(let i=0;i<2;i++)await page.locator('#step').click();
  assert.match(await page.locator('.victory-progress').innerText(),/NO FIELD ARMY/);
  assert.equal(await page.locator('#step').isDisabled(),false);
  await page.locator('#step').click();
  assert.match(await page.locator('.victory-progress').innerText(),/CAMPAIGN DEFEAT/);
+ await page.setViewportSize({width:390,height:844});
+ assert.equal(await page.locator('.victory-progress.defeat').isVisible(),true,'the final loss must remain visible on phones');
+ await page.setViewportSize({width:1440,height:900});
  assert.equal(await page.locator('#step').isDisabled(),true);
  const date=await page.locator('.map-toolbar h2').innerText();
  await page.locator('#new').click();
