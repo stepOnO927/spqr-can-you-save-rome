@@ -6,6 +6,12 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Main through `0683c260` (#348) is integrated. Institution and person senders
+remain distinct in the mailbox and in coalition and agreement letters. The
+new upstream privacy test needed its letter imports, and its browser fixture
+now uses the same module version as the campaign. The route, mail and module
+version tests pass 27/27; hosted checks follow.
+
 The Roman eastern final carrier now advances each saved road or sea leg. A
 captured current stop blocks the shipment; losing the old Syrian gate after
 the cargo has reached Anatolia does not stop its final Achaian leg. Older

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame} from '../engine.js?v=faces-name-disagreement-1';
-import {sendLetter} from '../epistulae.js?v=faces-name-disagreement-1';
+import {sendLetter,syncAgreementLetters,syncCoalitionLetters,receivedMail} from '../epistulae.js?v=faces-name-disagreement-1';
 import {mailboxHtml} from '../mail-ui.js?v=faces-name-disagreement-1';
 function letter(s,sender,recipient,thread,body){return sendLetter(s,{senderInstitution:sender,senderFaction:sender,recipient,category:'diplomatic',subject:['Notice','来信'],body:[body,body],threadId:thread,options:['accept','reject'],context:{kind:'treaty',treatyType:'non_aggression'}}).letter}
 test('undelivered letters do not expose their sender or contents through the thread or filter',()=>{
