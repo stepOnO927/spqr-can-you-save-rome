@@ -1211,6 +1211,71 @@ test('mutiny keeps surviving troops aboard until the convoy returns through a sa
   renderNavalPanel({state:restored,lang,root,section:'reports'});assert.match(content.innerHTML,new RegExp(label));
  }
 });
+test('a mutinous supply fleet keeps its paid food aboard until it reaches a friendly port',()=>{
+ const base=newGrandGame('senate'),fleet=base.naval.fleets.find(f=>f.id==='senate-adriatic');
+ base.naval.routes=[];base.naval.voyages=[];base.naval.fleets=[fleet];base.year=-48;
+ const originalFood=base.factions.senate.food;
+ assert.equal(orderFleet(base,'senate',fleet.id,'supply','t016').ok,true);
+ const cargo=fleet.order.cargo;
+ fleet.zone='tyrrhenian';fleet.order.path=[];
+ fleet.morale=18;
+ let state,mutiny;
+ for(let seed=1;seed<500&&!mutiny;seed++){
+  const candidate=structuredClone(base);candidate.seed=seed;advanceNaval(candidate);
+  mutiny=candidate.naval.reports.find(r=>r.kind==='mutiny');
+  if(mutiny)state=candidate;
+ }
+ assert.ok(mutiny,'an underpaid crew should eventually mutiny in a deterministic sample');
+ const returning=state.naval.fleets.find(f=>f.id===fleet.id);
+ assert.equal(returning.order?.kind,'return');
+ assert.equal(returning.order?.cargo,cargo);
+ assert.equal(mutiny.cargo,cargo);
+ assert.equal(state.factions.senate.food,originalFood-cargo);
+ for(const [lang,label] of [['en','food is returning aboard the fleet'],['zh','粮食随舰队返往']]){
+  const content={innerHTML:''},root={innerHTML:'',querySelector:()=>content,querySelectorAll:()=>[]};
+  renderNavalPanel({state,lang,root,section:'reports'});
+  assert.match(content.innerHTML,new RegExp(label));
+ }
+ const restored=upgradeSave(structuredClone(state));
+ for(let month=0;month<12&&restored.naval.fleets.find(f=>f.id===fleet.id).order;month++)advanceNaval(restored);
+ assert.equal(restored.naval.fleets.find(f=>f.id===fleet.id).order,null);
+ assert.equal(restored.factions.senate.food,originalFood);
+ assert.equal(restored.naval.reports.filter(r=>r.kind==='supply-return').length,1);
+});
+test('a food return diverts to an owned harbor if its ordered port is captured',()=>{
+ const s=newGrandGame('senate'),fleet=s.naval.fleets.find(f=>f.id==='senate-adriatic');
+ s.naval.routes=[];s.naval.voyages=[];s.naval.fleets=[fleet];
+ const originalFood=s.factions.senate.food;
+ assert.equal(orderFleet(s,'senate',fleet.id,'supply','t016').ok,true);
+ const cargo=fleet.order.cargo;
+ assert.equal(orderFleet(s,'senate',fleet.id,'return','italiaS').ok,true);
+ s.regions.find(r=>r.id==='italiaS').owner='caesar';
+ advanceNaval(s);
+ const returned=s.naval.reports.filter(r=>r.kind==='supply-return');
+ assert.equal(returned.length,1);
+ assert.notEqual(returned[0].port,'italiaS');
+ assert.equal(s.regions.find(r=>r.id===returned[0].port)?.owner,'senate');
+ assert.equal(returned[0].cargo,cargo);
+ assert.equal(s.factions.senate.food,originalFood);
+});
+test('mutiny records an actual food loss when no friendly harbor remains',()=>{
+ const base=newGrandGame('senate'),fleet=base.naval.fleets.find(f=>f.id==='senate-adriatic');
+ base.naval.routes=[];base.naval.voyages=[];base.naval.fleets=[fleet];base.year=-48;
+ assert.equal(orderFleet(base,'senate',fleet.id,'supply','t016').ok,true);
+ const cargo=fleet.order.cargo;
+ for(const port of base.regions.filter(r=>r.owner==='senate'&&r.port))port.owner='caesar';
+ fleet.morale=18;
+ let mutiny,loss;
+ for(let seed=1;seed<500&&!mutiny;seed++){
+  const candidate=structuredClone(base);candidate.seed=seed;advanceNaval(candidate);
+  mutiny=candidate.naval.reports.find(r=>r.kind==='mutiny');
+  if(mutiny)loss=candidate.naval.reports.filter(r=>r.kind==='supply-loss'&&r.reason==='mutiny');
+ }
+ assert.ok(mutiny);
+ assert.equal(mutiny.returnPort,null);
+ assert.equal(loss.length,1);
+ assert.equal(loss[0].cargo,cargo);
+});
 test('AI stages a transport fleet at an isolated army port and waits for embarkation',()=>{
  const setup=()=>{
   const s=newGrandGame('caesar');for(const r of s.regions)r.owner='egypt';

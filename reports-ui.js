@@ -1,7 +1,7 @@
 import {eventText,unreadCount} from './campaign-reports.js?v=14';
 import {FACTIONS} from './data.js';
 import {battleSideForPlayer} from './visibility.js';
-import {afterActionHtml} from './recon-ui.js?v=19';
+import {afterActionHtml} from './recon-ui.js?v=20';
 import {factionMark} from './identity.js';
 
 export const escapeReport=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
