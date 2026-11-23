@@ -12,7 +12,7 @@ The Museum's bronze senatorial decree icon is original inline SVG artwork. It is
 
 ## Museum exhibit source review
 
-The following five exhibit pictures are schematic game art, not photographs or claims that a particular object survived from the player's campaign. Their object IDs and unlock conditions remain unchanged in saved profiles.
+The following six exhibit pictures are schematic game art, not photographs or claims that a particular object survived from the player's campaign. Their object IDs and unlock conditions remain unchanged in saved profiles.
 
 | Exhibit | Historical comparison | Limit in the game |
 | --- | --- | --- |
@@ -21,3 +21,4 @@ The following five exhibit pictures are schematic game art, not photographs or c
 | Republican sword | [*Greece & Rome*, study of the *gladius Hispaniensis*](https://www.cambridge.org/core/journals/greece-and-rome/article/new-sword-from-spain-the-roman-adoption-of-the-gladius-hispaniensis/0165E9027FEAF09D7B29C3C2540E1770) reviews pre-49 BCE archaeological swords and differing blade forms. | The game's crossed-sword icon does not depict an excavated weapon from this campaign. |
 | Cato portrait | The [Capitoline Museums catalog, Scu 565](https://capitolini.info/scu00565/?lang=en) rejects an old identification of a late Republican head as Cato. | The game's Cato portrait model is imaginary. The catalog does not establish the appearance of Cato the Younger. |
 | Tyrian purple | The [Metropolitan Museum of Art's Phoenician trade essay](https://www.metmuseum.org/exhibitions/listings/2014/assyria-to-iberia/blog/posts/phoenicia-and-the-bible) describes murex purple and its Mediterranean trade. | The color swatch is interpretive, not an excavated or surviving 49 BCE textile; buying it in the fictional Harbor Office does not prove a particular shipment. |
+| Sanctuary oil lamp | A [University of Amsterdam archaeological review, p. 80](https://pure.uva.nl/ws/files/995020/76469_06.pdf) records oil lamps among material from the sanctuary of Juno Gabina alongside votive terracottas. | The icon is schematic. A lamp's presence at the sanctuary does not prove every lamp was offered, or date a particular lamp to 49 BCE. |

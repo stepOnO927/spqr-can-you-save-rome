@@ -54,6 +54,10 @@ try{
  const cato=page.locator('.artifact').filter({has:page.locator('h3',{hasText:'小加图肖像模型'})});
  assert.match(await cato.innerText(),/并非已证实的真容/);
  assert.equal(await cato.locator('.artifact-source').getAttribute('href'),'https://capitolini.info/scu00565/?lang=en');
+ await page.locator('[data-filter="ritual"]').click();
+ const lampZh=page.locator('.artifact').filter({has:page.locator('h3',{hasText:'圣所油灯模型'})});
+ assert.match(await lampZh.innerText(),/不能证明每盏油灯都是祭品/);
+ assert.equal(await lampZh.locator('.artifact-source').getAttribute('href'),'https://pure.uva.nl/ws/files/995020/76469_06.pdf');
  await page.locator('#nav-lang').click();
  assert.match(await page.locator('.museum-showcase').innerText(),/Featured collection/);
  await page.locator('[data-filter="all"]').click();
@@ -61,6 +65,8 @@ try{
  const sword=page.locator('.artifact').filter({has:page.locator('h3',{hasText:'Republican legion sword model'})});
  assert.match(await sword.innerText(),/not a drawing of a surviving campaign weapon/);
  assert.match(await sword.locator('.artifact-source').getAttribute('href'),/cambridge\.org\/core\/journals\/greece-and-rome/);
+ const lampEn=page.locator('.artifact').filter({has:page.locator('h3',{hasText:'Sanctuary oil lamp model'})});
+ assert.match(await lampEn.innerText(),/does not establish that every lamp was an offering/);
  await page.reload();await page.locator('#nav-museum').click();
  assert.equal(await page.locator('.museum-pedestal:not(.empty)').count(),3);
  await page.locator('[data-unfeature="cato-bust"]').click();
