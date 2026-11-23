@@ -1,15 +1,46 @@
 // MANDATE OF HEAVEN — strategic acceptance tests 11–20.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newHanGame,tick,moveArmy} from '../han/engine.js?v=dossier-archive-1';
+import {newHanGame,tick,moveArmy} from '../han/engine.js?v=faces-name-disagreement-1';
 import {ROUTES,REGIONS,OASIS} from '../han/data.js?v=han-1';
 import {PRESETS,templateStats,supplyFor,resolveBattle,marchMonths,recruitQuote,recruit,validateMix,saveTemplate} from '../han/military.js?v=han-1';
 import {propose,proposalScore,protectorateAction,access,declareWar,knownStrength,aiMilitary,observe,relation} from '../han/frontier.js?v=han-1';
-import {tradePath,legOpen,advanceSilk,embassyConditions,sendTradeEmbassy} from '../han/silk-road.js?v=han-1';
+import {tradePath,legOpen,advanceSilk,embassyConditions,sendTradeEmbassy} from '../han/silk-road.js?v=legacy-route-1';
 import {monthIndex} from '../han/util.js?v=han-1';
 
 const game=(p='han',o={})=>newHanGame(p,{seed:5,...o});
 const army=(s,owner,region,tpl,men=10000)=>{const t=PRESETS[tpl];const a={id:'t'+Math.random().toString(36).slice(2),owner,region,men,morale:70,training:50,supply:100,template:{id:t.id,name:t.name,mix:{...t.mix}},commander:null,move:null};s.armies.push(a);return a};
+
+test('oasis courts keep operating cash while local levies cost treasury after deployment',()=>{
+ const home=game('parthia',{seed:49}),deployed=game('parthia',{seed:49});
+ for(const s of [home,deployed]){
+  s.tradeMarkets.embeddedRoman=true;
+  s.armies.find(a=>a.owner==='shanshan').men=5000;
+ }
+ deployed.armies.find(a=>a.owner==='shanshan').region='jushi';
+ tick(home);tick(deployed);
+ assert.equal(home.factions.shanshan.treasury,deployed.factions.shanshan.treasury+1);
+ for(let i=1;i<24;i++)tick(home);
+ assert.equal(home.factions.shanshan.treasury,10);
+ assert.equal(home.focus.shanshan.current,null);
+});
+
+test('steppe hosts forage at home but spend treasury and grain when deployed',()=>{
+ const home=game('parthia',{seed:49}),deployed=game('parthia',{seed:49});
+ home.tradeMarkets.embeddedRoman=true;deployed.tradeMarkets.embeddedRoman=true;
+ deployed.armies.find(a=>a.owner==='wusun').region='jushi';
+ tick(home);tick(deployed);
+ assert.ok(home.factions.wusun.treasury>deployed.factions.wusun.treasury);
+ assert.ok(home.factions.wusun.grain>deployed.factions.wusun.grain);
+});
+
+test('Qiang highland bands draw household support at home but pay upkeep away',()=>{
+ const home=game('parthia',{seed:49}),deployed=game('parthia',{seed:49});
+ deployed.armies.find(a=>a.owner==='qiang').region='jincheng';
+ tick(home);tick(deployed);
+ assert.ok(home.factions.qiang.treasury>deployed.factions.qiang.treasury);
+ assert.ok(home.factions.qiang.grain>deployed.factions.qiang.grain);
+});
 
 test('11. Han troops march across valid Chinese territories along real routes',()=>{
  const s=game();const a=s.armies.find(x=>x.owner==='han'&&x.region==='changan');
@@ -52,7 +83,11 @@ test('14. Xiongnu forces fight differently: mounted archery, withdrawal and purs
  const horde=templateStats(PRESETS.chanyu);assert.ok(horde.speed>1.5&&horde.herd>0.9&&horde.withdraw>0.9);
  // outmatched, the steppe host withdraws instead of being destroyed
  const han=army(s,'han','monan','field',40000),hu=army(s,'zhizhi','monan','raiders',8000);
- const r=resolveBattle(s,[han],[hu],'monan',{rand:()=>0.5});assert.equal(r.outcome,'defender_withdrew');assert.ok(hu.men>=7700);
+ const r=resolveBattle(s,[han],[hu],'monan',{rand:()=>0.5});assert.equal(r.outcome,'defender_withdrew');assert.equal(hu.men,8000-r.losses.defender);
+ const trapped=army(s,'zhizhi','monan','raiders',8000);
+ const trappedResult=resolveBattle(s,[han],[trapped],'monan',{rand:()=>0.5,canRetreat:()=>false});
+ assert.equal(trappedResult.outcome,'attacker_won','an army without a legal retreat must fight');
+ assert.ok(trappedResult.losses.defender>0);
  // victorious horsemen pursue: losses to a beaten infantry army exceed normal
  const s2=game();const inf=army(s2,'han','monan','field',8000),big=army(s2,'zhizhi','monan','chanyu',30000);
  const r2=resolveBattle(s2,[inf],[big],'monan',{rand:()=>0.5});assert.equal(r2.outcome,'defender_won');assert.ok(r2.losses.attacker>8000*0.25);

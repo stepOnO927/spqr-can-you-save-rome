@@ -5,11 +5,17 @@ const base=process.env.SPQR_URL||'http://127.0.0.1:5173';
 const browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 // MapLibre can replace a marker between the visibility check and the click.
 // Retry an actual click; use the existing offscreen fallback only when hidden.
-async function selectMarker(marker){
- for(let attempt=0;attempt<3;attempt++){
+async function selectMarker(marker,page){
+ for(let attempt=0;attempt<4;attempt++){
   await marker.waitFor({state:'attached'});
-  if(!await marker.isVisible()){await marker.dispatchEvent('click');return}
-  try{await marker.click({force:true,timeout:5000});return}catch(error){if(attempt===2)throw error}
+  try{
+   if(await marker.isVisible())await marker.click({timeout:5000});
+   else await marker.dispatchEvent('click');
+   // MapLibre may replace a marker after Playwright has clicked it. Confirm
+   // that the command panel actually opened before issuing any orders.
+   await page.waitForFunction(()=>{const panel=document.querySelector('#command-detail');return /士气|Morale/.test(panel?.textContent||'')&&!!panel?.querySelector('[data-order="hold"]')},null,{timeout:2500});
+   return;
+  }catch(error){if(attempt===3)throw error}
  }
 }
 try{
@@ -21,7 +27,7 @@ try{
   await page.locator('#roman-faction').selectOption(side);
   await page.locator('#start-free').click();
   const marker=page.locator(`[data-army="${army}"]`);await marker.waitFor();
-  await selectMarker(marker);
+  await selectMarker(marker,page);
   const dossier=page.locator('#command-detail');
   assert.match(await dossier.innerText(),/士气|Morale/);
   assert.match(await dossier.innerText(),/附近已知威胁|Known nearby threats/);
@@ -49,7 +55,7 @@ try{
   assert.ok(saved.armies.some(a=>a.owner!==side&&(a.move||a.order)),`${side} should see an AI response in simulation`);
   const ready=saved.armies.find(a=>a.owner===side&&!a.move&&!a.siege);
   assert.ok(ready,`${side} should retain a field command`);
-  const next=page.locator(`[data-army="${ready.id}"]`);await selectMarker(next);
+  const next=page.locator(`[data-army="${ready.id}"]`);await selectMarker(next,page);
   await page.locator('#command-detail [data-order="hold"]').click();
   await page.locator('#save').click();
   const after=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')));

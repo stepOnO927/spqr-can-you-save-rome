@@ -28,4 +28,3 @@ test('classification remains conservative',()=>{
  assert.equal(classifySession({activeMs:120000,actions:3}).category,'engaged_gameplay_session');
  assert.equal(classifySession({knownTest:true,activeMs:120000,actions:3}).category,'known_development_test');
 });
-

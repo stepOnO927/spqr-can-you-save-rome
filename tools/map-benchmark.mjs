@@ -6,6 +6,7 @@ import os from 'node:os';
 import assert from 'node:assert/strict';
 
 const browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+const testUrl=process.env.SPQR_TEST_URL||'http://127.0.0.1:5173';
 const page=await browser.newPage({viewport:{width:1920,height:1080},deviceScaleFactor:1});
 const errors=[],tiles={ok:0,httpError:0,failed:0,cancelled:0};
 const tile=url=>/server\.arcgisonline\.com|elevation-tiles-prod\.s3\.amazonaws\.com|s3\.amazonaws\.com\/elevation-tiles-prod/.test(url);
@@ -41,7 +42,7 @@ async function exercise(){
 }
 try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
- await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});
+ await page.goto(`${testUrl}/map-lab/`,{waitUntil:'domcontentloaded'});
  await page.locator('#start-overlay:not([hidden])').waitFor({timeout:30000});await page.locator('#start-free').click();
  await page.locator('[data-city="ROMA"]').waitFor();await page.waitForTimeout(8000);
  const renderer=await page.evaluate(()=>{const canvas=document.querySelector('.maplibregl-canvas'),gl=canvas?.getContext('webgl2')||canvas?.getContext('webgl');const ext=gl?.getExtension('WEBGL_debug_renderer_info');return ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):'unavailable'});

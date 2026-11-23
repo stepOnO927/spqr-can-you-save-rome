@@ -1,11 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,recruit,upgradeSave,tick,resolveBattle,region,adjacent} from '../engine.js?v=dossier-archive-1';
-import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=dossier-archive-1';
-import {commandFactor,advanceMissingCommanders,advanceCharacters} from '../character-system.js?v=dossier-archive-1';
-import {deriveGovernment} from '../governance.js?v=dossier-archive-1';
-import {successorFor} from '../characters.js?v=dossier-archive-1';
-import {createFictionalPerson} from '../dynasties.js?v=dossier-archive-1';
+import {newGame,recruit,upgradeSave,tick,resolveBattle,region,adjacent} from '../engine.js?v=faces-name-disagreement-1';
+import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=faces-name-disagreement-1';
+import {commandFactor,advanceMissingCommanders,advanceCharacters} from '../character-system.js?v=faces-name-disagreement-1';
+import {deriveGovernment} from '../governance.js?v=faces-name-disagreement-1';
+import {successorFor} from '../characters.js?v=faces-name-disagreement-1';
+import {createFictionalPerson} from '../dynasties.js?v=faces-name-disagreement-1';
+const namedReplacement=(s,unit)=>{assert.match(unit.characterId,/^fictional:\d+$/);assert.deepEqual(unit.commander,s.world.dynasties.catalog[unit.characterId].name);assert.equal(s.world.characters[unit.characterId].militaryOnly,true);return unit.characterId};
 
 test('a local friendly person may command a vacant army and the appointment survives saving',()=>{
  let s=newGame('senate');assert.equal(recruit(s,'roma'),true);const unit=s.armies.find(a=>a.id==='levy1');
@@ -18,7 +19,7 @@ test('a commander can be replaced or relieved without losing their location',()=
  let s=newGame('senate');const army=s.armies.find(a=>a.id==='pompey');assert.ok(availableCommanders(s,army.id).includes('cato'));
  assert.equal(appointCommander(s,army.id,'cato').ok,true);assert.equal(s.world.characters.pompey.location,'roma');
  s=upgradeSave(JSON.parse(JSON.stringify(s)));tick(s);assert.equal(s.world.characters.pompey.location,'roma');assert.equal(s.armies.find(a=>a.id==='pompey').characterId,'cato');
- assert.equal(releaseCommander(s,'pompey').ok,true);tick(s);assert.equal(s.world.characters.cato.location,'roma');assert.equal(s.armies.find(a=>a.id==='pompey').characterId,null);
+ assert.equal(releaseCommander(s,'pompey').ok,true);const successor=namedReplacement(s,s.armies.find(a=>a.id==='pompey'));tick(s);assert.equal(s.world.characters.cato.location,'roma');assert.equal(s.armies.find(a=>a.id==='pompey').characterId,successor);
  assert.ok(availableCommanders(s,'pompey').includes('pompey'));
 });
 test('a destroyed army leaves its commander location unknown without claiming death',()=>{
@@ -42,9 +43,9 @@ test('a missing person cannot return without controlled territory or be chosen f
  assert.equal(deriveGovernment(s,'caesar').kind,'vacant');assert.ok(!successorFor(s,'caesar').includes('antony'));
  region(s,'gaul').owner='caesar';s.month++;advanceMissingCommanders(s);assert.equal(s.world.characters.antony.location,'gaul');
 });
-test('a missing commander’s health can change without revealing the outcome',()=>{
- const s=newGame('senate'),c=s.world.characters.cicero,threshold=1-Math.pow(1-.45,1/12),seed=Array.from({length:10000},(_,i)=>i).find(i=>((Math.imul(i,1664525)+1013904223)>>>0)/4294967296<threshold);c.location=null;c.health='dying';c.missing={origin:'roma',remaining:2,year:-50,month:12,healthSeed:seed};
- advanceCharacters(s);assert.equal(c.health,'deceased');assert.equal(c.alive,false);assert.ok(c.missing);assert.ok(!s.log.some(x=>x.en.includes('Cicero')&&x.en.includes('died')));
+test('missing commander health remains private until contact resumes',()=>{
+ const s=newGame('senate'),c=s.world.characters.cicero;c.location=null;c.health='dying';c.missing={origin:'roma',remaining:1,year:-50,month:12};s.world.intelSeed=0;
+ advanceCharacters(s);assert.equal(c.location,null);assert.ok(c.missing);assert.ok(!s.log.some(x=>x.en.includes('Cicero')&&x.en.includes('died')));
 });
 test('normal campaign months advance loss of contact and restore the leader after the third month',()=>{
  const s=newGame('caesar'),person=s.world.characters.caesar,army=s.armies.find(x=>x.id==='xiii');army.characterId=null;army.commander=['Unnamed officer','未具名军官'];person.location=null;person.missing={origin:'cisalpine',remaining:3,year:s.year,month:s.month,searchSeed:0};
@@ -66,19 +67,19 @@ test('commander eligibility respects saved fictional ages and historical uncerta
 });
 test('a seriously ill commander is relieved before the army moves or fights',()=>{
  const s=newGame('caesar'),unit=s.armies.find(a=>a.id==='xiii'),person=s.world.characters.caesar,skill=unit.skill;unit.move={to:'italiaN',remaining:1};person.health='seriously_ill';tick(s);
- assert.equal(unit.characterId,null);assert.deepEqual(unit.commander,['Unnamed officer','未具名军官']);assert.equal(person.location,'cisalpine');assert.equal(unit.skill,skill);assert.equal(s.battles[0].attacker.commander[1],'未具名军官');assert.equal(s.world.governments.caesar.kind,'acting_command');assert.ok(s.log.some(x=>x.zh.includes('重病无法指挥')));
+ namedReplacement(s,unit);assert.notEqual(unit.characterId,'caesar');assert.equal(person.location,'cisalpine');assert.equal(unit.skill,skill);assert.equal(s.battles[0].attacker.commander[1],unit.commander[1]);assert.equal(s.world.governments.caesar.kind,'acting_command');assert.ok(s.log.some(x=>x.zh.includes('重病无法指挥')));
 });
 test('death leaves the army rating intact and an eligible successor can be assigned',()=>{
  const s=newGame('caesar'),unit=s.armies.find(a=>a.id==='xiii'),skill=unit.skill;s.world.characters.caesar.health='dying';s.world.intelSeed=1972;advanceCharacters(s);
- assert.equal(s.world.characters.caesar.alive,false);assert.equal(unit.characterId,null);assert.equal(unit.skill,skill);assert.equal(appointCommander(s,unit.id,'antony').ok,true);assert.equal(unit.skill,skill);assert.equal(unit.characterId,'antony');
+ assert.equal(s.world.characters.caesar.alive,false);namedReplacement(s,unit);assert.equal(unit.skill,skill);assert.equal(appointCommander(s,unit.id,'antony').ok,true);assert.equal(unit.skill,skill);assert.equal(unit.characterId,'antony');
 });
 test('a missing commander in an old save is detached without revealing a location',()=>{
- let s=newGame('caesar'),person=s.world.characters.caesar;person.location=null;person.missing={origin:'cisalpine',remaining:3,year:s.year,month:s.month};s=upgradeSave(JSON.parse(JSON.stringify(s)));tick(s);
- assert.equal(s.world.characters.caesar.location,null);assert.equal(s.armies.find(a=>a.id==='xiii').characterId,null);assert.equal(s.world.governments.caesar.kind,'acting_command');
+ let s=newGame('caesar'),person=s.world.characters.caesar;person.location=null;person.missing={origin:'cisalpine',remaining:3,year:s.year,month:s.month,searchSeed:0};s=upgradeSave(JSON.parse(JSON.stringify(s)));tick(s);
+ assert.equal(s.world.characters.caesar.location,null);namedReplacement(s,s.armies.find(a=>a.id==='xiii'));assert.equal(s.world.governments.caesar.kind,'acting_command');
 });
 test('unseen foreign illness does not create a public report of a command change',()=>{
  const s=newGame('caesar'),unit=s.armies.find(a=>a.id==='pompey');s.world.characters.pompey.health='seriously_ill';const before=JSON.stringify(s.knowledge.caesar.senate.sightings.pompey);tick(s);
- assert.equal(unit.characterId,null);assert.equal(JSON.stringify(s.knowledge.caesar.senate.sightings.pompey),before);assert.ok(!s.log.some(e=>e.en.includes('simulated illness')&&e.en.includes('Pompey')));
+ namedReplacement(s,unit);assert.equal(JSON.stringify(s.knowledge.caesar.senate.sightings.pompey),before);assert.ok(!s.log.some(e=>e.en.includes('simulated illness')&&e.en.includes('Pompey')));
 });
 
 

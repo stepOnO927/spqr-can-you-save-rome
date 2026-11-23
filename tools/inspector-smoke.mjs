@@ -6,7 +6,7 @@ const browser=await chromium.launch({headless:true});
 try{
  const context=await browser.newContext({acceptDownloads:true}),page=await context.newPage(),errors=[];
  page.on('pageerror',e=>errors.push(e.message));
- await page.goto('http://127.0.0.1:5173/inspector.html',{waitUntil:'domcontentloaded'});
+ await page.goto((process.env.SPQR_TEST_URL||'http://127.0.0.1:5173')+'/inspector.html',{waitUntil:'domcontentloaded'});
  await page.evaluate(()=>localStorage.setItem('spqr-save-1','inspector-must-not-touch-this'));
  await page.locator('#shortcuts [data-select="economy"]').click();
  await page.locator('#run:not([disabled])').waitFor({timeout:120000});

@@ -1,8 +1,8 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=dossier-archive-1';
-import {createFictionalPerson,makeWill,settleInheritance,resolveInheritanceDispute,advanceEstateTransfers,advanceEstateRulingNotices,retryEstateRulingNotice,advanceDynasties,retryEstateTransfer,reclaimEstateTransfer} from '../dynasties.js?v=dossier-archive-1';
-import {addReport} from '../character-system.js?v=dossier-archive-1';
-import {renderGenealogy} from '../genealogy-ui.js?v=dossier-archive-1';
+import {newGame,upgradeSave} from '../engine.js?v=faces-name-disagreement-1';
+import {createFictionalPerson,makeWill,settleInheritance,resolveInheritanceDispute,advanceEstateTransfers,advanceEstateRulingNotices,retryEstateRulingNotice,advanceDynasties,retryEstateTransfer,reclaimEstateTransfer} from '../dynasties.js?v=faces-name-disagreement-1';
+import {addReport} from '../character-system.js?v=faces-name-disagreement-1';
+import {renderGenealogy} from '../genealogy-ui.js?v=faces-name-disagreement-1';
 
 function disputed(){
  const s=newGame('caesar'),parent=createFictionalPerson(s,{name:['Testator','立遗嘱者'],faction:'caesar',birthYear:-90,wealth:30}),child=createFictionalPerson(s,{name:['Child','本方子女'],faction:'caesar',birthYear:-65,parents:[parent]}),foreign=createFictionalPerson(s,{name:['Known heir','报告受益人'],faction:'egypt',birthYear:-70,parents:[parent]});

@@ -2,7 +2,7 @@ import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 
 const browser=await chromium.launch({headless:true});
-const origin='http://127.0.0.1:5173';
+const origin=process.env.SPQR_TEST_URL||'http://127.0.0.1:5173';
 const reports=[];
 async function visibleInFrame(locator){
   return locator.evaluate(el=>{const b=el.getBoundingClientRect();return b.width>0&&b.height>0&&b.top>=0&&b.bottom<=innerHeight&&b.left>=0&&b.right<=innerWidth});
@@ -14,11 +14,14 @@ try{
     page.on('pageerror',e=>errors.push(e.message));
     await page.goto(origin+'/',{waitUntil:'domcontentloaded'});
     await page.locator('#start-campaign').waitFor();
+    await page.locator('.setup-advanced').evaluate(el=>el.open=true);
+    await page.locator('#campaign-guide').uncheck();
+    await page.locator('#start-campaign').scrollIntoViewIfNeeded();
     assert.equal(await visibleInFrame(page.locator('#start-campaign')),true,'Roman Start outside '+width+'x'+height);
     await page.locator('#start-campaign').tap();
     console.log('Roman viewport',width,height,await page.evaluate(()=>{const ids=['.top','.shell','.shell main','.map-toolbar','#step','#map-svg'];return {portrait:matchMedia('(orientation:portrait)').matches,landscapeRule:matchMedia('(max-height:600px) and (orientation:landscape)').matches,inner:[innerWidth,innerHeight],scroll:document.documentElement.scrollHeight,rects:Object.fromEntries(ids.map(id=>{const e=document.querySelector(id),r=e?.getBoundingClientRect();return [id,r?{y:r.y,height:r.height,bottom:r.bottom}:null]}))}}));
     assert.equal(await visibleInFrame(page.locator('#step')),true,'Roman Advance outside '+width+'x'+height);
-    if(width<=1100){await page.locator('#tutorial-own-region').tap();assert.match(await page.locator('.experience-lesson').innerText(),/2\/8/)}
+    assert.equal(await page.locator('.experience-lesson').count(),0,'The guide was disabled for this free-play viewport check');
     await page.locator('#map-svg [data-army]').first().tap();
     assert.equal(await page.locator('.inspector:not(.closed)').count(),1,'Roman touch did not inspect an army');
     assert.deepEqual(errors,[],'Roman browser errors');

@@ -1,4 +1,4 @@
-import {isDeliveredReport} from '../person-knowledge.js?v=dossier-archive-1';
+import {isDeliveredReport} from '../person-knowledge.js?v=faces-name-disagreement-1';
 // A presentation projection of one observer's reports, never the simulated court.
 const key=ids=>JSON.stringify([...new Set(ids||[])].sort());
 const observed=r=>{const year=r.observationYear??r.year,month=r.observationMonth??r.month;return Number.isFinite(year)&&Number.isInteger(month)?year*12+month:-Infinity};
