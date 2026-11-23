@@ -13,10 +13,10 @@ import {holdPosition,strategicRetreat,armySupply,encircled} from './grand-operat
 import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation,bindIdeaSelection,openInscriptionEditor} from './development-ui.js?v=73';
 import {drawMap,mapPoint} from './map.js?v=69';
 import {avoidGrandLabelCollisions} from './map-label-layout.js?v=3';
-import {chronicleHtml,notificationsHtml,briefingHtml,battleReportHtml,reportLabel,eventDate} from './reports-ui.js?v=16';
+import {chronicleHtml,notificationsHtml,briefingHtml,battleReportHtml,reportLabel,eventDate} from './reports-ui.js?v=17';
 import {unreadCount,markRead,latestCritical,eventText} from './campaign-reports.js?v=14';
 import {assessment,firstHostileOnRoute,sendScouts,probePositions,delayAttack,requestReinforcements} from './reconnaissance.js?v=17';
-import {intelligenceHtml,fortificationText} from './recon-ui.js?v=15';
+import {intelligenceHtml,fortificationText} from './recon-ui.js?v=16';
 import {cultureLabel} from './culture-labels.js?v=1';
 import {settlementAdvice} from './settlement-ui.js?v=1';
 import {courtMediationHtml} from './court-mediation-ui.js?v=2';

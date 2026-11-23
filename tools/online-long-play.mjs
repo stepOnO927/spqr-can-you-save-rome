@@ -36,6 +36,7 @@ try{
  await page.locator('#lab-orders button').click();
  const prebattle=await page.locator('.prebattle-intel').innerText();
  assert.match(prebattle,/confidence|可信度/i);
+ assert.doesNotMatch(prebattle,/1 months/);
  await page.locator('#attack-anyway').click();
  for(let i=1;i<months;i++){
   if(await page.locator('#advance').isDisabled())break;

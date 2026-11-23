@@ -173,6 +173,7 @@ test('reports preserve observation and arrival, age without leaking fortificatio
  assert.doesNotMatch(chineseSummary,/\b(?:scouts|rumor|unverified|confirmed)\b/);
  const englishSummary=reconSummaryHtml(scout,'en');
  assert.match(englishSummary,/Observed 1\/49 BCE/);assert.match(englishSummary,/Arrived 2\/49 BCE/);
+ assert.match(englishSummary,/Age 1 month/);
  assert.match(englishSummary,/Misinformation risk High/);
  s.armies.find(a=>a.id==='italy').reconPending=null;
  assert.equal(probePositions(s,'italy','cisalpine').ok,true);
@@ -180,6 +181,7 @@ test('reports preserve observation and arrival, age without leaking fortificatio
  assert.ok(['highly credible','disputed','unverified','rumor'].includes(reports[0].confidence));
  const html=intelligenceHtml(assessment(s,'italy','cisalpine'),target,'en');
  assert.match(html,/Observed \/ arrived/);assert.match(html,/Compare intelligence reports/);
+ assert.doesNotMatch(html,/1 months/);
  assert.match(intelligenceHtml(assessment(s,'italy','cisalpine'),target,'zh'),/比较情报报告/);
 });
 test('probe has a real resource and readiness cost; delay lets AI advance',()=>{
