@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,diplomacy,estimatedStrength,isWar} from '../engine.js?v=multipolar-review-1';
-import {formCoalition,coalitionPeaceExemption} from '../coalitions.js?v=multipolar-review-1';
-import {inspectState} from '../inspector-diagnostics.js?v=multipolar-review-1';
-import {coalitionCouncilHtml} from '../coalition-council-ui.js?v=multipolar-review-1';
+import {newGame,upgradeSave,diplomacy,estimatedStrength,isWar} from '../engine.js?v=roman-vacancy-1';
+import {formCoalition,coalitionPeaceExemption} from '../coalitions.js?v=roman-vacancy-1';
+import {inspectState} from '../inspector-diagnostics.js?v=roman-vacancy-1';
+import {coalitionCouncilHtml} from '../coalition-council-ui.js?v=roman-vacancy-1';
 
 function atWarTogether(){
  const s=newGame('caesar');s.relations['caesar:egypt']=40;s.relations['caesar:numidia']=40;s.relations['egypt:senate']=-30;s.relations['numidia:senate']=-30;

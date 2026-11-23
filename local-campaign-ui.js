@@ -1,5 +1,5 @@
-import {localCampaignCity,localRecruit,localTradeOffer,localTradePartners,localPeerCities,localPeerTradeOffer,localProtectionOffer,localIndependenceOffer} from './local-campaign.js?v=multipolar-review-1';
-import {FACTIONS} from './data.js?v=multipolar-review-1';
+import {localCampaignCity,localRecruit,localTradeOffer,localTradePartners,localPeerCities,localPeerTradeOffer,localProtectionOffer,localIndependenceOffer} from './local-campaign.js?v=roman-vacancy-1';
+import {FACTIONS} from './data.js?v=roman-vacancy-1';
 
 const escape=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 

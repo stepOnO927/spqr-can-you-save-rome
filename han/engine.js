@@ -1,18 +1,18 @@
 // MANDATE OF HEAVEN — campaign engine. Independent of the Roman engine: the
 // Roman campaign, its saves and its modules are untouched. Han saves use
 // their own storage keys and carry dlc:'mandate-of-heaven'.
-import {START,REGIONS,FACTIONS,PLAYABLE,OASIS,OFFICES} from './data.js?v=multipolar-review-1';
+import {START,REGIONS,FACTIONS,PLAYABLE,OASIS,OFFICES} from './data.js?v=roman-vacancy-1';
 import {EURASIAN_FACTIONS,EURASIAN_RULERS} from './eurasia-data.js';
 import {initDependencies,advanceDependencies,changeDependency} from './dependencies.js';
-import {PEOPLE,PERSON,SURNAMES,GIVEN} from './people.js?v=multipolar-review-1';
-import {recordBirth,crown,enforceDynasticInvariants,isLiuClan,eligibility,statusOf,yearsBetween,claimStrength} from './dynasty.js?v=multipolar-review-1';
-import {initCourt,advanceCourt,resolveSuccession,computeMandate,recomputeInfluence,appoint,issueEdict,EDICTS,adminCapacity,emperorAuthority} from './court.js?v=multipolar-review-1';
-import {initIntel,initProtectorate,advanceFrontier,atWar,relation,setRelation,access,observe} from './frontier.js?v=multipolar-review-1';
-import {initSilk,advanceSilk} from './silk-road.js?v=multipolar-review-1';
-import {advanceFocus,focusState} from './focus.js?v=multipolar-review-1';
-import {PRESETS,marchMonths,routeBetween,supplyFor,resolveBattle,templateStats,cultureOf,recruit,recruitQuote,neighbours} from './military.js?v=multipolar-review-1';
-import {roll,clamp,log,advanceDate,monthIndex} from './util.js?v=multipolar-review-1';
-import {initialize as initializeAmbition,advance as advanceAmbition} from './ambitions.js?v=multipolar-review-1';
+import {PEOPLE,PERSON,SURNAMES,GIVEN} from './people.js?v=roman-vacancy-1';
+import {recordBirth,crown,enforceDynasticInvariants,isLiuClan,eligibility,statusOf,yearsBetween,claimStrength} from './dynasty.js?v=roman-vacancy-1';
+import {initCourt,advanceCourt,resolveSuccession,computeMandate,recomputeInfluence,appoint,issueEdict,EDICTS,adminCapacity,emperorAuthority} from './court.js?v=roman-vacancy-1';
+import {initIntel,initProtectorate,advanceFrontier,atWar,relation,setRelation,access,observe} from './frontier.js?v=roman-vacancy-1';
+import {initSilk,advanceSilk} from './silk-road.js?v=roman-vacancy-1';
+import {advanceFocus,focusState} from './focus.js?v=roman-vacancy-1';
+import {PRESETS,marchMonths,routeBetween,supplyFor,resolveBattle,templateStats,cultureOf,recruit,recruitQuote,neighbours} from './military.js?v=roman-vacancy-1';
+import {roll,clamp,log,advanceDate,monthIndex} from './util.js?v=roman-vacancy-1';
+import {initialize as initializeAmbition,advance as advanceAmbition} from './ambitions.js?v=roman-vacancy-1';
 
 export const DLC_ID='mandate-of-heaven',SAVE_VERSION='han-1';
 export const SCENARIOS={

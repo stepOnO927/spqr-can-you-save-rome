@@ -1,7 +1,7 @@
 // Names of Legend: campaign reputations are earned from dated, public actions.
 // The historical catalog is never rewritten. All generated identities live in the save.
-import {CHARACTER_CATALOG} from './characters.js?v=multipolar-review-1';
-import {fictionalPortraitKey} from './portrait-registry.js?v=multipolar-review-1';
+import {CHARACTER_CATALOG} from './characters.js?v=roman-vacancy-1';
+import {fictionalPortraitKey} from './portrait-registry.js?v=roman-vacancy-1';
 
 const roman={I:1,II:2,III:3,IV:4,V:5,VI:6,VII:7,VIII:8,IX:9,X:10,XI:11,XII:12,XIII:13,XIV:14,XV:15};
 const numerals=Object.fromEntries(Object.entries(roman).map(([key,value])=>[value,key]));

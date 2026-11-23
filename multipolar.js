@@ -1,9 +1,9 @@
-import {isDeliveredReport} from './person-knowledge.js?v=multipolar-review-1';
-import {ROUTES} from './data.js?v=multipolar-review-1';
-import {reportedControl} from './control-intelligence.js?v=multipolar-review-1';
-import {reportedDiplomacy} from './diplomatic-knowledge.js?v=multipolar-review-1';
-import {activeAgreement} from './agreements.js?v=multipolar-review-1';
-import {politicalMemoryAdjustment} from './political-memory.js?v=multipolar-review-1';
+import {isDeliveredReport} from './person-knowledge.js?v=roman-vacancy-1';
+import {ROUTES} from './data.js?v=roman-vacancy-1';
+import {reportedControl} from './control-intelligence.js?v=roman-vacancy-1';
+import {reportedDiplomacy} from './diplomatic-knowledge.js?v=roman-vacancy-1';
+import {activeAgreement} from './agreements.js?v=roman-vacancy-1';
+import {politicalMemoryAdjustment} from './political-memory.js?v=roman-vacancy-1';
 
 const pair=(a,b)=>[a,b].sort().join(':'),now=s=>s.year*12+s.month;
 // Only an actor's own condition and delivered intelligence can trigger an

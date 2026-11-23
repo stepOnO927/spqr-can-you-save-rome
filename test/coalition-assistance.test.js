@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,estimatedStrength,tick} from '../engine.js?v=multipolar-review-1';
-import {formCoalition} from '../coalitions.js?v=multipolar-review-1';
-import {COALITION_AID,sendCoalitionAidRequest,advanceCoalitionAidRequests,proposeCoalitionAidAI} from '../coalition-assistance.js?v=multipolar-review-1';
-import {syncCoalitionAidLetters,receivedMail,replyToLetter} from '../epistulae.js?v=multipolar-review-1';
-import {inspectState} from '../inspector-diagnostics.js?v=multipolar-review-1';
+import {newGame,upgradeSave,estimatedStrength,tick} from '../engine.js?v=roman-vacancy-1';
+import {formCoalition} from '../coalitions.js?v=roman-vacancy-1';
+import {COALITION_AID,sendCoalitionAidRequest,advanceCoalitionAidRequests,proposeCoalitionAidAI} from '../coalition-assistance.js?v=roman-vacancy-1';
+import {syncCoalitionAidLetters,receivedMail,replyToLetter} from '../epistulae.js?v=roman-vacancy-1';
+import {inspectState} from '../inspector-diagnostics.js?v=roman-vacancy-1';
 
 const roll=()=>.5;
 function council(){

@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,recruit,upgradeSave,tick,resolveBattle,region,adjacent} from '../engine.js?v=multipolar-review-1';
-import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=multipolar-review-1';
-import {commandFactor,advanceMissingCommanders,advanceCharacters} from '../character-system.js?v=multipolar-review-1';
-import {deriveGovernment} from '../governance.js?v=multipolar-review-1';
-import {successorFor} from '../characters.js?v=multipolar-review-1';
-import {createFictionalPerson} from '../dynasties.js?v=multipolar-review-1';
+import {newGame,recruit,upgradeSave,tick,resolveBattle,region,adjacent} from '../engine.js?v=roman-vacancy-1';
+import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=roman-vacancy-1';
+import {commandFactor,advanceMissingCommanders,advanceCharacters} from '../character-system.js?v=roman-vacancy-1';
+import {deriveGovernment} from '../governance.js?v=roman-vacancy-1';
+import {successorFor} from '../characters.js?v=roman-vacancy-1';
+import {createFictionalPerson} from '../dynasties.js?v=roman-vacancy-1';
 
 test('a local friendly person may command a vacant army and the appointment survives saving',()=>{
  let s=newGame('senate');assert.equal(recruit(s,'roma'),true);const unit=s.armies.find(a=>a.id==='levy1');

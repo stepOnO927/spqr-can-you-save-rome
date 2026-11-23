@@ -9,7 +9,7 @@ try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','en'));
  await page.goto(`${base}/map-lab/`,{waitUntil:'domcontentloaded'});
  await page.evaluate(async()=>{
-  const {newGame}=await import('/engine.js?v=multipolar-review-1'),state=newGame('caesar');
+  const {newGame}=await import('/engine.js?v=roman-vacancy-1'),state=newGame('caesar');
   state.armies.find(army=>army.id==='xiii').region='italiaS';
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state}));
  });

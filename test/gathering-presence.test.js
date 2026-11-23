@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=multipolar-review-1';
-import {sendLetter,replyToLetter,advanceMail,receivedMail,gatheringPlan} from '../epistulae.js?v=multipolar-review-1';
-import {mailboxHtml} from '../mail-ui.js?v=multipolar-review-1';
-import {createFictionalPerson} from '../dynasties.js?v=multipolar-review-1';
+import {newGame,upgradeSave} from '../engine.js?v=roman-vacancy-1';
+import {sendLetter,replyToLetter,advanceMail,receivedMail,gatheringPlan} from '../epistulae.js?v=roman-vacancy-1';
+import {mailboxHtml} from '../mail-ui.js?v=roman-vacancy-1';
+import {createFictionalPerson} from '../dynasties.js?v=roman-vacancy-1';
 
 function invitation(){
  const s=newGame('caesar'),host=s.world.characters['fictional:1'],guest=s.world.characters.caesar;
