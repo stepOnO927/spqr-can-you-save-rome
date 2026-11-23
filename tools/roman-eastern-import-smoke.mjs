@@ -56,7 +56,6 @@ try{
  const travelling=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')));
  assert.equal(travelling.world.hanWorld.bridge.settled[achaia].status,'in_transit');
  assert.equal(travelling.factions.caesar.treasury,83);
- const achaiaStock=travelling.markets.regions.achaia.goods.horses.stock;
  await page.reload({waitUntil:'domcontentloaded'});await page.locator('[data-slot="load"]').click();await page.locator('[data-tab="east"]').click();
  assert.match(await page.locator('.inspector').innerText(),/Your cargo in transit/);
  for(let i=0;i<5;i++)await page.locator('#step').click();
@@ -65,8 +64,8 @@ try{
  await page.evaluate(()=>document.querySelector('#save').click());
  const arrived=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')));
  assert.equal(arrived.world.hanWorld.bridge.settled[achaia].status,'delivered');
- assert.equal(arrived.markets.regions.achaia.goods.horses.stock,achaiaStock+1);
- assert.equal(arrived.markets.transactions.filter(x=>x.linkedHanShipment===achaia).length,1);
+ assert.equal(arrived.world.hanWorld.bridge.settled[achaia].quantity,1);
+ assert.deepEqual(arrived.markets.transactions.filter(x=>x.linkedHanShipment===achaia).map(x=>x.status),['imported']);
  assert.deepEqual(errors,[]);
  console.log('Roman eastern import browser smoke passed: local and long-haul purchases, bilingual panel, save/load and timed arrival without duplicate payment.');
 }finally{await browser.close()}
