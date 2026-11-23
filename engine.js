@@ -257,9 +257,11 @@ export function issueMilitaryOrder(s,armyId,kind,targetId=null,owner=s.player,{e
   return {ok:false,reason:'unavailable'};
 }
 
-export function startExpedition(s,armyId,nodes,owner=s.player){
+export function startExpedition(s,armyId,nodes,owner=s.player,{localObjectiveId=null}={}){
   const unit=army(s,armyId),destination=Array.isArray(nodes)?nodes.at(-1):null;
   if(!unit||unit.owner!==owner||unit.men<=0||unit.move||unit.siege||unit.reorg||planControlled(s,armyId)||!Array.isArray(nodes)||nodes.length<2||nodes[0]!==unit.region)return {ok:false,reason:'unavailable'};
+  const localObjective=localObjectiveId?localEntity(s,localObjectiveId):null;
+  if(localObjectiveId&&(!localObjective||localObjective.type!=='roman_town'||localObjective.theater!==destination))return {ok:false,reason:'invalid_objective'};
   const plan=planRoutes(s,armyId,destination);
   const chosen=plan.routes?.find(route=>route.nodes.length===nodes.length&&route.nodes.every((id,index)=>id===nodes[index]));
   if(!chosen||!['legal','treaty','supply_risk'].includes(chosen.status)||chosen.legs.some(leg=>!['legal','treaty'].includes(leg.status)))return {ok:false,reason:'route_unconfirmed'};
@@ -267,7 +269,7 @@ export function startExpedition(s,armyId,nodes,owner=s.player){
   if(!march.ok||march.unauthorized||!march.reportedOwner)return {ok:false,reason:march.reason||'route_unconfirmed'};
   const order=issueMilitaryOrder(s,armyId,march.hostile?'attack':'move',next,owner);
   if(!order.ok)return order;
-  unit.expedition={destination,nodes:[...nodes],nextIndex:1,status:'active',reason:null,started:{year:s.year,month:s.month}};
+  unit.expedition={destination,nodes:[...nodes],nextIndex:1,status:'active',reason:null,started:{year:s.year,month:s.month},...(localObjectiveId?{localObjectiveId}:{})};
   return {ok:true,expedition:unit.expedition};
 }
 

@@ -7,6 +7,24 @@ import {startupDiagnostics} from '../inspector-diagnostics.js';
 
 const routeTo = (state, destination) => planRoutes(state, 'xiii', destination).routes[0].nodes;
 
+test('a town expedition remembers its local objective without taking the town or theater', () => {
+  const state = newGame('caesar'), veterans = state.armies.find(unit => unit.id === 'viii');
+  const route = planRoutes(state, veterans.id, 'italiaS').routes.find(item => item.status === 'legal').nodes;
+  assert.equal(startExpedition(state, veterans.id, route, state.player, {localObjectiveId: 'iguvium'}).reason, 'invalid_objective');
+  assert.equal(veterans.move, null);
+  assert.equal(startExpedition(state, veterans.id, route, state.player, {localObjectiveId: 'corfinium'}).ok, true);
+  assert.equal(veterans.expedition.localObjectiveId, 'corfinium');
+  const restored = upgradeSave(JSON.parse(JSON.stringify(state)));
+  assert.equal(restored.armies.find(unit => unit.id === veterans.id).expedition.localObjectiveId, 'corfinium');
+  assert.equal(restored.regions.find(region => region.id === 'italiaS').owner, 'senate');
+  const town = restored.regions.flatMap(region => region.localEntities || []).find(entity => entity.id === 'corfinium');
+  assert.equal(town.controller, 'senate');
+  assert.equal(town.legalSovereign, 'senate');
+  assert.equal(startupDiagnostics(restored).warnings.some(item => item.code === 'invalid-expedition-objective'), false);
+  town.theater = 'italiaN';
+  assert.equal(startupDiagnostics(restored).warnings.some(item => item.code === 'invalid-expedition-objective'), true);
+});
+
 test('a confirmed multi-theater expedition advances one validated leg at a time and survives a save', () => {
   const state = newGame('caesar'), legion = state.armies.find(unit => unit.id === 'xiii');
   assert.equal(startExpedition(state, legion.id, routeTo(state, 'gaul')).ok, true);

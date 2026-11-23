@@ -41,6 +41,15 @@ try{
  assert.equal(town.legalSovereign,'senate');
  assert.equal(saved.regions.find(region=>region.id==='italiaS').owner,'senate');
  assert.equal(saved.armies.find(army=>army.id==='viii').move,null);
+ await objective.evaluate(node=>node.click());
+ await page.locator('#town-route-army').selectOption('viii');
+ await page.locator('#town-route-plan').click();
+ await page.locator('.route-choice button').filter({hasText:'START EXPEDITION'}).first().click();
+ assert.match(await page.locator('#command-detail').innerText(),/LOCAL OBJECTIVE: Corfinium/);
+ await page.locator('#save').click();
+ const expeditionSave=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')));
+ assert.equal(expeditionSave.armies.find(army=>army.id==='viii').expedition.localObjectiveId,'corfinium');
+ assert.equal(expeditionSave.regions.find(region=>region.id==='italiaS').owner,'senate');
  const iguvium=page.locator('.city-marker[data-city="IGUVIUM"]');
  await iguvium.waitFor({state:'visible'});
  await page.locator('[data-town-objective="iguvium"]').evaluate(node=>node.click());
