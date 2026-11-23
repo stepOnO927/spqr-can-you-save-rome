@@ -11,8 +11,11 @@ export function reconReports(s,owner,regionId){
  const reports=(s.militaryRecon||[]).filter(r=>r.owner===owner&&r.regionId===regionId).sort((a,b)=>((b.arrivalYear??b.year)*12+(b.arrivalMonth??b.month))-((a.arrivalYear??a.year)*12+(a.arrivalMonth??a.month)));
  return reports.map(report=>{
   const age=Math.max(0,turn(s)-observedAt(report));
-  const other=reports.find(r=>r!==report&&r.source!==report.source&&Math.abs(observedAt(r)-observedAt(report))<=2&&r.min!=null&&report.min!=null);
-  const corroborated=!!other&&Math.max(report.min,other.min)<=Math.min(report.max,other.max),disputed=!!other&&!corroborated;
+  // Armies can move between monthly observations. Only a separately sourced
+  // report from the same observed month can verify or contradict this one.
+  const peers=reports.filter(r=>r!==report&&r.source!==report.source&&observedAt(r)===observedAt(report)&&r.min!=null&&report.min!=null);
+  const corroborated=peers.some(r=>Math.max(report.min,r.min)<=Math.min(report.max,r.max));
+  const disputed=peers.some(r=>Math.max(report.min,r.min)>Math.min(report.max,r.max));
   const confidence=age>6?'outdated':report.source==='battle'?(age<=1?'confirmed':'highly credible'):disputed?'disputed':report.min==null?'rumor':corroborated?'highly credible':'unverified';
   return {...report,observationYear:report.observationYear??report.year,observationMonth:report.observationMonth??report.month,arrivalYear:report.arrivalYear??report.year,arrivalMonth:report.arrivalMonth??report.month,age,confidence,corroborated,disputed,reliability:report.reliability??(report.source==='probe'?'medium':'low')};
  });

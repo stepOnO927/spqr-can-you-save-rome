@@ -80,6 +80,12 @@ try{
  await page.locator('#load').click();if(page.viewportSize().width>600)await page.locator('#brief-toggle').click();await page.locator('[data-army="italy"]').click();
  assert.equal(await page.locator('.war-council img').count(),0);
  assert.equal(await page.evaluate(()=>window.__injected),undefined);
+ await page.locator('.war-council details summary').click();
+ assert.match(await page.locator('.war-council details').innerText(),/Only separate sources observing the same month can corroborate or conflict/);
+ await page.locator('#language').click();
+ await page.locator('.war-council details summary').click();
+ assert.match(await page.locator('.war-council details').innerText(),/只有同月观察、来源不同的报告才能相互印证或构成冲突/);
+ await page.locator('#language').click();
  await page.locator('[data-city="RAVENNA"]').evaluate(el=>el.click());
  assert.match(await page.locator('#command-detail .detail-grid').innerText(),/Fortification\s+≈2 ·/);
  assert.doesNotMatch(await page.locator('#command-detail .detail-grid').innerText(),/Fortification\s+7/);

@@ -184,6 +184,26 @@ test('reports preserve observation and arrival, age without leaking fortificatio
  assert.doesNotMatch(html,/1 months/);
  assert.match(intelligenceHtml(assessment(s,'italy','cisalpine'),target,'zh'),/比较情报报告/);
 });
+test('military reports from different observation months do not invent a dispute or corroboration',()=>{
+ const s=newGame('senate'),base={owner:'senate',armyId:'italy',regionId:'cisalpine',year:-49,arrivalYear:-49,positions:'enemy formations suspected in theater'};
+ s.month=4;
+ s.militaryRecon=[
+  {...base,source:'scouts',month:1,observationYear:-49,observationMonth:1,arrivalMonth:2,min:2000,max:4000},
+  {...base,source:'probe',month:3,observationYear:-49,observationMonth:3,arrivalMonth:3,min:8000,max:11000}
+ ];
+ let reports=reconReports(s,'senate','cisalpine');
+ assert.ok(reports.every(r=>!r.disputed&&!r.corroborated&&r.confidence==='unverified'));
+ assert.match(intelligenceHtml(assessment(s,'italy','cisalpine'),region(s,'cisalpine'),'en'),/Compare intelligence reports/);
+ s.militaryRecon[0].observationMonth=3;
+ reports=reconReports(s,'senate','cisalpine');
+ assert.ok(reports.every(r=>r.disputed&&r.confidence==='disputed'),'same-month independent estimates that cannot overlap are conflicting');
+ s.militaryRecon[0].min=8500;s.militaryRecon[0].max=9500;
+ reports=reconReports(upgradeSave(JSON.parse(JSON.stringify(s))),'senate','cisalpine');
+ assert.ok(reports.every(r=>r.corroborated&&!r.disputed&&r.confidence==='highly credible'),'same-month independent overlapping estimates corroborate after reload');
+ s.militaryRecon.push({...base,source:'battle',month:3,observationYear:-49,observationMonth:3,arrivalMonth:4,min:16000,max:18000});
+ reports=reconReports(s,'senate','cisalpine');
+ assert.equal(reports.find(r=>r.source==='scouts').confidence,'disputed','a contradictory third source must not be hidden by a corroborating source');
+});
 test('probe has a real resource and readiness cost; delay lets AI advance',()=>{
  const s=newGame('senate'),food=s.factions.senate.food;
  const out=probePositions(s,'italy','cisalpine');assert.equal(out.ok,true);
