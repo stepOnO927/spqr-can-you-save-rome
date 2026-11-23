@@ -5,6 +5,7 @@ import rivers from '../mediterranean-rivers.js';
 import poRiverDetail from '../po-river-detail.js';
 import centralItalyRivers from '../central-italy-rivers.js?v=1';
 import lakes from '../mediterranean-lakes.js';
+import lazioLakes from './lazio-lakes.js?v=1';
 import gardaLakeDetail from '../garda-lake-detail.js';
 import poHistoricCoast from '../po-historic-coast.js';
 import ravennaLandforms from './ravenna-paleolandforms.js?v=1';
@@ -60,7 +61,7 @@ export const physicalStyle={
   'ravenna-paleolandforms':{type:'geojson',data:ravennaLandforms,attribution:'Michele Abballe, PalaeoDEMs of the hinterland of Ravenna, Roman-period (~100 CE) palaeoLandforms; CC0, DOI 10.5281/zenodo.14534157'},
   'nile-delta':{type:'geojson',data:nileDelta,attribution:'Approximate Nile Delta between Natural Earth river branches'},
   'nile-delta-wash':{type:'image',url:'./nile-delta-wash.png',coordinates:[[29.8,31.7],[32,31.7],[32,30],[29.8,30]]},
-  lakes:{type:'geojson',data:lakes},
+  lakes:{type:'geojson',data:{type:'FeatureCollection',features:[...lakes.features,...lazioLakes.features]},attribution:'Natural Earth 1:10m lakes, public domain; Lazio lake shorelines: OpenStreetMap contributors, ODbL 1.0'},
   'garda-lake-detail':{type:'geojson',data:gardaLakeDetail,attribution:euHydroAttribution},
   'egypt-contours':{type:'geojson',data:egyptContours,attribution:terrainAttribution},
   'italy-contours':{type:'geojson',data:italyContours,attribution:terrainAttribution},

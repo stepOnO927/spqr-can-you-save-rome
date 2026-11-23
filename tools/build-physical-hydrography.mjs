@@ -13,11 +13,20 @@ const intersects=geometry=>{
  return west<=bounds[2]&&east>=bounds[0]&&south<=bounds[3]&&north>=bounds[1];
 };
 const round=value=>typeof value[0]==='number'?value.map(n=>Math.round(n*1e5)/1e5):value.map(round);
+function correctedLakeName(feature){
+ const name=feature.properties.name;
+ if(name!=='Lago di Bracciano')return name||null;
+ const [lon,lat]=feature.geometry.coordinates[0][0];
+ if(lon<11.8||lon>12.1||lat<42.5||lat>42.7)throw Error('Natural Earth Lazio lake position changed; review its name before rebuilding');
+ // This source polygon surrounds Bolsena, not Bracciano. Regione Lazio and
+ // EU Natura 2000 site coordinates place Bolsena near 11.928 E, 42.593 N.
+ return 'Lago di Bolsena';
+}
 async function build(name,output,include){
  const response=await fetch(source(name),{signal:AbortSignal.timeout(30000)});
  if(!response.ok)throw new Error(`${name}: HTTP ${response.status}`);
  const original=await response.json();
- const features=original.features.filter(feature=>include(feature)&&intersects(feature.geometry)).map(feature=>({type:'Feature',properties:{name:feature.properties.name||null,rank:feature.properties.scalerank,kind:feature.properties.featurecla},geometry:{type:feature.geometry.type,coordinates:round(feature.geometry.coordinates)}}));
+ const features=original.features.filter(feature=>include(feature)&&intersects(feature.geometry)).map(feature=>({type:'Feature',properties:{name:name==='ne_10m_lakes'?correctedLakeName(feature):feature.properties.name||null,rank:feature.properties.scalerank,kind:feature.properties.featurecla},geometry:{type:feature.geometry.type,coordinates:round(feature.geometry.coordinates)}}));
  const target=fileURLToPath(new URL(`../${output}`,import.meta.url));
  await writeFile(target,`// Natural Earth 1:10m modern hydrography, public domain. Source revision ${revision}.\nexport default ${JSON.stringify({type:'FeatureCollection',features})};\n`);
  console.log(`${output}: ${features.length} features`);
