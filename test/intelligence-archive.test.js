@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=archived-exchange-1';
-import {addReport,advanceOperations,reportEvidence,refreshReportConfidence,reportedHealthSubjects,queueMission,visiblePersonName} from '../character-system.js?v=archived-exchange-1';
-import {createFictionalPerson} from '../dynasties.js?v=archived-exchange-1';
-import {isDeliveredReport} from '../person-knowledge.js?v=archived-exchange-1';
+import {newGame,upgradeSave} from '../engine.js?v=dossier-archive-1';
+import {addReport,advanceOperations,reportEvidence,refreshReportConfidence,reportedHealthSubjects,queueMission,visiblePersonName} from '../character-system.js?v=dossier-archive-1';
+import {createFictionalPerson} from '../dynasties.js?v=dossier-archive-1';
+import {isDeliveredReport} from '../person-knowledge.js?v=dossier-archive-1';
 const successfulSeed=Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=.65&&q<.7});
 
 test('delivered intelligence is retained beyond the active window and survives save/load',()=>{

@@ -1,4 +1,4 @@
-import {sendStrategicOffer,PLAYABLE} from './engine.js?v=archived-exchange-1';
+import {sendStrategicOffer,PLAYABLE} from './engine.js?v=dossier-archive-1';
 import {FACTIONS} from './data.js?v=phase-x-1';
 
 const escape=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
