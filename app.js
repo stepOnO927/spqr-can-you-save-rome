@@ -17,7 +17,7 @@ import {receivedMail,unreadCount,markRead,archiveLetter,markAllRead} from './epi
 import {mailboxHtml} from './mail-ui.js?v=faces-name-disagreement-1';
 import {setWartimePolicy} from './epistulae-personnel.js?v=faces-name-disagreement-1';
 import {decideDisputedHeir,personAge} from './dynasties.js?v=faces-name-disagreement-1';
-import {renderGenealogy,bindGenealogy} from './genealogy-ui.js?v=faces-name-disagreement-1';
+import {renderGenealogy,bindGenealogy} from './genealogy-ui.js?v=roman-vacancy-branch-1';
 import {canFinalizeCampaign,finalizeCampaign} from './legacy.js?v=faces-name-disagreement-1';
 import {marchReason} from './movement-help.js?v=defeat-1';
 import {syncChronicleDispatches} from './chronicle.js?v=faces-name-disagreement-1';
