@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,tick,upgradeSave} from '../engine.js';
 import {startResearch,startConstruction} from '../inventions.js';
-import {initializeCivilization,commissionCulturalEvent,fundEducation,knownForeignSpecialists,inviteForeignSpecialist,specialistRoles} from '../civilization.js';
+import {initializeCivilization,commissionCulturalEvent,fundEducation,knownForeignSpecialists,inviteForeignSpecialist,specialistRoles,aiCivilization} from '../civilization.js';
 
 const advance=(s,months)=>{for(let i=0;i<months;i++)tick(s)};
 
@@ -77,4 +77,16 @@ test('36 months of completed monuments and AI patronage persist through a save',
  const saved=upgradeSave(JSON.parse(JSON.stringify(s)));
  assert.equal(saved.civilization.prestige.egypt,s.civilization.prestige.egypt);
  assert.ok(saved.regions.find(r=>r.id==='egyptUpper').buildings.includes('inscriptions'));
+});
+
+test('AI courts pay the same recruitment costs and only use their received leads',()=>{
+ const s=newGame('caesar');s.wars=[];s.relations['egypt:senate']=80;
+ s.factions.egypt.treasury=300;s.civilization.prestige.egypt=8;
+ s.inventions.egypt.research={id:'water',remaining:2};
+ const before=s.factions.egypt.treasury;
+ aiCivilization(s,'egypt');assert.equal(s.civilization.recruitment.length,0);
+ s.knowledge.egypt.senate.reports.push({kind:'office_finance',value:'cicero',year:s.year,month:s.month});
+ aiCivilization(s,'egypt');assert.equal(s.civilization.recruitment[0].id,'cicero');
+ assert.equal(s.civilization.prestige.egypt,0);
+ assert.equal(s.factions.egypt.treasury,before-20);
 });
