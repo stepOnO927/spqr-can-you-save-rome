@@ -261,7 +261,10 @@ export function initializeDevelopment(s){
     d.materials ||= {stone:6,timber:7,metal:3};d.trade ||= [];d.offers=Array.isArray(d.offers)?d.offers.filter(o=>o&&typeof o.seller==='string'&&s.factions[o.seller]&&['material','idea'].includes(o.branch)&&typeof o.id==='string'&&Number.isFinite(o.remaining)&&o.remaining>0&&o.remaining<=12):[];d.purchaseRequests=Array.isArray(d.purchaseRequests)?d.purchaseRequests.filter(o=>o&&typeof o.buyer==='string'&&o.buyer!=='rebels'&&s.factions[o.buyer]&&['material','idea'].includes(o.branch)&&typeof o.id==='string'&&Number.isFinite(o.remaining)&&o.remaining>0&&o.remaining<=12):[];d.foreignOrigins ||= {};d.visitingScholars=Array.isArray(d.visitingScholars)?d.visitingScholars.filter(v=>v&&s.factions[v.partner]&&Number.isFinite(v.remaining)&&v.remaining>0):[];
     d.scholarRequests=Array.isArray(d.scholarRequests)?d.scholarRequests.filter(v=>v&&s.factions[v.host]&&['material','idea'].includes(v.branch)&&typeof v.id==='string'&&Number.isInteger(v.remaining)&&v.remaining>0&&v.remaining<=12):[];
     d.merchantContacts=d.merchantContacts&&typeof d.merchantContacts==='object'&&!Array.isArray(d.merchantContacts)?d.merchantContacts:{};
-    d.merchantLeads=Array.isArray(d.merchantLeads)?d.merchantLeads.filter(lead=>lead&&s.factions[lead.seller]&&MATERIALS.some(item=>item.id===lead.id)&&Number.isInteger(lead.expiresTurn)&&lead.expiresTurn>s.year*12+s.month&&!d.knownMaterial.includes(lead.id)):[];
+    d.merchantLeads=Array.isArray(d.merchantLeads)?d.merchantLeads.filter(lead=>{
+      const branch=lead?.branch||'material',catalog=branch==='material'?MATERIALS:branch==='idea'?IDEAS:[],known=branch==='material'?d.knownMaterial:d.knownIdeas;
+      return !!(lead&&s.factions[lead.seller]&&catalog.some(item=>item.id===lead.id)&&Number.isInteger(lead.expiresTurn)&&lead.expiresTurn>s.year*12+s.month&&!known.includes(lead.id));
+    }):[];
     d.exchangeRequests=Array.isArray(d.exchangeRequests)?d.exchangeRequests.filter(o=>o&&o.partner!==id&&o.partner!=='rebels'&&s.factions[o.partner]&&['material','idea'].includes(o.offerBranch)&&['material','idea'].includes(o.wantBranch)&&typeof o.offerId==='string'&&typeof o.wantId==='string'&&Number.isFinite(o.remaining)&&o.remaining>0&&o.remaining<=12):[];
     d.agreementRequests=Array.isArray(d.agreementRequests)?d.agreementRequests.filter(o=>o&&o.partner!==id&&o.partner!=='rebels'&&s.factions[o.partner]&&Number.isInteger(o.remaining)&&o.remaining>0&&o.remaining<=4&&Number.isInteger(o.sentYear)&&Number.isInteger(o.sentMonth)&&o.sentMonth>=1&&o.sentMonth<=12):[];
   }
@@ -273,8 +276,8 @@ const knowledgeInProgress=(d,branch,id)=>d.research?.branch===branch&&d.research
 const visitingScholarFor=(s,owner,branch,id)=>development(s,owner)?.visitingScholars.find(visit=>visit.remaining>0&&!visit.travelRemaining&&(!visit.route||visit.currentRegion===visit.destination)&&(!visit.id||visit.branch===branch&&visit.id===id));
 export function scholarResearchBonus(s,owner,branch,id){return !!visitingScholarFor(s,owner,branch,id)}
 export function merchantResearchLead(s,owner,branch,id){
- if(branch!=='material')return null;
- return development(s,owner)?.merchantLeads.find(lead=>lead.id===id&&lead.expiresTurn>s.year*12+s.month)||null;
+ if(!['material','idea'].includes(branch))return null;
+ return development(s,owner)?.merchantLeads.find(lead=>(lead.branch||'material')===branch&&lead.id===id&&lead.expiresTurn>s.year*12+s.month)||null;
 }
 export function recordMerchantContact(s,route){
  const last=route?.last,buyer=last?.buyer,seller=last?.seller;
@@ -286,10 +289,16 @@ export function recordMerchantContact(s,route){
  const contact=previous?.seller===seller&&turn-previous.lastTurn<=9?previous:{seller,months:0,lastTurn:null};
  contact.months++;contact.lastTurn=turn;recipient.merchantContacts[route.id]=contact;
  if(contact.months<2)return null;
- contact.months=0;
- const item=MATERIALS.find(candidate=>source.knownMaterial.includes(candidate.id)&&!recipient.knownMaterial.includes(candidate.id)&&recipient.research?.id!==candidate.id&&!strategicKnowledge.has(candidate.id)&&candidate.prerequisites.every(id=>recipient.knownMaterial.includes(id))&&!recipient.trade.some(t=>t.branch==='material'&&t.id===candidate.id)&&!recipient.merchantLeads.some(lead=>lead.id===candidate.id));
- if(!item||recipient.merchantLeads.length>=3)return null;
- const lead={seller,routeId:route.id,id:item.id,year:s.year,month:s.month,expiresTurn:turn+6};recipient.merchantLeads.push(lead);
+ contact.months=0;contact.pairs=(Number.isSafeInteger(contact.pairs)?contact.pairs:0)+1;
+ if(recipient.merchantLeads.length>=3)return null;
+ const eligible=branch=>{
+  const catalog=branch==='material'?MATERIALS:IDEAS,known=branch==='material'?'knownMaterial':'knownIdeas';
+  return catalog.find(candidate=>(branch==='material'? !strategicKnowledge.has(candidate.id):['economy','culture'].includes(candidate.category)||['commercial-agreements','commercial-treaties'].includes(candidate.id))&&source[known].includes(candidate.id)&&!recipient[known].includes(candidate.id)&&!knowledgeInProgress(recipient,branch,candidate.id)&&candidate.prerequisites.every(id=>recipient[known].includes(id))&&!recipient.merchantLeads.some(lead=>(lead.branch||'material')===branch&&lead.id===candidate.id));
+ };
+ const order=contact.pairs%2?['material','idea']:['idea','material'];
+ const picked=order.map(branch=>({branch,item:eligible(branch)})).find(choice=>choice.item);
+ if(!picked)return null;
+ const {branch,item}=picked,lead={seller,routeId:route.id,branch,id:item.id,year:s.year,month:s.month,expiresTurn:turn+6};recipient.merchantLeads.push(lead);
  return {buyer,...lead,name:item.name};
 }
 export function researchTerms(s,owner,branch,id){

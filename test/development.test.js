@@ -937,6 +937,44 @@ test('two paid foreign shipments create a dated research lead, not free knowledg
  expiring.year=Math.floor((leadMonth+5)/12);expiring.month=leadMonth+6-expiring.year*12;
  assert.equal(researchTerms(expiring,'senate','material','water-control').merchant,null);
 });
+test('repeated paid voyages can teach a civilian idea without granting or equipping it',()=>{
+ let s=newGrandGame('senate');s.wars=[];s.factions.senate.treasury=1000;s.factions.senate.food=100;
+ s.development.egypt.knownIdeas=['legion-training','merchant-patronage'];
+ for(const route of s.naval.routes)if(route.id!=='egypt-papyrus')route.pausedBy=[s.regions.find(r=>r.id===route.from).owner];
+ for(let turn=0;turn<18&&!s.development.senate.merchantLeads.some(lead=>lead.branch==='idea');turn++){
+  s.year=-49+Math.floor(turn/12);s.month=turn%12+1;
+  advanceNaval(s);
+  if(turn===6)s=upgradeSave(structuredClone(s));
+ }
+ const material=s.naval.reports.find(report=>report.kind==='merchant-expedition'&&report.leadBranch==='material');
+ const idea=s.naval.reports.find(report=>report.kind==='merchant-expedition'&&report.leadBranch==='idea');
+ assert.equal(material?.leadId,'water-control');
+ assert.equal(idea?.leadId,'merchant-patronage');
+ assert.ok(idea.paid>0&&idea.amount>0,'a real paid arrival created the idea lead');
+ assert.ok(!s.development.senate.merchantLeads.some(lead=>lead.id==='legion-training'),'merchants do not reveal military methods');
+ assert.ok(!s.development.senate.knownIdeas.includes(idea.leadId));
+ assert.equal(recordMerchantContact(s,s.naval.routes.find(route=>route.id==='egypt-papyrus')),null,'the same arrival cannot create another lead');
+ const older=structuredClone(s),oldLead=older.development.senate.merchantLeads.find(lead=>lead.branch==='material');
+ assert.ok(oldLead);delete oldLead.branch;
+ assert.ok(researchTerms(upgradeSave(older),'senate','material',oldLead.id).merchant,'old material leads survive save migration');
+ const baseline=upgradeSave(structuredClone(s));baseline.development.senate.merchantLeads=[];
+ const normal=researchTerms(baseline,'senate','idea',idea.leadId),discounted=researchTerms(s,'senate','idea',idea.leadId);
+ assert.equal(discounted.cost,normal.cost-3);assert.equal(discounted.months,normal.months-1);
+ assert.match(developmentPanel(s,'en','idea'),/Merchant research lead/);
+ assert.match(developmentPanel(s,'zh','idea'),/商贸研究线索/);
+ const navalReport=lang=>{const content={innerHTML:''},root={innerHTML:'',querySelector:()=>content,querySelectorAll:()=>[]};renderNavalPanel({state:s,lang,root,section:'reports'});return content.innerHTML};
+ assert.match(navalReport('en'),/national-idea research lead/);
+ assert.match(navalReport('zh'),/国家理念/);
+ assert.equal(researchInnovation(s,'senate','idea',idea.leadId).ok,true);
+ assert.equal(researchTerms(s,'senate','idea',idea.leadId).merchant,null,'paid research consumes the lead once');
+ assert.ok(!s.development.senate.knownIdeas.includes(idea.leadId));
+ months(s,discounted.months);
+ assert.ok(s.development.senate.knownIdeas.includes(idea.leadId));
+ assert.equal(activeEffects(s,'senate').navalTrade||0,0,'knowledge alone does not equip a policy');
+ assert.equal(adoptIdea(s,'senate',idea.leadId).ok,true);
+ months(s,s.development.senate.adoption.remaining);
+ assert.equal(activeEffects(s,'senate').navalTrade,1);
+});
 
 test('Egyptian multiscript decrees require adoption and affect only Egyptian-culture integration',()=>{
  const id='egyptian-multiscript-decrees',idea=IDEAS.find(x=>x.id===id),s=newGrandGame('egypt');

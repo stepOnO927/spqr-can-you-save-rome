@@ -1,5 +1,5 @@
 import {GRAND_SITES,GRAND_ROUTES} from './grand-map-data.js';
-import {activeEffects,localBuildingEffects,recordMerchantContact} from './development.js?v=63';
+import {activeEffects,localBuildingEffects,recordMerchantContact} from './development.js?v=64';
 import {officeOf} from './office-system.js';
 import {nationalBudget} from './national-budget.js?v=32';
 
@@ -296,7 +296,7 @@ function advanceTradeVoyages(s,log){
   if(amount&&marketGoods.has(v.good))to.civicSatisfaction=Math.min(80,(to.civicSatisfaction??to.loyalty??70)+amount);
   const reason=amount?'delivered':!open?'closed':!need?'stocked':affordable<1?(floor?'war-reserve':'payment'):'capacity';tradeRecord(s,route,v.buyer,v.seller,reason,security,v.price,{amount,paid,marketBenefit:marketGoods.has(v.good)?amount:0,zone:v.zone});
   if(['payment','war-reserve'].includes(reason)&&v.buyer!==v.seller){openMerchantDispute(s,v,reason);if([v.buyer,v.seller].includes(s.player))log(s,'A merchant shipment reached port but the buyer did not pay; the cargo is returning and a freight claim is open.','商船抵港后买方未付款；货物正在返航，运费索赔已登记。')}
-  if(amount){const lead=recordMerchantContact(s,route);if(lead){report(s,{kind:'merchant-expedition',owner:lead.buyer,seller:lead.seller,from:v.from,to:v.to,good:v.good,amount,paid,leadId:lead.id,leadName:lead.name,expiresTurn:lead.expiresTurn});if(lead.buyer===s.player)log(s,`Merchant contact brought a research lead on ${lead.name[0]}. It expires in six months; research is still required.`,`商贸往来带来了${lead.name[1]}的研究线索。线索六个月后失效，仍须投入研究。`)}}
+  if(amount){const lead=recordMerchantContact(s,route);if(lead){report(s,{kind:'merchant-expedition',owner:lead.buyer,seller:lead.seller,from:v.from,to:v.to,good:v.good,amount,paid,leadId:lead.id,leadBranch:lead.branch,leadName:lead.name,expiresTurn:lead.expiresTurn});if(lead.buyer===s.player)log(s,`Merchant contact brought a research lead on ${lead.name[0]}. It expires in six months; research is still required.`,`商贸往来带来了${lead.name[1]}的研究线索。线索六个月后失效，仍须投入研究。`)}}
   sendTradeHome(s,v);
  }
 }
