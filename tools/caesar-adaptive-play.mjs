@@ -11,6 +11,8 @@ import {publicSettlementTerms} from '../campaign-outcome.js';
 // A changing-orders Caesar stress test. Every decision uses the public
 // political map, own armies/resources, or the same dated report a player sees.
 // This is an automated player path, not evidence of human-play balance.
+// SPQR_ADAPTIVE_PRIORITY=cash compares workshop-first investment with the
+// default food-first route while preserving the same military orders and seed.
 let s=newGrandGame('caesar');
 const selectedSeed=Number(process.env.SPQR_ADAPTIVE_SEED||s.seed);
 assert.ok(Number.isSafeInteger(selectedSeed)&&selectedSeed>0);
@@ -19,6 +21,8 @@ const limit=Math.max(36,Math.min(120,Number(process.env.SPQR_ADAPTIVE_MONTHS)||1
 const front=process.env.SPQR_ADAPTIVE_FRONT||'west';
 assert.ok(['west','italy'].includes(front));
 const invest=process.env.SPQR_ADAPTIVE_INVEST==='1';
+const priority=process.env.SPQR_ADAPTIVE_PRIORITY||'food';
+assert.ok(['food','cash'].includes(priority));
 const log=[],snapshots=[],seenBattles=new Set(),orders=new Map(),goals=new Map();
 let lastRecruitTurn=-Infinity,groupedAssaultBattles=0;
 const act=(label,result)=>{if(result?.ok){log.push(`${s.year}/${s.month} ${label}`);return true}return false};
@@ -83,9 +87,11 @@ function maintainEconomy(){
  const foodWorks=s.regions.filter(site=>site.owner==='caesar'&&['irrigation','grain-mill'].some(id=>site.buildings.includes(id)||site.construction?.buildingId===id)).length;
  const craftWorks=s.regions.filter(site=>site.owner==='caesar'&&(site.buildings.includes('workshop')||site.construction?.buildingId==='workshop')).length;
  const needFood=budget.foodNet<1&&foodWorks<3;
- const research=needFood&&!knowledge.knownMaterial.includes('water-control')?'water-control':!needFood&&budget.projectedNet<-2&&craftWorks<4&&!knowledge.knownMaterial.includes('craft-workshops')?'craft-workshops':null;
+ const needCash=budget.projectedNet<-2&&craftWorks<4;
+ const cashFirst=priority==='cash'&&needCash;
+ const research=cashFirst&&!knowledge.knownMaterial.includes('craft-workshops')?'craft-workshops':needFood&&!knowledge.knownMaterial.includes('water-control')?'water-control':!needFood&&needCash&&!knowledge.knownMaterial.includes('craft-workshops')?'craft-workshops':null;
  if(research&&!knowledge.research&&faction.treasury>=70)act(`research ${research}`,researchInnovation(s,'caesar','material',research));
- const building=needFood&&knowledge.knownMaterial.includes('water-control')?'irrigation':!needFood&&budget.projectedNet<-2&&knowledge.knownMaterial.includes('craft-workshops')&&craftWorks<4?'workshop':null;
+ const building=cashFirst&&knowledge.knownMaterial.includes('craft-workshops')?'workshop':needFood&&knowledge.knownMaterial.includes('water-control')?'irrigation':!needFood&&needCash&&knowledge.knownMaterial.includes('craft-workshops')?'workshop':null;
  if(!building||faction.treasury<60)return;
  const safety=site=>Math.min(12,routeDistance(site.id,nearestHostile(site.id)));
  const sites=s.regions.filter(site=>site.owner==='caesar'&&site.loyalty>=50).sort((a,b)=>safety(b)-safety(a)||b.loyalty-a.loyalty);
@@ -140,7 +146,7 @@ for(let elapsed=0;elapsed<limit&&!s.achievementState.finalized;elapsed++){
  }
  if(!s.achievementState.finalized)assert.deepEqual(revealedAchievements(s),[]);
 }
-const result={seed:selectedSeed,front,invest,date:`${s.year}/${s.month}`,finalized:s.achievementState.finalized,outcome:s.campaignOutcome?.winner||s.achievementState.result||'ongoing',civilWarKind:s.campaignOutcome?.kind||s.civilWarOutcome?.kind||null,territories:s.regions.filter(site=>site.owner==='caesar').length,rome:owner('roma'),treasury:s.factions.caesar.treasury,food:s.factions.caesar.food,field:fieldMen(),battles:seenBattles.size,groupedAssaultBattles,snapshots,log};
+const result={seed:selectedSeed,front,invest,priority,date:`${s.year}/${s.month}`,finalized:s.achievementState.finalized,outcome:s.campaignOutcome?.winner||s.achievementState.result||'ongoing',civilWarKind:s.campaignOutcome?.kind||s.civilWarOutcome?.kind||null,territories:s.regions.filter(site=>site.owner==='caesar').length,rome:owner('roma'),treasury:s.factions.caesar.treasury,food:s.factions.caesar.food,field:fieldMen(),battles:seenBattles.size,groupedAssaultBattles,snapshots,log};
 if(process.env.SPQR_ADAPTIVE_FINALIZE==='1'&&s.victory&&!s.achievementState.finalized){
  assert.deepEqual(revealedAchievements(s),[],'continuing after victory must keep achievements private');
  const finished=endCampaign(s,'retired');assert.equal(finished.ok,true);
