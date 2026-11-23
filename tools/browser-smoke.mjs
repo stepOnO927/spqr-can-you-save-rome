@@ -30,7 +30,8 @@ try{
  await page.locator('#guide-restart').click();await page.locator('#roman-faction').selectOption('senate');await page.locator('#start-free').click();
  await page.locator('[data-army="xiii"]').click({force:true});assert.match(await page.locator('#command-detail').innerText(),/上次报告的指挥官：盖乌斯·尤利乌斯·凯撒（可能过时）/);
  await page.locator('#command-detail button').click();assert.match(await page.locator('#command-detail').innerText(),/指挥官目击记录/);assert.match(await page.locator('#command-detail').innerText(),/不证明目前的职务或位置/);await page.locator('.historical-entry summary').click();assert.match(await page.locator('.historical-entry').innerText(),/公元前100年较常用/);assert.match(await page.locator('.historical-entry').innerText(),/公元前102年/);assert.match(await page.locator('.historical-entry').innerText(),/庞培于前59年迎娶凯撒之女朱莉娅/);assert.match(await page.locator('.historical-entry').innerText(),/前54年去世/);
- const road=roads.features.find(f=>f.properties.id===1550).geometry.coordinates[0][85],mercY=lat=>.5-Math.log((1+Math.sin(lat*Math.PI/180))/(1-Math.sin(lat*Math.PI/180)))/(4*Math.PI);
+ // Use an open stretch of the road; the attested Iguvium town marker occupies the northern bend.
+ const road=roads.features.find(f=>f.properties.id===1550).geometry.coordinates[0][50],mercY=lat=>.5-Math.log((1+Math.sin(lat*Math.PI/180))/(1-Math.sin(lat*Math.PI/180)))/(4*Math.PI);
  const romeBox=await page.locator('[data-city="ROMA"]').boundingBox(),narboBox=await page.locator('[data-city="NARBO"]').boundingBox(),world=(romeBox.x-narboBox.x)*360/(12.4964-3.003);
  const roadPoint={x:romeBox.x+world*(road[0]-12.4964)/360,y:romeBox.y+romeBox.height/2+world*(mercY(road[1])-mercY(41.9028))};
  console.log('Road click calibration',JSON.stringify({romeBox,narboBox,roadPoint,world}));
