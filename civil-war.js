@@ -35,6 +35,10 @@ export function startPoliticalWar(s,parent,plot){
 export function knownDynasticFactions(s,viewer){
  return Object.values(CONFIG).map(x=>x.rival).filter(id=>s.regions.some(r=>reportedControl(s,viewer,r.id)?.owner===id)||Object.values(s.knowledge[viewer]?.[id]?.sightings||{}).some(r=>isDeliveredReport(s,r))||s.knowledge[viewer]?.[id]?.reportedLeaders?.length>0);
 }
+// A diplomatic directory is a projection of known identities, not the live
+// faction registry. A stale reported government can remain listed after its
+// undisclosed defeat; attempting correspondence must resolve that uncertainty.
+export function knownDiplomaticTargets(s,viewer,opening){return [...new Set([...opening,...knownDynasticFactions(s,viewer)])].filter(id=>id!==viewer)}
 
 export function startDynasticWar(s,parent,claimant){
  const cfg=CONFIG[parent],dispute=s.world.disputes?.[parent],person=s.world.characters?.[claimant],base=s.factions[parent],home=cfg?.theater?s.regions.find(r=>r.id===cfg.theater):s.regions.find(r=>r.owner===parent&&r.id!=='roma'&&!s.armies.some(a=>a.region===r.id&&a.men>0));
@@ -163,3 +167,4 @@ export function advanceMediations(s){
   if(m.actor===s.player)log(s,m.status==='accepted'?'A reply reports a negotiated settlement; the situation may have changed since it was written.':m.status==='refused'?'A reply declined the mediation proposal.':'No mediation reply arrived; the letters may have been lost.',m.status==='accepted'?'回信称双方达成和解；局势可能在写信后改变。':m.status==='refused'?'回信拒绝了调停提议。':'未收到调停回信；书信可能遗失。');
  }
 }
+
