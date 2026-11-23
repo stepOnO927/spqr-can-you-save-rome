@@ -1,9 +1,9 @@
-import {visiblePersonName,storedCorrespondentName,isDeliveredReport,reportedPeople} from './person-knowledge.js?v=multipolar-review-1';
-import {CHARACTER_CATALOG,ageRange} from './characters.js?v=multipolar-review-1';
-import {startDynasticWar} from './civil-war.js?v=multipolar-review-1';
+import {visiblePersonName,storedCorrespondentName,isDeliveredReport,reportedPeople} from './person-knowledge.js?v=roman-vacancy-1';
+import {CHARACTER_CATALOG,ageRange} from './characters.js?v=roman-vacancy-1';
+import {startDynasticWar} from './civil-war.js?v=roman-vacancy-1';
 import {ROUTES} from './data.js?v=phase-x-1';
-import {assignBornPortrait,assignCourtPortrait,assignLegendPortrait} from './portrait-registry.js?v=multipolar-review-1';
-import {initializeLegend,recordLegendEvidence} from './legend.js?v=multipolar-review-1';
+import {assignBornPortrait,assignCourtPortrait,assignLegendPortrait} from './portrait-registry.js?v=roman-vacancy-1';
+import {initializeLegend,recordLegendEvidence} from './legend.js?v=roman-vacancy-1';
 
 // Family records are campaign facts. The encyclopedia remains an independent
 // account of documented history. In particular, names never establish kinship.

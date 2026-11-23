@@ -1,6 +1,6 @@
-import {isDeliveredReport} from './person-knowledge.js?v=multipolar-review-1';
-import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=multipolar-review-1';
-import {reportedControl} from './control-intelligence.js?v=multipolar-review-1';
+import {isDeliveredReport} from './person-knowledge.js?v=roman-vacancy-1';
+import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=roman-vacancy-1';
+import {reportedControl} from './control-intelligence.js?v=roman-vacancy-1';
 import {ROUTES} from './data.js?v=phase-x-1';
 
 // Alternate-history claimant commands use real game theaters and armies.

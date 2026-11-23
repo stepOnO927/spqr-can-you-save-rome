@@ -1,13 +1,13 @@
-import {earnedEpithets,legendName} from './legend.js?v=multipolar-review-1';
+import {earnedEpithets,legendName} from './legend.js?v=roman-vacancy-1';
 import {ROUTES, FACTIONS} from './data.js?v=phase-x-1';
-import {CHARACTER_CATALOG,ageRange} from './characters.js?v=multipolar-review-1';
-import {AGREEMENT_TYPES} from './agreements.js?v=multipolar-review-1';
-import {formatChronicleEntry} from './chronicle.js?v=multipolar-review-1';
-import {initializePersonnel,applyWarPersonnel} from './epistulae-personnel.js?v=multipolar-review-1';
-import {fictionalPortraitKey,observedFictionalPortrait} from './portrait-registry.js?v=multipolar-review-1';
+import {CHARACTER_CATALOG,ageRange} from './characters.js?v=roman-vacancy-1';
+import {AGREEMENT_TYPES} from './agreements.js?v=roman-vacancy-1';
+import {formatChronicleEntry} from './chronicle.js?v=roman-vacancy-1';
+import {initializePersonnel,applyWarPersonnel} from './epistulae-personnel.js?v=roman-vacancy-1';
+import {fictionalPortraitKey,observedFictionalPortrait} from './portrait-registry.js?v=roman-vacancy-1';
 import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
-import {canMediate,requestMediation} from './civil-war.js?v=multipolar-review-1';
-import {storedCorrespondentName} from './person-knowledge.js?v=multipolar-review-1';
+import {canMediate,requestMediation} from './civil-war.js?v=roman-vacancy-1';
+import {storedCorrespondentName} from './person-knowledge.js?v=roman-vacancy-1';
 
 const monthIndex = (year, month) => year * 12 + month;
 const pair = (a, b) => [a, b].sort().join(':');

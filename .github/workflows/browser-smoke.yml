@@ -130,6 +130,7 @@ jobs:
               node tools/safe-save-smoke.mjs
               node tools/health-succession-smoke.mjs
               node tools/succession-ui-recovery-smoke.mjs
+              node tools/roman-vacancy-smoke.mjs
               node tools/newborn-age-smoke.mjs
               node tools/born-portraits-smoke.mjs
               node tools/born-portraits-six-smoke.mjs
