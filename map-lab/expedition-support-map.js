@@ -62,11 +62,13 @@ export function expeditionSupportMap(state, coordinatesByTheater) {
   for (const army of state.armies || []) {
     const order = army.expedition;
     if (army.owner !== viewer || !['active', 'paused'].includes(order?.status)) continue;
-    const destination = theaterPoint(order.destination);
+    const localGoal = order.localObjectiveId && state.regions.flatMap(region => region.localEntities || [])
+      .find(entity => entity.id === order.localObjectiveId && entity.theater === order.destination);
+    const destination = point(localGoal?.coordinates) || theaterPoint(order.destination);
     const name = army.name?.en || army.name || army.id;
-    if (destination) points.push(feature('objective', destination, name, {id: army.id}));
+    if (destination) points.push(feature('objective', destination, localGoal?.name || name, {id: army.id, ...(localGoal ? {localObjectiveId: localGoal.id} : {})}));
     addPath('expedition', [army.region, ...(order.nodes || []).slice(order.nextIndex || 0)], name, {id: army.id});
-    entries.push({kind: 'objective', id: army.id, name, theaterId: order.destination, status: order.status});
+    entries.push({kind: 'objective', id: army.id, name, theaterId: order.destination, status: order.status, ...(localGoal ? {localObjectiveId: localGoal.id, localGoalName: localGoal.name} : {})});
   }
 
   return {points: {type: 'FeatureCollection', features: points}, lines: {type: 'FeatureCollection', features: lines}, entries};

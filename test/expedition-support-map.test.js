@@ -4,6 +4,7 @@ import {newGame, startExpedition, upgradeSave} from '../engine.js';
 import {localEntity} from '../local-polities.js';
 import {proposeAgreement} from '../agreements.js?v=archived-exchange-1';
 import {expeditionSupportMap} from '../map-lab/expedition-support-map.js';
+import {planRoutes} from '../route-planner.js';
 
 const coordinates={cisalpine:[11.6,44.75],narbo:[3.3,43.4],gaul:[4.5,47.54],egypt:[29.92,31.2],egyptUpper:[32.632,25.665],parthia:[44.5,33.1]};
 
@@ -18,6 +19,17 @@ test('own depot, in-transit food and expedition order appear without changing th
  assert.ok(view.points.features.some(item=>item.properties.kind==='objective'));
  assert.ok(view.lines.features.some(item=>item.properties.kind==='expedition'));
  assert.deepEqual(expeditionSupportMap(upgradeSave(structuredClone(state)),coordinates).entries,view.entries);
+});
+
+test('a saved town objective uses its own site point and name in the expedition map',()=>{
+ const state=newGame('caesar'),town=localEntity(state,'corfinium');
+ const route=planRoutes(state,'viii','italiaS').routes.find(item=>item.status==='legal').nodes;
+ assert.equal(startExpedition(state,'viii',route,state.player,{localObjectiveId:town.id}).ok,true);
+ const saved=upgradeSave(structuredClone(state)),view=expeditionSupportMap(saved,coordinates);
+ const marker=view.points.features.find(item=>item.properties.kind==='objective'&&item.properties.id==='viii');
+ assert.deepEqual(marker.geometry.coordinates,town.coordinates);
+ assert.equal(marker.properties.localObjectiveId,town.id);
+ assert.deepEqual(view.entries.find(item=>item.kind==='objective'&&item.id==='viii').localGoalName,town.name);
 });
 
 test('severed local rights mark an own depot isolated, and foreign depots stay hidden',()=>{

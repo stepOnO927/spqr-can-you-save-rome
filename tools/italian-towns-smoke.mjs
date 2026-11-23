@@ -50,6 +50,8 @@ try{
  const expeditionSave=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')));
  assert.equal(expeditionSave.armies.find(army=>army.id==='viii').expedition.localObjectiveId,'corfinium');
  assert.equal(expeditionSave.regions.find(region=>region.id==='italiaS').owner,'senate');
+ await page.locator('#map-mode').selectOption('expedition');
+ assert.match(await page.locator('#map-mode-details').innerText(),/Corfinium/);
  const iguvium=page.locator('.city-marker[data-city="IGUVIUM"]');
  await iguvium.waitFor({state:'visible'});
  await page.locator('[data-town-objective="iguvium"]').evaluate(node=>node.click());
