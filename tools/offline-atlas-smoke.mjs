@@ -9,6 +9,7 @@ import {identity} from '../identity.js';
 import {newGrandGame} from '../engine.js';
 import ocean from '../mediterranean-ocean.js';
 import {physicalLabels} from '../map-lab/physical-labels.js';
+import {GRAND_SITES} from '../grand-map-data.js';
 
 const inRing=(point,ring)=>{let inside=false;for(let i=0,j=ring.length-1;i<ring.length;j=i++){const a=ring[i],b=ring[j];if((a[1]>point[1])!==(b[1]>point[1])&&point[0]<(b[0]-a[0])*(point[1]-a[1])/(b[1]-a[1])+a[0])inside=!inside}return inside};
 const inSea=point=>ocean.features.some(feature=>{const geometry=feature.geometry,polygons=geometry.type==='Polygon'?[geometry.coordinates]:geometry.coordinates;return polygons.some(rings=>inRing(point,rings[0])&&!rings.slice(1).some(ring=>inRing(point,ring)))});
@@ -196,7 +197,10 @@ try{
  await page.locator('[data-objective="italiaN"]').click();await page.waitForTimeout(1200);
  for(let i=0;i<3;i++){await page.locator('#zoom-in').click();await page.waitForTimeout(500)}
  const site=await page.locator('[data-site="italiaN"]').boundingBox();
- assert.ok(Math.abs(site.x-page.viewportSize().width/2)<15,'Ariminum must stay at the map focus');
+ const ariminum=GRAND_SITES.find(point=>point.id==='italiaN');
+ const focus=await page.evaluate(async coordinates=>{const {map}=await import(document.querySelector('script[type="module"]').src),point=map.project(coordinates);return {center:map.getCenter().toArray(),point:[point.x,point.y],moving:map.isMoving()}},[ariminum.lon,ariminum.lat]);
+ assert.ok(site.width>0&&site.height>0,'Ariminum city marker must remain visible');
+ assert.ok(!focus.moving&&Math.abs(focus.point[0]-page.viewportSize().width/2)<5&&Math.abs(focus.point[1]-page.viewportSize().height/2)<5,`Ariminum must stay at the map focus: ${JSON.stringify(focus)}`);
  await selectMapMode('terrain');
  await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.isSourceLoaded('italy-contours')&&map.queryRenderedFeatures({layers:['italy-contours-minor','italy-contours-major']}).length>0},null,{timeout:20000});
  const visibleContours=await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.queryRenderedFeatures({layers:['italy-contours-minor','italy-contours-major']}).length});

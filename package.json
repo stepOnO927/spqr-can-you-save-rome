@@ -9,6 +9,8 @@
   },
   "devDependencies": {
     "playwright": "^1.65.0",
-    "polygon-clipping": "^0.15.7"
+    "polygon-clipping": "^0.15.7",
+    "proj4": "^2.23.0",
+    "shapefile": "^0.6.6"
   }
 }

@@ -19,7 +19,7 @@ import {mediateCourtDispute} from '../character-system.js?v=66';
 import {nationalBudget} from '../national-budget.js?v=35';
 import {budgetHtml} from '../budget-ui.js?v=41';
 import republicanRoads from '../republican-roads.js?v=1';
-import {physicalStyle} from './physical-style.js?v=50';
+import {physicalStyle} from './physical-style.js?v=51';
 import {physicalLabels} from './physical-labels.js?v=7';
 import {ancientPlaceLabels} from './ancient-place-labels.js';
 import {newGame,newGrandGame, moveArmy, cancelMarch, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, respondCivilSettlement, sendInquiry, queueMission, setTax, warContributionPlan, collectWarContributions, emergencyProvisionsPlan, collectEmergencyProvisions, aerariumPlan, seizeAerarium, personalDiplomaticCredit,royalCourtCredit,provincialRitesCredit,researchInnovation,adoptIdea,removeIdea,cancelIdeaAdoption,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,setReligiousPolicy,purchaseMaterials,recruitFigure} from '../engine.js?v=252';
@@ -597,11 +597,12 @@ function renderHudBase(){document.querySelector('#development').textContent=lang
 
 function renderTerrainLegend(){
  const historicalVisibility=currentMapMode==='terrain'?'visible':'none';
- for(const id of ['po-historic-band','po-historic-shore','ravenna-ridge-fill','ravenna-ridge-edge'])if(map.getLayer(id)&&(map.getLayoutProperty(id,'visibility')||'visible')!==historicalVisibility)map.setLayoutProperty(id,'visibility',historicalVisibility);
+ for(const id of ['po-historic-band','po-historic-shore','ravenna-ridge-fill','ravenna-ridge-edge','po-roman-drainage-line'])if(map.getLayer(id)&&(map.getLayoutProperty(id,'visibility')||'visible')!==historicalVisibility)map.setLayoutProperty(id,'visibility',historicalVisibility);
  if(currentMapMode!=='terrain'){document.querySelector('.brief').classList.remove('po-history');return}
  const close=map.getZoom()>=8.5;
  const center=map.getCenter(),poNearby=map.getZoom()>=8.2&&center.lng>=11.8&&center.lng<=13.1&&center.lat>=44.5&&center.lat<=45.4;
  const ravennaNearby=map.getZoom()>=8.2&&center.lng>=11.5&&center.lng<=12.65&&center.lat>=44.0&&center.lat<=44.8;
+ const poRomanNearby=map.getZoom()>=8.2&&center.lng>=10.2&&center.lng<=11.1&&center.lat>=44.5&&center.lat<=45.1;
  const fucinoNearby=map.getZoom()>=8.2&&center.lng>=13.2&&center.lng<=13.9&&center.lat>=41.7&&center.lat<=42.3;
  const egyptNearby=map.getZoom()>=8.25&&center.lng>=28&&center.lng<=34&&center.lat>=29&&center.lat<=33;
  document.querySelector('.brief').classList.toggle('po-history',poNearby);
@@ -610,10 +611,12 @@ function renderTerrainLegend(){
  if(map.getZoom()>=8.1&&center.lng>=9.5&&center.lng<=13.1&&center.lat>=41&&center.lat<=43.85)document.querySelector('#map-mode-note').textContent+=lang==='zh'?' 台伯河与阿诺河近景线条取自2006—2012年现代河网，不是前49年的精确河道。':' The close Tiber and Arno lines come from a 2006–2012 modern river network, not surveyed 49 BCE courses.';
  if(map.getZoom()>=8.1&&center.lng>=11.8&&center.lng<=12.9&&center.lat>=43.6&&center.lat<=44.5)document.querySelector('#map-mode-note').textContent+=lang==='zh'?' 阿里米努姆附近的马雷基亚河与萨维奥河线条取自现代开放地图，不是前49年的精确河道或河口。':' The Marecchia and Savio lines near Ariminum follow modern open-map courses, not surveyed 49 BCE rivers or mouths.';
  if(ravennaNearby)document.querySelector('#map-mode-note').textContent+=lang==='zh'?' 拉文纳附近细长色带是约公元100年的古海滩脊与河岸地貌研究复原；它们不是前49年的精确海岸，也不改变海陆。':' The narrow bands near Ravenna are reconstructed beach and river ridges for roughly 100 CE; they are not an exact 49 BCE coast and do not change land or sea.';
+ if(poRomanNearby)document.querySelector('#map-mode-note').textContent+=lang==='zh'?' 穆蒂纳以北的细虚线是考古记录中的罗马时期排水与土地划分痕迹，年代涵盖前2世纪至公元5世纪；不能断定每条线在前49年已存在。':' The fine dashed lines north of Mutina are archaeological traces of Roman drainage and land division, broadly dated from the 2nd century BCE to the 5th century CE; individual lines are not verified for 49 BCE.';
  if(fucinoNearby)document.querySelector('#map-mode-note').textContent+=lang==='zh'?' 富奇诺湖按现代高程与文献所述水位作约略重建；前49年的湖岸位置未被精确测定，虚线表示此不确定性。':' Fucino Lake is an approximate reconstruction from modern elevation and a published water-level estimate. Its 49 BCE shore was not surveyed; the dashed line marks that uncertainty.';
  const items=close?[['#c5c4a7',lang==='zh'?'陆地与高程':'Land & elevation'],['#5c9293',lang==='zh'?'现代河道与天然湖泊':'Modern rivers & natural lakes'],['#f0e4c4',lang==='zh'?'现代海岸线':'Modern shoreline'],['#2b626d',lang==='zh'?'海水':'Sea']]:[['#c5c4a7',lang==='zh'?'理想化地表与高程':'Land cover & elevation'],['#5c9293',lang==='zh'?'现代河道与天然湖泊':'Modern rivers & natural lakes'],['#2b626d',lang==='zh'?'近岸浅海（约0–200米）':'Coastal shelf (about 0–200 m)'],['#225565',lang==='zh'?'较深海域（超过200米）':'Deeper sea (over 200 m)']];
  if(poNearby)items.splice(1,0,['#a5b599',lang==='zh'?'古海岸参考带（示意）':'Historic shore band (schematic)'],['#84694d',lang==='zh'?'古海岸参考线（年代未定）':'Historic shore (undated)',true]);
  if(ravennaNearby)items.splice(1,0,['#b38d65',lang==='zh'?'拉文纳古海滩脊（约公元100年）':'Ravenna ancient beach ridge (~100 CE)'],['#758975',lang==='zh'?'拉文纳古河岸脊（约公元100年）':'Ravenna ancient river ridge (~100 CE)']);
+ if(poRomanNearby)items.splice(1,0,['#587d78',lang==='zh'?'罗马时期排水痕迹（年代范围较宽）':'Roman drainage traces (broad date)',true]);
  if(fucinoNearby)items.splice(1,0,['#5b9093',lang==='zh'?'富奇诺湖（排干前示意）':'Fucino Lake (pre-drainage model)'],['#e3e2c8',lang==='zh'?'古湖岸参考线（不确定）':'Approximate ancient lakeshore',true]);
  if(egyptNearby)items.splice(1,0,['#829a72',lang==='zh'?'尼罗河三角洲低地（示意）':'Nile Delta lowland (schematic)'],['#785f49',lang==='zh'?'现代高程等高线（10–200米）':'Modern elevation contours (10–200 m)']);
  if(!poNearby&&map.getZoom()>=8.3&&center.lng>=8.4&&center.lng<=16.9&&center.lat>=39.9&&center.lat<=47.5)items.splice(1,0,['#60604b',lang==='zh'?'现代高程等高线（500–1500米）':'Modern elevation contours (500–1500 m)']);

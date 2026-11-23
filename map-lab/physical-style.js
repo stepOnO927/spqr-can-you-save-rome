@@ -11,6 +11,7 @@ import fucinoLake from './fucino-lake.js?v=1';
 import gardaLakeDetail from '../garda-lake-detail.js';
 import poHistoricCoast from '../po-historic-coast.js';
 import ravennaLandforms from './ravenna-paleolandforms.js?v=1';
+import poRomanDrainage from './po-plain-roman.js?v=1';
 import historical from '../historical-territories.js';
 import egyptContours from './egypt-contours.js?v=1';
 import italyContours from './italy-contours.js?v=1';
@@ -62,6 +63,7 @@ export const physicalStyle={
   'ariminum-rivers':{type:'geojson',data:ariminumRivers,attribution:'Modern Marecchia and Savio: OpenStreetMap contributors, ODbL 1.0; adapted river centerlines'},
   'po-historic-coast':{type:'geojson',data:poHistoricCoast,attribution:'Approximate undated historical shoreline: Ancient World Mapping Center and OpenStreetMap contributors, ODbL 1.0; adapted Po crop'},
   'ravenna-paleolandforms':{type:'geojson',data:ravennaLandforms,attribution:'Michele Abballe, PalaeoDEMs of the hinterland of Ravenna, Roman-period (~100 CE) palaeoLandforms; CC0, DOI 10.5281/zenodo.14534157'},
+  'po-roman-drainage':{type:'geojson',data:poRomanDrainage,attribution:'Filippo Brandolini, Central Po Plain Roman-period drainage traces, 2nd c. BCE–5th c. CE; CC0, DOI 10.7910/DVN/JSYZ3H'},
   'nile-delta':{type:'geojson',data:nileDelta,attribution:'Approximate Nile Delta between Natural Earth river branches'},
   'nile-delta-wash':{type:'image',url:'./nile-delta-wash.png',coordinates:[[29.8,31.7],[32,31.7],[32,30],[29.8,30]]},
   lakes:{type:'geojson',data:{type:'FeatureCollection',features:[...lakes.features,...lazioLakes.features]},attribution:'Natural Earth 1:10m lakes, public domain; Lazio lake shorelines: OpenStreetMap contributors, ODbL 1.0'},
@@ -112,6 +114,9 @@ export const physicalStyle={
   {id:'italy-contours-minor',type:'line',source:'italy-contours',minzoom:8.3,filter:['<',['get','height'],1000],paint:{'line-color':'#6d694c','line-width':['interpolate',['linear'],['zoom'],8.3,.35,9.2,.65],'line-opacity':['interpolate',['linear'],['zoom'],8.3,0,9.2,.11]}},
   {id:'italy-contours-major',type:'line',source:'italy-contours',minzoom:8.3,filter:['>=',['get','height'],1000],paint:{'line-color':'#565e4a','line-width':['interpolate',['linear'],['zoom'],8.3,.45,9.2,.85],'line-opacity':['interpolate',['linear'],['zoom'],8.3,0,9.2,.14]}},
   {id:'land-wash',type:'fill',source:'land',paint:{'fill-color':'#d6d2b2','fill-opacity':.08}},
+  // Archaeological traces of Roman land division and drainage in one study
+  // area. The broad dating does not prove any given line existed in 49 BCE.
+  {id:'po-roman-drainage-line',type:'line',source:'po-roman-drainage',minzoom:8.2,layout:{visibility:'none','line-cap':'round'},paint:{'line-color':'#587d78','line-opacity':['interpolate',['linear'],['zoom'],8.2,.25,9,.72],'line-width':['interpolate',['linear'],['zoom'],8.2,.8,9,1.5],'line-dasharray':[2,2]}},
   // A local archaeological reconstruction of ridges, not a shore mask.
   {id:'ravenna-ridge-fill',type:'fill',source:'ravenna-paleolandforms',minzoom:8.2,layout:{visibility:'none'},paint:{'fill-color':['match',['get','kind'],'beach-ridge','#b38d65','#758975'],'fill-opacity':['interpolate',['linear'],['zoom'],8.2,.08,9,.23]}},
   {id:'ravenna-ridge-edge',type:'line',source:'ravenna-paleolandforms',minzoom:8.2,layout:{visibility:'none','line-join':'round','line-cap':'round'},paint:{'line-color':['match',['get','kind'],'beach-ridge','#8c6d4c','#60775e'],'line-width':['interpolate',['linear'],['zoom'],8.2,.45,9,.9],'line-opacity':['interpolate',['linear'],['zoom'],8.2,.13,9,.35]}},
