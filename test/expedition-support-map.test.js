@@ -30,6 +30,16 @@ test('a saved town objective uses its own site point and name in the expedition 
  assert.deepEqual(marker.geometry.coordinates,town.coordinates);
  assert.equal(marker.properties.localObjectiveId,town.id);
  assert.deepEqual(view.entries.find(item=>item.kind==='objective'&&item.id==='viii').localGoalName,town.name);
+ const army=saved.armies.find(item=>item.id==='viii');
+ army.region='italiaS';army.expedition.status='completed';army.expedition.nextIndex=army.expedition.nodes.length;
+ const arrived=expeditionSupportMap(saved,coordinates);
+ assert.equal(arrived.entries.find(item=>item.kind==='objective'&&item.id==='viii').status,'completed');
+ assert.deepEqual(arrived.points.features.find(item=>item.properties.kind==='objective'&&item.properties.id==='viii').geometry.coordinates,town.coordinates);
+ army.region='italiaN';
+ assert.equal(expeditionSupportMap(saved,coordinates).entries.some(item=>item.kind==='objective'&&item.id==='viii'),false);
+ army.region='italiaS';
+ localEntity(saved,town.id).controller=saved.player;
+ assert.equal(expeditionSupportMap(saved,coordinates).entries.some(item=>item.kind==='objective'&&item.id==='viii'),false);
 });
 
 test('severed local rights mark an own depot isolated, and foreign depots stay hidden',()=>{
