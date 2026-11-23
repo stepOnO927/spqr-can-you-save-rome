@@ -15,6 +15,28 @@ import {advanceAgreementProposals} from '../agreement-negotiations.js?v=multipol
 import {advanceGovernments} from '../governance.js?v=multipolar-review-1';
 import {advanceMovements} from '../movements.js?v=multipolar-review-1';
 import {newRevolutionScenario} from '../scenarios.js?v=multipolar-review-1';
+import {rememberPoliticalEvent} from '../political-memory.js?v=grand-chessboard-2';
+
+test('a court reconsiders its own new memories and leadership without reading foreign memories',()=>{
+ const s=newGame('caesar'),before=opportunityEvidenceSignature(s,'parthia');
+ rememberPoliticalEvent(s,'armenia','parthia','refused_aid',-8);
+ assert.equal(opportunityEvidenceSignature(s,'parthia'),before);
+ rememberPoliticalEvent(s,'parthia','armenia','refused_aid',-8);
+ const after=opportunityEvidenceSignature(s,'parthia');assert.notEqual(after,before);
+ s.world.leadership.parthia=[];
+ assert.notEqual(opportunityEvidenceSignature(s,'parthia'),after);
+});
+
+test('expired sightings and stability reports trigger a fresh strategic review',()=>{
+ const s=newGame('caesar'),k=s.knowledge.parthia.armenia;
+ k.sightings={test:{id:'test',region:'armenia',year:s.year-1,month:s.month}};
+ k.reports.push({kind:'stability',value:'fragile',source:'spy',year:s.year-2,month:s.month});
+ const before=opportunityEvidenceSignature(s,'parthia');
+ if(s.month===12){s.month=1;s.year++}else s.month++;
+ assert.notEqual(opportunityEvidenceSignature(s,'parthia'),before);
+ const opportunity=assessOpportunities(s,'parthia',estimatedStrength).find(x=>x.target==='armenia');
+ assert.equal(opportunity.frontierSightings,0);assert.equal(opportunity.instability,'unknown');
+});
 
 test('opportunities use the observer’s reports, not hidden military or political state',()=>{
  const s=newGame('caesar'),other=JSON.parse(JSON.stringify(s));

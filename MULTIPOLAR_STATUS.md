@@ -20,6 +20,8 @@ The current implementation does not yet provide tactical synchronization of acce
 
 Between quarterly reviews, a court also reevaluates when its own reported stability, strength estimates or troop sightings change, when it learns of a war, when one of its own agreements changes, or when its own army positions or broad resource bands change. The signature is built from the court's own information and bounded recent records; hidden foreign changes alone cannot trigger a review. This does not yet cover every kind of intelligence or deliver the full multipolar acceptance scenario.
 
+Expiration of a recent sighting or stability report also triggers review when it crosses the relevant age threshold. Changes in the court's own leadership, strategic personality or current leaders' political memories trigger a review as well; another court's private memories do not. Age-related gradual decay remains covered by the ordinary quarterly review.
+
 A change in the reported controller of a neighboring theater also triggers a review. The signature uses the observer's control reports, so an unobserved change in a foreign theater does not wake the planner or disclose its controller. Changes in the court's own relations or alliances and in its delivered diplomatic reports also trigger review; private agreements between other courts do not.
 
 ## Coalition invitations
