@@ -4,6 +4,11 @@ import {reportedControl} from './control-intelligence.js?v=dossier-archive-1';
 const now=s=>s.year*12+s.month;
 const live=['preparing','active'];
 const atWar=(s,a,b)=>(s.wars||[]).some(w=>w.includes(a)&&w.includes(b));
+export function operationNoticeRoute(s,owner,recipient){
+ const source=s.regions.find(r=>r.owner===owner)?.id||null;
+ const destination=s.regions.find(r=>reportedControl(s,owner,r.id)?.owner===recipient)?.id||null;
+ return {source,destination,destinationKnown:!!destination};
+}
 export function operationPartners(s,owner){
  return Object.keys(s.factions).filter(id=>id!==owner&&id!=='rebels'&&!atWar(s,owner,id)&&(
   (s.alliances||[]).some(pair=>pair.slice(0,2).includes(owner)&&pair.slice(0,2).includes(id))||
@@ -22,7 +27,7 @@ export function shareOperation(s,owner,planId,recipient,{sendLetter}={}){
  const prior=(s.mail?.messages||[]).filter(m=>m.senderFaction===owner&&m.context?.kind==='operation_notice');
  if(prior.some(m=>{const age=now(s)-(m.created.year*12+m.created.month);return age>=0&&(age===0||m.recipient===recipient&&age<6)}))return {ok:false,reason:'cooldown'};
  const names=i=>objectives.map(o=>s.regions.find(r=>r.id===o.region)?.name?.[i]||o.region).join(i?'、':', ');
- const result=sendLetter(s,{senderInstitution:owner,senderFaction:owner,recipient,category:'military',priority:'important',
+ const result=sendLetter(s,{senderInstitution:owner,senderFaction:owner,recipient,category:'military',priority:'important',...operationNoticeRoute(s,owner,recipient),
   subject:['Allied operational notice','盟军作战通报'],
   body:[`Our current operation proposes objectives at ${names(0)}. This is an intention as of dispatch, not proof that troops have moved. Plans may change before delivery. Decide independently using your own reports, forces and supplies; no march or declaration is required.`,
    `本方当前计划以${names(1)}为作战目标。这是发信时的意向，不证明军队已出发；送达前计划可能改变。请根据己方报告、兵力和补给独立决定，不要求行军或宣战。`],

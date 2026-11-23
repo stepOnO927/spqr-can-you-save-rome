@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave,estimatedStrength} from '../engine.js?v=dossier-archive-1';
 import {createPlan,assignRole,approvePlan,aiBattlePlans,planById} from '../battle-plans.js?v=dossier-archive-1';
-import {shareOperation,shareAiOperation,reportedOperationObjectives} from '../operation-intelligence.js?v=operation-notices-1';
+import {shareOperation,shareAiOperation,reportedOperationObjectives,operationNoticeRoute} from '../operation-intelligence.js?v=operation-notices-1';
 import {sendLetter,advanceMail,receivedMail} from '../epistulae.js?v=dossier-archive-1';
 import {observeControl} from '../control-intelligence.js?v=dossier-archive-1';
 
@@ -15,6 +15,14 @@ function setup(seed=49049){
  return {s,p};
 }
 function advance(s,n){for(let i=0;i<n;i++){if(++s.month>12){s.month=1;s.year++}advanceMail(s)}}
+test('a hidden foreign relocation cannot change the sender’s postal route or its price and travel estimate',()=>{
+ const {s,p}=setup(),copy=structuredClone(s);
+ for(const r of copy.regions)if(r.owner==='numidia')r.owner='mauretania';
+ copy.regions.find(r=>r.id==='egypt').owner='numidia';
+ assert.deepEqual(operationNoticeRoute(copy,'senate','numidia'),operationNoticeRoute(s,'senate','numidia'));
+ const a=shareOperation(s,'senate',p.id,'numidia',{sendLetter}),b=shareOperation(copy,'senate',p.id,'numidia',{sendLetter});
+ assert.ok(a.ok&&b.ok);assert.equal(a.duration,b.duration);assert.equal(s.factions.senate.treasury,copy.factions.senate.treasury);
+});
 test('an undisclosed allied order cannot affect another court’s choice or claim coordination',()=>{
  const {s,p}=setup(),copy=structuredClone(s);copy.world.battlePlans.find(x=>x.id===p.id).roles[0].target='mauretania';
  const a=planById(s,aiBattlePlans(s,'numidia',{estimatedStrength})),b=planById(copy,aiBattlePlans(copy,'numidia',{estimatedStrength}));
