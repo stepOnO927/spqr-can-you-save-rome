@@ -68,6 +68,7 @@ jobs:
               node tools/future-family-reports-smoke.mjs
               node tools/future-dossier-smoke.mjs
               node tools/archived-dossier-smoke.mjs
+              node tools/archived-leadership-summary-smoke.mjs
               node tools/mission-inbox-smoke.mjs
               node tools/mission-history-smoke.mjs
               node tools/agent-release-mail-smoke.mjs
