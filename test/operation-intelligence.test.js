@@ -62,4 +62,13 @@ test('AI dispatch is bounded, can act without a player, and never writes for a h
  assert.equal(shareAiOperation(s,'senate',{sendLetter,autoplayPlayer:true}).reason,'cooldown');
  const {s:ai}=setup();ai.player='caesar';assert.ok(shareAiOperation(ai,'senate',{sendLetter}).ok);
 });
+test('one partner’s cooldown does not permanently prevent notifying a different ally',()=>{
+ const {s}=setup();s.player='caesar';s.alliances.push(['senate','egypt']);
+ assert.ok(shareAiOperation(s,'senate',{sendLetter}).ok);
+ const first=s.mail.messages.find(m=>m.context?.kind==='operation_notice').recipient;
+ assert.equal(shareAiOperation(s,'senate',{sendLetter}).ok,false);
+ s.month++;assert.ok(shareAiOperation(s,'senate',{sendLetter}).ok);
+ const sent=s.mail.messages.filter(m=>m.context?.kind==='operation_notice');
+ assert.equal(sent.length,2);assert.notEqual(sent[1].recipient,first);
+});
 

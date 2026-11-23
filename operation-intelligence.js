@@ -52,9 +52,12 @@ export function reportedOperationObjectives(s,owner){
 export function shareAiOperation(s,owner,{sendLetter,autoplayPlayer=false}={}){
  if(owner===s.player&&!autoplayPlayer||!s.factions[owner]||s.factions[owner].treasury<10)return;
  const plans=(s.world.battlePlans||[]).filter(p=>p.owner===owner&&live.includes(p.status));
+ let last;
  for(const plan of plans)for(const recipient of operationPartners(s,owner)){
   const result=shareOperation(s,owner,plan.id,recipient,{sendLetter});
-  if(result.ok||result.reason==='cooldown')return result;
+  if(result.ok)return result;
+  last=result;
  }
+ return last;
 }
 
