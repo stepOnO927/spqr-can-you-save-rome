@@ -44,7 +44,7 @@ try{
  assert.doesNotMatch(await page.locator('.recon-actions').innerText(),/\b(?:rumor|unverified|confirmed)\b/);
  await page.locator('#guide-next').click();
  await page.locator('[data-city="RAVENNA"]').evaluate(el=>el.click());
- if(page.viewportSize().width<=600){assert.match(await page.locator('#guide-body').innerText(),/右上角菜单/);await page.locator('#mobile-menu.guide-highlight').waitFor();await page.locator('#mobile-menu').click();await page.locator('#resources-help.guide-highlight').waitFor()}
+ if(page.viewportSize().width<=600){assert.match(await page.locator('#guide-body').innerText(),/右上角菜单/);await page.locator('#language').click();assert.match(await page.locator('#guide-body').innerText(),/Open the upper menu first/);await page.locator('#language').click();await page.locator('#mobile-menu.guide-highlight').waitFor();await page.locator('#mobile-menu').click();await page.locator('#resources-help.guide-highlight').waitFor();assert.doesNotMatch(await page.locator('#guide-body').innerText(),/右上角菜单/)}
  await page.locator('#resources-help').click();
  await page.locator('#guide-next').click();
  assert.equal(await page.locator('#guide').isVisible(),false);
