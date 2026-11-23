@@ -332,17 +332,65 @@ test('a rival court can buy an observed cargo after the player priority window, 
  gate.stock++;gate.consumption=0;
  h.tradeMarkets.shipments.push({id,buyer:'external',seller:'han',destination:'mediterranean_gate',commodity:'horses',quantity:1,price:7,status:'delivered',deliveredAt:s.year*12+s.month});
  s.factions.senate.treasury=100;
+ const egyptStock=s.markets.regions.egypt.goods.horses.stock;
  assert.equal(romanView(s).availableImports.find(x=>x.id===id).rivalBidIn,3);
  for(let i=0;i<2;i++){advanceDate(s);advanceHanWorld(s);assert.equal(hanWorld(s).bridge.settled[id],undefined)}
  s=upgradeSave(structuredClone(s));h=hanWorld(s).state;
  assert.equal(romanView(s).availableImports.find(x=>x.id===id).rivalBidIn,1);
  advanceDate(s);advanceHanWorld(s);
  assert.equal(hanWorld(s).bridge.settled[id].owner,'senate');
- assert.equal(s.factions.senate.treasury,93);
+ assert.equal(hanWorld(s).bridge.settled[id].status,'in_transit');
+ assert.equal(s.factions.senate.treasury,92,'the rival pays one treasury for the final two-month route');
+ assert.equal(s.markets.regions.egypt.goods.horses.stock,egyptStock);
  assert.equal(romanView(s).availableImports.some(x=>x.id===id),false);
  assert.equal(romanView(s).imports.some(x=>x.hanShipment===id),false);
  assert.equal(s.markets.transactions.filter(x=>x.linkedHanShipment===id).length,1);
  assert.match(s.log[0].en,/rival court/);
  advanceDate(s);advanceHanWorld(s);
+ assert.equal(hanWorld(s).bridge.settled[id].status,'in_transit');
+ advanceDate(s);advanceHanWorld(s);
+ assert.equal(hanWorld(s).bridge.settled[id].status,'delivered');
+ assert.equal(s.markets.regions.egypt.goods.horses.stock,egyptStock+1);
  assert.equal(s.markets.transactions.filter(x=>x.linkedHanShipment===id).length,1);
+});
+
+test('Achaian imports travel five months and remain single paid cargo after save/load',()=>{
+ let s=newGame('caesar');attachHanWorld(s,{seed:91});
+ s.regions.find(r=>r.id==='achaia').owner='caesar';
+ const w=hanWorld(s),h=w.state,id='eastern-shipment:achaia',gate=h.tradeMarkets.regions.mediterranean_gate.goods.silk,port=s.markets.regions.achaia.goods.silk;
+ h.tradeMarkets.autonomousEnabled=false;gate.consumption=0;
+ h.tradeMarkets.shipments.push({id,buyer:'external',seller:'han',destination:'mediterranean_gate',commodity:'silk',quantity:1,price:7,status:'delivered',deliveredAt:s.year*12+s.month});gate.stock++;
+ const beforePort=port.stock,beforeGate=gate.stock,beforeCash=s.factions.caesar.treasury,beforeExternal=h.tradeMarkets.externalTreasury,beforeTransport=s.markets.transportSpent;
+ assert.deepEqual(romanView(s).availableImports.find(x=>x.id===id).portQuotes.achaia,{months:5,path:['syria','anatolia','achaia'],transport:3,total:10});
+ const bought=buyEasternImport(s,id,'achaia');assert.equal(bought.ok,true);
+ assert.equal(bought.receipt.status,'in_transit');assert.equal(gate.stock,beforeGate-1);assert.equal(port.stock,beforePort);
+ assert.equal(s.factions.caesar.treasury,beforeCash-10);assert.equal(h.tradeMarkets.externalTreasury,beforeExternal);assert.equal(s.markets.transportSpent,beforeTransport+3);
+ assert.equal(romanView(s).pendingImports[0].hanShipment,id);assert.equal(romanView(s).imports.length,0);
+ assert.match(eastPanel(s,{lang:0}),/Your cargo in transit.*estimated 5 months/s);
+ assert.match(eastPanel(s,{lang:1}),/本方在途商货.*预计还需 5 个月/s);
+ for(let i=0;i<2;i++){advanceDate(s);advanceHanWorld(s)}
+ s=upgradeSave(structuredClone(s));
+ for(let i=0;i<2;i++){advanceDate(s);advanceHanWorld(s);assert.equal(hanWorld(s).bridge.settled[id].status,'in_transit')}
+ assert.equal(s.markets.regions.achaia.goods.silk.stock,beforePort);
+ advanceDate(s);advanceHanWorld(s);
+ assert.equal(hanWorld(s).bridge.settled[id].status,'delivered');assert.equal(s.markets.regions.achaia.goods.silk.stock,beforePort+1);
+ assert.equal(romanView(s).pendingImports.length,0);
+ assert.equal(romanView(s).imports[0].hanShipment,id);assert.equal(s.markets.transactions.filter(x=>x.linkedHanShipment===id).length,1);
+ advanceDate(s);advanceHanWorld(s);assert.equal(s.markets.regions.achaia.goods.silk.stock,beforePort+1);
+});
+
+test('a captured destination returns the undelivered lot and refunds only its purchase price',()=>{
+ const s=newGame('caesar');attachHanWorld(s,{seed:92});
+ s.regions.find(r=>r.id==='achaia').owner='caesar';s.regions.find(r=>r.id==='syria').owner='caesar';
+ const w=hanWorld(s),h=w.state,id='eastern-shipment:return',gate=h.tradeMarkets.regions.mediterranean_gate.goods.horses;
+ h.tradeMarkets.autonomousEnabled=false;gate.consumption=0;
+ h.tradeMarkets.shipments.push({id,buyer:'external',seller:'han',destination:'mediterranean_gate',commodity:'horses',quantity:1,price:7,status:'delivered',deliveredAt:s.year*12+s.month});gate.stock++;
+ const beforeGate=gate.stock,beforeCash=s.factions.caesar.treasury,beforeTransport=s.markets.transportSpent;
+ assert.equal(buyEasternImport(s,id,'achaia').ok,true);s.regions.find(r=>r.id==='achaia').owner='egypt';
+ for(let i=0;i<5;i++){advanceDate(s);advanceHanWorld(s)}
+ assert.equal(w.bridge.settled[id].status,'returned');assert.equal(gate.stock,beforeGate);
+ assert.equal(s.factions.caesar.treasury,beforeCash-3);assert.equal(s.markets.transportSpent,beforeTransport+3);
+ assert.equal(romanView(s).availableImports.some(x=>x.id===id),true);
+ assert.equal(buyEasternImport(s,id,'syria').ok,true);assert.equal(w.bridge.settled[id].status,'delivered');
+ assert.equal(gate.stock,beforeGate-1);assert.equal(s.markets.transactions.filter(x=>x.linkedHanShipment===id&&x.status==='imported').length,1);
 });

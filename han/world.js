@@ -11,6 +11,7 @@ import {REGIONS,FACTIONS} from './data.js?v=han-1';
 import {isLiuClan} from './dynasty.js?v=han-1';
 import {initializeMarkets} from '../trade-markets.js?v=faces-wheels-1';
 import {COMMODITIES,marketPrice} from '../market-goods.js?v=faces-wheels-1';
+import {ROUTES as ROMAN_ROUTES} from '../data.js?v=phase-x-1';
 
 export const DLC_KEY='hanWorld';
 const mi=(y,m)=>y*12+m;
@@ -20,6 +21,20 @@ const PUBLIC_KINDS=new Set(['throne','war','disaster','frontier']);
 // hearsay passes, slowly.
 export const RELAY_MONTHS={trade:26,hearsay:40};
 const EAST_PORTS=['syria','egypt','anatolia','achaia'];
+// The exchange is in the Syrian theater. Other ports require an actual final
+// Roman road/sea leg rather than receiving the gate stock on purchase.
+function importRoute(port){
+ if(!EAST_PORTS.includes(port))return null;
+ const best=new Map([['syria',{months:0,path:['syria']}]]),open=new Set(['syria']);
+ while(open.size){let from=null;for(const id of open)if(from===null||best.get(id).months<best.get(from).months)from=id;open.delete(from);
+  for(const [a,b,kind] of ROMAN_ROUTES){const to=a===from?b:b===from?a:null;if(!EAST_PORTS.includes(to))continue;
+   const months=best.get(from).months+(kind==='sea'?3:2);
+   if(months<(best.get(to)?.months??Infinity)){best.set(to,{months,path:[...best.get(from).path,to]});open.add(to)}
+  }
+ }
+ return best.get(port)||null;
+}
+const importQuote=(cargo,port)=>{const route=importRoute(port);if(!route)return null;const transport=Math.ceil(route.months*cargo.quantity/2);return {...route,transport,total:cargo.price+transport}};
 const EASTERN_RELAY_MARKETS={parthia:'ctesiphon',media:'ecbatana'};
 const historicalRomanExports=s=>Object.fromEntries((s.markets?.transactions||[]).filter(tx=>tx.shipment&&['caesar','senate'].includes(tx.seller)&&tx.buyer==='parthia'&&EASTERN_RELAY_MARKETS[tx.destination]).map(tx=>[tx.shipment,{status:'legacy'}]));
 const PLAYER_IMPORT_PRIORITY_MONTHS=3;
@@ -85,19 +100,37 @@ function relayRomanExports(s,w){
 }
 function importAtPort(s,w,cargo,port){
  const h=w.state,bridge=ensureBridge(w),roman=initializeMarkets(s),gate=h.tradeMarkets?.regions?.mediterranean_gate?.goods?.[cargo.commodity];
- const price=cargo.price,quantity=cargo.quantity;
- if(cargo.buyer!=='external'||cargo.destination!=='mediterranean_gate'||cargo.status!=='delivered'||bridge.settled[cargo.id]||!EAST_PORTS.includes(port?.id)||!['caesar','senate'].includes(port.owner)||!COMMODITIES[cargo.commodity]||!gate||!roman.regions[port.id]?.goods?.[cargo.commodity]||!Number.isSafeInteger(quantity)||quantity<1||!Number.isSafeInteger(price)||price<0||gate.stock<quantity)return {ok:false,reason:'unavailable'};
- if(s.factions[port.owner]?.treasury<price)return {ok:false,reason:'treasury'};
+ const price=cargo.price,quantity=cargo.quantity,quote=importQuote(cargo,port?.id);
+ if(cargo.buyer!=='external'||cargo.destination!=='mediterranean_gate'||cargo.status!=='delivered'||bridge.settled[cargo.id]&&bridge.settled[cargo.id].status!=='returned'||!quote||!['caesar','senate'].includes(port?.owner)||!COMMODITIES[cargo.commodity]||!gate||!roman.regions[port.id]?.goods?.[cargo.commodity]||!Number.isSafeInteger(quantity)||quantity<1||!Number.isSafeInteger(price)||price<0||gate.stock<quantity)return {ok:false,reason:'unavailable'};
+ if(s.factions[port.owner]?.treasury<quote.total)return {ok:false,reason:'treasury'};
  // The external buyer paid Han at the gate. This court buys the same finite
- // cargo from that buyer; no customs money or stock appears for free.
- gate.stock-=quantity;roman.regions[port.id].goods[cargo.commodity].stock+=quantity;
- s.factions[port.owner].treasury-=price;h.tradeMarkets.externalTreasury+=price;
- const receipt={status:'delivered',hanShipment:cargo.id,merchantId:cargo.merchantId||null,port:port.id,owner:port.owner,commodity:cargo.commodity,quantity,price,year:s.year,month:s.month};
- bridge.settled[cargo.id]=receipt;if(port.owner===s.player&&cargo.commodity==='silk')w.known.silkCargoes=(w.known.silkCargoes||0)+quantity;
- roman.transactions.push({shipment:`han-import:${cargo.id}`,linkedHanShipment:cargo.id,merchantId:cargo.merchantId||null,seller:'external',buyer:port.owner,origin:'mediterranean_gate',destination:port.id,commodity:cargo.commodity,quantity,price,transport:0,tariffs:[],status:'imported',year:s.year,month:s.month});
+ // cargo from that buyer; the price stays in escrow during the final leg.
+ gate.stock-=quantity;s.factions[port.owner].treasury-=quote.total;roman.transportSpent+=quote.transport;
+ const receipt={status:quote.months?'in_transit':'delivered',hanShipment:cargo.id,merchantId:cargo.merchantId||null,port:port.id,owner:port.owner,commodity:cargo.commodity,quantity,price,transport:quote.transport,path:quote.path,arrivalAt:mi(s.year,s.month)+quote.months,year:s.year,month:s.month};
+ bridge.settled[cargo.id]=receipt;
+ if(!quote.months){roman.regions[port.id].goods[cargo.commodity].stock+=quantity;h.tradeMarkets.externalTreasury+=price;if(port.owner===s.player&&cargo.commodity==='silk')w.known.silkCargoes=(w.known.silkCargoes||0)+quantity}
+ roman.transactions.push({shipment:`han-import:${cargo.id}`,linkedHanShipment:cargo.id,merchantId:cargo.merchantId||null,seller:'external',buyer:port.owner,origin:'mediterranean_gate',destination:port.id,commodity:cargo.commodity,quantity,price,transport:quote.transport,tariffs:[],status:quote.months?'in_transit':'imported',year:s.year,month:s.month});
  if(roman.transactions.length>200)roman.transactions.shift();
- if(port.owner===s.player){const name=COMMODITIES[cargo.commodity].name;romanLog(s,`${name[0]} reached ${port.name[0]} through eastern merchants. The court bought ${quantity} batch${quantity===1?'':'es'} for ${price} treasury.`,`东方商人将${name[1]}运抵${port.name[1]}。朝廷花费${price}国库购入${quantity}批。`)}
+ if(port.owner===s.player){const name=COMMODITIES[cargo.commodity].name;romanLog(s,quote.months?`${name[0]} was purchased at the eastern exchange for ${price} treasury; transport to ${port.name[0]} takes ${quote.months} months and costs ${quote.transport}.`:`${name[0]} reached ${port.name[0]} through eastern merchants. The court bought ${quantity} batch${quantity===1?'':'es'} for ${price} treasury.`,quote.months?`朝廷在东方交易口以${price}国库购入${name[1]}，再花${quote.transport}国库运输，预计${quote.months}个月抵达${port.name[1]}。`:`东方商人将${name[1]}运抵${port.name[1]}。朝廷花费${price}国库购入${quantity}批。`)}
  return {ok:true,receipt};
+}
+function advanceRomanImportTransits(s,w){
+ const bridge=ensureBridge(w),roman=initializeMarkets(s),now=mi(s.year,s.month);
+ for(const receipt of Object.values(bridge.settled)){
+  if(receipt.status!=='in_transit'||receipt.arrivalAt>now)continue;
+  const port=s.regions.find(r=>r.id===receipt.port),tx=roman.transactions.find(x=>x.linkedHanShipment===receipt.hanShipment&&x.status==='in_transit');
+  if(port?.owner!==receipt.owner){
+   w.state.tradeMarkets.regions.mediterranean_gate.goods[receipt.commodity].stock+=receipt.quantity;
+   s.factions[receipt.owner].treasury+=receipt.price;
+   const cargo=w.state.tradeMarkets.shipments.find(x=>x.id===receipt.hanShipment);if(cargo)cargo.deliveredAt=now;
+   receipt.status='returned';if(tx)tx.status='returned';
+   if(receipt.owner===s.player)romanLog(s,`The route to ${port?.name?.[0]||receipt.port} closed before the eastern cargo arrived. Its purchase price was refunded; transport was spent.`,`东方货物抵达前，通往${port?.name?.[1]||receipt.port}的路线中断。货款已退，运费不返。`);
+   continue;
+  }
+  roman.regions[receipt.port].goods[receipt.commodity].stock+=receipt.quantity;
+  w.state.tradeMarkets.externalTreasury+=receipt.price;receipt.status='delivered';if(tx)tx.status='imported';
+  if(receipt.owner===s.player){if(receipt.commodity==='silk')w.known.silkCargoes=(w.known.silkCargoes||0)+receipt.quantity;romanLog(s,`${COMMODITIES[receipt.commodity].name[0]} reached ${port.name[0]} after its final journey.`,`东方货物${COMMODITIES[receipt.commodity].name[1]}经末程运输抵达${port.name[1]}。`)}
+ }
 }
 export function buyEasternImport(s,shipmentId,portId){
  if(campaignClosed(s))return {ok:false,reason:'finalized'};
@@ -113,9 +146,9 @@ function settleRomanImports(s,w){
  // player gets three months before a rival court may compete for the cargo.
  const playerHasPort=EAST_PORTS.some(id=>s.regions.find(r=>r.id===id)?.owner===s.player);
  for(const cargo of w.state.tradeMarkets?.shipments||[]){
-  if(cargo.buyer!=='external'||cargo.destination!=='mediterranean_gate'||cargo.status!=='delivered'||ensureBridge(w).settled[cargo.id])continue;
+  if(cargo.buyer!=='external'||cargo.destination!=='mediterranean_gate'||cargo.status!=='delivered'||ensureBridge(w).settled[cargo.id]&&ensureBridge(w).settled[cargo.id].status!=='returned')continue;
   if(playerHasPort&&(!Number.isSafeInteger(cargo.deliveredAt)||mi(s.year,s.month)-cargo.deliveredAt<PLAYER_IMPORT_PRIORITY_MONTHS))continue;
-  const port=EAST_PORTS.map(id=>s.regions.find(r=>r.id===id)).find(r=>r&&r.owner!==s.player&&['caesar','senate'].includes(r.owner)&&s.factions[r.owner]?.treasury>=cargo.price);
+  const port=EAST_PORTS.map(id=>s.regions.find(r=>r.id===id)).find(r=>r&&r.owner!==s.player&&['caesar','senate'].includes(r.owner)&&s.factions[r.owner]?.treasury>=importQuote(cargo,r.id)?.total);
   if(port){const bought=importAtPort(s,w,cargo,port);if(bought.ok&&playerHasPort)romanLog(s,`Eastern merchants sold their ${COMMODITIES[cargo.commodity].name[0]} cargo to the rival court before we bought it.`,`东方商人已将${COMMODITIES[cargo.commodity].name[1]}货批售予敌对朝廷，我方未能购入。`)}
  }
 }
@@ -139,6 +172,7 @@ export function advanceHanWorld(s){
  // Physically transfer paid cargo from the Han gate to a Roman market.
  w.lastDeliveries=h.silk.farWestDeliveries||w.lastDeliveries;
  relayRomanExports(s,w);
+ advanceRomanImportTransits(s,w);
  settleRomanImports(s,w);
  // the Roman embassy, if any
  if(w.embassy?.status==='travelling'&&now>=w.embassy.arrive){w.embassy.status='arrived';h.silk.contact.lijian={level:'embassy',heardAt:mi(h.year,h.month)};
@@ -176,6 +210,6 @@ export function upgradeHanWorld(s){const w=hanWorld(s);if(!w)return;w.state=load
 export function romanView(s){const w=hanWorld(s);if(!w)return null;
  const ports=EAST_PORTS.filter(id=>s.regions.find(r=>r.id===id)?.owner===s.player),goods=w.state.tradeMarkets?.regions?.mediterranean_gate?.goods||{};
  const rivalPort=EAST_PORTS.some(id=>{const owner=s.regions.find(r=>r.id===id)?.owner;return owner&&owner!==s.player&&['caesar','senate'].includes(owner)});
- const availableImports=ports.length&&!campaignClosed(s)?(w.state.tradeMarkets?.shipments||[]).filter(x=>x.buyer==='external'&&x.destination==='mediterranean_gate'&&x.status==='delivered'&&!ensureBridge(w).settled[x.id]&&COMMODITIES[x.commodity]&&Number.isSafeInteger(x.quantity)&&x.quantity>0&&Number.isSafeInteger(x.price)&&x.price>=0&&goods[x.commodity]?.stock>=x.quantity).map(x=>({id:x.id,commodity:x.commodity,quantity:x.quantity,price:x.price,merchantId:x.merchantId||null,merchantName:w.state.persons?.[x.merchantId]?.name||null,rivalBidIn:rivalPort&&Number.isSafeInteger(x.deliveredAt)?Math.max(0,PLAYER_IMPORT_PRIORITY_MONTHS-(mi(s.year,s.month)-x.deliveredAt)):null,ports})):[];
- return {snapshot:w.known.snapshot,dispatches:w.known.dispatches,silkCargoes:w.known.silkCargoes,imports:Object.values(w.bridge?.settled||{}).filter(x=>x.status==='delivered'&&x.owner===s.player).slice(-8).reverse(),exports:Object.values(w.bridge?.romanExports||{}).filter(x=>x.status==='transferred'&&x.seller===s.player).slice(-8).reverse(),availableImports,embassy:w.embassy?{...w.embassy}:null,conditions:embassyConditions(s)};
+ const availableImports=ports.length&&!campaignClosed(s)?(w.state.tradeMarkets?.shipments||[]).filter(x=>x.buyer==='external'&&x.destination==='mediterranean_gate'&&x.status==='delivered'&&(!ensureBridge(w).settled[x.id]||ensureBridge(w).settled[x.id].status==='returned')&&COMMODITIES[x.commodity]&&Number.isSafeInteger(x.quantity)&&x.quantity>0&&Number.isSafeInteger(x.price)&&x.price>=0&&goods[x.commodity]?.stock>=x.quantity).map(x=>({id:x.id,commodity:x.commodity,quantity:x.quantity,price:x.price,merchantId:x.merchantId||null,merchantName:w.state.persons?.[x.merchantId]?.name||null,rivalBidIn:rivalPort&&Number.isSafeInteger(x.deliveredAt)?Math.max(0,PLAYER_IMPORT_PRIORITY_MONTHS-(mi(s.year,s.month)-x.deliveredAt)):null,ports,portQuotes:Object.fromEntries(ports.map(port=>[port,importQuote(x,port)]))})):[];
+ return {snapshot:w.known.snapshot,dispatches:w.known.dispatches,silkCargoes:w.known.silkCargoes,imports:Object.values(w.bridge?.settled||{}).filter(x=>x.status==='delivered'&&x.owner===s.player).slice(-8).reverse(),pendingImports:Object.values(w.bridge?.settled||{}).filter(x=>x.status==='in_transit'&&x.owner===s.player).slice(-8).reverse(),exports:Object.values(w.bridge?.romanExports||{}).filter(x=>x.status==='transferred'&&x.seller===s.player).slice(-8).reverse(),availableImports,embassy:w.embassy?{...w.embassy}:null,conditions:embassyConditions(s)};
 }

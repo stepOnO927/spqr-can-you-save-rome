@@ -1602,6 +1602,20 @@ Chromium flow verifies a player-ordered venture and its bilingual receipt in
 GitHub Actions run 45055145162 passed all three browser groups. Wider private-network
 competition and additional commodity resale chains remain open.
 
+The Roman end of an eastern import now has a physical final leg. The Syrian
+exchange can deliver locally at once; Egypt and Anatolia require two months,
+and Achaia requires the Syrian–Anatolian road followed by a sea leg, five
+months in total. The purchase quote includes transport, the paid lot stays
+in transit through saves, and it reaches the destination market only on its
+arrival month. If the destination changes hands first, the lot returns to the
+exchange, the purchase price is refunded, and spent transport is retained.
+The player gets a renewed opportunity to buy a returned lot. The bilingual
+East panel now shows port-specific totals, travel time, and cargo in transit.
+The expanded browser smoke exercises both local and Achaian purchases with
+save/load and timed delivery. Focused market bridge tests and the full
+`npm test` suite (1,390 tests after merging main #345) pass locally; the browser expansion awaits the
+GitHub Actions run on this commit.
+
 ## Existing foundations
 
 | System | Reusable implementation | Limitation for Faces of Empire |

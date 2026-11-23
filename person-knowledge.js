@@ -16,6 +16,22 @@ export function isDeliveredReport(s,r){
 // Sightings retain when a force was observed, even when a report arrives later.
 export function sightingAge(s,r){return s.year*12+s.month-((r.observationYear??r.year)*12+(r.observationMonth??r.month))}
 export function isCompletedMeeting(s,m){const year=m?.resolvedYear??m?.year,month=m?.resolvedMonth??m?.month;return m?.status==='met'&&Number.isFinite(year)&&Number.isInteger(month)&&month>=1&&month<=12&&year*12+month<=s.year*12+s.month}
+// Archived reports can provide historical leads, never current authority or
+// corroboration. Cache a per-court index for the current month so AI and UI
+// lookups do not rescan a long history on every decision. Archive entries are
+// immutable once recorded; additions change the array length.
+const archiveIndexes=new WeakMap();
+function archivedPersonIndex(s,knowledge){
+ const archive=knowledge?.reportArchive;if(!Array.isArray(archive))return {leads:[],names:new Map()};
+ const now=s.year*12+s.month,old=archiveIndexes.get(knowledge);if(old&&old.archive===archive&&old.length===archive.length&&old.now===now)return old;
+ const leads=[],seen=new Set(),names=new Map();
+ for(let i=archive.length-1;i>=0;i--){const r=archive[i];if(!isDeliveredReport(s,r))continue;const named=namedReportSubjects(r),related=[...named,...(['health','age','location','conspiracy'].includes(r.kind)?[r.character]:[])];
+  for(const id of related)if(typeof id==='string'&&!seen.has(id)){seen.add(id);leads.push(id)}
+  const observed=new Set([...named,...(r.identityObserved===true&&['health','age','location'].includes(r.kind)?[r.character]:[])]);
+  for(const id of observed)if(typeof id==='string'&&validName(r.peopleNames?.[id])){const records=names.get(id)||[];records.push({name:r.peopleNames[id],year:r.observationYear??r.year,month:r.observationMonth??r.month});names.set(id,records)}
+ }
+ const index={archive,length:archive.length,now,leads,names};archiveIndexes.set(knowledge,index);return index;
+}
 // Names in delivered reports and observations are leads, not proof of current
 // office, allegiance, health or willingness to answer a diplomatic letter.
 export function reportedPeople(s,actor,target){
@@ -23,7 +39,7 @@ export function reportedPeople(s,actor,target){
  const meetings=(s.meetings||[]).filter(m=>isCompletedMeeting(s,m)&&((m.actor===actor&&m.targetFaction===target)||(m.targetFaction===actor&&m.actor===target))).map(m=>m.actor===actor?m.target:m.person);
  const leads=reports.filter(r=>isDeliveredReport(s,r)).flatMap(r=>[...namedReportSubjects(r),...(['health','age','location','conspiracy'].includes(r.kind)?[r.character]:[])]);
  const claimants=reports.filter(r=>isDeliveredReport(s,r)&&r.kind==='claimants').flatMap(r=>r.leaders||[]);
- return [...new Set([...(knowledge?.reportedLeaders||[]),...claimants,...Object.values(knowledge?.sightings||{}).filter(x=>isDeliveredReport(s,x)).map(x=>x.commanderId),...(knowledge?.commanderReports||[]).filter(x=>isDeliveredReport(s,x)).map(x=>x.commanderId),...leads,...meetings].filter(id=>CHARACTER_CATALOG[id]))];
+ return [...new Set([...(knowledge?.reportedLeaders||[]),...claimants,...Object.values(knowledge?.sightings||{}).filter(x=>isDeliveredReport(s,x)).map(x=>x.commanderId),...(knowledge?.commanderReports||[]).filter(x=>isDeliveredReport(s,x)).map(x=>x.commanderId),...leads,...meetings,...archivedPersonIndex(s,knowledge).leads].filter(id=>CHARACTER_CATALOG[id]))];
 }
 // A contact can be used by either participant's faction. Never reconstruct
 // a foreign relationship from its live trust value: older meetings without a
@@ -46,6 +62,7 @@ function personNameRecords(s,actor,target,id){
  // dated name; old reports without that provenance stay conservative.
  const observedSubject=r=>r.identityObserved===true&&['health','age','location'].includes(r.kind)&&r.character===id;
  const records=reports.filter(r=>isDeliveredReport(s,r)&&(!Number.isFinite(reportAge(s,r))||reportAge(s,r)>=0)&&(namedReportSubjects(r).includes(id)||observedSubject(r))&&validName(r.peopleNames?.[id])).map(r=>({name:r.peopleNames[id],year:r.observationYear??r.year,month:r.observationMonth??r.month}));
+ records.push(...(archivedPersonIndex(s,s.knowledge?.[actor]?.[target]).names.get(id)||[]));
  // A commander identification is a dated observer-owned snapshot. Older
  // sightings lacking a saved name cannot be filled from the live catalog.
  const k=s.knowledge?.[actor]?.[target];for(const r of [...Object.values(k?.sightings||{}),...(k?.commanderReports||[])])if(isDeliveredReport(s,r)&&r.commanderId===id&&validName(r.commanderName))records.push({name:r.commanderName,year:r.observationYear??r.year,month:r.observationMonth??r.month});
