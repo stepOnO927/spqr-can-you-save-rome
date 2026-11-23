@@ -164,6 +164,7 @@ jobs:
               node tools/merge-map-switch-smoke.mjs
               node tools/scenario-systems-smoke.mjs
               node tools/construction-smoke.mjs
+              node tools/population-migration-smoke.mjs
               command timeout 900s node tools/browser-smoke.mjs
               node tools/phase-v-smoke.mjs
               node tools/capture-check.mjs
