@@ -20,6 +20,7 @@ import {renderLocalGovernor} from './local-governor-ui.js?v=roman-vacancy-1';
 import {renderSecurity} from './security-ui.js?v=roman-vacancy-1';
 import {renderOffices} from './offices-ui.js?v=roman-vacancy-1';
 import {renderCursus} from './cursus-ui.js?v=roman-vacancy-1';
+import {initializeCursus} from '../cursus-honorum.js?v=roman-vacancy-1';
 import {officeEffects} from '../office-system.js?v=roman-vacancy-1';
 import {populationFactor,religiousTaxCost} from '../religion.js?v=roman-vacancy-1';
 import {satisfactionForOutline} from './satisfaction-map.js?v=roman-vacancy-1';
