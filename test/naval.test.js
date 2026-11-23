@@ -1653,6 +1653,26 @@ test('AI can reassign a released escort to a newly raided route',()=>{
  assert.equal(escort.order?.kind,'escort');
  assert.equal(escort.order?.target,'levant-luxury');
 });
+test('AI patrols return before stores run out and release a quiet route for troop staging',()=>{
+ const tired=newGrandGame('egypt'),watch=tired.naval.fleets.find(f=>f.id==='senate-adriatic');
+ watch.port=null;watch.zone='adriatic';watch.order={kind:'patrol',target:'adriatic',path:[]};watch.supply=42;
+ tired.naval.pirates.find(p=>p.zone==='adriatic').ships=0;
+ tired.naval.pirates.find(p=>p.zone==='adriatic').pressure=60;
+ advanceNaval(tired);
+ assert.equal(watch.order?.kind,'return');assert.equal(tired.regions.find(r=>r.id===watch.order.targetPort)?.owner,'senate');
+
+ const staging=newGrandGame('egypt'),fleet=staging.naval.fleets.find(f=>f.id==='senate-adriatic'),army=staging.armies.find(a=>a.id==='italy');
+ for(const site of staging.regions)site.owner='egypt';
+ staging.regions.find(r=>r.id==='italiaS').owner='senate';staging.regions.find(r=>r.id==='t075').owner='caesar';
+ staging.armies=[army];staging.naval.fleets=staging.naval.fleets.filter(f=>f.owner==='senate');army.region='italiaS';fleet.port=null;fleet.zone='adriatic';fleet.order={kind:'patrol',target:'adriatic',path:[]};
+ staging.naval.pirates.find(p=>p.zone==='adriatic').pressure=0;
+ advanceNaval(staging);
+ assert.equal(fleet.order?.kind,'return','the quiet patrol stages at the waiting army instead of remaining offshore');
+ assert.equal(fleet.order?.targetPort,'italiaS');
+ advanceNaval(staging);assert.equal(fleet.port,'italiaS');
+ aiTurn(staging,'senate');assert.equal(army.move?.sea,true);assert.equal(army.move?.to,'t075');
+ assert.equal(fleet.order?.kind,'transport');
+});
 test('AI pursues a dated hostile fleet report through a real sea battle without reading hidden positions',()=>{
  const setup=()=>{
   const s=newGrandGame('caesar'),hunter=s.naval.fleets.find(f=>f.owner==='senate'),enemy=s.naval.fleets.find(f=>f.owner==='caesar');

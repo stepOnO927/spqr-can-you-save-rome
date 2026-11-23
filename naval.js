@@ -902,6 +902,17 @@ function aiTransportShipbuilding(s,owner){
 }
 function aiNavalOrders(s,owner,f){
  if(f.port&&!f.order&&s.naval.queues.some(q=>q.owner===owner&&q.aiFleetId===f.id))return;
+ // Patrols and other optional station orders must not leave an AI squadron
+ // offshore until its stores are empty. A spent patrol can then be staged for
+ // transport or assigned another useful mission.
+ if(!f.port&&['patrol','escort','intercept','blockade','raid','recon'].includes(f.order?.kind)&&(f.supply<40||f.hull<40)){
+  const home=s.regions.filter(r=>r.owner===owner&&r.port).map(r=>({r,path:seaRoute(f.zone,portZone(r.id))})).filter(x=>x.path).sort((a,b)=>a.path.length-b.path.length)[0];
+  if(home)orderFleet(s,owner,f.id,'return',home.r.id);
+  else f.order=null;
+  return;
+ }
+ if(f.order?.kind==='patrol'&&!s.naval.pirates.some(p=>p.zone===f.zone&&p.pressure>=12)&&aiTransportStagingPort(s,owner,f))f.order=null;
+ if(f.order?.kind==='blockade'&&!s.regions.some(r=>r.id===f.order.targetPort&&atWar(s,owner,r.owner)))f.order=null;
  if(f.order?.kind==='escort'){
   const order=f.order,route=s.naval.routes.find(r=>r.id===order.target);
   const from=route&&s.regions.find(r=>r.id===route.from),to=route&&s.regions.find(r=>r.id===route.to);
