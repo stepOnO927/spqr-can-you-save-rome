@@ -14,6 +14,11 @@ alongside the branch's eastern trade changes. Focused inquiry and module
 version tests pass 6/6. The merged Windows full suite passes 1,398/1,399;
 the existing 40 ms NPC East CPU gate measured 42.29 ms. Hosted checks for the
 merged head follow.
+The first hosted run for this merge passed the Linux unit suite, packaging,
+quality and browser groups 2 and 3. Browser group 1 exposed an inquiry smoke
+fixture that read the first inquiry after new AI letters were inserted; it now
+finds the player's specific Egypt inquiry and its matching reply. The focused
+inquiry tests pass 8/8; the corrected browser run follows.
 
 Main through `62010d8a` (#343) is integrated. The new fourteenth pair of
 campaign-born portraits and its save migration were added to the branch's
