@@ -23,6 +23,7 @@ import {initializeInventions,advanceInventions,aiInnovation,activeModifiers as i
 import {advanceFocuses,focusModifiers} from './national-focus.js?v=dossier-archive-1';
 import {seedTemplates,formationCombatFactor,formationMarchDelta,formationSiegeReduction,formationUpkeepDelta,observeFormationRecon,advanceReorganizations,aiDesignFormations,aiRecruitFormation,aiReorganize,advanceCommandInfluence} from './legion-designer.js?v=dossier-archive-1';
 import {advanceBattlePlans,aiBattlePlans,planControlled} from './battle-plans.js?v=dossier-archive-1';
+import {shareAiOperation} from './operation-intelligence.js?v=operation-notices-1';
 // IMPERIUM systems are on by default. A scenario or an isolated legacy test may set
 // world.imperium.enabled=false to run the pre-expansion AI unchanged.
 const imperiumOn=s=>s.world?.imperium?.enabled!==false;
@@ -658,6 +659,7 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
   if(owner!=='rebels'&&imperiumOn(s)){
     if((s.month+owner.length)%6===0||!s.world.aiFormationPlans?.[owner])aiDesignFormations(s,owner);
     if(strongPlanning||s.month%3===0)aiBattlePlans(s,owner,{estimatedStrength,log});
+    shareAiOperation(s,owner,{sendLetter,autoplayPlayer});
     // Reorganize quarterly, or soon after a lost battle when a battered army is safe at home.
     const beaten=(s.battles||[]).some(b=>(b.attackerWins?b.defender.owner:b.attacker.owner)===owner&&(s.year*12+s.month)-(b.year*12+b.month)<=2);
     if((s.month%4===2&&f.treasury>70||beaten&&f.treasury>35)&&(!strategy||!['recover','stabilize'].includes(strategy.goal)||beaten))aiReorganize(s,owner,{log});

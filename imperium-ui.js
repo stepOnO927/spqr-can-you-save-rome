@@ -7,6 +7,8 @@ import {BRANCH_NAMES,PATH_NAMES} from './imperium-focus-data.js?v=imperium-1';
 import {treeFor,focusStatus,focusState,canStartFocus,startFocus,cancelFocus,focusCost,focusReportsFor,focusById} from './national-focus.js?v=dossier-archive-1';
 import {COMPONENTS,CULTURE_NAMES,templatesFor,templateStats,saveTemplate,duplicateTemplate,deleteTemplate,validateTemplate,availableComponents,cultureOf,reorganizationQuote,reorganizeArmy,recruitmentQuote,recruitFormation,commanderSpecialty,commandConcentration,seedTemplates,formationState,outdatedArmies} from './legion-designer.js?v=dossier-archive-1';
 import {ROLES,ROLE_NAMES,MODES,plansFor,planById,createPlan,assignRole,removeRole,approvePlan,pausePlan,cancelPlan,editPlan,assessPlan,adviserCounsel,approveRecommendation,legalStep} from './battle-plans.js?v=dossier-archive-1';
+import {operationPartners,shareOperation,operationNoticeRoute} from './operation-intelligence.js?v=operation-notices-1';
+import {sendLetter,courierMonths} from './epistulae.js?v=dossier-archive-1';
 
 // IMPERIUM screens: national strategy tree, legion designer, operational planner.
 // UI state is local to this module; game state changes only through engine APIs.
@@ -151,6 +153,10 @@ export function designerScreen(state,lang){
 }
 
 // ---------- battle planner ----------
+function operationSharingPanel(state,lang,plan){
+ const zh=lang==='zh',partners=operationPartners(state,state.player),sent=(state.mail?.messages||[]).filter(m=>m.senderFaction===state.player&&m.context?.kind==='operation_notice'&&m.context.planId===plan.id).slice(-4).reverse();
+ return `<section class="rule-block" data-operation-sharing><h4>${zh?'盟军作战通报':'ALLIED OPERATIONAL NOTICE'}</h4><p>${zh?'寄信花费1国库；按距离送达，可能遗失。仅分享发信时的目标，不共享部队数量、路线或后续改令。盟军根据自己的情报和补给独立决定；不保证配合，不自动宣战。':'A notice costs 1 treasury, travels with distance and may be lost. Share current objectives only, without troop numbers, routes or later orders. Allies decide from their own intelligence and supplies; cooperation is not guaranteed and no war is declared.'}</p>${['active','preparing'].includes(plan.status)&&partners.length?`<label>${zh?'盟友':'Partner'} <select id="imp-operation-partner">${partners.map(id=>`<option value="${esc(id)}">${esc(fname(id,lang))}</option>`).join('')}</select></label> <button class="action" data-imp-share-operation ${state.factions[state.player].treasury<1?'disabled':''}>${zh?'寄出通报 · 1国库':'Send notice · 1 treasury'}</button>`:`<p>${zh?'需要已批准的进攻或围城计划，以及同盟、进攻或防御条约伙伴。':'Requires an approved offensive or siege plan and a full, offensive or defensive treaty partner.'}</p>`}${sent.map(m=>`<p>${esc(fname(m.recipient,lang))} · ${campaignDate(m.created.month,m.created.year,lang)} · ${zh?'已寄出，未获独立确认':'Dispatched; receipt not independently confirmed'}</p>`).join('')}</section>`;
+}
 export function plannerPanel(state,lang,selectedArmy){
  const L2=tx(lang),owner=state.player,plans=plansFor(state,owner).filter(p=>!['completed','cancelled','failed'].includes(p.status)||p.id===ui.plan),plan=ui.plan&&planById(state,ui.plan);
  const own=state.regions.filter(r=>r.owner===owner),armies=state.armies.filter(a=>a.owner===owner&&a.men>0),commanders=Object.values(state.world.characters).filter(c=>c.alive&&c.faction===owner);
@@ -162,6 +168,7 @@ export function plannerPanel(state,lang,selectedArmy){
  const targets=ui.addRole==='offensive'?[]:['frontline','defensive','fallback','reserve','supply_guard'].includes(ui.addRole)?own.map(r=>r.id):REGIONS.map(r=>r.id).filter(id=>state.regions.some(r=>r.id===id)&&(ui.addRole!=='siege'||reportedControl(state,owner,id)?.owner!==owner));
  return `<div class="panel-heading"><span class="eyebrow">CONSILIVM BELLI</span><h2>${L2.planner}</h2></div>${list}
  <article class="imp-plan"><h3>${esc(plan.name)} <small class="ps-${plan.status}">${esc(L2.pstatus[plan.status])}</small></h3>
+ ${operationSharingPanel(state,lang,plan)}
  ${plan.attention?`<p class="imp-err" role="alert">${esc(L2.attention[plan.attention]||plan.attention)}</p>`:''}
  <label for="imp-mode">${L2.mode}</label><select id="imp-mode" ${editable?'':'disabled'}>${MODES.map(m=>`<option value="${m}" ${plan.mode===m?'selected':''}>${esc(L2.modes[m])}</option>`).join('')}</select>
  <label for="imp-cond">${L2.condition}</label><select id="imp-cond" ${plan.status==='draft'?'':'disabled'}>${['immediate','prepared'].map(m=>`<option value="${m}" ${plan.condition?.kind===m?'selected':''}>${esc(L2.conditions[m])}</option>`).join('')}</select>
@@ -227,6 +234,7 @@ export function bindImperium({state,lang,render,flash,log}){
  all('[data-imp-new-plan]').forEach(el=>el.onclick=()=>{const r=createPlan(state,owner,{name:$('#imp-pname')?.value||'',mode:'assisted'});if(r.ok)ui.plan=r.plan.id;render()});
  const plan=ui.plan&&planById(state,ui.plan);
  if(plan){
+  const share=$('[data-imp-share-operation]');if(share){const partner=$('#imp-operation-partner'),label=lang==='zh'?'寄出通报 · 1国库':'Send notice · 1 treasury',estimate=document.createElement('p');share.after(estimate);const quote=()=>{const route=operationNoticeRoute(state,owner,partner.value),months=courierMonths(state,route.source,route.destination);estimate.textContent=lang==='zh'?`按已知地址预计${months}个月；送达时可能已过期。`:`Estimated ${months} month(s) to the recorded address; it may be outdated on arrival.`};quote();partner.onchange=()=>{delete share.dataset.confirmed;share.textContent=label;quote()};share.onclick=()=>{if(!share.dataset.confirmed){share.dataset.confirmed='true';share.textContent=lang==='zh'?'确认分享作战目标 · 1国库':'Confirm sharing objectives · 1 treasury';return}const result=shareOperation(state,owner,plan.id,partner.value,{sendLetter});render();flash(result.ok?(lang==='zh'?`通报已寄出，约${result.duration}个月；不保证送达或配合。`:`Notice sent; about ${result.duration} month(s). Delivery and cooperation are not guaranteed.`):result.reason==='cooldown'?(lang==='zh'?'本月已寄过通报，或过去6个月已向此盟友通报。':'Already sent this month, or notified this partner in the past six months.'):(lang==='zh'?'无法寄出：检查计划、进攻目标、条约伙伴和国库。':'Cannot send: check approved plan, hostile objective, treaty partner and treasury.'))}}
   const sel=(id,fn)=>{const el=$(id);if(el)el.onchange=()=>{fn(el);render()}};
   sel('#imp-mode',el=>editPlan(state,owner,plan.id,{mode:el.value}));
   sel('#imp-cond',el=>editPlan(state,owner,plan.id,{condition:{kind:el.value}}));
@@ -250,3 +258,4 @@ export function bindImperium({state,lang,render,flash,log}){
  if(ui.drawing){all('[data-map-group]').forEach(el=>el.addEventListener('click',e=>{e.stopImmediatePropagation();e.preventDefault();const a=state.armies.find(x=>x.id===ui.drawing.armyId);if(!a)return;const last=ui.drawing.path.at(-1)||a.region,ids=el.dataset.mapGroup.split(','),next=ids.find(id=>legalStep(state,owner,last,id).ok);
   if(!next){flash(lang==='zh'?'只能选择相邻且可进入的战区。':'Choose an adjacent theater that can be entered.');return}ui.drawing.path.push(next);render()},{capture:true}))}
 }
+
