@@ -123,6 +123,8 @@ body.atlas-focus .mast,body.atlas-focus .brief,body.atlas-focus .selection,body.
 .grand-campaign .grand-site.near-site{width:10px;height:10px}
 .grand-campaign .grand-site.near-site:after{content:'';position:absolute;inset:-7px}
 .grand-campaign .grand-site.near-site:is(:hover,:focus):after{content:none}
+.grand-campaign .grand-site.beside-army{background:#f2e5c8;color:#273b36;text-shadow:none;border-color:#846f4c;box-shadow:0 2px 7px #12232399;z-index:4}
+.grand-campaign .grand-site.beside-army:before{color:var(--site-accent,#9b7850);text-shadow:0 0 2px #fff8dd}
 .army:is(.spaced-right,.spaced-left):after{content:'';position:absolute;bottom:0;width:var(--standard-displacement);border-bottom:1px dashed #f0d8a5b8;pointer-events:none}
 .army.spaced-right:after{right:100%}
 .army.spaced-left:after{left:100%}

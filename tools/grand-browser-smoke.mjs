@@ -198,6 +198,7 @@ assert.match(await page.locator('#situation').innerText(),/OWN FIELD FORCE/);
 assert.doesNotMatch(await page.locator('#situation').innerText(),/Northern Italy loyalty/);
 const datedEgypt=newGrandGame('egypt');datedEgypt.year=-47;datedEgypt.month=6;
 await page.locator('#upload-save-file').setInputFiles({name:'egypt-47-bce.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(datedEgypt))});
+await page.waitForFunction(()=>document.querySelector('.identity strong')?.textContent?.includes('47 BCE'));
 assert.match(await page.locator('.identity strong').innerText(),/Egypt · 47 BCE/);
 await page.locator('#language').click();assert.match(await page.locator('.identity strong').innerText(),/埃及 · 公元前47年/);
 await page.locator('#save').click();await page.locator('#load').click();assert.match(await page.locator('.identity strong').innerText(),/埃及 · 公元前47年/);

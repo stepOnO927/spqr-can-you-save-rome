@@ -697,10 +697,16 @@ map.on('load',()=>{
  syncSiteCrowding=()=>{
   const zoom=map.getZoom?.(),canProject=typeof map.project==='function';
   const candidates=state.grandMap&&canProject&&zoom>=4.8?armyMarkers.filter(mark=>mark.unitRegion&&mark.displayPoint).map(mark=>mark.displayPoint):[];
-  for(const {site,element,attached} of siteMarkers){
+  for(const {site,element,marker,attached} of siteMarkers){
    const point=attached&&candidates.length?map.project([site.lon,site.lat]):null;
-   element.classList.toggle('near-army',!!point&&candidates.some(flag=>Math.abs(point.x-flag.x)<52&&Math.abs(point.y-flag.y)<38));
+   const nearArmy=!!point&&candidates.some(flag=>Math.abs(point.x-flag.x)<52&&Math.abs(point.y-flag.y)<38);
+   // At close scale the main settlement stays named beside its army standard.
+   // Lesser sites remain compact, so the flag and city are both selectable.
+   const besideArmy=nearArmy&&zoom>=8&&(element.classList.contains('major')||element.classList.contains('landmark'));
+   element.classList.toggle('near-army',nearArmy&&!besideArmy);
+   element.classList.toggle('beside-army',besideArmy);
    element.classList.remove('near-site');
+   if(typeof marker.setOffset==='function')marker.setOffset(besideArmy?[-element.offsetWidth-14,30]:[0,0]);
   }
   if(!state.grandMap||zoom<6.2)return;
   const viewport=map.getContainer().getBoundingClientRect(),placed=[];
