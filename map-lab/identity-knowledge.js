@@ -9,6 +9,10 @@ export function identityKnowledge(s,id){
  if(verified&&!hasReportedNameConflict(s,s.player,id))return {kind:'corroborated'};
  const meetings=(s.meetings||[]).filter(m=>((m.actor===s.player&&m.target===id)||(m.targetFaction===s.player&&m.person===id))&&m.status==='met').map(m=>({year:m.resolvedYear??m.year,month:m.resolvedMonth??m.month})).filter(m=>Number.isFinite(m.year)&&Number.isFinite(m.month)&&m.year*12+m.month<=now).sort((a,b)=>(b.year*12+b.month)-(a.year*12+a.month));
  if(meetings.length)return {kind:'met',...meetings[0]};
- const reported=targets.some(k=>(k.reportedLeaders||[]).includes(id)||(k.commanderReports||[]).some(r=>isDeliveredReport(s,r)&&r.commanderId===id)||Object.values(k.sightings||{}).some(r=>isDeliveredReport(s,r)&&r.commanderId===id)||(k.reports||[]).some(r=>isDeliveredReport(s,r)&&(names(r).includes(id)||(['health','age','location','conspiracy'].includes(r.kind)&&r.character===id))));
+ const mentions=r=>isDeliveredReport(s,r)&&(names(r).includes(id)||(['health','age','location','conspiracy'].includes(r.kind)&&r.character===id));
+ // Archives preserve a reported identity, not current corroboration. The
+ // verified check above deliberately continues to use active evidence only.
+ const reported=targets.some(k=>(k.reportedLeaders||[]).includes(id)||(k.commanderReports||[]).some(r=>isDeliveredReport(s,r)&&r.commanderId===id)||Object.values(k.sightings||{}).some(r=>isDeliveredReport(s,r)&&r.commanderId===id)||(k.reports||[]).some(mentions)||(k.reportArchive||[]).some(mentions));
  return {kind:reported?'reported':'unknown'};
 }
+
