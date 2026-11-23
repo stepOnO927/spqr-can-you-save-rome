@@ -55,6 +55,8 @@ try{
  await page.evaluate(()=>document.querySelector('#save').click());
  const travelling=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')));
  assert.equal(travelling.world.hanWorld.bridge.settled[achaia].status,'in_transit');
+ assert.deepEqual(travelling.world.hanWorld.bridge.settled[achaia].path,['syria','anatolia','achaia']);
+ assert.deepEqual(travelling.world.hanWorld.bridge.settled[achaia].legs.map(leg=>leg.network),['campaign','campaign']);
  assert.equal(travelling.factions.caesar.treasury,84);
  await page.reload({waitUntil:'domcontentloaded'});await page.locator('[data-slot="load"]').click();await page.locator('[data-tab="east"]').click();
  assert.match(await page.locator('.inspector').innerText(),/Your cargo in transit/);
