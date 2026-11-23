@@ -949,7 +949,7 @@ body.atlas .spqr-version{left:auto;right:10px}
   :root .experience-actions{flex-wrap:nowrap}
   :root .experience-actions button{background:#161310f2}
   :root .experience-strip .experience-summary{display:none}
-  :root .experience-strip .experience-lesson{display:block;max-height:110px;overflow:auto;margin-top:4px;padding:6px 8px;background:#161310f2;border:1px solid var(--iv-line);font-size:10px;line-height:1.3;pointer-events:auto}
+  :root .experience-strip .experience-lesson{display:block;max-height:110px;overflow:auto;margin-top:4px;padding:6px 8px;background:#161310f2;border:1px solid var(--iv-line);font-size:10px;line-height:1.3;pointer-events:none}
   :root .experience-actions button,:root .experience-lesson button{pointer-events:auto}
   :root .experience-actions{margin-top:0}
   :root .experience-actions button{min-height:36px;padding:0 var(--iv-2);font-size:10px}
