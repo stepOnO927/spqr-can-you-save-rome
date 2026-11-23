@@ -45,7 +45,7 @@ test('every building reference has a distinct drawing and names its cited histor
 test('period engineering references name the checked source instead of only its host',()=>{
  for(const [id,title] of [
   ['roadmaking','UNESCO, Via Appia. Regina Viarum'],
-  ['bridge-engineering','UNESCO, Via Appia. Regina Viarum'],
+  ['bridge-engineering','Caesar, Civil Wars 1.40–41, 1.48–54'],
   ['stone-fortification','Musée d’Archéologie nationale, Vercingetorix and Alesia'],
   ['supply-organization','Javier Salido Dominguez, Architecture in the Service of the Roman Army (2015)'],
   ['dam-engineering','Alyzia Dam archaeological and engineering study (ISSMGE, 2026)']

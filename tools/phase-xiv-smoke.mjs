@@ -37,6 +37,7 @@ try{
   await page.locator('.dev-tree-links path[data-from="water-control"][data-to="urban-drainage"]').waitFor();
   assert.ok(await page.locator('.dev-tree-links path[data-from="water-control"][data-to="urban-drainage"]').getAttribute('d'));
   await page.locator('.dev-reference summary').click();
+  assert.match(await page.locator('#tech-bridge-engineering').innerText(),/Sicoris[\s\S]*floods broke them/);
   assert.match(await page.locator('.dev-reference').innerText(),/Provincial grain-store capacity \+24/);
   assert.match(await page.locator('.dev-reference').innerText(),/Provincial grain-store capacity \+12/);
   assert.match(await page.locator('.dev-reference').innerText(),/Provincial grain-store capacity \+20/);
@@ -126,6 +127,7 @@ try{
   assert.match(await page.locator('.inspector h2').innerText(),/文明发展/);
   await page.locator('[data-dev-branch="material"]').click();
   await page.locator('.dev-reference summary').click();
+  assert.match(await page.locator('#tech-bridge-engineering').innerText(),/西科里斯河[\s\S]*洪水冲毁桥梁/);
   assert.match(await page.locator('.dev-reference').innerText(),/地方储粮容量 \+24/);
   assert.match(await page.locator('.dev-reference').innerText(),/地方储粮容量 \+12/);
   assert.match(await page.locator('.dev-reference').innerText(),/地方储粮容量 \+20/);

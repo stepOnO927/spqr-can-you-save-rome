@@ -131,7 +131,7 @@ const additionalMaterials=[
  ['library-organization',['Private Collection Organization','私人藏书整理'],'library',librarySource,['Private book collections existed in Republican Rome; the first Roman public libraries came later.','共和国时期罗马已有私人藏书；罗马公共图书馆出现得更晚。'],24,4,['craft-workshops']],
  ['bath-construction',['Bath Construction','浴场建造'],'bath',pompeiiBathSource,['Pompeii’s Stabian and Republican baths were built in the second century BCE; their water and heating systems changed over time.','庞贝的斯塔比亚浴场与共和国浴场建于前2世纪；供水和加热设施后来多次改造。'],24,4,['aqueduct-refinement']],
  ['administrative-building',['Administrative Building','行政建筑'],'administration',pompeiiForumSource,['Pompeii’s Forum complex included a council chamber, record store, and magistrates’ building; their surviving phases need not all date to 49 BCE.','庞贝广场建筑群包括议事厅、档案库和地方官建筑；留存形态不一定全都属于前49年。'],23,4,['public-square-planning']],
- ['bridge-engineering',['Bridge Engineering','桥梁工程'],'bridge',appianSource,['Bridges extend practical roads across rivers.','桥梁使实用道路跨越河流。'],24,4,['roadmaking']],
+ ['bridge-engineering',['Bridge Engineering','桥梁工程'],'bridge',massiliaSource,['At Ilerda in 49 BCE, bridges carried army supplies across the Sicoris; floods broke them and delayed repairs. The local march and revenue effects are game abstractions.','前49年伊莱尔达战役中，桥梁承载军需跨越西科里斯河；洪水冲毁桥梁并延误修复。地方行军与收入效果属于游戏抽象。'],24,4,['roadmaking']],
  ['port-facilities',['Port Facilities','港口设施'],'port',massiliaSource,['Massilia received merchant ships and warships during the 49 BCE siege; port works still require a suitable coast.','前49年马赛围城时商船与战船进出港口；港口工程仍须依托适宜海岸。'],26,4,['roadmaking']],
  ['warehouse-management',['Warehouse Management','仓储管理'],'warehouse',massiliaSource,['At Massilia, provisions were gathered and reserved for a possible siege; storage capacity is a game abstraction.','马赛曾为可能的围城收集并储备粮食与物资；仓储容量是游戏抽象值。'],20,3,['grain-storage']],
  ['shipyard-craft',['Shipyard Craft','造船工艺'],'shipyard',massiliaSource,['Caesar reports twelve warships made at Arelate in 49 BCE and equipped before deployment; the card represents local yard organization.','凯撒记载前49年阿雷拉特建造并装备十二艘战船；此卡代表地方船厂组织。'],28,5,['port-facilities']]
@@ -140,7 +140,7 @@ const checkedMaterialSourceTitles={
  'dam-engineering':'Alyzia Dam archaeological and engineering study (ISSMGE, 2026)',
  'reservoir-design':'Italian Ministry of Culture, Auximum water collection system',
  'supply-organization':'Javier Salido Dominguez, Architecture in the Service of the Roman Army (2015)',
- 'bridge-engineering':'UNESCO, Via Appia. Regina Viarum'
+ 'bridge-engineering':'Caesar, Civil Wars 1.40–41, 1.48–54'
 };
 for(const [id,name,building,url,context,cost,months,prerequisites] of additionalMaterials)MATERIALS.push({id,name,building,cost,months,prerequisites,context,source:source(url,checkedMaterialSourceTitles[id])});
 const additionalBuildings=[
