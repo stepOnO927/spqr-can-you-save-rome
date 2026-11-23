@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=peace-outcome-1';
-import {configureStartingDifficulty} from '../difficulty.js?v=peace-outcome-1';
-import {newScenario} from '../scenarios.js?v=peace-outcome-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=office-intel-privacy-1';
+import {configureStartingDifficulty} from '../difficulty.js?v=office-intel-privacy-1';
+import {newScenario} from '../scenarios.js?v=office-intel-privacy-1';
 
 test('difficulty does not secretly penalize the player economy',()=>{
  const states=['standard','hard','expert'].map(difficulty=>{const s=newGame('caesar');s.difficulty=difficulty;tick(s);return s});
