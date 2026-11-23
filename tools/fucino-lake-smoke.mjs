@@ -4,18 +4,19 @@ import {readFile,mkdir} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
 
 const root=resolve(import.meta.dirname,'..'),out=resolve(root,'outputs','fucino-lake');
+const preview=process.env.SPQR_PREVIEW_URL;
 await mkdir(out,{recursive:true});
 const browser=await chromium.launch({headless:true,executablePath:process.env.SPQR_CHROME_PATH||'C:/Program Files/Google/Chrome/Application/chrome.exe',args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 const page=await browser.newPage({viewport:{width:1440,height:900}}),errors=[];
 page.on('pageerror',error=>errors.push(error.message));
 try{
- await page.route('**/*',async route=>{
+ if(!preview)await page.route('**/*',async route=>{
   const url=new URL(route.request().url());if(url.protocol==='blob:')return route.continue();if(url.hostname!=='spqr.test')return route.abort();
   const file=resolve(root,'.'+(url.pathname.endsWith('/')?url.pathname+'index.html':url.pathname));if(!file.startsWith(root+sep))return route.abort();
   const mime={'.js':'text/javascript','.html':'text/html','.css':'text/css','.svg':'image/svg+xml','.json':'application/json','.png':'image/png','.jpg':'image/jpeg'}[extname(file)]||'application/octet-stream';
   try{await route.fulfill({status:200,contentType:mime,body:await readFile(file)})}catch{await route.fulfill({status:404,body:'Not found'})}
  });
- await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
+ await page.goto(preview?new URL('map-lab/',preview).href:'http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
  await page.locator('#start-free').click();await page.locator('#map-mode').selectOption('terrain');
  await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);map.jumpTo({center:[13.55,42.0],zoom:9.05})});
  await page.locator('#map-charting').waitFor({state:'visible',timeout:5000});
