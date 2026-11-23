@@ -1,7 +1,7 @@
-import {buildChessboard} from './chessboard.js?v=peace-sender-1';
-import {focusReportsFor,focusById} from './national-focus.js?v=peace-sender-1';
-import {warningLedger} from './warning-ledger.js?v=peace-sender-1';
-import {FACTIONS,REGIONS} from './data.js?v=peace-sender-1';
+import {buildChessboard} from './chessboard.js?v=institutional-senders-1';
+import {focusReportsFor,focusById} from './national-focus.js?v=institutional-senders-1';
+import {warningLedger} from './warning-ledger.js?v=institutional-senders-1';
+import {FACTIONS,REGIONS} from './data.js?v=institutional-senders-1';
 
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const label=(x,zh)=>Array.isArray(x)?x[zh?1:0]||x[0]:x||'';

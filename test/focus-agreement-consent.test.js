@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=peace-sender-1';
-import {advanceFocuses,focusState} from '../national-focus.js?v=peace-sender-1';
-import {advanceAgreementProposals,answerAgreementProposal,sendAgreementProposal} from '../agreement-negotiations.js?v=peace-sender-1';
-import {syncAgreementLetters,receivedMail,replyToLetter} from '../epistulae.js?v=peace-sender-1';
+import {newGame,upgradeSave} from '../engine.js?v=institutional-senders-1';
+import {advanceFocuses,focusState} from '../national-focus.js?v=institutional-senders-1';
+import {advanceAgreementProposals,answerAgreementProposal,sendAgreementProposal} from '../agreement-negotiations.js?v=institutional-senders-1';
+import {syncAgreementLetters,receivedMail,replyToLetter} from '../epistulae.js?v=institutional-senders-1';
 
 function start(seed){const s=newGame('caesar');s.seed=seed;s.wars=[];s.factions.egypt.treasury=100;s.relations['caesar:egypt']=60;const f=focusState(s,'egypt');f.active={id:'egy_back_caesar',progress:4,months:5,paid:{}};advanceFocuses(s);return s}
 function step(s,options={}){s.month++;if(s.month>12){s.month=1;s.year++}advanceAgreementProposals(s,options);syncAgreementLetters(s)}

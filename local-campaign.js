@@ -1,9 +1,9 @@
-import {FACTIONS,ROUTES} from './data.js?v=peace-sender-1';
+import {FACTIONS,ROUTES} from './data.js?v=institutional-senders-1';
 import {localEntity,localTradeOpen} from './local-polities.js';
-import {initializeControlKnowledge,reportedControl} from './control-intelligence.js?v=peace-sender-1';
-import {initializeLocalDiscovery,localDiscoveryLevel,LOCAL_DISCOVERY_LEVELS,recordLocalDiscovery} from './local-discovery.js?v=peace-sender-1';
-import {sendLetter} from './epistulae.js?v=peace-sender-1';
-import {nonMilitaryAccessStatus} from './border-access.js?v=peace-sender-1';
+import {initializeControlKnowledge,reportedControl} from './control-intelligence.js?v=institutional-senders-1';
+import {initializeLocalDiscovery,localDiscoveryLevel,LOCAL_DISCOVERY_LEVELS,recordLocalDiscovery} from './local-discovery.js?v=institutional-senders-1';
+import {sendLetter} from './epistulae.js?v=institutional-senders-1';
+import {nonMilitaryAccessStatus} from './border-access.js?v=institutional-senders-1';
 
 const date=state=>state.year*12+state.month;
 const relation=(state,a,b)=>state.relations[[a,b].sort().join(':')]??0;

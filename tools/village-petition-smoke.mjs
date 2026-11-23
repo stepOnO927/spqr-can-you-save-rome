@@ -9,7 +9,7 @@ try {
   await page.addInitScript(()=>localStorage.setItem('spqr-lang','en'));
   await page.goto(`${base}/`,{waitUntil:'domcontentloaded'});
   const before=await page.evaluate(async()=>{
-    const {newGame}=await import('/engine.js?v=peace-sender-1');
+    const {newGame}=await import('/engine.js?v=institutional-senders-1');
     const {advanceVillages}=await import('/local-villages.js');
     const state=newGame('caesar'),village=state.regions.flatMap(region=>region.localEntities||[]).find(entity=>entity.id==='ravenna-farms');
     village.village.storedFood=0;state.month=6;advanceVillages(state);
@@ -37,7 +37,7 @@ try {
   assert.equal(saved.factions.caesar.treasury,before.treasury-14);
   assert.equal(saved.factions.caesar.food,before.food-2);
   await page.evaluate(async()=>{
-    const {newGame}=await import('/engine.js?v=peace-sender-1');
+    const {newGame}=await import('/engine.js?v=institutional-senders-1');
     const {advanceVillages}=await import('/local-villages.js');
     const state=newGame('caesar'),site=state.regions.flatMap(region=>region.localEntities||[]).find(entity=>entity.id==='ravenna-farms');
     site.village.road=1;state.month=6;advanceVillages(state);

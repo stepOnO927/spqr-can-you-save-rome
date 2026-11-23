@@ -1,10 +1,10 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=peace-sender-1';
-import {createFictionalPerson} from '../dynasties.js?v=peace-sender-1';
-import {addReport} from '../character-system.js?v=peace-sender-1';
-import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=peace-sender-1';
-import {advanceMailReports} from '../mail-reports.js?v=peace-sender-1';
-import {receivedMail} from '../epistulae.js?v=peace-sender-1';
+import {newGame,upgradeSave} from '../engine.js?v=institutional-senders-1';
+import {createFictionalPerson} from '../dynasties.js?v=institutional-senders-1';
+import {addReport} from '../character-system.js?v=institutional-senders-1';
+import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=institutional-senders-1';
+import {advanceMailReports} from '../mail-reports.js?v=institutional-senders-1';
+import {receivedMail} from '../epistulae.js?v=institutional-senders-1';
 const replies=s=>receivedMail(s).filter(m=>m.context?.kind==='personal_audience_result');
 function fixture(seed,away=false){
  const s=newGame('caesar');s.wars=[];s.world.characters['fictional:1'].location='egypt';

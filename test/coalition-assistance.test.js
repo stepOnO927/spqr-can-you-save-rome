@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,estimatedStrength,tick} from '../engine.js?v=peace-sender-1';
-import {formCoalition} from '../coalitions.js?v=peace-sender-1';
-import {COALITION_AID,sendCoalitionAidRequest,advanceCoalitionAidRequests,proposeCoalitionAidAI} from '../coalition-assistance.js?v=peace-sender-1';
-import {syncCoalitionAidLetters,receivedMail,replyToLetter} from '../epistulae.js?v=peace-sender-1';
-import {inspectState} from '../inspector-diagnostics.js?v=peace-sender-1';
+import {newGame,upgradeSave,estimatedStrength,tick} from '../engine.js?v=institutional-senders-1';
+import {formCoalition} from '../coalitions.js?v=institutional-senders-1';
+import {COALITION_AID,sendCoalitionAidRequest,advanceCoalitionAidRequests,proposeCoalitionAidAI} from '../coalition-assistance.js?v=institutional-senders-1';
+import {syncCoalitionAidLetters,receivedMail,replyToLetter} from '../epistulae.js?v=institutional-senders-1';
+import {inspectState} from '../inspector-diagnostics.js?v=institutional-senders-1';
 
 const roll=()=>.5;
 function council(){

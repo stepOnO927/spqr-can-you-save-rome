@@ -29,7 +29,7 @@ try{
  await page.locator('[data-faction-army="xiii"]').click();
  assert.match(await page.locator('#command-detail').innerText(),/LEG-BY-LEG EXPEDITION/);
  await page.evaluate(async()=>{
-  const {newGame}=await import('/engine.js?v=peace-sender-1');
+  const {newGame}=await import('/engine.js?v=institutional-senders-1');
   const state=newGame('caesar'),army=state.armies.find(unit=>unit.id==='pompey');
   army.region='sicilia';
   const island=state.regions.find(place=>place.id==='sicilia');

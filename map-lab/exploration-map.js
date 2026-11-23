@@ -1,4 +1,4 @@
-import {LOCAL_DISCOVERY_LEVELS} from '../local-discovery.js?v=peace-sender-1';
+import {LOCAL_DISCOVERY_LEVELS} from '../local-discovery.js?v=institutional-senders-1';
 
 const COLORS=['#59666b','#b8a66f','#c7b46c','#7299a6','#78a88b','#a5bf88'];
 
