@@ -1,6 +1,7 @@
 // Campaign abstractions of documented ancient practices, not claims of first invention in 49 BCE.
 // Research unlocks a local project; only completed buildings affect the simulation.
 import {ROUTES} from './data.js?v=phase-x-1';
+import {specialistBonus} from './civilization.js';
 
 const pair=(a,b)=>[a,b].sort().join(':');
 const sum=(items,key)=>items.reduce((n,x)=>n+(x[key]||0),0);
@@ -57,7 +58,7 @@ export const IDEAS=[
 export const ALL=[...MATERIALS,...IDEAS];
 const conflicts=[['hardline_diplomacy','diplomatic_accommodation'],['central_administration','provincial_autonomy'],['tax_farming','labor_mobility']];
 const byId=id=>ALL.find(x=>x.id===id);
-const peopleBonus=(s,owner,subject)=>{const leaders=s.world?.leadership?.[owner]||[];const people=s.world?.characters||{};return Object.entries(people).some(([id,p])=>p.alive&&p.faction===owner&&!p.missing&&((subject.category==='military'&&leaders.includes(id)&&/caesar|pompey/i.test(id))||(subject.category==='government'&&/cicero/i.test(id))||(subject.branch==='material'&&/vitruvius/i.test(id))))?1:0};
+const peopleBonus=(s,owner,subject)=>{const leaders=s.world?.leadership?.[owner]||[];const people=s.world?.characters||{};return Object.entries(people).some(([id,p])=>p.alive&&p.faction===owner&&!p.missing&&((subject.category==='military'&&leaders.includes(id)&&/caesar|pompey/i.test(id))||(subject.category==='government'&&/cicero/i.test(id))||(subject.branch==='material'&&/vitruvius/i.test(id))))||specialistBonus(s,owner,subject.branch==='material'?'engineer':'scholar')?1:0};
 export function initializeInventions(s){s.inventions||={};for(const owner of Object.keys(s.factions||{})){if(owner==='rebels')continue;const x=s.inventions[owner]||={};x.knownMaterial||=[];x.knownIdeas||=[];x.active||={};x.slots||={};for(const [cat] of CATEGORIES){x.active[cat]||=[];x.slots[cat]||=1}x.research||=null;x.reform||=null;x.cooldown??=0;s.inventions[owner]=x}if(!s.grandChessboardIdeasMigrated){for(const [owner,ids] of Object.entries(s.world?.nationalIdeas||{})){const x=s.inventions[owner];if(!x)continue;for(const id of ids){const item=IDEAS.find(i=>i.id==='gc_'+id);if(!item)continue;if(!x.knownIdeas.includes(item.id))x.knownIdeas.push(item.id);if(!x.active[item.category].includes(item.id))x.active[item.category].push(item.id);x.slots[item.category]=Math.max(x.slots[item.category],x.active[item.category].length)}}s.grandChessboardIdeasMigrated=true}for(const r of s.regions||[]){r.buildings||=[];r.construction||=null}s.knowledgeTrades||=[];return s}
 export const inventionState=(s,owner)=>initializeInventions(s).inventions[owner];
 export function activeModifiers(s,owner){const x=inventionState(s,owner);return x?Object.values(x.active).flat().map(byId).filter(Boolean).reduce((out,i)=>{for(const [k,v] of Object.entries(i.mods))out[k]=(out[k]||0)+v;return out},{}):{}}
