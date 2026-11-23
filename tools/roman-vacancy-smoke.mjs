@@ -6,7 +6,7 @@ try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
  for(const view of ['atlas','campaign']){
   await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
-  const id=await page.evaluate(async view=>{const {newGame}=await import('/engine.js?v=roman-vacancy-1'),{initializeCursus}=await import('/cursus-honorum.js?v=roman-vacancy-1'),s=newGame('caesar'),c=initializeCursus(s),id=c.senators.find(x=>x.faction==='caesar').id;for(const key of ['caesar','antony','lepidus']){s.world.characters[key].alive=false;s.world.characters[key].health='deceased'}s.world.leadership.caesar=[];s.factions.caesar.treasury=100;sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:view,state:s}));return id},view);
+  const id=await page.evaluate(async view=>{const {newGame}=await import('/engine.js?v=peace-outcome-1'),{initializeCursus}=await import('/cursus-honorum.js?v=peace-outcome-1'),s=newGame('caesar'),c=initializeCursus(s),id=c.senators.find(x=>x.faction==='caesar').id;for(const key of ['caesar','antony','lepidus']){s.world.characters[key].alive=false;s.world.characters[key].health='deceased'}s.world.leadership.caesar=[];s.factions.caesar.treasury=100;sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:view,state:s}));return id},view);
   if(view==='atlas'){
    await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});await page.locator('#factions').click();await page.locator('[data-faction="caesar"]').click();
    await page.locator('#vacant-leader').selectOption(id);assert.match(await page.locator('#command-detail').innerText(),/补任罗马指挥职位/);await page.locator('#vacant-appoint').click();await page.locator('#vacant-feedback button').click();

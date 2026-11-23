@@ -1,7 +1,7 @@
-import {newGame,estimatedStrength} from './engine.js?v=roman-vacancy-1';
-import {createFictionalPerson} from './dynasties.js?v=roman-vacancy-1';
-import {formCoalition} from './coalitions.js?v=roman-vacancy-1';
-import {observeDiplomacy} from './diplomatic-knowledge.js?v=roman-vacancy-1';
+import {newGame,estimatedStrength} from './engine.js?v=peace-outcome-1';
+import {createFictionalPerson} from './dynasties.js?v=peace-outcome-1';
+import {formCoalition} from './coalitions.js?v=peace-outcome-1';
+import {observeDiplomacy} from './diplomatic-knowledge.js?v=peace-outcome-1';
 
 // A fictional political crisis in the 49 BCE campaign. Conditions make
 // collective opposition plausible, but do not preselect a war or outcome.

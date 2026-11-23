@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,queueMission} from '../engine.js?v=roman-vacancy-1';
-import {addReport,advanceOperations} from '../character-system.js?v=roman-vacancy-1';
-import {createFictionalPerson} from '../dynasties.js?v=roman-vacancy-1';
+import {newGame,upgradeSave,queueMission} from '../engine.js?v=peace-outcome-1';
+import {addReport,advanceOperations} from '../character-system.js?v=peace-outcome-1';
+import {createFictionalPerson} from '../dynasties.js?v=peace-outcome-1';
 
 test('targeted investigations retain the name known at dispatch, including after save/load',()=>{
  let initial=newGame('caesar');const id=createFictionalPerson(initial,{name:['Known then','当时姓名'],faction:'egypt',birthYear:-75,location:'egypt'});
