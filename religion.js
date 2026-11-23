@@ -1,5 +1,6 @@
 import {createFictionalPerson,initializeDynasties} from './dynasties.js?v=dossier-archive-1';
 import {hasNationalIdea} from './national-ideas.js?v=grand-chessboard-2';
+import {ROUTES} from './data.js?v=phase-x-1';
 
 const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
 const log=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.log.slice(0,80)};
@@ -44,6 +45,26 @@ export function initializeReligion(s){
 export function localInstitutions(s,region){return (s.world?.religiousInstitutions||[]).filter(o=>o.region===region)}
 export function populationFactor(r){return r.population?clamp(r.population.total/Math.max(1,r.population.baseline),.7,1.2):1}
 export function religiousTaxCost(s,faction){return (s.world?.religiousInstitutions||[]).filter(o=>o.privilegedBy.includes(faction)&&s.regions.some(r=>r.id===o.region&&r.owner===faction)).length}
+function migratePopulation(s){
+ const regions=new Map(s.regions.map(r=>[r.id,r])),plans=[];
+ for(const from of s.regions){
+  const people=from.population;
+  if(!people||people.total<1000||people.satisfaction>=45||!s.factions[from.owner]||from.owner==='rebels')continue;
+  const neighbors=ROUTES.filter(([a,b,kind])=>kind!=='sea'&&(a===from.id||b===from.id)).map(([a,b])=>regions.get(a===from.id?b:a)).filter(to=>to?.owner===from.owner&&to.population?.satisfaction>=Math.max(55,people.satisfaction+20));
+  neighbors.sort((a,b)=>b.population.satisfaction-a.population.satisfaction||a.id.localeCompare(b.id));
+  const to=neighbors[0];if(!to)continue;
+  const count=Math.min(800,Math.floor(people.total*(45-people.satisfaction)/35*.0025));
+  if(count>0)plans.push({from:from.id,to:to.id,count,owner:from.owner});
+ }
+ for(const move of plans){
+  const from=regions.get(move.from),to=regions.get(move.to),count=Math.min(move.count,Math.max(0,from.population.total-1));
+  if(!count||to.owner!==move.owner)continue;
+  const wealth=Math.min(from.population.householdWealth||0,Math.floor((from.population.householdWealth||0)*count/from.population.total));
+  from.population.total-=count;to.population.total+=count;from.population.householdWealth-=wealth;to.population.householdWealth+=wealth;
+  const record={from:from.id,to:to.id,count,year:s.year,month:s.month};(s.world.populationMigrations||=[]).push(record);s.world.populationMigrations=s.world.populationMigrations.slice(-80);
+  if(move.owner===s.player)log(s,`${count.toLocaleString('en-US')} people moved from ${from.name[0]} to ${to.name[0]} after local hardship.`,`因当地生活困难，${count.toLocaleString('zh-CN')}人从${from.name[1]}迁往${to.name[1]}。`);
+ }
+}
 export function religiousPolicy(s,actor,id,action){
  initializeReligion(s);const o=s.world.religiousInstitutions.find(x=>x.id===id),r=o&&s.regions.find(x=>x.id===o.region),f=s.factions[actor];
  if(!o||!r||r.owner!==actor||!f)return {ok:false,reason:'unavailable'};
@@ -97,5 +118,5 @@ export function advanceReligion(s){
   const prefer=o.factions.civic>65?o.council[1]:o.factions.civic<35?o.council[0]:o.leader;
   if(prefer&&s.world.characters[prefer]?.alive)o.leader=prefer;
  }
- if(s.month===12)for(const r of s.regions){const f=s.factions[r.owner],p=r.population;if(!f||!p)continue;const hardship=(f.food<0?-0.008:0)+(p.satisfaction<35?-0.004:0),growth=0.002+hardship;p.total=Math.max(0,Math.round(p.total*(1+growth)));p.satisfaction=clamp(p.satisfaction+(f.tax==='high'?-2:f.tax==='low'?1:0)+(f.food<0?-2:0),0,100);p.householdWealth=Math.max(0,p.householdWealth+Math.floor(r.food/2)-(f.tax==='high'?2:0));const local=localInstitutions(s,r.id),total=local.reduce((n,o)=>n+o.followers,0);if(total>p.total)for(const o of local)o.followers=Math.floor(o.followers*p.total/total)}
+ if(s.month===12){for(const r of s.regions){const f=s.factions[r.owner],p=r.population;if(!f||!p)continue;const hardship=(f.food<0?-0.008:0)+(p.satisfaction<35?-0.004:0),growth=0.002+hardship;p.total=Math.max(0,Math.round(p.total*(1+growth)));p.satisfaction=clamp(p.satisfaction+(f.tax==='high'?-2:f.tax==='low'?1:0)+(f.food<0?-2:0),0,100);p.householdWealth=Math.max(0,p.householdWealth+Math.floor(r.food/2)-(f.tax==='high'?2:0));const local=localInstitutions(s,r.id),total=local.reduce((n,o)=>n+o.followers,0);if(total>p.total)for(const o of local)o.followers=Math.floor(o.followers*p.total/total)}migratePopulation(s)}
 }

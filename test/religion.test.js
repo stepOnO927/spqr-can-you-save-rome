@@ -36,6 +36,36 @@ test('population hardship affects subsequent tax potential and investigation is 
  const s=newGame('senate'),o=s.world.religiousInstitutions.find(x=>x.id==='roman_college'),r=s.regions.find(x=>x.id==='roma');assert.equal(populationFactor(r),1);
  assert.ok(religiousPolicy(s,'senate',o.id,'investigate').ok);assert.equal(s.world.religionReports.senate,undefined);s.factions.senate.food=-1;s.month=11;advanceReligion(s);s.month=12;advanceReligion(s);assert.ok(r.population.total<r.population.baseline);assert.ok(populationFactor(r)<1);s.month=1;s.year++;advanceReligion(s);assert.ok(['suspected','no_evidence'].includes(s.world.religionReports.senate[0].value));assert.equal(s.world.religionReports.senate[0].confidence,'unverified');
 });
+test('hardship causes bounded migration along a friendly land route without creating people or wealth',()=>{
+ let s=newGame('caesar'),from=s.regions.find(r=>r.id==='gaul'),to=s.regions.find(r=>r.id==='narbo');
+ for(const r of s.regions)r.population.satisfaction=65;
+ from.population.satisfaction=10;to.population.satisfaction=90;s.factions.caesar.food=100;s.month=12;
+ const fromBefore=from.population.total,toBefore=to.population.total,wealthBefore=from.population.householdWealth+to.population.householdWealth;
+ advanceReligion(s);
+ const record=s.world.populationMigrations.find(x=>x.from==='gaul');assert.ok(record);
+ assert.equal(record.to,'narbo');assert.ok(record.count>0&&record.count<=800);
+ assert.equal(from.population.total,Math.round(fromBefore*.998)-record.count);
+ assert.equal(to.population.total,Math.round(toBefore*1.002)+record.count);
+ assert.equal(from.population.householdWealth+to.population.householdWealth,wealthBefore+Math.floor(from.food/2)+Math.floor(to.food/2));
+ assert.match(s.log[0].en,/people moved from Further Gaul to Narbonensis/);
+ s=upgradeSave(structuredClone(s));assert.deepEqual(s.world.populationMigrations.find(x=>x.from==='gaul'),record);
+});
+test('population does not migrate across a sea link or an unfriendly border',()=>{
+ const s=newGame('senate'),island=s.regions.find(r=>r.id==='sicilia');
+ for(const r of s.regions)r.population.satisfaction=90;
+ island.population.satisfaction=10;s.month=12;advanceReligion(s);
+ assert.ok(!(s.world.populationMigrations||[]).some(x=>x.from==='sicilia'));
+ const border=s.regions.find(r=>r.id==='italiaN'),neighbor=s.regions.find(r=>r.id==='cisalpine');border.population.satisfaction=10;neighbor.population.satisfaction=90;s.month=12;advanceReligion(s);
+ assert.ok(!(s.world.populationMigrations||[]).some(x=>x.from==='italiaN'&&x.to==='cisalpine'));
+});
+test('36 monthly population updates keep gradual migration recorded across three years',()=>{
+ let s=newGame('caesar');for(const r of s.regions)r.population.satisfaction=65;
+ s.regions.find(r=>r.id==='gaul').population.satisfaction=10;s.regions.find(r=>r.id==='narbo').population.satisfaction=90;s.factions.caesar.food=100;
+ for(let i=0;i<36;i++){s.year=-49+Math.floor(i/12);s.month=i%12+1;advanceReligion(s);if(i===17)s=upgradeSave(structuredClone(s))}
+ const records=s.world.populationMigrations.filter(x=>x.from==='gaul');assert.equal(records.length,3);
+ assert.ok(records.every(x=>x.to==='narbo'&&x.month===12&&x.count>0&&x.count<=800));
+ assert.ok(records[0].count>=records[2].count,'movement should shrink as the origin loses population');
+});
 test('new campaigns do not inherit fictional people created in another campaign',()=>{
  const first=newGame('caesar'),id=createFictionalPerson(first,{name:'Prior campaign only',faction:'senate',birthYear:-80,location:'roma'});assert.ok(first.world.characters[id]);
  const second=newGame('caesar');assert.equal(second.world.characters[id],undefined);assert.equal(second.world.religiousInstitutions.length,3);
