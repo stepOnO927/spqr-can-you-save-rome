@@ -7,6 +7,7 @@ import {newGrandGame,army,region,armySupply,encircled} from '../engine.js';
 const root=resolve(fileURLToPath(new URL('..',import.meta.url)));
 const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',args:['--no-sandbox']});
 const page=await browser.newPage({viewport:{width:Number(process.env.SPQR_ATLAS_WIDTH||1440),height:Number(process.env.SPQR_ATLAS_HEIGHT||900)}}),errors=[];
+const clickHud=async selector=>{if(page.viewportSize().width<=600&&await page.locator('#mobile-actions').isHidden())await page.locator('#mobile-menu').click();await page.locator(selector).click()};
 await page.addInitScript(()=>{if(localStorage.getItem('spqr-lang')===null)localStorage.setItem('spqr-lang','zh')});
 page.on('pageerror',e=>errors.push(e.message));
 try{
@@ -21,7 +22,10 @@ try{
  assert.match(await page.locator('#command-detail .detail-grid').innerText(),/防御工事\s+未知/,'enemy works must stay hidden in theater details');
  assert.match(await page.locator('#guide-body').innerText(),/assess|评估/i);
  await page.locator('#guide-next').click();await page.locator('[data-army="italy"]').click();await page.locator('#guide-next').click();
+ assert.match(await page.locator('#guide-body').innerText(),/山南高卢的拉文纳/,'the tutorial must name the destination shown by the grand campaign');
  assert.match(await page.locator('.war-council').innerText(),/军议/);
+ assert.equal(await page.locator('.war-council p').first().evaluate(el=>getComputedStyle(el).color),'rgb(59, 51, 40)','war-council advice must be readable on its pale paper');
+ if(page.viewportSize().width>800){const panel=await page.locator('.selection').boundingBox(),controls=await page.locator('.map-controls').boundingBox(),transfer=await page.locator('.file-transfer').boundingBox();assert.ok(panel.x+panel.width<=controls.x,'map controls must not cover the selected command panel');assert.ok(panel.y>=transfer.y+transfer.height,'save transfer buttons must not cover a long command panel')}
  await page.locator('[data-council-mark]').click();
  assert.ok(await page.locator('.recon-map-mark').count());
  assert.match(await page.locator('[data-council-mark]').innerText(),/取消侦察标记/);
@@ -40,6 +44,7 @@ try{
  assert.doesNotMatch(await page.locator('.recon-actions').innerText(),/\b(?:rumor|unverified|confirmed)\b/);
  await page.locator('#guide-next').click();
  await page.locator('[data-city="RAVENNA"]').evaluate(el=>el.click());
+ if(page.viewportSize().width<=600){assert.match(await page.locator('#guide-body').innerText(),/右上角菜单/);await page.locator('#mobile-menu.guide-highlight').waitFor();await page.locator('#mobile-menu').click();await page.locator('#resources-help.guide-highlight').waitFor()}
  await page.locator('#resources-help').click();
  await page.locator('#guide-next').click();
  assert.equal(await page.locator('#guide').isVisible(),false);
@@ -57,12 +62,12 @@ try{
  assert.match(await page.locator('#map-mode-note').innerText(),/ivory ◎ counters/);
  assert.equal(await page.locator('.legend .swatch').count(),0);
  if(page.viewportSize().width<=600)await page.locator('#brief-toggle').click();
- await page.locator('#chronicle').click();
+ await clickHud('#chronicle');
  assert.match(await page.locator('#command-detail').innerText(),/Scouts returned from/);
  await page.locator('#language').click();
  assert.match(await page.locator('#command-detail').innerText(),/斥候回报/);
  await page.locator('#language').click();
- await page.locator('#guide-restart').click();await page.locator('#roman-faction').selectOption('senate');await page.locator('#difficulty').selectOption('standard');await page.locator('#start-free').click();
+ await clickHud('#guide-restart');await page.locator('#roman-faction').selectOption('senate');await page.locator('#difficulty').selectOption('standard');await page.locator('#start-free').click();
  assert.equal(await page.locator('body').evaluate(el=>el.classList.contains('grand-campaign')),true,'free play must retain the grand campaign');
  assert.equal(await page.locator('.grand-site').count(),121);
  await page.locator('.grand-site[data-site="cisalpine"]').evaluate(el=>el.click());
@@ -75,9 +80,9 @@ try{
  assert.match(await page.locator('.after-action').innerText(),/AFTER-ACTION REVIEW/);
  assert.match(await page.locator('.after-action').innerText(),/Friendly casualties/);
  if(page.viewportSize().width<=600)await page.locator('#brief-toggle').click();
- await page.locator('#save').click();
+ await clickHud('#save');
  await page.evaluate(()=>{const key='spqr-save-1',s=JSON.parse(localStorage.getItem(key));const base={owner:'senate',armyId:'italy',regionId:'cisalpine',year:s.year,month:s.month,observationYear:s.year,observationMonth:s.month,arrivalYear:s.year,arrivalMonth:s.month,min:1000,max:3000};s.regions.find(r=>r.id==='cisalpine').fort=7;s.militaryRecon=[{...base,source:'<img src=x onerror=window.__injected=true>',defensive:{fort:2}},{...base,source:'scouts'}];localStorage.setItem(key,JSON.stringify(s))});
- await page.locator('#load').click();if(page.viewportSize().width>600)await page.locator('#brief-toggle').click();await page.locator('[data-army="italy"]').click();
+ await clickHud('#load');if(page.viewportSize().width>600)await page.locator('#brief-toggle').click();await page.locator('[data-army="italy"]').click();
  assert.equal(await page.locator('.war-council img').count(),0);
  assert.equal(await page.evaluate(()=>window.__injected),undefined);
  await page.locator('.war-council details summary').click();
@@ -183,7 +188,7 @@ try{
  assert.equal(await page.getByRole('button',{name:'RETREAT',exact:true}).isDisabled(),true);
  assert.match(await page.locator('.operational-orders .retreat-rule').innerText(),/Already retreated this month/);
  await page.locator('#language').click();assert.match(await page.locator('.operational-orders .retreat-rule').innerText(),/每支军队每月只能撤/);
- await page.locator('#save').click();await page.locator('#load').click();await page.locator('[data-army="xiii"]').evaluate(el=>el.click());
+ await clickHud('#save');await clickHud('#load');await page.locator('[data-army="xiii"]').evaluate(el=>el.click());
  assert.equal(await page.getByRole('button',{name:'战略撤退'}).isDisabled(),true);
  army(pocket,'xiii').region='t035';army(pocket,'xiii').lastStrategicRetreat={year:pocket.year,month:pocket.month};
  await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state})),pocket);
@@ -195,7 +200,9 @@ try{
  for(const id of ['cisalpine','t005','t008'])region(bottleneckCampaign,id).owner='caesar';
  army(bottleneckCampaign,'xiii').region='t008';army(bottleneckCampaign,'viii').region='t008';
  await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state})),bottleneckCampaign);
- await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});await page.locator('#map-mode').selectOption('supply');
+ await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
+ if(page.viewportSize().width<=600)await page.locator('#brief-toggle').click();
+ await page.locator('#map-mode').selectOption('supply');
  assert.equal(await page.locator('.supply-bottleneck').count(),2);
  assert.match(await page.locator('.legend').innerText(),/关键补给节点/);
  await page.locator('#language').click();assert.match(await page.locator('.legend').innerText(),/Critical supply node/);
