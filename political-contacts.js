@@ -1,6 +1,6 @@
-import {isDeliveredReport,reportedPersonalContact} from './person-knowledge.js?v=office-intel-privacy-1';
-import {initializeWorld} from './characters.js?v=office-intel-privacy-1';
-import {politicalAmbition} from './conspiracies.js?v=office-intel-privacy-1';
+import {isDeliveredReport,reportedPersonalContact} from './person-knowledge.js?v=archived-exchange-1';
+import {initializeWorld} from './characters.js?v=archived-exchange-1';
+import {politicalAmbition} from './conspiracies.js?v=archived-exchange-1';
 const random=s=>{s.world.intelSeed=(Math.imul(s.world.intelSeed,1664525)+1013904223)>>>0;return s.world.intelSeed/4294967296};
 const pair=(a,b)=>[a,b].sort().join(':');
 const current=s=>s.year*12+s.month;

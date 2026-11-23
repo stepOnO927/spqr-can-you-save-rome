@@ -1,16 +1,16 @@
-import {recordLegendEvidence} from './legend.js?v=office-intel-privacy-1';
-import {namedReportSubjects,reportedPersonName,visiblePersonName,isDeliveredReport,isCompletedMeeting,reportedPersonalContacts,reportedPeople} from './person-knowledge.js?v=office-intel-privacy-1';
-import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange,characterAgeRange} from './characters.js?v=office-intel-privacy-1';
-import {settleInheritance,dynastyRoll} from './dynasties.js?v=office-intel-privacy-1';
+import {recordLegendEvidence} from './legend.js?v=archived-exchange-1';
+import {namedReportSubjects,reportedPersonName,visiblePersonName,isDeliveredReport,isCompletedMeeting,reportedPersonalContacts,reportedPeople} from './person-knowledge.js?v=archived-exchange-1';
+import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange,characterAgeRange} from './characters.js?v=archived-exchange-1';
+import {settleInheritance,dynastyRoll} from './dynasties.js?v=archived-exchange-1';
 import {FACTIONS,ROUTES} from './data.js?v=phase-x-1';
-import {deriveGovernment,validSuccessionPlan} from './governance.js?v=office-intel-privacy-1';
-import {potentialConspirators} from './conspiracies.js?v=office-intel-privacy-1';
-import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=office-intel-privacy-1';
-import {reportedControl} from './control-intelligence.js?v=office-intel-privacy-1';
-import {canHoldOffice,localGovernor} from './office-system.js?v=office-intel-privacy-1';
-import {activeAgreement} from './agreements.js?v=office-intel-privacy-1';
+import {deriveGovernment,validSuccessionPlan} from './governance.js?v=archived-exchange-1';
+import {potentialConspirators} from './conspiracies.js?v=archived-exchange-1';
+import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=archived-exchange-1';
+import {reportedControl} from './control-intelligence.js?v=archived-exchange-1';
+import {canHoldOffice,localGovernor} from './office-system.js?v=archived-exchange-1';
+import {activeAgreement} from './agreements.js?v=archived-exchange-1';
 import {activeModifiers} from './inventions.js?v=mission-discount-1';
-import {registerMissionPersonnel} from './epistulae-personnel.js?v=office-intel-privacy-1';
+import {registerMissionPersonnel} from './epistulae-personnel.js?v=archived-exchange-1';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 // A visual impression is less precise than the historical birth estimate.
 // Unknown birth dates remain unknown, rather than becoming invented ages.
@@ -221,7 +221,14 @@ function prepareExchange(s,op){
  // must not displace a fresher observation already held by the partner.
  // Undated legacy reports remain usable, but cannot outrank dated evidence.
  const observedAt=r=>{const year=r.observationYear??r.year,month=r.observationMonth??r.month;return Number.isFinite(year)&&Number.isInteger(month)?year*12+month:-Infinity};
- const prior=(s.knowledge[partner]?.[op.target]?.reports||[]).filter(r=>isDeliveredReport(s,r)&&r.kind===op.subject&&(!op.subjectCharacter||r.character===op.subjectCharacter)).reduce((best,r)=>!best||observedAt(r)>observedAt(best)?r:best,null);
+ const knowledge=s.knowledge[partner]?.[op.target];let prior=null;
+ // Old delivered reports remain part of the partner's records even after the
+ // bounded active evidence window moves them into its archive. Search both
+ // stores without promoting undelivered or undated material into fresh facts.
+ for(const reports of [knowledge?.reports||[],knowledge?.reportArchive||[]])for(const r of reports){
+  if(!isDeliveredReport(s,r)||r.kind!==op.subject||op.subjectCharacter&&r.character!==op.subjectCharacter)continue;
+  if(!prior||observedAt(r)>observedAt(prior))prior=r;
+ }
  if(!access)return {available:false};
  // Trade is contact, not an obligation to share secrets. The recipient's own
  // relations influence its independent response; the sender learns only the

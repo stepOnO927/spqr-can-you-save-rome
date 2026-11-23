@@ -1,6 +1,6 @@
-import {CHARACTER_CATALOG} from './characters.js?v=office-intel-privacy-1';
-import {createFictionalPerson,recordLifeEvent} from './dynasties.js?v=office-intel-privacy-1';
-import {recordLegendEvidence} from './legend.js?v=office-intel-privacy-1';
+import {CHARACTER_CATALOG} from './characters.js?v=archived-exchange-1';
+import {createFictionalPerson,recordLifeEvent} from './dynasties.js?v=archived-exchange-1';
+import {recordLegendEvidence} from './legend.js?v=archived-exchange-1';
 
 const date=s=>s.year*12+s.month;
 const pair=(a,b)=>[a,b].sort().join(':');
