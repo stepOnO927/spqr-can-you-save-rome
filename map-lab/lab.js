@@ -23,6 +23,7 @@ import {renderLocalGovernor} from './local-governor-ui.js?v=faces-name-disagreem
 import {renderSecurity} from './security-ui.js?v=faces-name-disagreement-1';
 import {renderOffices} from './offices-ui.js?v=faces-name-disagreement-1';
 import {renderCursus} from './cursus-ui.js?v=faces-name-disagreement-1';
+import {initializeCursus} from '../cursus-honorum.js?v=faces-name-disagreement-1';
 import {officeEffects} from '../office-system.js?v=faces-name-disagreement-1';
 import {populationFactor,religiousTaxCost} from '../religion.js?v=faces-name-disagreement-1';
 import {satisfactionForOutline} from './satisfaction-map.js?v=faces-name-disagreement-1';
