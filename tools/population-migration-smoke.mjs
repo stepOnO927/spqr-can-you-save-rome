@@ -23,7 +23,7 @@ try{
  await page.locator('[data-city="NARBO"]').dispatchEvent('click');
  await page.locator('#city-region').click();
  assert.match(await page.locator('#command-detail').innerText(),/最近迁徙[\s\S]*来自远高卢/);
- await page.locator('#lang').click();
+ await page.locator('#language').click();
  assert.match(await page.locator('#command-detail').innerText(),/Recent migration[\s\S]*arrived from Further Gaul/);
  await page.locator('#save').click();
  await page.evaluate(()=>{const state=JSON.parse(localStorage.getItem('spqr-save-1'));sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state}))});
