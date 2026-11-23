@@ -42,3 +42,15 @@ test('mailbox dates use the historical calendar and local language',()=>{
  assert.match(mailboxHtml(s,{lang:'en',selected:m.id}),/1\/1 CE/);assert.match(mailboxHtml(s,{lang:'zh',selected:m.id}),/公元1年1月/);assert.doesNotMatch(mailboxHtml(s,{lang:'en',selected:m.id}),/0 CE/);
  m.created={year:-1,month:12};assert.match(mailboxHtml(s,{lang:'zh',selected:m.id}),/公元前1年12月/);
 });
+
+test('unsigned peace letters do not reveal hidden changes in the sending court',()=>{
+ function build(changed){const s=newGame('senate');if(changed){s.world.leadership.caesar=['antony'];s.world.characters.caesar.alive=false;s.world.characters.caesar.health='deceased'}(s.inquiries||=[]).push({actor:'caesar',target:'senate',subject:'peace',status:'awaiting_decision',duration:2,remaining:6,sentYear:s.year,sentMonth:s.month});syncPeaceLetters(s);const m=receivedMail(s).find(x=>x.context?.kind==='peace');assert.ok(m);return {s,m}}
+ const first=build(false),second=build(true);assert.equal(first.m.senderId,null);assert.equal(second.m.senderId,null);assert.equal(second.m.senderPortrait,null);assert.deepEqual(first.m.senderName,['Caesarian command','凯撒派军队']);assert.deepEqual(second.m.senderName,first.m.senderName);assert.deepEqual(second.m.body,first.m.body);assert.doesNotMatch(second.m.body[1],/盖乌斯|安东尼/);
+ const saved=upgradeSave(JSON.parse(JSON.stringify(second.s))),restored=receivedMail(saved).find(x=>x.id===second.m.id);assert.deepEqual(restored.senderName,second.m.senderName);assert.equal(restored.senderId,null);
+});
+test('a previously created peace letter keeps its recorded signature after hidden changes',()=>{
+ const s=newGame('caesar');const result=sendLetter(s,{senderId:'orodes',senderFaction:'parthia',recipient:'caesar',category:'diplomatic',subject:['Peace proposal','议和提议'],body:['A proposal','一份提议'],context:{kind:'peace'}});assert.equal(result.ok,true);const m=result.letter;m.delivery='received';(s.inquiries||=[]).push({actor:'parthia',target:'caesar',subject:'peace',status:'awaiting_decision',remaining:6,mailId:m.id});const previous=[...m.senderName];s.world.leadership.parthia=['pacorus'];s.world.characters.orodes.alive=false;syncPeaceLetters(s);assert.deepEqual(m.senderName,previous);assert.equal(m.senderId,'orodes');
+});
+test('a dispatched institutional peace letter can arrive after the sender vanishes',()=>{
+ const s=newGame('senate');(s.inquiries||=[]).push({actor:'caesar',target:'senate',subject:'peace',status:'awaiting_decision',remaining:6,sentYear:s.year,sentMonth:s.month});delete s.factions.caesar;syncPeaceLetters(s);const m=receivedMail(s).find(x=>x.context?.kind==='peace');assert.ok(m);assert.deepEqual(m.senderName,['Caesarian command','凯撒派军队']);
+});
