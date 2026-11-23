@@ -5,7 +5,7 @@ import {FACTIONS} from '../data.js?v=phase-x-1';
 import {advanceMovements,respondToMovement,reportedMovements,offerMovementSupport,recognizeMovement} from '../movements.js?v=faces-name-disagreement-1';
 import {newRevolutionScenario} from '../scenarios.js?v=faces-name-disagreement-1';
 import {plotFormationChance} from '../conspiracies.js?v=faces-name-disagreement-1';
-import {identity,factionMark} from '../identity.js?v=breakaway-kits-1';
+import {identity,identityStory,factionMark} from '../identity.js?v=identity-encyclopedia-1';
 import {drawMap} from '../map.js?v=breakaway-kits-1';
 import {observeControl} from '../control-intelligence.js?v=control-delivery-1';
 
@@ -32,6 +32,7 @@ test('an armed breakaway keeps a distinct inherited emblem on the map and throug
  const {s}=crisis(),m=organize(s);arm(s,m);
  const kit=structuredClone(identity(m.force,s)),origin=identity('caesar');
  assert.equal(kit.origin,'caesar');assert.equal(kit.motif,origin.motif);assert.notEqual(kit.map,origin.map);assert.notEqual(kit.primary,identity('shared').primary);assert.equal(s.world.movementFactionCatalog[m.force].color,kit.map);
+ assert.equal(identityStory(m.force,s,'zh').originFaction,'caesar');assert.match(identityStory(m.force,s,'en').provenance,/not a documented ancient national flag/);
  assert.notEqual(factionMark(m.force,'standard',s),factionMark('caesar','standard',s));
  observeControl(s);
  const map=drawMap(s,{selectedRegion:'gaul',selectedArmy:null,mode:'political',lang:'en',view:[0,0,1200,650]});
@@ -43,6 +44,7 @@ test('an armed breakaway keeps a distinct inherited emblem on the map and throug
 test('victory changes the real government and defeat removes the independent force',()=>{
  const a=crisis(),m=organize(a.s);arm(a.s,m);const victoriousKit=structuredClone(identity(m.force,a.s));for(const r of a.s.regions.filter(x=>x.owner==='caesar'))r.owner=m.force;a.s.armies=a.s.armies.filter(x=>x.owner!=='caesar');month(a.s);
  assert.equal(m.stage,'victorious');assert.deepEqual(a.s.world.leadership.caesar,[m.leader]);assert.equal(a.s.factions[m.force],undefined);assert.equal(a.r.owner,'caesar');assert.equal(identity('caesar',a.s).map,victoriousKit.map);assert.equal(identity('caesar',a.s).politicalOrigin,m.force);assert.equal(identity('caesar',upgradeSave(structuredClone(a.s))).map,victoriousKit.map);
+ assert.match(identityStory('caesar',a.s,'zh').origin,/新政府沿用/);
  const b=crisis(),n=organize(b.s);arm(b.s,n);b.r.owner='caesar';b.s.armies=b.s.armies.filter(x=>x.owner!==n.force);month(b.s);assert.equal(n.stage,'defeated');assert.equal(b.s.factions[n.force],undefined);assert.equal(b.s.world.characters[n.leader].faction,'caesar');
 });
 test('a movement can establish a new government even if its first leader dies',()=>{

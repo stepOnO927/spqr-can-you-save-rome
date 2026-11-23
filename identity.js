@@ -46,6 +46,34 @@ export function ensureBreakawayIdentity(s,id,parent){
  s.world.factionIdentities[id]=kit;return kit;
 }
 export function identity(id,s){const saved=s?.world?.factionIdentities?.[id];return validSavedKit(saved)?saved:IDENTITIES[id]||IDENTITIES.shared}
+const inspirations={
+ caesar:['Roman Republican vexilla and legion standards','罗马共和国军旗与军团军标'],
+ senate:['Roman Republican civic and military insignia','罗马共和国公民与军队徽记'],
+ egypt:['Ptolemaic court ornament','托勒密宫廷纹饰'],
+ egypt_claimant:['Ptolemaic court ornament, altered for a rival court','托勒密宫廷纹饰，按竞争宫廷改绘'],
+ parthia:['Arsacid horse-archer and bow imagery','阿尔沙克王朝骑射与弓的意象'],
+ parthia_claimant:['Arsacid bow imagery, altered for a rival court','阿尔沙克王朝弓的意象，按竞争宫廷改绘'],
+ armenia:['Armenian royal headgear','亚美尼亚王室头饰'],
+ numidia:['North African spear imagery','北非长矛意象'],
+ mauretania:['North African palm imagery','北非棕榈意象'],
+ galatia:['Anatolian shield imagery','安纳托利亚盾牌意象'],
+ bosporus:['Black Sea grain imagery','黑海谷物意象'],
+ han:['Han administrative seal imagery','汉代官印意象'],
+ shanshan:['Oasis-route imagery','绿洲商路意象'],
+ rebels:['An improvised uprising standard','起义军临时军标'],
+ shared:['A neutral game-map marker','游戏地图中立标记']
+};
+export function identityStory(id,s,lang='en'){
+ const zh=lang==='zh',kit=identity(id,s),base=kit.origin||s?.world?.movements?.find(m=>m.force===id)?.parent||id;
+ const inspiration=inspirations[base]||inspirations.shared;
+ const adopted=!!kit.politicalOrigin,breakaway=!!kit.origin;
+ return {
+  inspiration:inspiration[zh?1:0],
+  originFaction:breakaway&&!adopted?base:null,
+  origin:adopted?(zh?'新政府沿用获胜运动的旗帜。':'The new government retained the victorious movement’s emblem.'):breakaway?(zh?'从原政治势力分立；在旧纹样上加入新图案。':'A breakaway power adapting its former political motif.'):zh?'现有政治传统的游戏标识。':'Game identity of the current political tradition.',
+  provenance:zh?'原创游戏重建图案；不代表有文献证实的古代国旗。':'Original game reconstruction; not a documented ancient national flag.'
+ };
+}
 export function factionMark(id,variant='insignia',s){
  const f=identity(id,s),art=motifs[f.motif]||motifs.bands,isBanner=variant==='banner',isStandard=variant==='standard';
  const shape=f.cut===1?'M4 4h32v29l-8-3-8 7-8-7-8 3z':f.cut===2?'M4 4h32v31l-16-6-16 6z':id==='parthia'?'M4 4h31l-6 13 6 17-15-3L4 37z':id==='egypt'?'M5 4h30v25L20 38 5 29z':id==='armenia'?'M5 4h30v31l-8-4-7 6-7-6-8 4z':'M4 4h32v29l-16 4L4 33z';

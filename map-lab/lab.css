@@ -167,3 +167,9 @@
 #training-badge{padding:5px 9px;border:1px solid #ba9c62;background:#2c463d;color:#f4dfaa;font:700 11px Manrope,'Microsoft YaHei',sans-serif;white-space:nowrap}#training-badge[hidden]{display:none}#start-training{border-color:#bfa473;color:#f1ddad;background:#315043}
 @media(max-width:700px){#training-badge{max-width:66px;overflow:hidden;text-overflow:ellipsis;font-size:9px;padding:3px}}
 #territory-alerts{position:absolute;z-index:8;top:76px;left:50%;transform:translateX(-50%);display:flex;align-items:center;flex-wrap:wrap;gap:7px;max-width:min(560px,calc(100vw - 24px));padding:9px 12px;background:#4a2923;border:2px solid #d0984e;color:#ffe5b8;box-shadow:0 3px 14px #0009;font:11px Manrope,Arial,sans-serif}#territory-alerts:empty{display:none}#territory-alerts strong{letter-spacing:1px;color:#ffd08a}#territory-alerts button{border:1px solid #d0984e;background:#332522;color:#fff0ce;padding:5px 8px;font:11px Manrope,Arial,sans-serif;cursor:pointer}#territory-alerts button:hover,#territory-alerts button:focus-visible{background:#674039}#territory-alerts small{font-size:10px;color:#e5d3b3}@media(max-width:800px){#territory-alerts{top:62px}}
+.identity-encyclopedia{border:1px solid #8f8060;background:#14231f;padding:9px 11px;margin:10px 0;color:#ded5b9;font:11px/1.5 Manrope,'Microsoft YaHei',sans-serif}
+.identity-encyclopedia summary{cursor:pointer;color:#e8d29b;font-weight:700;letter-spacing:.6px}
+.identity-encyclopedia .identity-art{display:flex;align-items:center;gap:13px;margin:10px 0}
+.identity-encyclopedia .faction-banner,.identity-encyclopedia .faction-standard{width:49px;height:52px}
+.identity-encyclopedia .faction-insignia{width:36px;height:36px}
+.identity-encyclopedia p{margin:6px 0}.identity-encyclopedia small{color:#bcb094}
