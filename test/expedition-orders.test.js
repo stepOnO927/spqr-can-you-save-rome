@@ -45,7 +45,7 @@ test('a confirmed multi-theater expedition advances one validated leg at a time 
   assert.equal(startupDiagnostics(state).warnings.length, 0);
 });
 
-test('a selected stocked staging stop pauses the march until the player resumes it', () => {
+test('a selected known staging point pauses the march until the player resumes it', () => {
   const state = newGame('caesar'), legion = state.armies.find(unit => unit.id === 'xiii');
   const nodes = routeTo(state, 'gaul');
   assert.deepEqual(nodes, ['cisalpine', 'narbo', 'gaul']);
