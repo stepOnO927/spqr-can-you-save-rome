@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,region,tick,upgradeSave,previewMarch,moveArmy} from '../engine.js?v=archived-exchange-1';
-import {observeControl,reportedControl,requestControlReport,advanceControlScouts} from '../control-intelligence.js?v=archived-exchange-1';
-import {drawMap} from '../map.js?v=archived-exchange-1';
-import {advanceMovements} from '../movements.js?v=archived-exchange-1';
-import {buildChessboard} from '../chessboard.js?v=archived-exchange-1';
-import {observeDiplomacy} from '../diplomatic-knowledge.js?v=archived-exchange-1';
-import {observeBalanceOfPower} from '../coalitions.js?v=archived-exchange-1';
+import {newGame,region,tick,upgradeSave,previewMarch,moveArmy} from '../engine.js?v=dossier-archive-1';
+import {observeControl,reportedControl,requestControlReport,advanceControlScouts} from '../control-intelligence.js?v=dossier-archive-1';
+import {drawMap} from '../map.js?v=dossier-archive-1';
+import {advanceMovements} from '../movements.js?v=dossier-archive-1';
+import {buildChessboard} from '../chessboard.js?v=dossier-archive-1';
+import {observeDiplomacy} from '../diplomatic-knowledge.js?v=dossier-archive-1';
+import {observeBalanceOfPower} from '../coalitions.js?v=dossier-archive-1';
 
 test('undelivered frontier control cannot reveal contacts, chessboard threats or AI balance',()=>{
  const base=newGame('caesar');delete base.controlKnowledge.caesar.italiaN;

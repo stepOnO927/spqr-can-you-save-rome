@@ -1,13 +1,13 @@
-import {earnedEpithets,legendName} from './legend.js?v=archived-exchange-1';
+import {earnedEpithets,legendName} from './legend.js?v=dossier-archive-1';
 import {ROUTES, FACTIONS} from './data.js?v=phase-x-1';
-import {CHARACTER_CATALOG,ageRange} from './characters.js?v=archived-exchange-1';
-import {AGREEMENT_TYPES} from './agreements.js?v=archived-exchange-1';
-import {formatChronicleEntry} from './chronicle.js?v=archived-exchange-1';
-import {initializePersonnel,applyWarPersonnel} from './epistulae-personnel.js?v=archived-exchange-1';
-import {fictionalPortraitKey,observedFictionalPortrait} from './portrait-registry.js?v=archived-exchange-1';
+import {CHARACTER_CATALOG,ageRange} from './characters.js?v=dossier-archive-1';
+import {AGREEMENT_TYPES} from './agreements.js?v=dossier-archive-1';
+import {formatChronicleEntry} from './chronicle.js?v=dossier-archive-1';
+import {initializePersonnel,applyWarPersonnel} from './epistulae-personnel.js?v=dossier-archive-1';
+import {fictionalPortraitKey,observedFictionalPortrait} from './portrait-registry.js?v=dossier-archive-1';
 import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
-import {canMediate,requestMediation} from './civil-war.js?v=archived-exchange-1';
-import {storedCorrespondentName} from './person-knowledge.js?v=archived-exchange-1';
+import {canMediate,requestMediation} from './civil-war.js?v=dossier-archive-1';
+import {storedCorrespondentName} from './person-knowledge.js?v=dossier-archive-1';
 
 const monthIndex = (year, month) => year * 12 + month;
 const pair = (a, b) => [a, b].sort().join(':');
