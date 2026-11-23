@@ -5,6 +5,25 @@ import {proposeAgreement,terminateAgreement,activeAgreement,advanceAgreements,vi
 import {addReport,queueMission,advanceOperations} from '../character-system.js?v=faces-name-disagreement-1';
 
 function friendly(s,a,b){s.relations[[a,b].sort().join(':')]=60}
+test('a player declaration discloses every additional treaty enemy without duplicating the original declaration',()=>{
+ const s=newGame('caesar');s.wars=[];s.alliances=[];friendly(s,'egypt','parthia');
+ assert.ok(proposeAgreement(s,'egypt','parthia','defensive',{secret:true}).ok);
+ assert.ok(diplomacy(s,'caesar','egypt','war'));
+ assert.ok(isWar(s,'caesar','parthia'));
+ const notices=s.log.filter(e=>e.en.startsWith('Treaty obligations have brought'));
+ assert.equal(notices.length,1);assert.equal(notices[0].other,'parthia');
+ assert.match(notices[0].zh,/条约义务/);
+ // Actual belligerency is known to the player; the secret treaty terms remain hidden.
+ assert.equal(visibleAgreements(s,'caesar').length,0);
+ assert.equal(s.log.filter(e=>e.en.includes('declared war on')).length,1);
+});
+test('an attack on the player also announces the third country joining against them',()=>{
+ const s=newGame('caesar');s.wars=[];s.alliances=[];friendly(s,'egypt','parthia');
+ assert.ok(proposeAgreement(s,'egypt','parthia','offensive').ok);
+ assert.ok(diplomacy(s,'egypt','caesar','war'));
+ assert.ok(isWar(s,'caesar','parthia'));
+ assert.deepEqual(s.log.filter(e=>e.en.startsWith('Treaty obligations have brought')).map(e=>e.other),['parthia']);
+});
 test('treaties cost resources, expire, survive saves and breaches affect credibility',()=>{
  let s=newGame('egypt');friendly(s,'egypt','parthia');const cash=s.factions.egypt.treasury;
  const result=proposeAgreement(s,'egypt','parthia','non_aggression',{secret:true});assert.ok(result.ok);assert.equal(s.factions.egypt.treasury,cash-4);

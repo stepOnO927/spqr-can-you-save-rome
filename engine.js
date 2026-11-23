@@ -302,7 +302,10 @@ export function diplomacy(s, actor, target, action, options={}){
     s.relations[key]=-60;
     s.factions[actor].legitimacy=Math.max(0,s.factions[actor].legitimacy-5);
     if(actor===s.player||target===s.player)log(s,`${FACTIONS[actor].short[0]} declared war on ${FACTIONS[target].short[0]}.`,`${FACTIONS[actor].short[1]}向${FACTIONS[target].short[1]}宣战。`,{other:actor===s.player?target:actor});
-    else for(const enemy of s.wars.filter(w=>w.includes(s.player)).map(w=>w.find(id=>id!==s.player)).filter(id=>!playerWarsBefore.has(id))){log(s,`An alliance has brought your faction into war with ${FACTIONS[enemy].short[0]}.`,`同盟义务使本方与${FACTIONS[enemy].short[1]}进入战争。`)}
+    for(const enemy of s.wars.filter(w=>w.includes(s.player)).map(w=>w.find(id=>id!==s.player)).filter(id=>!playerWarsBefore.has(id))){
+      if((actor===s.player&&enemy===target)||(target===s.player&&enemy===actor))continue;
+      log(s,`Treaty obligations have brought your faction into war with ${FACTIONS[enemy].short[0]}.`,`条约义务使本方与${FACTIONS[enemy].short[1]}进入战争。`,{other:enemy});
+    }
     warLetters(s,warsBefore);
     return true;
   }
