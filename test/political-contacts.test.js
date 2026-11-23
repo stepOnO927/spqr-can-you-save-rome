@@ -29,6 +29,11 @@ test('actual trust can still affect the reply after the letter travels',()=>{
  const results=[];for(const trust of [-30,30]){const s=setup();s.world.personalRelations['antony:cato'].trust=trust;assert.ok(offerPoliticalContact(s,'caesar','senate','cato','antony').ok);s.world.intelSeed=seedFor((a,b)=>a>.25&&b<.5);for(let i=0;i<3;i++){month(s);assert.equal(s.world.politicalContacts[0].status,'pending')}month(s);results.push(s.world.politicalContacts[0].status)}
  assert.deepEqual(results,['no_reply','channel_open']);
 });
+test('a recorded personal contact remains usable after its intelligence lead is archived',()=>{
+ let s=setup();for(let i=0;i<35;i++)addReport(s,'caesar','senate',{kind:'stability',value:'stable',source:'spy'});assert.ok(s.knowledge.caesar.senate.reportArchive.some(r=>r.character==='cato'));s=upgradeSave(structuredClone(s));const treasury=s.factions.caesar.treasury;
+ assert.equal(offerPoliticalContact(s,'caesar','senate','cato','antony').ok,true);assert.equal(s.factions.caesar.treasury,treasury-12);assert.equal(s.world.politicalContacts[0].remaining,4);
+ const unknown=setup();unknown.knowledge.caesar.senate.reports=[];unknown.meetings[0].resolvedYear=unknown.year+1;unknown.meetings[0].resolvedMonth=unknown.month;unknown.knowledge.caesar.senate.reportArchive=[{kind:'conspiracy',character:'cato',value:'suspected',source:'spy',year:unknown.year+1,month:unknown.month}];assert.equal(offerPoliticalContact(unknown,'caesar','senate','cato','antony').reason,'unavailable');
+});
 test('a completed meeting is available to the recipient faction as well as the sender',()=>{
  let s=setup();delete s.meetings[0].contactCredit;s=upgradeSave(structuredClone(s));addReport(s,'senate','caesar',{kind:'leaders',leaders:['antony'],source:'spy'});
  assert.ok(claimantRepresentatives(s,'senate','antony').includes('cato'));assert.ok(offerPoliticalContact(s,'senate','caesar','antony','cato').ok);

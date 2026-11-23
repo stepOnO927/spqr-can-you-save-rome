@@ -31,6 +31,7 @@ jobs:
           node() { echo "BROWSER_CHECK: $*" >&2; command timeout 240s node "$@"; }
           case "${{ matrix.part }}" in
             1)
+              node tools/imperium-visual-smoke.mjs
               node tools/poki-mobile-smoke.mjs
               node tools/short-screen-smoke.mjs
               node tools/runtime-storage-failure-smoke.mjs
@@ -102,6 +103,7 @@ jobs:
               node tools/fictional-family-age-smoke.mjs
               node tools/family-loan-visibility-smoke.mjs
               node tools/contact-credit-privacy-smoke.mjs
+              node tools/archived-political-contact-smoke.mjs
               node tools/missing-leadership-smoke.mjs
               node tools/commander-age-uncertainty-smoke.mjs
               node tools/claimant-aid-forces-smoke.mjs
