@@ -2,7 +2,9 @@
 
 状态：**仅准备；尚未部署、切换域名或更改 GitHub 仓库可见性。** 在 Cloudflare 公网站点完整测试并获得明确切换批准前，仓库必须保持公开，现有 GitHub Pages 保持运行。
 
-审查分支 `838d35b9` 已合入公开 `main` 至 `26b1368b`，同时保留前一轮已实测的新主战役界面，并接入依赖玩家已送达情报的竞争政权外交列表。10 项相关规则检查通过；此合并头的托管构建与浏览器仍待复测。2026 年 11 月 23 日再次尝试对旧 GitHub Pages 作只读访问时，本机 DNS 解析失败，不能据此推断旧站已关闭；更早同日的三入口请求均曾返回 HTTP 200，GitHub API 仍显示仓库公开且启用 Pages。未执行旧部署或仓库可见性更改。
+最新审查提交 `ee3b39e3` 已纳入公开 `main` 至 `9a2eaf52`，同时保留主战役新视觉界面并接入九类条约的真实浏览器核对。[托管规则检查](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45261274833)通过 **1,397/1,397** 项，[Pages 包与三个入口浏览器](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45261274868)、[Poki](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45261275064)、[36 个月浏览器](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45261274954)和[三组深入浏览器](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45261274931)全部通过。第一组逐项检查九类条约和桌面/手机界面；第二组验证竞争政权的情报可见性、城镇目标和归档联系人。公开包 **339 个文件、5.15 MiB、最大单文件 1.06 MiB**。Cloudflare 实际域名尚未部署或验收。
+
+审查分支 `838d35b9` 已合入公开 `main` 至 `26b1368b`，同时保留前一轮已实测的新主战役界面，并接入依赖玩家已送达情报的竞争政权外交列表。10 项相关规则检查通过；托管复测结果见上方更新后的合并头。2026 年 11 月 23 日再次尝试对旧 GitHub Pages 作只读访问时，本机 DNS 解析失败，不能据此推断旧站已关闭；更早同日的三入口请求均曾返回 HTTP 200，GitHub API 仍显示仓库公开且启用 Pages。未执行旧部署或仓库可见性更改。
 
 最新代码合并提交 `01441c73` 已纳入公开 `main` 至 `5a49e5d8`。[托管规则检查](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45249623150)通过 **1,396/1,396** 项，[Pages 包与三个入口浏览器](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45249622846)、[Poki](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45249622787)、[36 个月浏览器](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45249622870)和[三组深入浏览器](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45249622945)全部通过。第一组实测桌面和手机上的新主战役视觉层；第二组实测城镇目标和归档政治联系人。公开包现有 **339 个文件、5.15 MiB、最大单文件 1.06 MiB**，包含新主战役视觉样式和脚本；三个入口、存档迁移与站内资源检查通过。候选包验证不等于 Cloudflare 实际域名验收。
 
