@@ -80,8 +80,8 @@ test('letters and missions addressed to an old claimant court do not reach a lat
 test('a prepared response can still arrive after the original claimant court falls',()=>{
  const s=legacyIsolated(newGame('caesar'));contestLeadership(s,'egypt','cleopatra');assert.equal(startDynasticWar(s,'egypt','cleopatra'),true);s.controlKnowledge.caesar.egyptUpper={owner:'egypt_claimant',year:-49,month:1,source:'travelers'};assert.equal(sendInquiry(s,'caesar','egypt_claimant').ok,true);
  // A previously composed reply is already in transit; ending the court does not erase it.
- s.inquiries[0].sealed={status:'answered',year:-49,month:1,report:{kind:'leaders',leaders:['cleopatra'],source:'official',confidence:'unverified'}};assert.equal(settleDynasticWar(s,'egypt'),true);s.world.intelSeed=1000;
- for(let i=0;i<4;i++)tick(s);assert.equal(s.inquiries[0].status,'answered');
+ const sent=s.inquiries.find(x=>x.actor==='caesar'&&x.target==='egypt_claimant');sent.sealed={status:'answered',year:-49,month:1,report:{kind:'leaders',leaders:['cleopatra'],source:'official',confidence:'unverified'}};assert.equal(settleDynasticWar(s,'egypt'),true);s.world.intelSeed=1000;
+ for(let i=0;i<4;i++)tick(s);assert.equal(sent.status,'answered');
 });
 
 test('the death of the last claimant resolves an incumbent vacancy and preserves accepted reserves',()=>{

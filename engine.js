@@ -428,9 +428,22 @@ export function answerPeaceOffer(s,actor,decision){
  log(s,'Your reply to the peace offer has been sent; the war continues until a valid acceptance is delivered.','议和答复已寄出；在有效接受送达前战争继续。');
  return {ok:true};
 }
+// An inquiry must reach the player before a response can be sent. The reply
+// remains sealed until its return journey succeeds.
+export function answerOfficialInquiry(s,actor,subject,choice){
+ if(!['answer_limited','disclose_leaders','refuse'].includes(choice))return {ok:false,reason:'decision'};
+ const letter=(s.inquiries||[]).find(x=>x.actor===actor&&x.target===s.player&&x.subject===subject&&subject!=='peace'&&x.status==='awaiting_decision');
+ if(!letter||!s.regions.some(r=>r.owner===s.player)||choice==='disclose_leaders'&&subject!=='leaders')return {ok:false,reason:'unavailable'};
+ const sealed={status:choice==='refuse'?'refused':'answered',year:s.year,month:s.month};
+ if(choice==='answer_limited'){sealed.claim=['The court offers no clear information on this question.','本方没有就此问题提供明确消息。'];sealed.report=subject==='leaders'?{kind:'leaders',leaders:[],exhaustive:false}:subject==='successor'?{kind:'succession',value:'unknown'}:subject==='representative'?{kind:'authority',value:'unknown'}:{kind:subject,value:'unknown'}}
+ if(choice==='disclose_leaders'){const leaders=(s.world.leadership[s.player]||[]).filter(id=>CHARACTER_CATALOG[id]);sealed.report={kind:'leaders',leaders:[...leaders],exhaustive:false};sealed.claim=leaders.length?[leaders.map(id=>CHARACTER_CATALOG[id].name[0]).join(', '),leaders.map(id=>CHARACTER_CATALOG[id].name[1]).join('、')]:['No leaders were named.','没有指明领导人。']}
+ if(sealed.report)sealed.report.peopleNames=snapshotReportedPeople(sealed.report);letter.status='pending';letter.phase='return';letter.remaining=Math.max(1,Math.floor((letter.duration||2)/2));letter.sealed=sealed;
+ log(s,'Your reply has been sent; it may be lost before reaching the sender.','答复已寄出；送达前可能遗失。');return {ok:true};
+}
 function resolveInquiries(s,{autoplayPlayer=false}={}){
  for(const letter of s.inquiries||[]){
   if(letter.status==='awaiting_decision'){
+   if(letter.subject!=='peace'){if(autoplayPlayer&&letter.target===s.player){answerOfficialInquiry(s,letter.actor,letter.subject,'answer_limited');continue}if(!s.regions.some(r=>r.owner===letter.target)||--letter.remaining<=0)letter.status='no_reply';continue}
    if(autoplayPlayer&&letter.target===s.player&&isWar(s,letter.actor,letter.target)){const f=s.factions[letter.target],threat=estimatedStrength(s,letter.target,letter.actor),own=strength(s,letter.target),accept=f.stability<45||f.food<15||f.treasury<10||threat>=own*.8;answerPeaceOffer(s,letter.actor,accept?'accept':'refuse');continue}
    if(!isWar(s,letter.actor,letter.target)||--letter.remaining<=0)letter.status='no_reply';continue
   }
@@ -445,6 +458,11 @@ function resolveInquiries(s,{autoplayPlayer=false}={}){
     if(roll<.18||!hostile||!s.regions.some(r=>r.owner===letter.target)){letter.status='no_reply';continue}
     letter.status='awaiting_decision';letter.phase='at_court';letter.remaining=6;
     log(s,`A peace offer has arrived from ${FACTIONS[letter.actor].short[0]}; your decision is needed.`,`${FACTIONS[letter.actor].short[1]}的议和书信已送达，等待你的决定。`);continue;
+   }
+   if(letter.subject!=='peace'&&!autoplayPlayer&&letter.target===s.player&&letter.actor!==s.player){
+    if(roll<.18||!s.regions.some(r=>r.owner===letter.target)){letter.status='no_reply';continue}
+    letter.status='awaiting_decision';letter.phase='at_court';letter.remaining=6;
+    log(s,'A foreign official inquiry has arrived and awaits your decision.','一封外国政府的询问信已送达，等待你的决定。');continue;
    }
    const sealed={status:'answered',year:s.year,month:s.month};
    if(roll<.18||!s.regions.some(r=>r.owner===letter.target)||(letter.target.endsWith('_claimant')&&(letter.targetGeneration??0)!==(s.world.dynasticGenerations?.[letter.target]||0)))sealed.status='no_reply';
@@ -798,6 +816,12 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
     const institution=(s.world.religiousInstitutions||[]).find(o=>owned.some(r=>r.id===o.region)&&((o.relations[owner]??0)<-15||owned.find(r=>r.id===o.region)?.population?.satisfaction<40));
     if(institution){const relation=institution.relations[owner]??0;religiousPolicy(s,owner,institution.id,relation<0?'tolerance':'negotiate')}
   }
+  // Infrequent inquiries use reported frontiers and a per-court cooldown;
+  // every recipient, including another AI, decides independently.
+  if(owner!=='rebels'&&s.month%6===5&&f.treasury>60&&strategicRoll(s,owner,819)<.18){
+    const now=s.year*12+s.month,targets=[...new Set(reportedNeighbors().map(x=>x.owner))].filter(id=>id!==owner&&id!=='rebels'&&courtReports[id]&&s.factions[id]&&!isWar(s,owner,id)&&!(s.inquiries||[]).some(x=>x.actor===owner&&x.target===id&&now-(x.sentYear*12+x.sentMonth)<24)).sort();
+    if(targets.length){const target=targets[Math.floor(strategicRoll(s,owner,820)*targets.length)],subjects=['leaders','availability','representative'];sendInquiry(s,owner,target,subjects[Math.floor(strategicRoll(s,owner,821)*subjects.length)])}
+  }
   // A faction may write about its own captured personnel, without exposing a
   // letter to the player until its outward journey reaches the holder.
   if(owner!=='rebels'&&s.month%6===3&&f.treasury>35){
@@ -930,7 +954,7 @@ export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
     else if(a.siege){a.siege.remaining--;if(a.siege.remaining<=0){const r=region(s,a.siege.region),witnessed=a.owner===s.player||r.owner===s.player;r.owner=a.owner;r.loyalty=36;a.siege=null;if(witnessed)log(s,`${r.name[0]} surrendered after a siege.`,`${r.name[1]}在围攻后投降。`)}}
   }
   advanceMovements(s,{autoplayPlayer});
-  resolveInquiries(s,{autoplayPlayer});syncPeaceLetters(s);reconcilePeacePersonnel(s);advancePersonnel(s);advanceOperations(s);advanceAgentRequests(s,{autoplayPlayer});if(!autoplayPlayer)syncAgentReleaseLetters(s);advanceCharacters(s);advanceDynasties(s);syncFamilyReplies(s);relieveIncapacitatedCommanders(s);advanceMissingCommanders(s);resolveDynasticWars(s);advanceMediations(s);advanceDisputes(s);advancePersonalPlans(s);advanceConspiracies(s);advancePoliticalContacts(s,addReport);advanceGovernments(s,{autoplayPlayer});if(s.world?.cursus)advanceCursus(s);linkCommanders(s);advancePersonalDiplomacy(s);
+  resolveInquiries(s,{autoplayPlayer});syncPeaceLetters(s);if(!autoplayPlayer)syncOfficialInquiryLetters(s);reconcilePeacePersonnel(s);advancePersonnel(s);advanceOperations(s);advanceAgentRequests(s,{autoplayPlayer});if(!autoplayPlayer)syncAgentReleaseLetters(s);advanceCharacters(s);advanceDynasties(s);syncFamilyReplies(s);relieveIncapacitatedCommanders(s);advanceMissingCommanders(s);resolveDynasticWars(s);advanceMediations(s);advanceDisputes(s);advancePersonalPlans(s);advanceConspiracies(s);advancePoliticalContacts(s,addReport);advanceGovernments(s,{autoplayPlayer});if(s.world?.cursus)advanceCursus(s);linkCommanders(s);advancePersonalDiplomacy(s);
   advanceControlScouts(s);observeArmies(s);observeFormationRecon(s);observeControl(s);if(s.month%6===0)observeBalanceOfPower(s);
   if(imperiumOn(s)){advanceBattlePlans(s,{autoplayPlayer,issueOrder:issueMilitaryOrder,estimatedStrength,log});advanceCommandInfluence(s,{log})}
   // Friendly courts may forward fresh scout sightings; recipients judge them on their own.
