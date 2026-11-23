@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=archived-leads-1';
-import {proposeAgreement} from '../agreements.js?v=archived-leads-1';
-import {setBorderPolicy} from '../border-access.js?v=archived-leads-1';
-import {accessMapStatus,accessMapEntries,accessMapColor,ACCESS_MAP_COLORS} from '../map-lab/access-map.js?v=archived-leads-1';
+import {newGame,upgradeSave} from '../engine.js?v=official-inquiries-1';
+import {proposeAgreement} from '../agreements.js?v=official-inquiries-1';
+import {setBorderPolicy} from '../border-access.js?v=official-inquiries-1';
+import {accessMapStatus,accessMapEntries,accessMapColor,ACCESS_MAP_COLORS} from '../map-lab/access-map.js?v=official-inquiries-1';
 
 test('access map distinguishes war, own control, commerce and closed borders',()=>{
  const s=newGame('caesar');

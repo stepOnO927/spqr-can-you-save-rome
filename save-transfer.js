@@ -1,5 +1,5 @@
 import {localStore as localStorage} from './safe-storage.js';
-import {validPlayableCampaign} from './local-campaign-save.js?v=archived-leads-1';
+import {validPlayableCampaign} from './local-campaign-save.js?v=official-inquiries-1';
 const ROMAN_KEYS=['spqr-save-1','spqr-save-2','spqr-save-3'];
 const HAN_KEY='spqr-han-save-browser';
 const ARCHIVE_KEY='spqr-legacy-archive';

@@ -1,6 +1,6 @@
-import {CHARACTER_CATALOG} from './characters.js?v=archived-leads-1';
-import {createFictionalPerson,recordLifeEvent} from './dynasties.js?v=archived-leads-1';
-import {recordLegendEvidence} from './legend.js?v=archived-leads-1';
+import {CHARACTER_CATALOG} from './characters.js?v=official-inquiries-1';
+import {createFictionalPerson,recordLifeEvent} from './dynasties.js?v=official-inquiries-1';
+import {recordLegendEvidence} from './legend.js?v=official-inquiries-1';
 
 const date=s=>s.year*12+s.month;
 const pair=(a,b)=>[a,b].sort().join(':');

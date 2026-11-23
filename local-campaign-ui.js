@@ -1,5 +1,5 @@
-import {localCampaignCity,localRecruit,localTradeOffer,localTradePartners,localPeerCities,localPeerTradeOffer,localProtectionOffer,localIndependenceOffer} from './local-campaign.js?v=archived-leads-1';
-import {FACTIONS} from './data.js?v=archived-leads-1';
+import {localCampaignCity,localRecruit,localTradeOffer,localTradePartners,localPeerCities,localPeerTradeOffer,localProtectionOffer,localIndependenceOffer} from './local-campaign.js?v=official-inquiries-1';
+import {FACTIONS} from './data.js?v=official-inquiries-1';
 
 const escape=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 

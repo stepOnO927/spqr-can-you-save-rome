@@ -1,5 +1,5 @@
-import {snapshotFictionalCatalog,restoreFictionalCatalog} from './characters.js?v=archived-leads-1';
-import {validPlayableCampaign} from './local-campaign-save.js?v=archived-leads-1';
+import {snapshotFictionalCatalog,restoreFictionalCatalog} from './characters.js?v=official-inquiries-1';
+import {validPlayableCampaign} from './local-campaign-save.js?v=official-inquiries-1';
 // A one-use transfer between views in the same tab; saved game slots are untouched.
 export const HANDOFF_KEY = 'spqr-view-handoff-v1';
 

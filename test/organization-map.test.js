@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,estimatedStrength,upgradeSave} from '../engine.js?v=archived-leads-1';
-import {formCoalition,renameCoalition,leaveCoalition} from '../coalitions.js?v=archived-leads-1';
+import {newGame,estimatedStrength,upgradeSave} from '../engine.js?v=official-inquiries-1';
+import {formCoalition,renameCoalition,leaveCoalition} from '../coalitions.js?v=official-inquiries-1';
 import {knownOrganizations,organizationMapColor,organizationsForOwner} from '../map-lab/organization-map.js';
-import {observeDiplomacy} from '../diplomatic-knowledge.js?v=archived-leads-1';
+import {observeDiplomacy} from '../diplomatic-knowledge.js?v=official-inquiries-1';
 
 function joined(){
  const s=newGame('caesar');

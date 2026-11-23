@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=archived-leads-1';
-import {HANDOFF_KEY,stageHandoff,receiveHandoff} from '../view-handoff.js?v=archived-leads-1';
-import {CHARACTER_CATALOG} from '../characters.js?v=archived-leads-1';
+import {newGame,upgradeSave} from '../engine.js?v=official-inquiries-1';
+import {HANDOFF_KEY,stageHandoff,receiveHandoff} from '../view-handoff.js?v=official-inquiries-1';
+import {CHARACTER_CATALOG} from '../characters.js?v=official-inquiries-1';
 
 function memoryStorage() {
   const values=new Map();

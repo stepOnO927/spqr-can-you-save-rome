@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,estimatedStrength} from '../engine.js?v=archived-leads-1';
-import {formCoalition} from '../coalitions.js?v=archived-leads-1';
-import {proposeCoalitionMotion} from '../coalition-motions.js?v=archived-leads-1';
-import {coalitionCouncilHtml} from '../coalition-council-ui.js?v=archived-leads-1';
-import {campaignDate} from '../campaign-date.js?v=archived-leads-1';
+import {newGame,estimatedStrength} from '../engine.js?v=official-inquiries-1';
+import {formCoalition} from '../coalitions.js?v=official-inquiries-1';
+import {proposeCoalitionMotion} from '../coalition-motions.js?v=official-inquiries-1';
+import {coalitionCouncilHtml} from '../coalition-council-ui.js?v=official-inquiries-1';
+import {campaignDate} from '../campaign-date.js?v=official-inquiries-1';
 
 test('council displays the correct BCE ballot deadline and only known nominees',()=>{
  const s=newGame('caesar');s.relations['caesar:egypt']=40;s.relations['caesar:numidia']=40;s.relations['egypt:senate']=-30;s.relations['numidia:senate']=-30;

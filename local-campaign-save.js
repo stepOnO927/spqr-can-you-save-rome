@@ -1,4 +1,4 @@
-import {FACTIONS} from './data.js?v=archived-leads-1';
+import {FACTIONS} from './data.js?v=official-inquiries-1';
 
 export function validPlayableCampaign(data){
  if(!data||!Array.isArray(data.regions)||!data.regions.length||!Array.isArray(data.armies)||!data.factions?.[data.player])return false;
