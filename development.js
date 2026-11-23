@@ -13,7 +13,7 @@ const appianSource='https://whc.unesco.org/en/list/1708';
 const gracchusMilestonesSource='https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Plutarch/Lives/Caius_Gracchus%2A.html';
 const miningSource='https://oxrep.web.ox.ac.uk/mines-database';
 const quarrySource='https://oxrep.web.ox.ac.uk/stone-quarries-database';
-const alesiaSource='https://musee-archeologienationale.fr/en/node/1592';
+const alesiaSource='https://alesia.com/en/archaeology/';
 const numantiaSource='https://numanciasoria.es/en/divulgacion/the-archaeological-hall-of-garray';
 const siegeSource='https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/2A%2A.html';
 const massiliaSource='https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/1B%2A.html';
@@ -95,7 +95,7 @@ export const MATERIALS = [
   {id:'roadmaking',name:['Road Building','道路修筑'],cost:22,months:3,building:'road',context:['Roman roads predate 49 BCE; this node spreads and improves local technique.','罗马道路早于前49年；此项代表技术传播与改进。'],source:source(appianSource,'UNESCO, Via Appia. Regina Viarum')},
   {id:'water-control',name:['Water Management','水利管理'],cost:24,months:4,building:'irrigation',context:['Cato advises gentle irrigation of beds and maintenance of drainage ditches; local channels adapt these older practices.','加图建议温和引水灌溉苗床并维护排水沟；地方水渠改造这些已有做法。'],source:source(catoWaterSource,'Cato, On Agriculture 151, 155')},
   {id:'barracks-design',name:['Barracks Planning','兵营规划'],cost:21,months:3,building:'barracks',context:['Republican Roman siege camps show planned military quarters.','共和国时期的罗马围城军营显示出经过规划的营舍。'],source:source(numantiaSource)},
-  {id:'stone-fortification',name:['Fortification Planning','防御工事规划'],cost:25,months:4,building:'fort',context:['Caesar’s works at Alesia show extensive field fortifications; materials and layouts varied by site.','凯撒在阿莱西亚修筑了大规模野战工事；材料和布局因地而异。'],source:source(alesiaSource,'Musée d’Archéologie nationale, Vercingetorix and Alesia')},
+  {id:'stone-fortification',name:['Fortification Planning','防御工事规划'],cost:25,months:4,building:'fort',context:['Caesar’s works at Alesia show extensive field fortifications; materials and layouts varied by site.','凯撒在阿莱西亚修筑了大规模野战工事；材料和布局因地而异。'],source:source(alesiaSource,'MuséoParc Alésia, Archaeology of the Siege')},
   {id:'quarrying',name:['Quarrying','采石'],cost:20,months:3,building:'quarry',context:['Roman-period quarry sites are documented, though dating individual sites to 49 BCE is often uncertain.','罗马时期采石场有考古记录，但单个遗址是否活跃于前49年往往难以确定。'],source:source(quarrySource)},
   {id:'metal-extraction',name:['Metal Extraction','金属采掘'],cost:23,months:4,building:'mine',context:['Roman mining sites are documented, but this card does not date a particular deposit to 49 BCE.','罗马时期矿场有考古记录，但此卡不把某处矿藏断定为前49年已开采。'],source:source(miningSource)},
   {id:'grain-storage',name:['Grain Storage','谷物储藏'],cost:20,months:3,building:'granary',context:['Cato describes protecting stored grain against weevils and mice; a granary still must be built.','加图记载了防止谷仓中的谷物受象鼻虫与老鼠侵害的方法；研究后仍需建造粮仓。'],source:source(catoGranarySource,'Cato, On Agriculture 92')},

@@ -46,7 +46,7 @@ test('period engineering references name the checked source instead of only its 
  for(const [id,title] of [
   ['roadmaking','UNESCO, Via Appia. Regina Viarum'],
   ['bridge-engineering','Caesar, Civil Wars 1.40–41, 1.48–54'],
-  ['stone-fortification','Musée d’Archéologie nationale, Vercingetorix and Alesia'],
+  ['stone-fortification','MuséoParc Alésia, Archaeology of the Siege'],
   ['supply-organization','Javier Salido Dominguez, Architecture in the Service of the Roman Army (2015)'],
   ['dam-engineering','Alyzia Dam archaeological and engineering study (ISSMGE, 2026)']
  ]){
@@ -57,6 +57,7 @@ test('period engineering references name the checked source instead of only its 
  }
  const dam=MATERIALS.find(x=>x.id==='dam-engineering');
  const bridge=BUILDINGS.find(x=>x.id==='bridge');
+ assert.equal(MATERIALS.find(x=>x.id==='stone-fortification').source.url,'https://alesia.com/en/archaeology/');
  assert.match(bridge.context[0],/Sicoris.*simulation values/);
  assert.match(bridge.context[1],/西科里斯河.*模拟数值/);
  assert.match(developmentPanel(newGrandGame('senate'),'en','material'),/Caesar records bridges over the Sicoris/);
