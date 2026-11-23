@@ -20,6 +20,15 @@ const openingOrders=advanceMarketAI(state);
 for(const buyer of ['senate','egypt','armenia','galatia'])assert.ok(openingOrders.some(x=>x.buyer===buyer),`${buyer} did not place an order`);
 const initialTreasury=Object.fromEntries(Object.entries(state.factions).map(([id,f])=>[id,f.treasury]));
 const romanPopulation=state.regions.reduce((sum,region)=>sum+region.population.total,0);
+const romanGoods=Object.keys(state.markets.regions[state.regions[0].id].goods);
+const romanGoodsBalance=(campaign,good)=>{
+ const markets=campaign.markets,items=Object.values(markets.regions).map(market=>market.goods[good]);
+ const total=field=>items.reduce((sum,item)=>sum+(item[field]||0),0);
+ const reserved=markets.saleOrders.filter(order=>order.status==='open'&&order.commodity===good).reduce((sum,order)=>sum+order.available,0);
+ const traveling=markets.shipments.filter(shipment=>['traveling','blocked'].includes(shipment.status)&&shipment.commodity===good).reduce((sum,shipment)=>sum+shipment.quantity,0);
+ return {physical:total('stock')+reserved+traveling,produced:total('produced'),consumed:total('consumed'),discarded:total('surplusDiscarded'),manufactured:total('usedForManufacture'),construction:total('usedForConstruction'),military:total('usedForRecruitment')+total('usedForMilitary')};
+};
+const openingRomanGoods=Object.fromEntries(romanGoods.map(good=>[good,romanGoodsBalance(state,good).physical]));
 for(let i=0;i<120;i++){
  const before=state.year*12+state.month;tick(state);assert.equal(state.year*12+state.month,before+1,'campaign time stalled');
  if(i===59)Object.assign(state,upgradeSave(structuredClone(state)));
@@ -37,6 +46,7 @@ for(let i=0;i<120;i++){
   assert.ok(state.world.characters[shipment.merchantId],`missing merchant for ${shipment.id}`);
   if(shipment.status==='delivered')assert.equal(shipment.escrow,0);
  }
+ for(const good of romanGoods){const balance=romanGoodsBalance(state,good);assert.equal(balance.physical+balance.consumed+balance.discarded+balance.manufactured+balance.construction+balance.military,openingRomanGoods[good]+balance.produced,`Roman ${good} units were created or lost after month ${i+1}`)}
 }
 assert.equal(state.markets.transportSpent+state.markets.merchantFees,state.markets.transactions.reduce((sum,x)=>sum+x.transport,0),'transport payments must have one destination');
 const summary={months:120,year:state.year,month:state.month,openingBuyers:openingOrders.map(x=>x.buyer),shipments:state.markets.shipments.length,delivered:state.markets.transactions.length,blocked:state.markets.shipments.filter(x=>x.status==='blocked').length,merchants:Object.keys(state.markets.merchants).length,merchantFees:state.markets.merchantFees,transportSpent:state.markets.transportSpent,treasuryChange:Object.fromEntries(Object.entries(initialTreasury).map(([id,before])=>[id,(state.factions[id]?.treasury??0)-before]))};
