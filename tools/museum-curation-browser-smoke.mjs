@@ -23,6 +23,15 @@ try{
  await page.locator('#nav-museum').click();
  assert.match(await page.locator('.hub-panel').innerText(),/建造博物馆后/);
  assert.equal(await page.locator('.artifact').count(),0);
+ await page.evaluate(()=>{const key='spqr-legacy-profile-v1',p=JSON.parse(localStorage.getItem(key));p.achievements=[{id:'first-recon',category:'hidden',year:-49,month:2,coins:75},{id:'survive:12',category:'ordinary',year:-48,month:1,coins:60}];localStorage.setItem(key,JSON.stringify(p))});
+ await page.reload();await page.locator('#nav-museum').click();
+ assert.equal(await page.locator('.museum-achievements article').count(),2,'earned achievements remain reviewable before buying the physical museum');
+ assert.match(await page.locator('.museum-achievements').innerText(),/边境之眼/);
+ assert.doesNotMatch(await page.locator('.museum-achievements').innerText(),/执掌历史/);
+ await page.locator('#nav-lang').click();
+ assert.match(await page.locator('.museum-achievements').innerText(),/Eyes Across the Frontier/);
+ await page.evaluate(()=>{const key='spqr-legacy-profile-v1',p=JSON.parse(localStorage.getItem(key));p.achievements=[];localStorage.setItem(key,JSON.stringify(p));localStorage.setItem('spqr-lang','zh')});
+ await page.reload();await page.locator('#nav-museum').click();
  await page.locator('[data-shop]').click();
  for(const id of ['museum','camp','museum-figures','museum-ritual'])await page.locator(`[data-buy="${id}"]`).click();
  await page.locator('#nav-museum').click();
