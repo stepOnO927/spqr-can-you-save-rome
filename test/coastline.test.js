@@ -4,6 +4,7 @@ import land from '../mediterranean-land.js';
 import ocean from '../mediterranean-ocean.js';
 import lakes from '../mediterranean-lakes.js';
 import lazioLakes from '../map-lab/lazio-lakes.js';
+import fucinoLake from '../map-lab/fucino-lake.js';
 import {physicalStyle} from '../map-lab/physical-style.js';
 import {physicalLabels} from '../map-lab/physical-labels.js';
 import {readFileSync} from 'node:fs';
@@ -70,4 +71,22 @@ test('Lazio lake names and polygons match their real locations without changing 
   assert.ok(source);
   assert.ok(Math.abs(area(feature)/area(source)-1)<.03,`${feature.properties.name} simplification changed lake area too much`);
  }
+});
+
+test('approximate Lacus Fucinus restores a historical inland lake without changing the modern coast',()=>{
+ assert.equal(fucinoLake.features.length,1);
+ const feature=fucinoLake.features[0],label=physicalLabels.find(item=>item.id==='fucinus');
+ assert.equal(feature.properties.kind,'approximate historical lake');
+ assert.equal(feature.properties.referenceLevelMeters,660);
+ assert.ok(feature.properties.approximateAreaKm2>110&&feature.properties.approximateAreaKm2<150);
+ assert.equal(inRing(feature.geometry.coordinates[0],13.547222,41.995),true);
+ assert.ok(label?.en.includes('approx.')&&label?.zh.includes('约略'));
+ assert.equal(inRing(feature.geometry.coordinates[0],...label.point),true);
+ assert.equal(inRing(feature.geometry.coordinates[0],13.42,42.03),false,'Avezzano remains outside the illustrative lake');
+ for(const ring of feature.geometry.coordinates){assert.ok(ring.length>=4);assert.deepEqual(ring[0],ring.at(-1))}
+ assert.equal(contains(landPolygons,...label.point),true);
+ assert.equal(contains(oceanPolygons,...label.point),false);
+ assert.deepEqual(physicalStyle.sources['fucino-lake'].data,fucinoLake);
+ assert.ok(physicalStyle.layers.some(layer=>layer.id==='fucino-historical-fill'&&layer.source==='fucino-lake'));
+ assert.ok(physicalStyle.layers.some(layer=>layer.id==='fucino-historical-shore'&&layer.paint['line-dasharray']));
 });

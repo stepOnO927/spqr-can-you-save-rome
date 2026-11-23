@@ -15,6 +15,7 @@ export const physicalLabels=[
  {id:'benacus',kind:'lake',point:[10.66,45.61],en:'Benacus',zh:'贝纳库斯湖',minZoom:8.15},
  {id:'bolsena',kind:'lake',point:[11.92806,42.59306],en:'Lake Bolsena',zh:'博尔塞纳湖',minZoom:8.7},
  {id:'bracciano',kind:'lake',point:[12.2314,42.1225],en:'Lake Bracciano',zh:'布拉恰诺湖',minZoom:8.7},
+ {id:'fucinus',kind:'lake',point:[13.547222,41.995],en:'Lacus Fucinus · approx.',zh:'富奇诺湖 · 约略',minZoom:8.4},
  {id:'po-plain',kind:'land',point:[10.5,45.1],en:'Po Plain',zh:'波河平原',minZoom:7.7},
  {id:'apennines',kind:'land',point:[13.3,42.9],en:'Apennines',zh:'亚平宁山脉',overviewEn:'APENNINVS',minZoom:4.8,maxZoom:8.3},
  {id:'apennines-north',kind:'land',point:[12.34,43.86],en:'Apennines',zh:'亚平宁山脉',minZoom:8.3},

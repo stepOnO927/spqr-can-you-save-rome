@@ -6,6 +6,7 @@ import poRiverDetail from '../po-river-detail.js';
 import centralItalyRivers from '../central-italy-rivers.js?v=1';
 import lakes from '../mediterranean-lakes.js';
 import lazioLakes from './lazio-lakes.js?v=1';
+import fucinoLake from './fucino-lake.js?v=1';
 import gardaLakeDetail from '../garda-lake-detail.js';
 import poHistoricCoast from '../po-historic-coast.js';
 import ravennaLandforms from './ravenna-paleolandforms.js?v=1';
@@ -62,6 +63,7 @@ export const physicalStyle={
   'nile-delta':{type:'geojson',data:nileDelta,attribution:'Approximate Nile Delta between Natural Earth river branches'},
   'nile-delta-wash':{type:'image',url:'./nile-delta-wash.png',coordinates:[[29.8,31.7],[32,31.7],[32,30],[29.8,30]]},
   lakes:{type:'geojson',data:{type:'FeatureCollection',features:[...lakes.features,...lazioLakes.features]},attribution:'Natural Earth 1:10m lakes, public domain; Lazio lake shorelines: OpenStreetMap contributors, ODbL 1.0'},
+  'fucino-lake':{type:'geojson',data:fucinoLake,attribution:'Approximate ancient Fucino: modern Mapzen elevation and published lake-level estimate; see SOURCES.md'},
   'garda-lake-detail':{type:'geojson',data:gardaLakeDetail,attribution:euHydroAttribution},
   'egypt-contours':{type:'geojson',data:egyptContours,attribution:terrainAttribution},
   'italy-contours':{type:'geojson',data:italyContours,attribution:terrainAttribution},
@@ -112,6 +114,8 @@ export const physicalStyle={
   {id:'ravenna-ridge-fill',type:'fill',source:'ravenna-paleolandforms',minzoom:8.2,layout:{visibility:'none'},paint:{'fill-color':['match',['get','kind'],'beach-ridge','#b38d65','#758975'],'fill-opacity':['interpolate',['linear'],['zoom'],8.2,.08,9,.23]}},
   {id:'ravenna-ridge-edge',type:'line',source:'ravenna-paleolandforms',minzoom:8.2,layout:{visibility:'none','line-join':'round','line-cap':'round'},paint:{'line-color':['match',['get','kind'],'beach-ridge','#8c6d4c','#60775e'],'line-width':['interpolate',['linear'],['zoom'],8.2,.45,9,.9],'line-opacity':['interpolate',['linear'],['zoom'],8.2,.13,9,.35]}},
   {id:'natural-lakes',type:'fill',source:'lakes',filter:['!=',['get','name'],'Lago di Garda'],paint:{'fill-color':'#5b9093','fill-opacity':.88}},
+  {id:'fucino-historical-fill',type:'fill',source:'fucino-lake',paint:{'fill-color':'#5b9093','fill-opacity':.8}},
+  {id:'fucino-historical-shore',type:'line',source:'fucino-lake',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#e3e2c8','line-opacity':.9,'line-width':['interpolate',['linear'],['zoom'],6,.7,9.2,1.7],'line-dasharray':[3,2]}},
   {id:'garda-overview',type:'fill',source:'lakes',maxzoom:8,filter:['==',['get','name'],'Lago di Garda'],paint:{'fill-color':'#5b9093','fill-opacity':.88}},
   {id:'garda-close',type:'fill',source:'garda-lake-detail',minzoom:8,paint:{'fill-color':'#5b9093','fill-opacity':.88}},
   {id:'lake-shores',type:'line',source:'lakes',filter:['!=',['get','name'],'Lago di Garda'],paint:{'line-color':'#c6d2ba','line-opacity':.65,'line-width':.65}},
