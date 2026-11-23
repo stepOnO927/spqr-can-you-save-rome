@@ -56,6 +56,11 @@ test('period engineering references name the checked source instead of only its 
   assert.match(developmentPanel(newGrandGame('senate'),'en','material'),new RegExp(title.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));
  }
  const dam=MATERIALS.find(x=>x.id==='dam-engineering');
+ const bridge=BUILDINGS.find(x=>x.id==='bridge');
+ assert.match(bridge.context[0],/Sicoris.*simulation values/);
+ assert.match(bridge.context[1],/西科里斯河.*模拟数值/);
+ assert.match(developmentPanel(newGrandGame('senate'),'en','material'),/Caesar records bridges over the Sicoris/);
+ assert.match(developmentPanel(newGrandGame('senate'),'zh','material'),/凯撒记载前49年西科里斯河上的桥梁/);
  assert.match(dam.context[0],/Alyzia.*mid-fourth to third century BCE/);
  assert.match(dam.context[1],/阿利齐亚.*前4世纪中叶至前3世纪/);
  assert.doesNotMatch(dam.context.join(' '),/Alcantarilla|阿尔坎塔里利亚/);
