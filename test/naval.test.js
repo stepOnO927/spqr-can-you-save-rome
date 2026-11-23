@@ -566,6 +566,17 @@ test('Pontic harbors use the Black Sea through the Marmara passage, including ol
  const resumed=upgradeSave(JSON.parse(JSON.stringify(underway)));
  assert.deepEqual(resumed.naval.fleets.find(f=>f.id===returning.id).order.path,['propontis','aegean']);
 });
+test('Alexandria can launch a real troop convoy toward a hostile Aegean port after obtaining transport hulls',()=>{
+ const s=newGrandGame('egypt'),army=s.armies.find(a=>a.id==='egyptguard'),fleet=s.naval.fleets.find(f=>f.id==='egypt-grain');
+ s.wars.push(['egypt','senate']);
+ assert.equal(previewMarch(s,army.id,'t091').sea,false,'without transports the army has only the long land route');
+ fleet.ships.transport=2;fleet.sailors+=140;
+ const plan=previewMarch(s,army.id,'t091');
+ assert.equal(plan.ok,true);assert.equal(plan.path[0].sea,true);
+ assert.equal(moveArmy(s,army.id,'t091').ok,true);
+ assert.equal(army.move.sea,true);assert.equal(army.move.transportFleetId,fleet.id);
+ assert.equal(fleet.order.kind,'transport');
+});
 test('light-only fleets use ship speed and merchant hulls set cargo capacity',()=>{
  const s=newGrandGame('senate'),f=s.naval.fleets.find(x=>x.owner==='senate');f.ships={light:2};f.sailors=130;f.zone='western';f.port=null;assert.equal(fleetSpeed(f),3);assert.equal(fleetCargoCapacity(f),0);assert.equal(orderFleet(s,'senate',f.id,'intercept','tyrrhenian').ok,true);advanceNaval(s);assert.equal(f.zone,'tyrrhenian');f.ships.merchant=2;assert.equal(fleetCargoCapacity(f),8)
 });
@@ -1395,6 +1406,19 @@ test('AI dispatches a paid supply convoy only for its own under-supplied port fr
  healthy.regions.find(r=>r.id==='t016').food=.4;
  advanceNaval(healthy);
  assert.notEqual(healthy.naval.fleets.find(f=>f.id==='senate-adriatic').order?.kind,'supply');
+});
+test('AI supplies an exposed army before staging its fleet for a distant sea assault',()=>{
+ const s=newGrandGame('egypt'),fleet=s.naval.fleets.find(f=>f.id==='senate-adriatic');
+ fleet.ships.transport=1;fleet.ships.merchant=1;fleet.sailors-=25;
+ s.naval.routes=[];s.factions.senate.treasury=200;s.factions.senate.food=50;
+ s.regions.find(r=>r.id==='t103').owner='caesar';
+ s.armies.find(a=>a.id==='italy').region='t030';
+ const hungry=s.armies.find(a=>a.id==='pompey');hungry.region='t016';hungry.operationalSupply=.4;
+ s.regions.find(r=>r.id==='t016').food=.4;
+ advanceNaval(s);
+ assert.ok(!s.naval.queues.some(q=>q.owner==='senate'&&q.type==='transport'),'a distant lift project must not reserve the only ship needed for urgent supply');
+ assert.equal(fleet.order?.kind,'supply');
+ assert.equal(fleet.order.targetPort,'t016');
 });
 test('AI can supply an inland front through friendly land routes beyond the harbor neighbor',()=>{
  const s=newGrandGame('egypt'),fleet=s.naval.fleets.find(f=>f.id==='senate-adriatic'),army=s.armies.find(a=>a.id==='italy');

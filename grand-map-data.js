@@ -1,6 +1,6 @@
 import {REGIONS as LEGACY_REGIONS,ROUTES as LEGACY_ROUTES} from './data.js';
 import LAND_CORRIDORS from './land-corridors.js';
-import SEA_CORRIDORS from './sea-corridors.js';
+import SEA_CORRIDORS from './sea-corridors.js?v=2';
 
 // Settlement anchors define operational territories, not asserted ancient
 // administrative boundaries. Coordinates were manually curated as approximate
@@ -160,6 +160,12 @@ export function grandRoutes(){
   }
  }
  for(const [from,to,kind] of LEGACY_ROUTES){const left=GRAND_GROUPS[from],right=GRAND_GROUPS[to];if(!left||!right)continue;let candidates=left.flatMap(a=>right.filter(b=>kind!=='sea'||a.tags.includes('port')&&b.tags.includes('port')).map(b=>({a,b,d:km(a,b)})));if(!candidates.length)continue;candidates.sort((x,y)=>x.d-y.d);for(const {a,b} of candidates.slice(0,kind==='sea'?1:2))add(a,b,kind)}
+ // Additional operational embarkations between named ports. Their plotted
+ // water corridors are derived separately from the modern land mask.
+ for(const [from,to] of [['egypt','t114'],['egypt','t091'],['t016','t029'],['t022','t028'],['italiaS','epirus']]){
+  const a=GRAND_SITES.find(site=>site.id===from),b=GRAND_SITES.find(site=>site.id===to);
+  if(a?.tags.includes('port')&&b?.tags.includes('port'))add(a,b,'sea');
+ }
  return [...links.values()];
 }
 export const GRAND_ROUTES=grandRoutes();
