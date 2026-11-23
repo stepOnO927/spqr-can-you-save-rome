@@ -13,7 +13,7 @@ try{
   await page.locator('#campaign-guide').uncheck();
   await page.locator('#start-campaign').click();
   await page.locator('.victory-progress').waitFor({state:'attached'});
-  if(width>700)await page.locator('#close-panel').click();
+  if(width>700&&await page.locator('#close-panel').isVisible())await page.locator('#close-panel').click();
   const visual=await page.evaluate((widthForTest)=>({
    sheet:[...document.styleSheets].some(sheet=>sheet.href?.includes('imperium-visual.css')),
    background:getComputedStyle(document.body).backgroundColor,
