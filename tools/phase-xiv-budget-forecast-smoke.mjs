@@ -34,6 +34,8 @@ try{
   await page.evaluate(value=>localStorage.setItem('spqr-lang',value),lang);
   await page.reload({waitUntil:'domcontentloaded'});
   await page.locator('#entry-file').setInputFiles({name:'parthia.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(state))});
+  await page.locator('[data-tab="development"]').click();
+  assert.match(await page.locator('.inspector .dev-budget-preview').first().innerText(),lang==='zh'?/研究前国库.*预计每月收支.*研究费立即扣除/:/Treasury before research.*Projected monthly balance.*Research costs are paid now/);
   await page.locator('[data-tab="ideas"]').click();
   assert.equal(await page.locator('[data-select-idea]').count(),50);
   assert.equal(await page.locator('.dev-idea-detail:visible').count(),5);
@@ -56,6 +58,7 @@ try{
   await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
   if(width<=700)await page.locator('#mobile-menu').click();
   await page.locator('#development').click();
+  assert.match(await page.locator('.dev-budget-preview').first().innerText(),lang==='zh'?/研究前国库.*预计每月收支.*研究费立即扣除/:/Treasury before research.*Projected monthly balance.*Research costs are paid now/);
   await page.locator('[data-dev-page="ideas"]').click();
   assert.equal(await page.locator('[data-select-idea]').count(),50);
   assert.equal(await page.locator('.dev-idea-detail:visible').count(),5);

@@ -29,6 +29,16 @@ test('construction panel shows a bilingual cash runway before paying for works',
  assert.match(constructionPanel(s,'zh',site),/国库已耗尽/);
 });
 
+test('research tree shows the current treasury runway before the player spends',()=>{
+ const s=newGrandGame('caesar'),net=nationalBudget(s,'caesar').projectedNet;
+ assert.ok(net<0);
+ const cash=s.factions.caesar.treasury,months=Math.ceil(cash/-net);
+ for(const branch of ['material','idea']){
+  assert.match(developmentPanel(s,'en',branch),new RegExp(`Treasury before research ${cash}¤[\\s\\S]*Projected monthly balance ${net}¤[\\s\\S]*funds last about ${months} months[\\s\\S]*Research costs are paid now`));
+  assert.match(developmentPanel(s,'zh',branch),new RegExp(`研究前国库 ${cash}¤[\\s\\S]*预计每月收支 ${net}¤[\\s\\S]*资金约可维持 ${months}个月[\\s\\S]*研究费立即扣除`));
+ }
+});
+
 test('every building reference has a distinct drawing and names its cited historical source',()=>{
  const drawings=BUILDINGS.map(buildingIllustration);
  assert.equal(new Set(drawings).size,BUILDINGS.length);
