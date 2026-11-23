@@ -26,6 +26,7 @@ try{
   await page.locator('[data-tab="government"]').click();
   await page.locator('.inspector:not(.closed)').waitFor();
   await page.locator('[data-tab="map"]').click();
+  if(width<700)await page.locator('#close-panel').click();
   const previous=await page.locator('.map-toolbar h2').innerText();
   await page.locator('#step').click();
   assert.notEqual(await page.locator('.map-toolbar h2').innerText(),previous,'advance month must still work');
