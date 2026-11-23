@@ -7,7 +7,7 @@ page.on('pageerror',error=>errors.push(error.message));
 try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
  await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
- const force=await page.evaluate(async()=>{
+ const {force,kit}=await page.evaluate(async()=>{
   const {newGame}=await import('/engine.js?v=faces-name-disagreement-1');
   const {advanceMovements}=await import('/movements.js?v=breakaway-kits-1');
   const {observeControl}=await import('/control-intelligence.js?v=control-delivery-1');
@@ -19,7 +19,7 @@ try{
   const movement=state.world.movements.find(m=>m.stage==='armed');if(!movement)throw Error('The crisis did not create an armed breakaway');
   observeControl(state);
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state}));
-  return movement.force;
+  return {force:movement.force,kit:state.world.factionIdentities[movement.force]};
  });
  await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});
  const inspect=async()=>{
@@ -31,7 +31,7 @@ try{
   assert.match(await page.locator('.identity-encyclopedia').innerText(),/原创游戏重建图案/);
   return page.locator('.identity-encyclopedia .faction-banner').getAttribute('style');
  };
- const before=await inspect();await page.locator('#save').click();await page.locator('#load').click();
+ const before=await inspect();assert.ok(before.includes(kit.primary)&&before.includes(kit.accent),'the directory must render the saved breakaway colors rather than a generic emblem');await page.locator('#save').click();await page.locator('#load').click();
  const after=await inspect();assert.equal(after,before);assert.deepEqual(errors,[]);
  console.log('A simulated breakaway appears in the faction directory with its inherited emblem and survives save/load.');
 }finally{await browser.close()}
