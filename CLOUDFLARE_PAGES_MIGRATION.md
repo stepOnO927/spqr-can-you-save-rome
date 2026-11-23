@@ -6,7 +6,7 @@
 
 公开 `main` 的长期情报归档已合入审查分支。合并提交 `9ae1f232` 的 [规则检查](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45084993666)通过 1,359/1,359 项；[Pages 包与三入口浏览器](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45084993731)、[36 个月浏览器](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45084993728)、[Poki](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45084993715)和[三组深度浏览器](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45084993722)全部通过。第一组实测商业同盟议事、长期情报分页及内部安全旧报告的存读档。当前公开包仍为 335 个文件、5.02 MiB，总文件最大 1.06 MiB，公开路径检查通过。Cloudflare 实际部署和新域名仍待验收。
 
-随后公开 `main` 的归档身份线索修复又合入审查分支。新合并提交的 GitHub 托管包和浏览器检查尚待运行；上段数字只适用于已验证的 `9ae1f232`。
+随后公开 `main` 的归档身份线索修复又合入审查分支。代码提交 `3ee889da` 的 [规则检查](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45107661997)通过 1,360/1,360 项；[Pages 包与三入口浏览器](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45107662018)、[36 个月浏览器](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45107662095)、[Poki](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45107662070)和[三组深度浏览器](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45107662045)全部通过。第一组实际从归档报告选择人物线索继续调查，同时复验商业同盟、存读档及内部安全报告。公开包为 335 个文件、5.02 MiB，最大单文件 1.06 MiB，公开目录门禁通过。这仍不是 Cloudflare 实际站点或正式域名的验收。
 
 ## 运行入口与依赖审计
 
