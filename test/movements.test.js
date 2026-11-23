@@ -41,8 +41,8 @@ test('an armed breakaway keeps a distinct inherited emblem on the map and throug
  const legacy=structuredClone(s);delete legacy.world.factionIdentities;legacy.world.movementFactionCatalog[m.force].color='#8a7365';const restored=upgradeSave(legacy);assert.deepEqual(identity(m.force,restored),kit,'older saves rebuild the same emblem');assert.equal(restored.world.movementFactionCatalog[m.force].color,kit.map);
 });
 test('victory changes the real government and defeat removes the independent force',()=>{
- const a=crisis(),m=organize(a.s);arm(a.s,m);for(const r of a.s.regions.filter(x=>x.owner==='caesar'))r.owner=m.force;a.s.armies=a.s.armies.filter(x=>x.owner!=='caesar');month(a.s);
- assert.equal(m.stage,'victorious');assert.deepEqual(a.s.world.leadership.caesar,[m.leader]);assert.equal(a.s.factions[m.force],undefined);assert.equal(a.r.owner,'caesar');
+ const a=crisis(),m=organize(a.s);arm(a.s,m);const victoriousKit=structuredClone(identity(m.force,a.s));for(const r of a.s.regions.filter(x=>x.owner==='caesar'))r.owner=m.force;a.s.armies=a.s.armies.filter(x=>x.owner!=='caesar');month(a.s);
+ assert.equal(m.stage,'victorious');assert.deepEqual(a.s.world.leadership.caesar,[m.leader]);assert.equal(a.s.factions[m.force],undefined);assert.equal(a.r.owner,'caesar');assert.equal(identity('caesar',a.s).map,victoriousKit.map);assert.equal(identity('caesar',a.s).politicalOrigin,m.force);assert.equal(identity('caesar',upgradeSave(structuredClone(a.s))).map,victoriousKit.map);
  const b=crisis(),n=organize(b.s);arm(b.s,n);b.r.owner='caesar';b.s.armies=b.s.armies.filter(x=>x.owner!==n.force);month(b.s);assert.equal(n.stage,'defeated');assert.equal(b.s.factions[n.force],undefined);assert.equal(b.s.world.characters[n.leader].faction,'caesar');
 });
 test('a movement can establish a new government even if its first leader dies',()=>{

@@ -5,7 +5,7 @@ import {generateFictionalName} from './fictional-names.js?v=faces-wheels-1';
 import {hasNationalIdea} from './national-ideas.js?v=grand-chessboard-2';
 import {activeAgreement,terminateAgreement} from './agreements.js?v=focus-agreement-consent-1';
 import {reportedPersonalContact} from './person-knowledge.js?v=faces-name-disagreement-1';
-import {ensureBreakawayIdentity} from './identity.js?v=breakaway-kits-1';
+import {ensureBreakawayIdentity,identity as factionIdentity} from './identity.js?v=breakaway-kits-1';
 
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const log=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.log.slice(0,80)};
@@ -156,7 +156,7 @@ function resolveArmedMovement(s,m){
  }
  if(rebelAlive&&governmentAlive)return;
  if(!rebelAlive){if(foldForce(s,m,false)){m.stage='defeated';m.outcome='military_defeat'}return}
- if(!governmentAlive&&foldForce(s,m,true,{inheritWars:true})){applyDemand(s,m);m.stage='victorious';m.outcome='government_change';if(parent===s.player)log(s,'A movement won the civil war and established a new government.','政治运动赢得内战并建立了新政府。')}
+ if(!governmentAlive){const winningKit=structuredClone(factionIdentity(id,s));if(foldForce(s,m,true,{inheritWars:true})){s.world.factionIdentities[parent]={...winningKit,politicalOrigin:id,effectiveYear:s.year,effectiveMonth:s.month};applyDemand(s,m);m.stage='victorious';m.outcome='government_change';if(parent===s.player)log(s,'A movement won the civil war and established a new government.','政治运动赢得内战并建立了新政府。')}}
 }
 export function advanceMovements(s,{autoplayPlayer=false}={}){
  initializeMovements(s);
