@@ -319,9 +319,11 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
  if(op.subject.startsWith('office_')){
   // Only successful spies can inspect an assignment. No name is a lack of
   // evidence, not proof of a vacancy. Wartime deception may reuse an old lead.
-  const office=op.subject.slice('office_'.length),theater=office.startsWith('theater:')?office.slice('theater:'.length):null,post=theater?s.world.localGovernors?.[theater]:null,personId=theater?(post?.faction===op.target?localGovernor(s,theater):null):s.world.offices?.[op.target]?.[office],prior=(s.knowledge[op.actor]?.[op.target]?.reports||[]).find(r=>r.kind===op.subject&&CHARACTER_CATALOG[r.value]);
+  const office=op.subject.slice('office_'.length),theater=office.startsWith('theater:')?office.slice('theater:'.length):null,post=theater?s.world.localGovernors?.[theater]:null,personId=theater?(post?.faction===op.target?localGovernor(s,theater):null):s.world.offices?.[op.target]?.[office],prior=(s.knowledge[op.actor]?.[op.target]?.reports||[]).find(r=>isDeliveredReport(s,r)&&r.kind===op.subject&&(s.world.dynasties?.catalog?.[r.value]||CHARACTER_CATALOG[r.value]));
   const value=falsehood?(prior?.value||'unknown'):q>=.55&&CHARACTER_CATALOG[personId]&&canHoldOffice(s,op.target,personId)?personId:'unknown';
-  report={kind:op.subject,value,source,confidence:'unverified',reliability:'moderate'};
+  // A misleading report may repeat a delivered lead, including its saved
+  // name, but cannot learn a person's current identity from the hidden court.
+  report={kind:op.subject,value,source,confidence:'unverified',reliability:'moderate',...(falsehood&&prior?{peopleNames:structuredClone(prior.peopleNames||{})}:{})};
  }
  else if(op.subject==='clashes'){
   // No report is not evidence of peace. Rumors may be false in a contested court.
