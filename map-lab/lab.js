@@ -16,6 +16,7 @@ import {captureOwnOrders,ownOrderUpdates,formatOwnOrder,controlReportChanges,for
 import {syncChronicleDispatches} from '../chronicle.js?v=faces-name-disagreement-1';
 import {renderChronicle} from './chronicle-ui.js?v=faces-name-disagreement-1';
 import {formatChronicleEntry} from '../chronicle.js?v=faces-name-disagreement-1';
+import {recentPlayerTerritoryLosses} from '../territory-alert.js?v=1';
 import {knownDynasticFactions} from '../civil-war.js?v=faces-name-disagreement-1';
 import {reportedControl,reportedFortification,requestControlReport} from '../control-intelligence.js?v=control-delivery-1';
 import {renderLocalGovernor} from './local-governor-ui.js?v=faces-name-disagreement-1';
@@ -284,6 +285,10 @@ function renderRomanHud(){updateMailButton();const f=state.factions[state.player
 
 function renderHud(){
  const badge=document.querySelector('#training-badge');badge.hidden=!state.training;badge.textContent=lang==='zh'?'训练战役 · 独立存档':'TRAINING · SEPARATE SAVES';
+ const alerts=document.querySelector('#territory-alerts');
+ const losses=recentPlayerTerritoryLosses(state);
+ alerts.innerHTML=losses.length?`<strong>${lang==='zh'?'失地警报':'TERRITORY LOST'}</strong>${losses.map(e=>`<button type="button" data-loss-region="${esc(e.region)}">${esc(n(e.place)||e.region)} · ${esc(n(FACTIONS[e.current]?.short)||(lang==='zh'?'控制方未知':'controller unknown'))}</button>`).join('')}<small>${lang==='zh'?'点击战区查看；外国控制报告可能过时。':'Select a theater to respond; foreign control reports may be outdated.'}</small>`:'';
+ alerts.querySelectorAll('[data-loss-region]').forEach(button=>button.onclick=()=>{const id=button.dataset.lossRegion;if(namedPoints[id])map.flyTo({center:namedPoints[id],zoom:5.8});showRegion(region(state,id))});
  renderRomanHud();
  document.querySelector('#map-mode option[value="trade"]').textContent=lang==='zh'?'贸易路线与市场':'Trade routes & markets';
  document.querySelector('#markets').textContent=lang==='zh'?'市场':'MARKETS';

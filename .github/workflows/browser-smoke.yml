@@ -180,6 +180,7 @@ jobs:
               command timeout 900s node tools/browser-smoke.mjs
               node tools/phase-v-smoke.mjs
               node tools/roman-defeat-smoke.mjs
+              node tools/territory-alert-smoke.mjs
               node tools/capture-check.mjs
               node tools/map-benchmark.mjs
               ;;

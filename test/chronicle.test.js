@@ -2,6 +2,17 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,tick,upgradeSave,resolveBattle,region,diplomacy} from '../engine.js?v=faces-name-disagreement-1';
 import {captureCampaignState,recordCampaignTurn,filterChronicle,formatChronicleEntry,recordIntelligenceReports,syncChronicleDispatches} from '../chronicle.js?v=faces-name-disagreement-1';
+import {recentPlayerTerritoryLosses} from '../territory-alert.js?v=1';
+
+test('territory alert uses confirmed recent own losses and clears on recapture or expiry',()=>{
+ const s=newGame('senate'),r=region(s,'roma'),before=captureCampaignState(s);
+ s.month=2;r.owner='caesar';recordCampaignTurn(s,before);
+ recordIntelligenceReports(s,[{region:'egypt',name:['Egypt','埃及'],owner:['Egypt','埃及'],year:-49,month:1,source:'travelers'}]);
+ assert.deepEqual(recentPlayerTerritoryLosses(s).map(e=>e.region),['roma']);
+ assert.equal(recentPlayerTerritoryLosses(upgradeSave(structuredClone(s)))[0].region,'roma');
+ s.month=6;assert.deepEqual(recentPlayerTerritoryLosses(s),[]);
+ s.month=3;r.owner='senate';assert.deepEqual(recentPlayerTerritoryLosses(s),[]);
+});
 
 test('between-turn dispatches appear once with their original dates without importing unverified legacy entries',()=>{
  const s=newGame('caesar');s.log.unshift({year:-49,month:2,en:'An offer arrived.',zh:'议和信已送达。'},{year:-49,month:1,en:'SECRET',zh:'秘密',legacyUnverified:true});
