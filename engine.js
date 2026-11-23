@@ -424,7 +424,7 @@ export function answerPeaceOffer(s,actor,decision){
  const letter=(s.inquiries||[]).find(x=>x.actor===actor&&x.target===s.player&&x.subject==='peace'&&x.status==='awaiting_decision');
  if(!letter||!isWar(s,actor,s.player))return {ok:false,reason:'unavailable'};
  letter.status='pending';letter.phase='return';letter.remaining=Math.max(1,Math.floor((letter.duration||2)/2));
- letter.sealed={status:decision==='accept'?'answered':'refused',year:s.year,month:s.month,acceptedByPlayer:decision==='accept',...(decision==='accept'?{claim:['Peace accepted; the war has ended.','议和获接受；战争结束。']}:{})};
+ letter.sealed={status:decision==='accept'?'answered':'refused',year:s.year,month:s.month,acceptedByPlayer:decision==='accept',...(decision==='accept'?{claim:['The peace offer is accepted.','接受议和提议。']}:{})};
  log(s,'Your reply to the peace offer has been sent; the war continues until a valid acceptance is delivered.','议和答复已寄出；在有效接受送达前战争继续。');
  return {ok:true};
 }
@@ -474,7 +474,7 @@ function resolveInquiries(s,{autoplayPlayer=false}={}){
    const plan=subject==='successor'?validSuccessionPlan(s,letter.target):null;
    const disclose=subject==='successor'&&!hostile&&rel>=30&&roll>=.75&&!claimants.length&&plan&&CHARACTER_CATALOG[plan];
    if(subject==='peace'){
-    sealed.claim=['Peace accepted; the war has ended.','议和获接受；战争结束。'];
+    sealed.claim=['The peace offer is accepted.','接受议和提议。'];
    }else if(subject==='successor'){
     sealed.claim=disclose?[`The court names ${CHARACTER_CATALOG[plan].name[0]} as a possible successor.`,`宫廷称${CHARACTER_CATALOG[plan].name[1]}为可能的继任人选。`]:['The reply did not name a successor.','回信没有指明继任人选。'];
     sealed.report={kind:'succession',value:disclose?plan:'unknown'};
@@ -520,7 +520,13 @@ function resolveInquiries(s,{autoplayPlayer=false}={}){
   if(replyMail)replyMail.delivery=reply.status==='no_reply'?'lost':'received';
   // A provisional acceptance only takes effect when it reaches the sender.
   // Circumstances may change during the return journey.
-  if(letter.subject==='peace'&&reply.status==='answered'&&!diplomacy(s,letter.actor,letter.target,'peace',{acceptedByPlayer:!!reply.acceptedByPlayer&&letter.target===s.player}))reply={status:'no_reply'};
+  if(letter.subject==='peace'&&reply.status==='answered'){
+   // Older in-flight saves composed this outcome before the return journey.
+   if(reply.claim?.[0]==='Peace accepted; the war has ended.'&&reply.claim?.[1]==='议和获接受；战争结束。')reply.claim=['The peace offer is accepted.','接受议和提议。'];
+   const settled=diplomacy(s,letter.actor,letter.target,'peace',{acceptedByPlayer:!!reply.acceptedByPlayer&&letter.target===s.player});
+   letter.peaceSettlement=settled?'concluded':'not_concluded';
+   if(!settled&&(letter.actor===s.player||letter.target===s.player))log(s,'The acceptance was delivered, but no new peace settlement took effect because circumstances changed.','接受议和的回信已送达，但局势发生变化，新的和平协议未能生效。');
+  }
   letter.status=reply.status;letter.resolvedYear=s.year;letter.resolvedMonth=s.month;
   if(reply.status==='refused'&&Number.isInteger(reply.year)&&Number.isInteger(reply.month)){letter.responseYear=reply.year;letter.responseMonth=reply.month}
   delete letter.sealed;
