@@ -1,4 +1,4 @@
-import {setLegendMode} from './legend.js?v=intelligence-archive-1';
+import {setLegendMode} from './legend.js?v=archived-leads-1';
 import './version-ui.js';
 import {analytics} from './analytics.js';
 import {sendAgreementProposal,answerAgreementProposal} from './agreement-negotiations.js?v=intelligence-archive-1';
