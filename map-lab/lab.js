@@ -19,7 +19,7 @@ import {mediateCourtDispute} from '../character-system.js?v=66';
 import {nationalBudget} from '../national-budget.js?v=32';
 import {budgetHtml} from '../budget-ui.js?v=38';
 import republicanRoads from '../republican-roads.js?v=1';
-import {physicalStyle} from './physical-style.js?v=49';
+import {physicalStyle} from './physical-style.js?v=50';
 import {physicalLabels} from './physical-labels.js?v=7';
 import {ancientPlaceLabels} from './ancient-place-labels.js';
 import {newGame,newGrandGame, moveArmy, cancelMarch, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, respondCivilSettlement, sendInquiry, queueMission, setTax, warContributionPlan, collectWarContributions, emergencyProvisionsPlan, collectEmergencyProvisions, aerariumPlan, seizeAerarium, personalDiplomaticCredit,royalCourtCredit,provincialRitesCredit,researchInnovation,adoptIdea,removeIdea,cancelIdeaAdoption,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,setReligiousPolicy,purchaseMaterials,recruitFigure} from '../engine.js?v=244';
@@ -188,7 +188,7 @@ map.on('moveend',()=>{
   // A distant jump can otherwise reveal a sharp coast before its rivers or
   // local lake polygon have arrived, leaving a briefly empty water body.
   const zoom=map.getZoom?.()||0;
-  const hydroSources=['rivers','lakes','fucino-lake',...(zoom>=8?['garda-lake-detail']:[]),...(zoom>=8.1?['po-river-detail','central-italy-rivers']:[])];
+  const hydroSources=['rivers','lakes','fucino-lake',...(zoom>=8?['garda-lake-detail']:[]),...(zoom>=8.1?['po-river-detail','central-italy-rivers','ariminum-rivers']:[])];
   const hydroReady=hydroSources.every(id=>map.isSourceLoaded?.(id)??true);
   const ready=now-mapChartedAt>=2000&&now-mapSourceAt>=450&&masksReady&&terrainReady&&hydroReady&&!(map.isMoving?.()??false);
   if(ready||now-mapChartedAt>10000){revealChart();return}
@@ -606,7 +606,8 @@ function renderTerrainLegend(){
  document.querySelector('.brief').classList.toggle('po-history',poNearby);
  document.querySelector('#map-mode-note').textContent=(close?(lang==='zh'?'近景采用现代高程、河湖与海岸；不显示粗略海深带，柔光仅作示意。':'Close view uses modern terrain and shoreline; depth bands are hidden and coastal glow is illustrative.'):(lang==='zh'?'总览显示海底深度分带；近景隐藏粗略深度边界。岸边柔光只标示海岸，不代表测得水深。可单独开启山体光影。':'Overview shows sea-depth bands; close zoom hides their coarse boundaries. The shoreline glow marks the coast, not measured depth. Hill shading can be toggled separately.'))+(poNearby?(lang==='zh'?' 波河口虚线与柔光仅标示年代未定的海岸参考位置；局部圆顺的现代海岸仍决定海陆，并非前49年海岸复原。':' Po: the dashed line and soft band mark an undated shore reference; the locally rounded modern coast still determines land and sea, not a reconstructed 49 BCE shoreline.'):'');
  if(egyptNearby)document.querySelector('#map-mode-note').textContent+=lang==='zh'?' 尼罗河三角洲浅绿色区域根据现代河道示意，不代表前49年的冲积土或耕地边界。':' The pale green Nile Delta follows modern mapped branches schematically, not a surveyed 49 BCE alluvial or farmland boundary.';
- if(map.getZoom()>=8.1&&center.lng>=9.5&&center.lng<=13.1&&center.lat>=41&&center.lat<=44.5)document.querySelector('#map-mode-note').textContent+=lang==='zh'?' 台伯河与阿诺河近景线条取自2006—2012年现代河网，不是前49年的精确河道。':' The close Tiber and Arno lines come from a 2006–2012 modern river network, not surveyed 49 BCE courses.';
+ if(map.getZoom()>=8.1&&center.lng>=9.5&&center.lng<=13.1&&center.lat>=41&&center.lat<=43.85)document.querySelector('#map-mode-note').textContent+=lang==='zh'?' 台伯河与阿诺河近景线条取自2006—2012年现代河网，不是前49年的精确河道。':' The close Tiber and Arno lines come from a 2006–2012 modern river network, not surveyed 49 BCE courses.';
+ if(map.getZoom()>=8.1&&center.lng>=11.8&&center.lng<=12.9&&center.lat>=43.6&&center.lat<=44.5)document.querySelector('#map-mode-note').textContent+=lang==='zh'?' 阿里米努姆附近的马雷基亚河与萨维奥河线条取自现代开放地图，不是前49年的精确河道或河口。':' The Marecchia and Savio lines near Ariminum follow modern open-map courses, not surveyed 49 BCE rivers or mouths.';
  if(ravennaNearby)document.querySelector('#map-mode-note').textContent+=lang==='zh'?' 拉文纳附近细长色带是约公元100年的古海滩脊与河岸地貌研究复原；它们不是前49年的精确海岸，也不改变海陆。':' The narrow bands near Ravenna are reconstructed beach and river ridges for roughly 100 CE; they are not an exact 49 BCE coast and do not change land or sea.';
  if(fucinoNearby)document.querySelector('#map-mode-note').textContent+=lang==='zh'?' 富奇诺湖按现代高程与文献所述水位作约略重建；前49年的湖岸位置未被精确测定，虚线表示此不确定性。':' Fucino Lake is an approximate reconstruction from modern elevation and a published water-level estimate. Its 49 BCE shore was not surveyed; the dashed line marks that uncertainty.';
  const items=close?[['#c5c4a7',lang==='zh'?'陆地与高程':'Land & elevation'],['#5c9293',lang==='zh'?'现代河道与天然湖泊':'Modern rivers & natural lakes'],['#f0e4c4',lang==='zh'?'现代海岸线':'Modern shoreline'],['#2b626d',lang==='zh'?'海水':'Sea']]:[['#c5c4a7',lang==='zh'?'理想化地表与高程':'Land cover & elevation'],['#5c9293',lang==='zh'?'现代河道与天然湖泊':'Modern rivers & natural lakes'],['#2b626d',lang==='zh'?'近岸浅海（约0–200米）':'Coastal shelf (about 0–200 m)'],['#225565',lang==='zh'?'较深海域（超过200米）':'Deeper sea (over 200 m)']];

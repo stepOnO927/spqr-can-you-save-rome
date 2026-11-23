@@ -4,6 +4,7 @@ import bathymetry from '../mediterranean-bathymetry.js?v=2';
 import rivers from '../mediterranean-rivers.js';
 import poRiverDetail from '../po-river-detail.js';
 import centralItalyRivers from '../central-italy-rivers.js?v=1';
+import ariminumRivers from '../ariminum-rivers.js?v=1';
 import lakes from '../mediterranean-lakes.js';
 import lazioLakes from './lazio-lakes.js?v=1';
 import fucinoLake from './fucino-lake.js?v=1';
@@ -58,6 +59,7 @@ export const physicalStyle={
   rivers:{type:'geojson',data:rivers,attribution:'Hydrography: Natural Earth 1:10m, public domain'},
   'po-river-detail':{type:'geojson',data:poRiverDetail,attribution:euHydroAttribution},
   'central-italy-rivers':{type:'geojson',data:centralItalyRivers,attribution:euHydroAttribution},
+  'ariminum-rivers':{type:'geojson',data:ariminumRivers,attribution:'Modern Marecchia and Savio: OpenStreetMap contributors, ODbL 1.0; adapted river centerlines'},
   'po-historic-coast':{type:'geojson',data:poHistoricCoast,attribution:'Approximate undated historical shoreline: Ancient World Mapping Center and OpenStreetMap contributors, ODbL 1.0; adapted Po crop'},
   'ravenna-paleolandforms':{type:'geojson',data:ravennaLandforms,attribution:'Michele Abballe, PalaeoDEMs of the hinterland of Ravenna, Roman-period (~100 CE) palaeoLandforms; CC0, DOI 10.5281/zenodo.14534157'},
   'nile-delta':{type:'geojson',data:nileDelta,attribution:'Approximate Nile Delta between Natural Earth river branches'},
@@ -127,6 +129,7 @@ export const physicalStyle={
   {id:'waterways-minor',type:'line',source:'rivers',minzoom:7,filter:['all',['>',['get','rank'],6],['!=',['get','name'],'Tevere']],paint:{'line-color':'#67999a','line-opacity':.72,'line-width':['interpolate',['linear'],['zoom'],7,.55,9,1.05]}},
   {id:'waterways-tiber-overview',type:'line',source:'rivers',minzoom:7,maxzoom:8.1,filter:['==',['get','name'],'Tevere'],paint:{'line-color':'#67999a','line-opacity':.72,'line-width':['interpolate',['linear'],['zoom'],7,.55,8.1,.95]}},
   {id:'waterways-central-italy',type:'line',source:'central-italy-rivers',minzoom:8.1,layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#5c9293','line-opacity':.78,'line-width':['interpolate',['linear'],['zoom'],8.1,.85,9.2,1.45]}},
+  {id:'waterways-ariminum',type:'line',source:'ariminum-rivers',minzoom:8.1,layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#5c9293','line-opacity':.78,'line-width':['interpolate',['linear'],['zoom'],8.1,.85,9.2,1.45]}},
   // These broad historical polygons orient the overview, but their straight
   // source edges should not masquerade as surveyed provincial borders locally.
   {id:'control',type:'fill',source:'historical',filter:['!=',['get','id'],'roman-extent'],paint:{'fill-color':['match',['get','id'],'gaul','#ad4d3d','narbo','#ad4d3d','italy','#b0a480','greece','#778994','sicilia','#778994','hispania','#778994','asia','#778994','syria','#778994','africa','#778994','#aa9c75'],'fill-opacity':['interpolate',['linear'],['zoom'],6,.30,7,.18,8.5,0]}},
