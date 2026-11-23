@@ -1,6 +1,6 @@
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
-import {readFile,mkdir} from 'node:fs/promises';
+import {readFile,mkdir,access} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
@@ -17,7 +17,13 @@ try{
   if(url.protocol==='blob:')return route.continue();
   if(url.hostname!=='spqr.test')return route.abort();
   const pathname=url.pathname.endsWith('/')?url.pathname+'index.html':url.pathname;
-  const file=pathname==='/map-lab/physical-style.js'&&process.env.SPQR_MAP_STYLE_OVERRIDE?resolve(root,process.env.SPQR_MAP_STYLE_OVERRIDE):resolve(root,'.'+pathname);
+  let file=pathname==='/map-lab/physical-style.js'&&process.env.SPQR_MAP_STYLE_OVERRIDE?resolve(root,process.env.SPQR_MAP_STYLE_OVERRIDE):resolve(root,'.'+pathname);
+  // Compare local DEM replacements at the identical camera without changing shipped tiles.
+  if(pathname.startsWith('/map-lab/terrain/')&&process.env.SPQR_MAP_TERRAIN_OVERRIDE_DIR){
+   const relative=pathname.slice('/map-lab/terrain/'.length);
+   const candidate=resolve(root,process.env.SPQR_MAP_TERRAIN_OVERRIDE_DIR,relative);
+   if(candidate.startsWith(root+sep))try{await access(candidate);file=candidate}catch{}
+  }
   if(!file.startsWith(root+sep))return route.abort();
   const mime={'.js':'text/javascript','.html':'text/html','.css':'text/css','.svg':'image/svg+xml','.json':'application/json','.png':'image/png','.jpg':'image/jpeg'}[extname(file)]||'application/octet-stream';
   try{await route.fulfill({status:200,contentType:mime,body:await readFile(file)})}catch{await route.fulfill({status:404,body:'Not found'})}
