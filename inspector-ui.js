@@ -1,7 +1,7 @@
-import {newGame,upgradeSave,tick,recruit,moveArmy,previewMarch,setTax,projectTaxPath} from './engine.js?v=office-intel-privacy-1';
+import {newGame,upgradeSave,tick,recruit,moveArmy,previewMarch,setTax,projectTaxPath} from './engine.js?v=archived-exchange-1';
 import {newHanGame,tick as hanTick,serialize as hanSerialize,loadHanSave} from './han/engine.js';
 import {isLiuClan} from './han/dynasty.js';
-import {REGIONS,ROUTES,FACTIONS} from './data.js?v=office-intel-privacy-1';
+import {REGIONS,ROUTES,FACTIONS} from './data.js?v=archived-exchange-1';
 import {FEATURES} from './feature-registry.js';
 import {inspectState} from './inspector-diagnostics.js';
 

@@ -9,8 +9,8 @@ try {
   await page.addInitScript(() => localStorage.setItem('spqr-lang', 'en'));
   await page.goto(`${base}/map-lab/`, {waitUntil: 'domcontentloaded'});
   const resources = await page.evaluate(async () => {
-    const {newGame} = await import('/engine.js?v=office-intel-privacy-1');
-    const {createFictionalPerson} = await import('/dynasties.js?v=office-intel-privacy-1');
+    const {newGame} = await import('/engine.js?v=archived-exchange-1');
+    const {createFictionalPerson} = await import('/dynasties.js?v=archived-exchange-1');
     const state = newGame('caesar');
     const official = createFictionalPerson(state, {name: ['Test steward', '测试村官'], faction: 'caesar', birthYear: -85, location: 'cisalpine', origin: 'court_nominee'});
     sessionStorage.setItem('spqr-view-handoff-v1', JSON.stringify({target: 'atlas', state}));

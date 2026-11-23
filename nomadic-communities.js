@@ -1,4 +1,4 @@
-import {ROUTES} from './data.js?v=office-intel-privacy-1';
+import {ROUTES} from './data.js?v=archived-exchange-1';
 
 const now=state=>state.year*12+state.month;
 const hostile=(state,a,b)=>a!==b&&(state.wars||[]).some(pair=>pair.includes(a)&&pair.includes(b));

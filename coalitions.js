@@ -1,9 +1,9 @@
-import {isDeliveredReport} from './person-knowledge.js?v=office-intel-privacy-1';
-import {ROUTES} from './data.js?v=office-intel-privacy-1';
-import {reportedControl} from './control-intelligence.js?v=office-intel-privacy-1';
-import {activeAgreement} from './agreements.js?v=office-intel-privacy-1';
-import {rememberPoliticalEvent} from './political-memory.js?v=office-intel-privacy-1';
-import {reportedDiplomacy} from './diplomatic-knowledge.js?v=office-intel-privacy-1';
+import {isDeliveredReport} from './person-knowledge.js?v=archived-exchange-1';
+import {ROUTES} from './data.js?v=archived-exchange-1';
+import {reportedControl} from './control-intelligence.js?v=archived-exchange-1';
+import {activeAgreement} from './agreements.js?v=archived-exchange-1';
+import {rememberPoliticalEvent} from './political-memory.js?v=archived-exchange-1';
+import {reportedDiplomacy} from './diplomatic-knowledge.js?v=archived-exchange-1';
 
 const pair=(a,b)=>[a,b].sort().join(':');
 const rel=(s,a,b)=>s.relations[pair(a,b)]??0;

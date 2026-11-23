@@ -1,9 +1,9 @@
-import {isDeliveredReport,storedCorrespondentName} from '../person-knowledge.js?v=office-intel-privacy-1';
-import {campaignDate} from '../campaign-date.js?v=office-intel-privacy-1';
-import {queueMission,missionCost,availableAgents,counterWatchRemaining,answerAgentRelease,offerAgentHandover} from '../character-system.js?v=office-intel-privacy-1';
-import {reassurePerson} from '../conspiracies.js?v=office-intel-privacy-1';
-import {CHARACTER_CATALOG} from '../characters.js?v=office-intel-privacy-1';
-import {FACTIONS} from '../data.js?v=office-intel-privacy-1';
+import {isDeliveredReport,storedCorrespondentName} from '../person-knowledge.js?v=archived-exchange-1';
+import {campaignDate} from '../campaign-date.js?v=archived-exchange-1';
+import {queueMission,missionCost,availableAgents,counterWatchRemaining,answerAgentRelease,offerAgentHandover} from '../character-system.js?v=archived-exchange-1';
+import {reassurePerson} from '../conspiracies.js?v=archived-exchange-1';
+import {CHARACTER_CATALOG} from '../characters.js?v=archived-exchange-1';
+import {FACTIONS} from '../data.js?v=archived-exchange-1';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function renderSecurity({panel,state,language,refresh}){

@@ -1,4 +1,4 @@
-import {commercialContact,initializeCommercialLeagues,admitCommercialLeagueMember,expelCommercialLeagueMember,dissolveCommercialLeague} from './commercial-leagues.js?v=office-intel-privacy-1';
+import {commercialContact,initializeCommercialLeagues,admitCommercialLeagueMember,expelCommercialLeagueMember,dissolveCommercialLeague} from './commercial-leagues.js?v=archived-exchange-1';
 
 const now=s=>s.year*12+s.month;
 const relation=(s,a,b)=>s.relations[[a,b].sort().join(':')]??0;

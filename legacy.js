@@ -1,7 +1,7 @@
-import {storedCorrespondentName} from './person-knowledge.js?v=office-intel-privacy-1';
-import {syncChronicleDispatches} from './chronicle.js?v=office-intel-privacy-1';
-import {CHARACTER_CATALOG} from './characters.js?v=office-intel-privacy-1';
-import {initializeDynasties} from './dynasties.js?v=office-intel-privacy-1';
+import {storedCorrespondentName} from './person-knowledge.js?v=archived-exchange-1';
+import {syncChronicleDispatches} from './chronicle.js?v=archived-exchange-1';
+import {CHARACTER_CATALOG} from './characters.js?v=archived-exchange-1';
+import {initializeDynasties} from './dynasties.js?v=archived-exchange-1';
 
 export function canFinalizeCampaign(s){return !!(s.victory||s.defeat||s.peacefulVictory||s.world?.dynasties?.scenario?.stage==='resolved')}
 

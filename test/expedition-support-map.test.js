@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame, startExpedition, upgradeSave} from '../engine.js';
 import {localEntity} from '../local-polities.js';
-import {proposeAgreement} from '../agreements.js?v=office-intel-privacy-1';
+import {proposeAgreement} from '../agreements.js?v=archived-exchange-1';
 import {expeditionSupportMap} from '../map-lab/expedition-support-map.js';
 
 const coordinates={cisalpine:[11.6,44.75],narbo:[3.3,43.4],gaul:[4.5,47.54],egypt:[29.92,31.2],egyptUpper:[32.632,25.665],parthia:[44.5,33.1]};

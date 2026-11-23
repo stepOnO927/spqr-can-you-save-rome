@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame, upgradeSave, diplomacy, isWar, tick} from '../engine.js?v=office-intel-privacy-1';
-import {proposeAgreement, advanceAgreements, terminateAgreement} from '../agreements.js?v=office-intel-privacy-1';
-import {subjectRelation, subjectAidQuote, requestSubjectAid, subjectTerms} from '../suzerainty.js?v=office-intel-privacy-1';
-import {militaryAccessStatus, nonMilitaryAccessStatus} from '../border-access.js?v=office-intel-privacy-1';
-import {inspectState} from '../inspector-diagnostics.js?v=office-intel-privacy-1';
-import {suzeraintyColor} from '../map-lab/suzerainty-map.js?v=office-intel-privacy-1';
+import {newGame, upgradeSave, diplomacy, isWar, tick} from '../engine.js?v=archived-exchange-1';
+import {proposeAgreement, advanceAgreements, terminateAgreement} from '../agreements.js?v=archived-exchange-1';
+import {subjectRelation, subjectAidQuote, requestSubjectAid, subjectTerms} from '../suzerainty.js?v=archived-exchange-1';
+import {militaryAccessStatus, nonMilitaryAccessStatus} from '../border-access.js?v=archived-exchange-1';
+import {inspectState} from '../inspector-diagnostics.js?v=archived-exchange-1';
+import {suzeraintyColor} from '../map-lab/suzerainty-map.js?v=archived-exchange-1';
 
 const friends = (state, a, b) => { state.relations[[a, b].sort().join(':')] = 70; };
 function client() {

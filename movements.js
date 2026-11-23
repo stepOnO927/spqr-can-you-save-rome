@@ -1,10 +1,10 @@
-import {FACTIONS,ROUTES} from './data.js?v=office-intel-privacy-1';
-import {CHARACTER_CATALOG} from './characters.js?v=office-intel-privacy-1';
-import {createFictionalPerson} from './dynasties.js?v=office-intel-privacy-1';
-import {hasNationalIdea} from './national-ideas.js?v=office-intel-privacy-1';
-import {activeAgreement,terminateAgreement} from './agreements.js?v=office-intel-privacy-1';
+import {FACTIONS,ROUTES} from './data.js?v=archived-exchange-1';
+import {CHARACTER_CATALOG} from './characters.js?v=archived-exchange-1';
+import {createFictionalPerson} from './dynasties.js?v=archived-exchange-1';
+import {hasNationalIdea} from './national-ideas.js?v=archived-exchange-1';
+import {activeAgreement,terminateAgreement} from './agreements.js?v=archived-exchange-1';
 import {transferTerritory} from './territory.js';
-import {reportedPersonalContact} from './person-knowledge.js?v=office-intel-privacy-1';
+import {reportedPersonalContact} from './person-knowledge.js?v=archived-exchange-1';
 
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const log=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.log.slice(0,80)};

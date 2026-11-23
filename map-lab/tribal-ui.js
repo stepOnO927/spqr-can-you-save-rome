@@ -1,8 +1,8 @@
 import {localEntity, localContactQuote, offerLocalContact, localSiegeQuote, besiegeLocalEntity, localAdministrationQuote, startLocalAdministration} from '../local-polities.js';
 import {localSecurity} from '../local-resistance.js';
 import {renderFootholdPanel} from './foothold-ui.js';
-import {FACTIONS} from '../data.js?v=office-intel-privacy-1';
-import {localDiscoveryLevel} from '../local-discovery.js?v=office-intel-privacy-1';
+import {FACTIONS} from '../data.js?v=archived-exchange-1';
+import {localDiscoveryLevel} from '../local-discovery.js?v=archived-exchange-1';
 
 export function renderTribalEntity({state, id, actor, language, panel, refresh}) {
   const entity = localEntity(state, id), zh = language === 'zh';

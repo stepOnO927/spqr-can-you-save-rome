@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newScenario} from '../scenarios.js?v=office-intel-privacy-1';
-import {tick,upgradeSave} from '../engine.js?v=office-intel-privacy-1';
-import {potentialConspirators} from '../conspiracies.js?v=office-intel-privacy-1';
-import {leaveCoalition} from '../coalitions.js?v=office-intel-privacy-1';
-import {fictionalPortraitKey,observedFictionalPortrait} from '../portrait-registry.js?v=office-intel-privacy-1';
-import {advancePersonalPlans} from '../personal-plans.js?v=office-intel-privacy-1';
+import {newScenario} from '../scenarios.js?v=archived-exchange-1';
+import {tick,upgradeSave} from '../engine.js?v=archived-exchange-1';
+import {potentialConspirators} from '../conspiracies.js?v=archived-exchange-1';
+import {leaveCoalition} from '../coalitions.js?v=archived-exchange-1';
+import {fictionalPortraitKey,observedFictionalPortrait} from '../portrait-registry.js?v=archived-exchange-1';
+import {advancePersonalPlans} from '../personal-plans.js?v=archived-exchange-1';
 
 test('both Roman sides can start and reload each required scenario',()=>{
  for(const player of ['caesar','senate'])for(const kind of ['historical','ambitious_general','three_state_coalition','civic_movement','revolution']){

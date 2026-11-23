@@ -1,7 +1,7 @@
-import {receivedMail,unreadCount,gatheringPlan} from './epistulae.js?v=office-intel-privacy-1';
-import {wartimePolicy} from './epistulae-personnel.js?v=office-intel-privacy-1';
-import {CHARACTER_CATALOG} from './characters.js?v=office-intel-privacy-1';
-import {campaignDate} from './campaign-date.js?v=office-intel-privacy-1';
+import {receivedMail,unreadCount,gatheringPlan} from './epistulae.js?v=archived-exchange-1';
+import {wartimePolicy} from './epistulae-personnel.js?v=archived-exchange-1';
+import {CHARACTER_CATALOG} from './characters.js?v=archived-exchange-1';
+import {campaignDate} from './campaign-date.js?v=archived-exchange-1';
 
 const safe=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const local=(value,zh)=>Array.isArray(value)?value[zh?1:0]:value;

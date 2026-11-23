@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,estimatedStrength} from '../engine.js?v=office-intel-privacy-1';
-import {formCoalition} from '../coalitions.js?v=office-intel-privacy-1';
-import {proposeCoalitionMotion,voteCoalitionMotion,advanceCoalitionMotions,proposeCoalitionMotionsAI} from '../coalition-motions.js?v=office-intel-privacy-1';
-import {syncCoalitionMotionLetters,receivedMail,replyToLetter} from '../epistulae.js?v=office-intel-privacy-1';
-import {inspectState} from '../inspector-diagnostics.js?v=office-intel-privacy-1';
-import {advanceCoalitionAdmissions} from '../coalition-admissions.js?v=office-intel-privacy-1';
+import {newGame,upgradeSave,estimatedStrength} from '../engine.js?v=archived-exchange-1';
+import {formCoalition} from '../coalitions.js?v=archived-exchange-1';
+import {proposeCoalitionMotion,voteCoalitionMotion,advanceCoalitionMotions,proposeCoalitionMotionsAI} from '../coalition-motions.js?v=archived-exchange-1';
+import {syncCoalitionMotionLetters,receivedMail,replyToLetter} from '../epistulae.js?v=archived-exchange-1';
+import {inspectState} from '../inspector-diagnostics.js?v=archived-exchange-1';
+import {advanceCoalitionAdmissions} from '../coalition-admissions.js?v=archived-exchange-1';
 
 function council(){
  const s=newGame('caesar');s.relations['caesar:egypt']=40;s.relations['caesar:numidia']=40;s.relations['egypt:senate']=-30;s.relations['numidia:senate']=-30;

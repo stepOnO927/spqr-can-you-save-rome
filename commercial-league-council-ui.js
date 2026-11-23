@@ -1,4 +1,4 @@
-import {eligibleCommercialLeagueTargets} from './commercial-league-politics.js?v=office-intel-privacy-1';
+import {eligibleCommercialLeagueTargets} from './commercial-league-politics.js?v=archived-exchange-1';
 
 export function commercialLeagueCouncilHtml(s,lang,label,esc,onlyId=null){
  const zh=lang==='zh';

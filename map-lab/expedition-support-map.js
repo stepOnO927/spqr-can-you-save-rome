@@ -1,5 +1,5 @@
 import {footholdSupplyRoute} from '../foothold.js';
-import {accessMapEntries} from './access-map.js?v=office-intel-privacy-1';
+import {accessMapEntries} from './access-map.js?v=archived-exchange-1';
 
 const point = coordinates => Array.isArray(coordinates) && coordinates.length === 2 && coordinates.every(Number.isFinite) ? coordinates : null;
 const feature = (kind, coordinates, name, extra = {}) => ({

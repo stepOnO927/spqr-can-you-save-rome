@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=office-intel-privacy-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=archived-exchange-1';
 import {advanceLocalEntities,localContactQuote,localEntity,offerLocalContact} from '../local-polities.js';
-import {inspectState} from '../inspector-diagnostics.js?v=office-intel-privacy-1';
+import {inspectState} from '../inspector-diagnostics.js?v=archived-exchange-1';
 import {exportSaves,importSaves} from '../save-transfer.js';
 
 function storage(initial={}){const values=new Map(Object.entries(initial));return {getItem:key=>values.get(key)??null,setItem:(key,value)=>values.set(key,value),removeItem:key=>values.delete(key)}}
