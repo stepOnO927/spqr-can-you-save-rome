@@ -1,5 +1,5 @@
 import {ROUTES,FACTIONS} from './data.js?v=phase-x-1';
-import {reportedControl} from './control-intelligence.js?v=institutional-senders-1';
+import {reportedControl} from './control-intelligence.js?v=multipolar-review-1';
 
 // Public announcements are learned by participants and adjacent observers.
 // Snapshots are not live links: an observer who loses contact keeps old news.

@@ -1,20 +1,42 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrder,diplomacy} from '../engine.js?v=institutional-senders-1';
-import {advanceStrategicWarnings,warningCandidates} from '../strategic-warnings.js?v=institutional-senders-1';
+import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrder,diplomacy} from '../engine.js?v=multipolar-review-1';
+import {advanceStrategicWarnings,warningCandidates} from '../strategic-warnings.js?v=multipolar-review-1';
 import {warningLedger} from '../warning-ledger.js?v=warning-privacy-1';
-import {assessOpportunities,opportunityEvidenceSignature} from '../multipolar.js?v=institutional-senders-1';
-import {observeDiplomacy,reportedDiplomacy} from '../diplomatic-knowledge.js?v=institutional-senders-1';
+import {assessOpportunities,opportunityEvidenceSignature} from '../multipolar.js?v=multipolar-review-1';
+import {observeDiplomacy,reportedDiplomacy} from '../diplomatic-knowledge.js?v=multipolar-review-1';
 import {observeAttackPattern} from '../strategic-planning.js?v=multipolar-2';
-import {buildChessboard} from '../chessboard.js?v=institutional-senders-1';
-import {renderChessboard} from '../chessboard-ui.js?v=institutional-senders-1';
-import {addReport,supportClaimant,requestAgentRelease,advanceAgentRequests} from '../character-system.js?v=institutional-senders-1';
-import {advanceAgreements,proposeAgreement} from '../agreements.js?v=institutional-senders-1';
-import {advanceAgreementProposals} from '../agreement-negotiations.js?v=institutional-senders-1';
-import {advanceGovernments} from '../governance.js?v=institutional-senders-1';
-import {advanceMovements} from '../movements.js?v=institutional-senders-1';
-import {newRevolutionScenario} from '../scenarios.js?v=institutional-senders-1';
+import {buildChessboard} from '../chessboard.js?v=multipolar-review-1';
+import {renderChessboard} from '../chessboard-ui.js?v=multipolar-review-1';
+import {addReport,supportClaimant,requestAgentRelease,advanceAgentRequests} from '../character-system.js?v=multipolar-review-1';
+import {advanceAgreements,proposeAgreement} from '../agreements.js?v=multipolar-review-1';
+import {advanceAgreementProposals} from '../agreement-negotiations.js?v=multipolar-review-1';
+import {advanceGovernments} from '../governance.js?v=multipolar-review-1';
+import {advanceMovements} from '../movements.js?v=multipolar-review-1';
+import {newRevolutionScenario} from '../scenarios.js?v=multipolar-review-1';
+import {rememberPoliticalEvent} from '../political-memory.js?v=grand-chessboard-2';
+
+test('a court reconsiders its own new memories and leadership without reading foreign memories',()=>{
+ const s=newGame('caesar'),before=opportunityEvidenceSignature(s,'parthia');
+ rememberPoliticalEvent(s,'armenia','parthia','refused_aid',-8);
+ assert.equal(opportunityEvidenceSignature(s,'parthia'),before);
+ rememberPoliticalEvent(s,'parthia','armenia','refused_aid',-8);
+ const after=opportunityEvidenceSignature(s,'parthia');assert.notEqual(after,before);
+ s.world.leadership.parthia=[];
+ assert.notEqual(opportunityEvidenceSignature(s,'parthia'),after);
+});
+
+test('expired sightings and stability reports trigger a fresh strategic review',()=>{
+ const s=newGame('caesar'),k=s.knowledge.parthia.armenia;
+ k.sightings={test:{id:'test',region:'armenia',year:s.year-1,month:s.month}};
+ k.reports.push({kind:'stability',value:'fragile',source:'spy',year:s.year-2,month:s.month});
+ const before=opportunityEvidenceSignature(s,'parthia');
+ if(s.month===12){s.month=1;s.year++}else s.month++;
+ assert.notEqual(opportunityEvidenceSignature(s,'parthia'),before);
+ const opportunity=assessOpportunities(s,'parthia',estimatedStrength).find(x=>x.target==='armenia');
+ assert.equal(opportunity.frontierSightings,0);assert.equal(opportunity.instability,'unknown');
+});
 
 test('opportunities use the observer’s reports, not hidden military or political state',()=>{
  const s=newGame('caesar'),other=JSON.parse(JSON.stringify(s));
@@ -340,6 +362,6 @@ test('old saves without a warning queue keep working and do not duplicate existi
  for(let i=0;i<3;i++)tick(save,{autoplayPlayer:true});assert.ok(Array.isArray(save.warningLetters));
  // The warning layer reuses courier, report and memory helpers; it does not call
  // the existing war, breach, aid or claimant-support decision paths.
- const source=fs.readFileSync(new URL('../strategic-warnings.js?v=institutional-senders-1',import.meta.url),'utf8');
+ const source=fs.readFileSync(new URL('../strategic-warnings.js?v=multipolar-review-1',import.meta.url),'utf8');
  assert.doesNotMatch(source,/diplomacy\(|proposeAgreement|terminateAgreement|supportClaimant|wars\.push|alliances\.push|opportunistic_war|treaty_breach/);
 });

@@ -1,7 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=institutional-senders-1';
-import {fundMissingSearch,advanceMissingCommanders} from '../character-system.js?v=institutional-senders-1';
-import {renderMissingSearch} from '../missing-search-ui.js?v=institutional-senders-1';
+import {newGame,upgradeSave} from '../engine.js?v=multipolar-review-1';
+import {fundMissingSearch,advanceMissingCommanders} from '../character-system.js?v=multipolar-review-1';
+import {renderMissingSearch} from '../missing-search-ui.js?v=multipolar-review-1';
 
 function fixture(){const s=newGame('senate'),p=s.world.characters.pompey,a=s.armies.find(x=>x.characterId==='pompey');if(a){a.characterId=null;a.commander=['Unnamed officer','未具名军官']}p.location=null;p.missing={origin:'roma',remaining:3,year:s.year-1,month:12,searchSeed:1000};return s}
 function month(s){if(++s.month>12){s.month=1;s.year++}advanceMissingCommanders(s)}

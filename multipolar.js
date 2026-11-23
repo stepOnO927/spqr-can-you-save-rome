@@ -1,8 +1,8 @@
-import {isDeliveredReport} from './person-knowledge.js?v=institutional-senders-1';
+import {isDeliveredReport} from './person-knowledge.js?v=multipolar-review-1';
 import {ROUTES} from './data.js?v=phase-x-1';
-import {reportedControl} from './control-intelligence.js?v=institutional-senders-1';
-import {reportedDiplomacy} from './diplomatic-knowledge.js?v=institutional-senders-1';
-import {activeAgreement} from './agreements.js?v=institutional-senders-1';
+import {reportedControl} from './control-intelligence.js?v=multipolar-review-1';
+import {reportedDiplomacy} from './diplomatic-knowledge.js?v=multipolar-review-1';
+import {activeAgreement} from './agreements.js?v=multipolar-review-1';
 import {politicalMemoryAdjustment} from './political-memory.js?v=grand-chessboard-2';
 
 const pair=(a,b)=>[a,b].sort().join(':'),now=s=>s.year*12+s.month;
@@ -11,8 +11,8 @@ const pair=(a,b)=>[a,b].sort().join(':'),now=s=>s.year*12+s.month;
 export function opportunityEvidenceSignature(s,actor){
  const f=s.factions[actor];if(!f)return '';
  const evidence=Object.entries(s.knowledge?.[actor]||{}).sort(([a],[b])=>a.localeCompare(b)).map(([target,k])=>{
-  const reports=(k.reports||[]).filter(r=>isDeliveredReport(s,r)&&['stability','strength','secret_treaty'].includes(r.kind)).slice(-32).map(r=>[r.kind,r.value,r.confidence,r.originSource??r.source??null,r.observationYear??r.year,r.observationMonth??r.month]).sort();
-  const sightings=Object.values(k.sightings||{}).filter(x=>isDeliveredReport(s,x)).sort((a,b)=>((b.observationYear??b.year)*12+(b.observationMonth??b.month))-((a.observationYear??a.year)*12+(a.observationMonth??a.month))).slice(0,32).map(x=>[x.id,x.region,x.year,x.month,x.observationYear??x.year,x.observationMonth??x.month,x.receivedYear??null,x.receivedMonth??null]).sort();
+  const reports=(k.reports||[]).filter(r=>isDeliveredReport(s,r)&&['stability','strength','secret_treaty'].includes(r.kind)).slice(-32).map(r=>{const age=now(s)-((r.observationYear??r.year)*12+(r.observationMonth??r.month));return [r.kind,r.value,r.confidence,r.originSource??r.source??null,r.observationYear??r.year,r.observationMonth??r.month,age>=0&&age<=24]}).sort();
+  const sightings=Object.values(k.sightings||{}).filter(x=>isDeliveredReport(s,x)).sort((a,b)=>((b.observationYear??b.year)*12+(b.observationMonth??b.month))-((a.observationYear??a.year)*12+(a.observationMonth??a.month))).slice(0,32).map(x=>{const age=now(s)-((x.observationYear??x.year)*12+(x.observationMonth??x.month));return [x.id,x.region,x.year,x.month,x.observationYear??x.year,x.observationMonth??x.month,x.receivedYear??null,x.receivedMonth??null,age>=0&&age<=12,age>=0&&age<=24]}).sort();
   return [target,reports,sightings];
  });
  const diplomacy=reportedDiplomacy(s,actor).filter(x=>x.status==='active'&&now(s)-(x.year*12+x.month)>=0&&now(s)-(x.year*12+x.month)<=24).map(x=>[x.id,x.kind,x.type??null]).sort();
@@ -25,7 +25,12 @@ export function opportunityEvidenceSignature(s,actor){
  const owned=new Set(s.regions.filter(r=>r.owner===actor).map(r=>r.id)),border=new Set();
  for(const [a,b] of ROUTES){if(owned.has(a)&&!owned.has(b))border.add(b);if(owned.has(b)&&!owned.has(a))border.add(a)}
  const frontier=[...border].sort().map(id=>[id,reportedControl(s,actor,id)?.owner??null]);
- return JSON.stringify([evidence,diplomacy,agreements,relations,alliances,ownArmies,frontier,Math.floor(f.treasury/25),Math.floor(f.food/25),Math.floor(f.stability/10)]);
+ // A new personal experience or change of leadership can alter how this court
+ // weighs loyalty and betrayal, without exposing anyone else's memories.
+ const leaders=[...(s.world.leadership?.[actor]||[])].sort(),leaderSet=new Set(leaders);
+ const memories=(s.world.politicalMemories||[]).filter(m=>m.observer===actor&&leaderSet.has(m.person)).map(m=>[m.person,m.subject,m.kind,m.weight,m.year,m.month]);
+ const personality=s.world.strategicPersonalities?.[actor]?.personality||'survivor';
+ return JSON.stringify([evidence,diplomacy,agreements,relations,alliances,ownArmies,frontier,leaders,memories,personality,Math.floor(f.treasury/25),Math.floor(f.food/25),Math.floor(f.stability/10)]);
 }
 // These are estimates from the actor's own evidence, not foreign hidden state.
 // No sighting does not mean that a frontier is undefended.
