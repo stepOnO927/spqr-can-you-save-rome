@@ -1,6 +1,6 @@
-import {receivedMail,unreadCount,gatheringPlan} from './epistulae.js?v=peace-sender-1';
-import {wartimePolicy} from './epistulae-personnel.js?v=peace-sender-1';
-import {CHARACTER_CATALOG} from './characters.js?v=peace-sender-1';
+import {receivedMail,unreadCount,gatheringPlan} from './epistulae.js?v=institutional-senders-1';
+import {wartimePolicy} from './epistulae-personnel.js?v=institutional-senders-1';
+import {CHARACTER_CATALOG} from './characters.js?v=institutional-senders-1';
 import {campaignDate} from './campaign-date.js?v=calendar-1';
 
 const safe=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -9,15 +9,17 @@ const labels={inbox:['Inbox','收件箱'],unread:['Unread','未读'],diplomatic:
 const choices={disclose_leaders:['Share nominal leaders','告知名义领袖'],answer_limited:['Reply without details','只作含糊答复'],commander_reassure:['Reassure officer · 8 treasury, +15 loyalty','安抚将领 · 8国库、忠诚度+15'],commander_defer:['Defer petition · no cost','暂缓请求 · 无费用'],finance_high_tax:['Raise tax · provincial loyalty may fall','加税 · 行省忠诚可能下降'],finance_low_tax:['Lower tax · revenue may fall','减税 · 收入可能下降'],finance_wait:['Keep current policy and monitor','维持现行税政并观察'],release_agent:['Approve handover','同意交接'],accept:['Accept accord','接受协定'],accept_agreement:['Accept proposal · reply required','接受提议 · 寄出答复'],accept_coalition:['Accept invitation · 5 treasury on formation','接受邀请 · 成立时5国库'],join_war:['Join the war','加入战争'],send_war_aid:['Send 12 treasury and 8 food','派出12国库与8粮食'],reject:['Reject','拒绝'],refuse:['Refuse','拒绝'],negotiate:['Seek negotiations','寻求谈判'],condemn:['Condemn','谴责'],seek_allies:['Seek allied support','请求盟友援助'],war_council:['Open War Council','打开战争会议'],ignore:['No reply','不予回复'],acknowledge:['Acknowledge','知悉'],view_location:['View location','查看地点'],request_reinforcements:['Raise reinforcements','征募援军'],contact_governor:['Contact governor','联系总督'],truth:['Answer truthfully','如实回答'],polite:['Decline politely','婉言谢绝'],humor:['Reply humorously','幽默作答'],ask_why:['Ask why','询问缘由'],respond_warmly:['Reply warmly','亲切回复'],respond_formally:['Reply formally','正式回复'],grant_audience:['Grant audience','准予会面'],grant_favor:['Grant favor · 3¤','给予资助 · 3国库'],apologize:['Offer an apology','致歉'],defend:['Defend our position','申明立场'],welcome:['Welcome the court','欢迎来函'],formal_reply:['Reply formally','正式回函'],send_aid:['Send aid · 5¤','提供援助 · 5国库'],concede:['Settle · 6¤','和解 · 6国库'],mediate:['Send mediation · 12¤','派遣调停 · 12国库'],decline:['Decline','谢绝'],full_relief:['Approve full relief · 12¤','批准全额赈济 · 12国库'],limited_relief:['Approve limited relief · 5¤','批准有限赈济 · 5国库'],request_report:['Request a provincial report','请求地方报告'],representative:['Send a representative','派代表出席'],private_meeting:['Request private meeting','请求私下会面'],review_budget:['Review budget','审阅预算'],audit:['Request audit · 3¤','请求审计 · 3国库'],consult_official:['Consult an official','咨询官员']};
 const date=(m,lang)=>m.sentDateKnown===false?(lang==='zh'?'日期未记录':'date not recorded'):campaignDate(m.created?.month,m.created?.year,lang);
 const priority={critical:0,important:1,routine:2};
+// Namespace faction and person IDs: a Roman faction and a person can both be 'caesar'.
+const senderKey=m=>m.senderId?'person:'+m.senderId:'faction:'+m.senderFaction;
 
 export function mailboxHtml(s,{lang='en',filter='inbox',query='',sort='newest',sender='',selected=null}={}){
  const zh=lang==='zh',all=s.mail?.messages||[],now=s.year*12+s.month;
  let letters=filter==='sent'?all.filter(m=>m.senderFaction===s.player&&m.recipient!==s.player):receivedMail(s).filter(m=>filter==='archive'?m.archived:!m.archived&&(filter==='inbox'||filter==='unread'&&!m.read||m.category===filter));
  if(query){const q=query.toLocaleLowerCase();letters=letters.filter(m=>[m.senderName,m.subject,m.body,m.eventId].some(v=>String(local(v,zh)||'').toLocaleLowerCase().includes(q)))}
- if(sender)letters=letters.filter(m=>(m.senderId||m.senderFaction)===sender);
+ if(sender)letters=letters.filter(m=>senderKey(m)===sender||(!sender.startsWith('person:')&&!sender.startsWith('faction:')&&(m.senderId||m.senderFaction)===sender));
  letters.sort((a,b)=>sort==='oldest'?a.arrival-b.arrival:sort==='priority'?(priority[a.priority]??2)-(priority[b.priority]??2)||b.arrival-a.arrival:b.arrival-a.arrival);
  const current=letters.find(m=>m.id===selected)||letters[0]||null;
- const senders=[...new Map(receivedMail(s).map(m=>[m.senderId||m.senderFaction,m.senderName])).entries()];
+ const senders=[...new Map(receivedMail(s).map(m=>[senderKey(m),m.senderName])).entries()];
  const thread=current?all.filter(m=>m.threadId===current.threadId&&m.id!==current.id&&(m.recipient===s.player&&m.delivery==='received'||m.senderFaction===s.player&&m.recipient!==s.player)).sort((a,b)=>a.created.year-b.created.year||a.created.month-b.created.month):[];
  const response=current?(current.recipient===s.player?current.responses.find(r=>!r.ai):current.responses.find(r=>r.ai&&r.resolved&&r.outcome!=='lost'&&Number.isFinite(r.arrival)&&r.arrival<=now)):null;
  const peaceInquiry=current?.context?.kind==='peace'?(s.inquiries||[]).find(x=>x.mailId===current.id):null;
