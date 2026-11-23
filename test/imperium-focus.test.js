@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=peace-outcome-1';
-import {FOCUS_TREES,BRANCHES} from '../imperium-focus-data.js?v=peace-outcome-1';
-import {validateFocusTrees,focusStatus,startFocus,cancelFocus,focusState,canStartFocus,treeFor,focusModifiers,scoreFocus,focusReportsFor,legitimateFocusView,unlockedComponents} from '../national-focus.js?v=peace-outcome-1';
-import {COMPONENTS} from '../legion-designer.js?v=peace-outcome-1';
-import {REGIONS} from '../data.js?v=peace-outcome-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=office-intel-privacy-1';
+import {FOCUS_TREES,BRANCHES} from '../imperium-focus-data.js?v=office-intel-privacy-1';
+import {validateFocusTrees,focusStatus,startFocus,cancelFocus,focusState,canStartFocus,treeFor,focusModifiers,scoreFocus,focusReportsFor,legitimateFocusView,unlockedComponents} from '../national-focus.js?v=office-intel-privacy-1';
+import {COMPONENTS} from '../legion-designer.js?v=office-intel-privacy-1';
+import {REGIONS} from '../data.js?v=office-intel-privacy-1';
 
 const roundTrip=s=>upgradeSave(JSON.parse(JSON.stringify(s)));
 const run=(s,id,actor=s.player)=>{const f=treeFor(actor).find(x=>x.id===id);{const r=startFocus(s,actor,id);assert.equal(r.ok,true,`${id} should start: ${r.reason}`)};for(let i=0;i<f.months;i++)tick(s);assert.ok(focusState(s,actor).completed.includes(id),`${id} should complete`)};

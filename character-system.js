@@ -1,16 +1,16 @@
-import {recordLegendEvidence} from './legend.js?v=peace-outcome-1';
-import {namedReportSubjects,reportedPersonName,visiblePersonName,isDeliveredReport,isCompletedMeeting,reportedPersonalContacts,reportedPeople} from './person-knowledge.js?v=peace-outcome-1';
-import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange,characterAgeRange} from './characters.js?v=peace-outcome-1';
-import {settleInheritance,dynastyRoll} from './dynasties.js?v=peace-outcome-1';
-import {FACTIONS,ROUTES} from './data.js?v=peace-outcome-1';
-import {deriveGovernment,validSuccessionPlan} from './governance.js?v=peace-outcome-1';
-import {potentialConspirators} from './conspiracies.js?v=peace-outcome-1';
-import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=peace-outcome-1';
-import {reportedControl} from './control-intelligence.js?v=peace-outcome-1';
-import {canHoldOffice,localGovernor} from './office-system.js?v=peace-outcome-1';
-import {activeAgreement} from './agreements.js?v=peace-outcome-1';
-import {activeModifiers} from './inventions.js?v=peace-outcome-1';
-import {registerMissionPersonnel} from './epistulae-personnel.js?v=peace-outcome-1';
+import {recordLegendEvidence} from './legend.js?v=office-intel-privacy-1';
+import {namedReportSubjects,reportedPersonName,visiblePersonName,isDeliveredReport,isCompletedMeeting,reportedPersonalContacts,reportedPeople} from './person-knowledge.js?v=office-intel-privacy-1';
+import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange,characterAgeRange} from './characters.js?v=office-intel-privacy-1';
+import {settleInheritance,dynastyRoll} from './dynasties.js?v=office-intel-privacy-1';
+import {FACTIONS,ROUTES} from './data.js?v=office-intel-privacy-1';
+import {deriveGovernment,validSuccessionPlan} from './governance.js?v=office-intel-privacy-1';
+import {potentialConspirators} from './conspiracies.js?v=office-intel-privacy-1';
+import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=office-intel-privacy-1';
+import {reportedControl} from './control-intelligence.js?v=office-intel-privacy-1';
+import {canHoldOffice,localGovernor} from './office-system.js?v=office-intel-privacy-1';
+import {activeAgreement} from './agreements.js?v=office-intel-privacy-1';
+import {activeModifiers} from './inventions.js?v=office-intel-privacy-1';
+import {registerMissionPersonnel} from './epistulae-personnel.js?v=office-intel-privacy-1';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 // A visual impression is less precise than the historical birth estimate.
 // Unknown birth dates remain unknown, rather than becoming invented ages.
@@ -285,9 +285,11 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
  if(op.subject.startsWith('office_')){
   // Only successful spies can inspect an assignment. No name is a lack of
   // evidence, not proof of a vacancy. Wartime deception may reuse an old lead.
-  const office=op.subject.slice('office_'.length),theater=office.startsWith('theater:')?office.slice('theater:'.length):null,post=theater?s.world.localGovernors?.[theater]:null,personId=theater?(post?.faction===op.target?localGovernor(s,theater):null):s.world.offices?.[op.target]?.[office],prior=(s.knowledge[op.actor]?.[op.target]?.reports||[]).find(r=>r.kind===op.subject&&CHARACTER_CATALOG[r.value]);
+  const office=op.subject.slice('office_'.length),theater=office.startsWith('theater:')?office.slice('theater:'.length):null,post=theater?s.world.localGovernors?.[theater]:null,personId=theater?(post?.faction===op.target?localGovernor(s,theater):null):s.world.offices?.[op.target]?.[office],prior=(s.knowledge[op.actor]?.[op.target]?.reports||[]).find(r=>isDeliveredReport(s,r)&&r.kind===op.subject&&CHARACTER_CATALOG[r.value]);
   const value=falsehood?(prior?.value||'unknown'):q>=.55&&CHARACTER_CATALOG[personId]&&canHoldOffice(s,op.target,personId)?personId:'unknown';
-  report={kind:op.subject,value,source,confidence:'unverified',reliability:'moderate'};
+  // Repeating an old lead does not observe that person's current identity.
+  // Keep the name recorded on that lead, including an empty legacy snapshot.
+  report={kind:op.subject,value,source,confidence:'unverified',reliability:'moderate',...(falsehood&&prior?{peopleNames:structuredClone(prior.peopleNames||{})}:{})};
  }
  else if(op.subject==='clashes'){
   // No report is not evidence of peace. Rumors may be false in a contested court.

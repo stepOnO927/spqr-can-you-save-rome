@@ -1,5 +1,5 @@
-import {ROUTES} from './data.js?v=peace-outcome-1';
-import {militaryAccessStatus} from './border-access.js?v=peace-outcome-1';
+import {ROUTES} from './data.js?v=office-intel-privacy-1';
+import {militaryAccessStatus} from './border-access.js?v=office-intel-privacy-1';
 import {footholdConnected} from './foothold.js';
 import {villageFoodQuote, takeVillageFood} from './local-villages.js';
 

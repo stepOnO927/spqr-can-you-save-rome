@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,sendStrategicOffer,advanceStrategicOffers,answerStrategicOffer,replyToLetter,isWar,upgradeSave} from '../engine.js?v=peace-outcome-1';
-import {proposeAgreement} from '../agreements.js?v=peace-outcome-1';
-import {observeDiplomacy} from '../diplomatic-knowledge.js?v=peace-outcome-1';
-import {buildChessboard} from '../chessboard.js?v=peace-outcome-1';
-import {receivedMail} from '../epistulae.js?v=peace-outcome-1';
-import {mailboxHtml} from '../mail-ui.js?v=peace-outcome-1';
+import {newGame,tick,sendStrategicOffer,advanceStrategicOffers,answerStrategicOffer,replyToLetter,isWar,upgradeSave} from '../engine.js?v=office-intel-privacy-1';
+import {proposeAgreement} from '../agreements.js?v=office-intel-privacy-1';
+import {observeDiplomacy} from '../diplomatic-knowledge.js?v=office-intel-privacy-1';
+import {buildChessboard} from '../chessboard.js?v=office-intel-privacy-1';
+import {receivedMail} from '../epistulae.js?v=office-intel-privacy-1';
+import {mailboxHtml} from '../mail-ui.js?v=office-intel-privacy-1';
 
 function setup(seed){
  const s=newGame('caesar');s.seed=seed;s.wars.push(['egypt','senate']);s.relations['egypt:parthia']=40;

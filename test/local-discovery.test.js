@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=peace-outcome-1';
-import {localDiscoveryLevel,recordLocalDiscovery} from '../local-discovery.js?v=peace-outcome-1';
-import {observeArrival,requestControlReport,advanceControlScouts} from '../control-intelligence.js?v=peace-outcome-1';
+import {newGame,upgradeSave} from '../engine.js?v=office-intel-privacy-1';
+import {localDiscoveryLevel,recordLocalDiscovery} from '../local-discovery.js?v=office-intel-privacy-1';
+import {observeArrival,requestControlReport,advanceControlScouts} from '../control-intelligence.js?v=office-intel-privacy-1';
 import {localEntity} from '../local-polities.js';
-import {inspectState} from '../inspector-diagnostics.js?v=peace-outcome-1';
+import {inspectState} from '../inspector-diagnostics.js?v=office-intel-privacy-1';
 
 test('opening local knowledge distinguishes nearby, public Roman and distant minor polities',()=>{
  const s=newGame('caesar');

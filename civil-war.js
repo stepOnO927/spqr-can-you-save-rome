@@ -1,7 +1,7 @@
-import {isDeliveredReport} from './person-knowledge.js?v=peace-outcome-1';
-import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=peace-outcome-1';
-import {reportedControl} from './control-intelligence.js?v=peace-outcome-1';
-import {ROUTES} from './data.js?v=peace-outcome-1';
+import {isDeliveredReport} from './person-knowledge.js?v=office-intel-privacy-1';
+import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=office-intel-privacy-1';
+import {reportedControl} from './control-intelligence.js?v=office-intel-privacy-1';
+import {ROUTES} from './data.js?v=office-intel-privacy-1';
 import {transferTerritory} from './territory.js';
 
 // Alternate-history claimant commands use real game theaters and armies.

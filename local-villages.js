@@ -1,7 +1,7 @@
 import {localEntity, villageDevelopment} from './local-polities.js';
-import {sendLetter} from './epistulae.js?v=peace-outcome-1';
-import {localAdministrator} from './office-system.js?v=peace-outcome-1';
-import {CHARACTER_CATALOG} from './characters.js?v=peace-outcome-1';
+import {sendLetter} from './epistulae.js?v=office-intel-privacy-1';
+import {localAdministrator} from './office-system.js?v=office-intel-privacy-1';
+import {CHARACTER_CATALOG} from './characters.js?v=office-intel-privacy-1';
 
 const clamp = value => Math.max(0, Math.min(100, value));
 function villageEvent(state, region, entity) {

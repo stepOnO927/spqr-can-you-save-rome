@@ -1,9 +1,9 @@
-import {ROUTES,FACTIONS,REGIONS} from './data.js?v=peace-outcome-1';
-import {reportedControl} from './control-intelligence.js?v=peace-outcome-1';
-import {reportedDiplomacy} from './diplomatic-knowledge.js?v=peace-outcome-1';
-import {activeAgreement} from './agreements.js?v=peace-outcome-1';
-import {rememberPoliticalEvent,politicalMemoryAdjustment} from './political-memory.js?v=peace-outcome-1';
-import {isDeliveredReport} from './person-knowledge.js?v=peace-outcome-1';
+import {ROUTES,FACTIONS,REGIONS} from './data.js?v=office-intel-privacy-1';
+import {reportedControl} from './control-intelligence.js?v=office-intel-privacy-1';
+import {reportedDiplomacy} from './diplomatic-knowledge.js?v=office-intel-privacy-1';
+import {activeAgreement} from './agreements.js?v=office-intel-privacy-1';
+import {rememberPoliticalEvent,politicalMemoryAdjustment} from './political-memory.js?v=office-intel-privacy-1';
+import {isDeliveredReport} from './person-knowledge.js?v=office-intel-privacy-1';
 
 // Scout-based strategic warnings between friendly courts.
 // A sender may only forward a dated sighting from its own knowledge. The letter

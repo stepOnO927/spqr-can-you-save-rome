@@ -8,7 +8,7 @@ try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
  await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
  await page.evaluate(async()=>{
-  const {newGame}=await import('/engine.js?v=peace-outcome-1'),s=newGame('caesar');
+  const {newGame}=await import('/engine.js?v=office-intel-privacy-1'),s=newGame('caesar');
   for(const [a,b] of [['caesar','egypt'],['caesar','numidia'],['egypt','numidia']])s.relations[[a,b].sort().join(':')]=40;
   s.world.diplomaticKnowledge.caesar={egypt:{id:'egypt',kind:'agreement',status:'active',parties:['caesar','egypt'],year:s.year,month:s.month},numidia:{id:'numidia',kind:'agreement',status:'active',parties:['caesar','numidia'],year:s.year,month:s.month}};
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state:s}));
@@ -23,7 +23,7 @@ try{
  await page.locator('#new').click();await page.locator('[data-slot="load"]').click();await page.locator('[data-tab="government"]').click();
  assert.match(await page.locator('#commercial-propose').locator('..').innerText(),/等待回信/);
  await page.evaluate(async()=>{
-  const {advanceCommercialLeagueOffers}=await import('/commercial-leagues.js?v=peace-outcome-1');
+  const {advanceCommercialLeagueOffers}=await import('/commercial-leagues.js?v=office-intel-privacy-1');
   const s=JSON.parse(localStorage.getItem('spqr-save-1'));
   for(let i=0;i<4;i++){s.month++;advanceCommercialLeagueOffers(s,()=>.5)}
   if(!s.world.commercialLeagues.length)throw Error('League failed to form in browser setup');
@@ -38,7 +38,7 @@ try{
  await dissolution.click();assert.match(await dissolution.innerText(),/确认提出解散表决/);await dissolution.click();
  assert.match(await page.locator('#map-mode-details').innerText(),/待表决/);
  await page.evaluate(async()=>{
-  const {newGame}=await import('/engine.js?v=peace-outcome-1'),league=await import('/commercial-leagues.js?v=peace-outcome-1');
+  const {newGame}=await import('/engine.js?v=office-intel-privacy-1'),league=await import('/commercial-leagues.js?v=office-intel-privacy-1');
   const s=newGame('caesar');
   for(const [a,b] of [['caesar','egypt'],['caesar','numidia'],['egypt','numidia']])s.relations[[a,b].sort().join(':')]=40;
   s.world.diplomaticKnowledge.caesar={egypt:{kind:'agreement',status:'active',parties:['caesar','egypt']},numidia:{kind:'agreement',status:'active',parties:['caesar','numidia']}};
@@ -52,9 +52,9 @@ try{
  const campaignDissolution=page.locator('[data-commercial-motion][data-motion-kind="dissolution"]');await campaignDissolution.click();await campaignDissolution.click();
  assert.match(await page.locator('.rule-block').filter({hasText:'成员议事'}).last().innerText(),/待表决/);
  await page.evaluate(async()=>{
-  const {newGame}=await import('/engine.js?v=peace-outcome-1');
-  const league=await import('/commercial-leagues.js?v=peace-outcome-1');
-  const {syncCommercialLeagueLetters}=await import('/epistulae.js?v=peace-outcome-1');
+  const {newGame}=await import('/engine.js?v=office-intel-privacy-1');
+  const league=await import('/commercial-leagues.js?v=office-intel-privacy-1');
+  const {syncCommercialLeagueLetters}=await import('/epistulae.js?v=office-intel-privacy-1');
   const s=newGame('caesar');
   for(const [a,b] of [['caesar','egypt'],['caesar','numidia'],['egypt','numidia']])s.relations[[a,b].sort().join(':')]=40;
   s.world.diplomaticKnowledge.egypt={caesar:{id:'caesar',kind:'agreement',status:'active',parties:['egypt','caesar'],year:s.year,month:s.month},numidia:{id:'numidia',kind:'agreement',status:'active',parties:['egypt','numidia'],year:s.year,month:s.month}};

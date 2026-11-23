@@ -1,6 +1,6 @@
-import {ROUTES} from './data.js?v=peace-outcome-1';
+import {ROUTES} from './data.js?v=office-intel-privacy-1';
 import {localEntity} from './local-polities.js';
-import {militaryAccessStatus} from './border-access.js?v=peace-outcome-1';
+import {militaryAccessStatus} from './border-access.js?v=office-intel-privacy-1';
 
 const costs = Object.freeze({
   1: {treasury: 8, food: 3, months: 1, garrison: 1000},

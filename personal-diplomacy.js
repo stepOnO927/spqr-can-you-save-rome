@@ -1,11 +1,11 @@
-import {reportedControl,observeArrival} from './control-intelligence.js?v=peace-outcome-1';
-import {initializeWorld, CHARACTER_CATALOG} from './characters.js?v=peace-outcome-1';
-import {ROUTES} from './data.js?v=peace-outcome-1';
-import {addReport,reportedHealthSubjects,reportedPersonName,apparentAgeRange} from './character-system.js?v=peace-outcome-1';
-import {officeOf} from './office-system.js?v=peace-outcome-1';
-import {fictionalPortraitKey} from './portrait-registry.js?v=peace-outcome-1';
-import {nonMilitaryAccessStatus} from './border-access.js?v=peace-outcome-1';
-import {isCompletedMeeting,isDeliveredReport,storedCorrespondentName} from './person-knowledge.js?v=peace-outcome-1';
+import {reportedControl,observeArrival} from './control-intelligence.js?v=office-intel-privacy-1';
+import {initializeWorld, CHARACTER_CATALOG} from './characters.js?v=office-intel-privacy-1';
+import {ROUTES} from './data.js?v=office-intel-privacy-1';
+import {addReport,reportedHealthSubjects,reportedPersonName,apparentAgeRange} from './character-system.js?v=office-intel-privacy-1';
+import {officeOf} from './office-system.js?v=office-intel-privacy-1';
+import {fictionalPortraitKey} from './portrait-registry.js?v=office-intel-privacy-1';
+import {nonMilitaryAccessStatus} from './border-access.js?v=office-intel-privacy-1';
+import {isCompletedMeeting,isDeliveredReport,storedCorrespondentName} from './person-knowledge.js?v=office-intel-privacy-1';
 
 const atWar=(s,a,b)=>a!==b&&s.wars.some(w=>w.includes(a)&&w.includes(b));
 // A commander in transit has not arrived in a theater where an audience can occur.

@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,queueMission,sendInquiry,tick} from '../engine.js?v=peace-outcome-1';
-import {createFictionalPerson} from '../dynasties.js?v=peace-outcome-1';
-import {genealogyMeetingContacts} from '../genealogy-personal-actions.js?v=peace-outcome-1';
-import {addReport,reportedPersonName,advanceOperations} from '../character-system.js?v=peace-outcome-1';
-import {requestPersonalMeeting} from '../personal-diplomacy.js?v=peace-outcome-1';
-import {visiblePersonName} from '../person-knowledge.js?v=peace-outcome-1';
+import {newGame,upgradeSave,queueMission,sendInquiry,tick} from '../engine.js?v=office-intel-privacy-1';
+import {createFictionalPerson} from '../dynasties.js?v=office-intel-privacy-1';
+import {genealogyMeetingContacts} from '../genealogy-personal-actions.js?v=office-intel-privacy-1';
+import {addReport,reportedPersonName,advanceOperations} from '../character-system.js?v=office-intel-privacy-1';
+import {requestPersonalMeeting} from '../personal-diplomacy.js?v=office-intel-privacy-1';
+import {visiblePersonName} from '../person-knowledge.js?v=office-intel-privacy-1';
 
 test('meeting recipients come from reports rather than a foreign court’s hidden state',()=>{
  let s=newGame('caesar');const id=createFictionalPerson(s,{name:['Hidden Person','秘密人物'],faction:'egypt',birthYear:-75,location:'egypt'});
