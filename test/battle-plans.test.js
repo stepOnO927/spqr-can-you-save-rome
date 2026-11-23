@@ -119,13 +119,16 @@ test('with spare forces and stale intelligence, expert AI adds reconnaissance an
  const roles=plan.roles.map(r=>r.role);assert.ok(roles.includes('recon'),`roles: ${roles}`);assert.ok(roles.includes('supply_guard')||roles.includes('reserve'),`roles: ${roles}`);
 });
 
-test('an AI ally coordinates with a live allied operation against the same objective',async()=>{
+test('an AI ally considers a delivered operational notice rather than a hidden allied plan',async()=>{
  const {observeControl}=await import('../control-intelligence.js?v=dossier-archive-1');
+ const {shareOperation}=await import('../operation-intelligence.js?v=operation-notices-1'),{sendLetter}=await import('../epistulae.js?v=dossier-archive-1');
  const s=newGame('senate');s.difficulty='expert';
  s.regions.find(r=>r.id==='africa').owner='caesar';s.wars.push(['caesar','numidia']);s.alliances.push(['numidia','senate']);observeControl(s);
  for(const a of s.armies.filter(a=>a.owner==='numidia'))a.men=15000;
  const senatePlan=createPlan(s,'senate',{mode:'automatic',objective:'africa',ai:true}).plan;
  assert.ok(assignRole(s,'senate',senatePlan.id,{armyId:'pompey',role:'offensive',path:['italiaS','sicilia','africa']}).ok);approvePlan(s,'senate',senatePlan.id);
+ assert.ok(shareOperation(s,'senate',senatePlan.id,'numidia',{sendLetter}).ok);
+ const notice=s.mail.messages.find(m=>m.context?.kind==='operation_notice');notice.delivery='received';notice.arrival=s.year*12+s.month;
  const id=aiBattlePlans(s,'numidia',{estimatedStrength});const plan=planById(s,id);
  assert.equal(plan.objective,'africa');assert.ok(plan.events.some(e=>e.kind==='coordinated'));
  // Without the alliance, Numidia makes its own choice and records no coordination.
@@ -133,3 +136,4 @@ test('an AI ally coordinates with a live allied operation against the same objec
  for(const a of t.armies.filter(a=>a.owner==='numidia'))a.men=15000;
  const other=planById(t,aiBattlePlans(t,'numidia',{estimatedStrength}));assert.ok(!other||!other.events.some(e=>e.kind==='coordinated'));
 });
+
