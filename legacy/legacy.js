@@ -1,6 +1,6 @@
-import {BUILDINGS,GOODS,loadProfile,saveProfile,exportProfile,importProfile,purchase,applyCosmetic,createScenario,claimReward} from './legacy-core.js?v=18';
+import {BUILDINGS,GOODS,loadProfile,saveProfile,exportProfile,importProfile,purchase,applyCosmetic,createScenario,claimReward} from './legacy-core.js?v=19';
 import {PETITIONS,decidePetition,availablePetitions} from './civic.js?v=10';
-import {ARTIFACTS} from './museum.js?v=12';
+import {ARTIFACTS} from './museum.js?v=13';
 import {selectableDrivers,raceRivals,startRace,settleRace} from './race.js?v=12';
 import {availableActivities,resolveActivity} from './activities.js?v=9';
 import {harborDossier,beginHarborDossier,corroborateHarborDossier,closeHarborDossier,HARBOR_COSTS} from './intelligence-case.js?v=4';
@@ -16,7 +16,7 @@ import {harborOfficeHtml} from './harbor-ui.js?v=1';
 import {commissionMerchantReport,acquireTyrianCloth,settleHarborExchange} from './harbor-trade.js?v=1';
 import {CAMP_DRILL_STAGES,CAMP_DRILL_GRADES,beginCampDrill,answerCampDrill} from './camp-drill.js?v=2';
 import {FESTIVAL_PLANS,FESTIVAL_COUNSELS,FESTIVAL_PRIORITIES,beginTempleFestival,counselTempleFestival,settleTempleFestival} from './temple-festival.js?v=1';
-import {MUSEUM_HALLS,museumHallFor,museumPrestige,curateArtifact,removeFeaturedArtifact} from './museum-curation.js?v=1';
+import {MUSEUM_HALLS,museumHallFor,museumPrestige,curateArtifact,removeFeaturedArtifact} from './museum-curation.js?v=2';
 
 let profile=loadProfile(),lang=localStorage.getItem('spqr-lang')==='zh'?'zh':'en',panel='city',selected='curia',filter='all',race=null,notice='';
 let libraryBranch='material',librarySelection='roadmaking';
