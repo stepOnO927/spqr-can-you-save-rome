@@ -39,10 +39,10 @@ try{
  assert.match(await page.locator('#command-detail').innerText(),/LEG-BY-LEG EXPEDITION/);
  await page.locator('#advance').click();
  await page.locator('#advance').click();
- await page.locator('[data-faction-army="xiii"]').click();
+ await page.locator('[data-army="xiii"]').first().dispatchEvent('click');
  assert.match(await page.locator('#command-detail').innerText(),/At staging point; awaiting resume order/);
  await page.locator('#advance').click();
- await page.locator('[data-faction-army="xiii"]').click();
+ await page.locator('[data-army="xiii"]').first().dispatchEvent('click');
  assert.match(await page.locator('#command-detail').innerText(),/At staging point; awaiting resume order/);
  await page.getByRole('button',{name:'RECHECK AND RESUME'}).click();
  assert.match(await page.locator('#command-detail').innerText(),/In progress/);
