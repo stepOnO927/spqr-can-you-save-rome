@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick} from '../engine.js?v=peace-sender-1';
-import {offerAgentHandover,advanceAgentRequests,requestAgentRelease,availableAgents} from '../character-system.js?v=peace-sender-1';
+import {newGame,upgradeSave,tick} from '../engine.js?v=institutional-senders-1';
+import {offerAgentHandover,advanceAgentRequests,requestAgentRelease,availableAgents} from '../character-system.js?v=institutional-senders-1';
 
 function fixture(owner='senate',holder='caesar'){const s=newGame('caesar');s.world.captives.push({id:'handover-1',owner,holder,state:'held'});return s}
 function month(s){if(++s.month>12){s.month=1;s.year++}advanceAgentRequests(s)}

@@ -1,5 +1,5 @@
-import {newScenario} from '../scenarios.js?v=peace-sender-1';
-import {tick,diplomacy,isWar} from '../engine.js?v=peace-sender-1';
+import {newScenario} from '../scenarios.js?v=institutional-senders-1';
+import {tick,diplomacy,isWar} from '../engine.js?v=institutional-senders-1';
 
 // Paired seeds give each difficulty the same initial state and random streams.
 // The player is passive, so these are comparable simulations, not matches

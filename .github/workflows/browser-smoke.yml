@@ -114,6 +114,7 @@ jobs:
               node tools/senator-portraits-smoke.mjs
               node tools/senate-record-privacy-smoke.mjs
               node tools/mail-privacy-smoke.mjs
+              node tools/mail-sender-identity-smoke.mjs
               node tools/gathering-presence-smoke.mjs
               node tools/gathering-delegate-smoke.mjs
               node tools/atlas-mail-alert-smoke.mjs

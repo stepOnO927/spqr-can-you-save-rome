@@ -1,7 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick,sendInquiry,answerOfficialInquiry,replyToLetter} from '../engine.js?v=peace-sender-1';
-import {receivedMail,syncOfficialInquiryLetters} from '../epistulae.js?v=peace-sender-1';
-import {mailboxHtml} from '../mail-ui.js?v=peace-sender-1';
+import {newGame,upgradeSave,tick,sendInquiry,answerOfficialInquiry,replyToLetter} from '../engine.js?v=institutional-senders-1';
+import {receivedMail,syncOfficialInquiryLetters} from '../epistulae.js?v=institutional-senders-1';
+import {mailboxHtml} from '../mail-ui.js?v=institutional-senders-1';
 const request=s=>s.inquiries.find(x=>x.actor==='egypt'&&x.target==='caesar'&&x.subject==='leaders');
 const letters=s=>receivedMail(s).filter(m=>m.context?.kind==='official_inquiry');
 function arrived(){for(let i=1;i<=80;i++){const s=newGame('caesar');s.wars=[];assert.equal(sendInquiry(s,'egypt','caesar','leaders').ok,true);assert.equal(letters(s).length,0);assert.equal(answerOfficialInquiry(s,'egypt','leaders','refuse').reason,'unavailable');s.seed=(i*7000013)>>>0;tick(s);if(request(s).status==='awaiting_decision')return s}throw Error('Could not produce delivered inquiry')}
