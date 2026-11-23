@@ -16,7 +16,10 @@ try{
  await page.reload({waitUntil:'domcontentloaded'});
  const corfinium=page.locator('.city-marker[data-city="CORFINIUM"]');
  await corfinium.waitFor({state:'visible'});
- await corfinium.evaluate(node=>node.click());
+ const objective=page.locator('[data-town-objective="corfinium"]');
+ await objective.waitFor({state:'visible'});
+ assert.match(await objective.innerText(),/Secure Corfinium/);
+ await objective.evaluate(node=>node.click());
  let panel=page.locator('#command-detail');
  assert.match(await panel.innerText(),/ROMAN TOWN · Corfinium/);
  assert.match(await panel.innerText(),/Domitius Ahenobarbus/);
@@ -33,7 +36,7 @@ try{
  assert.equal(saved.regions.find(region=>region.id==='italiaS').owner,'senate');
  const iguvium=page.locator('.city-marker[data-city="IGUVIUM"]');
  await iguvium.waitFor({state:'visible'});
- await iguvium.evaluate(node=>node.click());
+ await page.locator('[data-town-objective="iguvium"]').evaluate(node=>node.click());
  panel=page.locator('#command-detail');
  assert.match(await panel.innerText(),/ROMAN TOWN · Iguvium/);
  assert.match(await panel.innerText(),/Thermus/);

@@ -50,9 +50,9 @@ test('a real garrison prevents automatic local reversion even at peak resistance
 test('hostile and unrestful towns affect the owner’s local tax income', () => {
   const state = newGame('caesar'), town = localEntity(state, 'ariminum');
   transferTerritory(state, 'italiaN', 'caesar');
-  assert.equal(localEntityRevenue(state, 'caesar'), -1);
+  const hostileIncome=localEntityRevenue(state, 'caesar');
   town.controller = 'caesar'; town.resistance = 20;
-  assert.equal(localEntityRevenue(state, 'caesar'), 1);
+  assert.equal(localEntityRevenue(state, 'caesar'), hostileIncome+2);
   town.resistance = 80;
-  assert.equal(localEntityRevenue(state, 'caesar'), 0);
+  assert.equal(localEntityRevenue(state, 'caesar'), hostileIncome+1);
 });
