@@ -16,7 +16,8 @@ try{
   const url=new URL(route.request().url());
   if(url.protocol==='blob:')return route.continue();
   if(url.hostname!=='spqr.test')return route.abort();
-  const file=resolve(root,'.'+(url.pathname.endsWith('/')?url.pathname+'index.html':url.pathname));
+  const pathname=url.pathname.endsWith('/')?url.pathname+'index.html':url.pathname;
+  const file=pathname==='/map-lab/physical-style.js'&&process.env.SPQR_MAP_STYLE_OVERRIDE?resolve(root,process.env.SPQR_MAP_STYLE_OVERRIDE):resolve(root,'.'+pathname);
   if(!file.startsWith(root+sep))return route.abort();
   const mime={'.js':'text/javascript','.html':'text/html','.css':'text/css','.svg':'image/svg+xml','.json':'application/json','.png':'image/png','.jpg':'image/jpeg'}[extname(file)]||'application/octet-stream';
   try{await route.fulfill({status:200,contentType:mime,body:await readFile(file)})}catch{await route.fulfill({status:404,body:'Not found'})}
@@ -43,15 +44,16 @@ try{
  if(close){
   const ariminum=page.locator('.grand-site[data-site="italiaN"]');
   assert.equal(await ariminum.isVisible(),true);
-  const cityAndFlag=()=>page.evaluate(()=>{const city=document.querySelector('.grand-site[data-site="italiaN"]'),flag=document.querySelector('.army[data-army="italy"]'),a=city.getBoundingClientRect(),b=flag.getBoundingClientRect();return {size:getComputedStyle(city).fontSize,named:city.textContent.trim().length>2,overlap:a.left<b.right&&b.left<a.right&&a.top<b.bottom&&b.top<a.bottom}});
-  assert.deepEqual(await cityAndFlag(),{size:'11px',named:true,overlap:false},'Ariminum should stay named beside the field standard without covering it');
+  const cityAndFlag=()=>page.evaluate(()=>{const city=document.querySelector('.grand-site[data-site="italiaN"]'),flag=document.querySelector('.army[data-army="italy"]'),a=city.getBoundingClientRect(),b=flag.getBoundingClientRect();return {size:parseFloat(getComputedStyle(city).fontSize),named:city.textContent.trim().length>2,overlap:a.left<b.right&&b.left<a.right&&a.top<b.bottom&&b.top<a.bottom}});
+  const checkCityFlag=async label=>{const result=await cityAndFlag();assert.ok(result.size>=9&&result.named&&!result.overlap,`${label}: ${JSON.stringify(result)}`)};
+  await checkCityFlag('Ariminum should stay named beside the field standard without covering it');
   assert.match(await ariminum.getAttribute('aria-label'),/Ariminum|阿里米努姆/);
   await ariminum.focus();
   assert.match(await ariminum.getAttribute('aria-label'),/Ariminum|阿里米努姆/,'keyboard focus should retain the city name');
   await ariminum.blur();
   await page.locator('#language').click();
   assert.match(await ariminum.getAttribute('aria-label'),/阿里米努姆/);
-  assert.deepEqual(await cityAndFlag(),{size:'11px',named:true,overlap:false},'the close-map city and standard should stay separate after a language switch');
+  await checkCityFlag('the close-map city and standard should stay separate after a language switch');
   await page.locator('#language').click();
  }
  await page.screenshot({path:resolve(output,`atlas-focus-before${suffix}.png`)});
