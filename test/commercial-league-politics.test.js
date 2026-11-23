@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=intelligence-archive-1';
-import {proposeCommercialLeague,advanceCommercialLeagueOffers} from '../commercial-leagues.js?v=intelligence-archive-1';
-import {proposeCommercialLeagueMotion,voteCommercialLeagueMotion,advanceCommercialLeagueMotions,advanceCommercialLeagueAdmissions,eligibleCommercialLeagueTargets} from '../commercial-league-politics.js?v=intelligence-archive-1';
-import {syncCommercialLeagueMotionLetters,syncCommercialLeagueAdmissionLetters,receivedMail,replyToLetter} from '../epistulae.js?v=intelligence-archive-1';
+import {newGame,upgradeSave} from '../engine.js?v=archived-leads-1';
+import {proposeCommercialLeague,advanceCommercialLeagueOffers} from '../commercial-leagues.js?v=archived-leads-1';
+import {proposeCommercialLeagueMotion,voteCommercialLeagueMotion,advanceCommercialLeagueMotions,advanceCommercialLeagueAdmissions,eligibleCommercialLeagueTargets} from '../commercial-league-politics.js?v=archived-leads-1';
+import {syncCommercialLeagueMotionLetters,syncCommercialLeagueAdmissionLetters,receivedMail,replyToLetter} from '../epistulae.js?v=archived-leads-1';
 
 const roll=()=>.5;
 const month=s=>{s.month++;if(s.month>12){s.month=1;s.year++}};

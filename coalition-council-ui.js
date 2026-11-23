@@ -1,4 +1,4 @@
-import {eligibleCoalitionAdmissionTargets} from './coalition-admissions.js?v=intelligence-archive-1';
+import {eligibleCoalitionAdmissionTargets} from './coalition-admissions.js?v=archived-leads-1';
 
 const kinds={leadership:['Leadership vote','盟主改选'],expulsion:['Expulsion','成员除名'],admission:['Member nomination','提议增员'],contribution:['Contribution change','责任调整'],dissolution:['Dissolution','解散联盟']};
 const policies={military:['Military','军事'],funding:['Funding','资金'],supplies:['Supplies','粮食'],diplomacy:['Diplomacy','外交']};

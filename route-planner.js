@@ -1,6 +1,6 @@
-import {ROUTES,REGIONS} from './data.js?v=intelligence-archive-1';
-import {reportedControl} from './control-intelligence.js?v=intelligence-archive-1';
-import {militaryAccessStatus} from './border-access.js?v=intelligence-archive-1';
+import {ROUTES,REGIONS} from './data.js?v=archived-leads-1';
+import {reportedControl} from './control-intelligence.js?v=archived-leads-1';
+import {militaryAccessStatus} from './border-access.js?v=archived-leads-1';
 
 const graph = new Map();
 for (const [from, to, type] of ROUTES) {

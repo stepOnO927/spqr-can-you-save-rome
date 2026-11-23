@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,resolveBattle,upgradeSave} from '../engine.js?v=intelligence-archive-1';
-import {tutorialTurnProgress,createTutorial} from '../map-lab/tutorial.js?v=intelligence-archive-1';
+import {newGame,resolveBattle,upgradeSave} from '../engine.js?v=archived-leads-1';
+import {tutorialTurnProgress,createTutorial} from '../map-lab/tutorial.js?v=archived-leads-1';
 
 test('tutorial report follows the selected army, not an unrelated battle',()=>{
  let s=newGame('caesar'),unit=s.armies.find(a=>a.id==='xiii');

@@ -1,12 +1,12 @@
-import {campaignYear,campaignDate} from './campaign-date.js?v=intelligence-archive-1';
-import {reportedControl} from './control-intelligence.js?v=intelligence-archive-1';
-import {REGIONS,ROUTES,FACTIONS} from './data.js?v=intelligence-archive-1';
-import {CHARACTER_CATALOG} from './characters.js?v=intelligence-archive-1';
-import {mapPoint} from './map.js?v=intelligence-archive-1';
-import {BRANCH_NAMES,PATH_NAMES} from './imperium-focus-data.js?v=intelligence-archive-1';
-import {treeFor,focusStatus,focusState,canStartFocus,startFocus,cancelFocus,focusCost,focusReportsFor,focusById} from './national-focus.js?v=intelligence-archive-1';
-import {COMPONENTS,CULTURE_NAMES,templatesFor,templateStats,saveTemplate,duplicateTemplate,deleteTemplate,validateTemplate,availableComponents,cultureOf,reorganizationQuote,reorganizeArmy,recruitmentQuote,recruitFormation,commanderSpecialty,commandConcentration,seedTemplates,formationState,outdatedArmies} from './legion-designer.js?v=intelligence-archive-1';
-import {ROLES,ROLE_NAMES,MODES,plansFor,planById,createPlan,assignRole,removeRole,approvePlan,pausePlan,cancelPlan,editPlan,assessPlan,adviserCounsel,approveRecommendation,legalStep} from './battle-plans.js?v=intelligence-archive-1';
+import {campaignYear,campaignDate} from './campaign-date.js?v=archived-leads-1';
+import {reportedControl} from './control-intelligence.js?v=archived-leads-1';
+import {REGIONS,ROUTES,FACTIONS} from './data.js?v=archived-leads-1';
+import {CHARACTER_CATALOG} from './characters.js?v=archived-leads-1';
+import {mapPoint} from './map.js?v=archived-leads-1';
+import {BRANCH_NAMES,PATH_NAMES} from './imperium-focus-data.js?v=archived-leads-1';
+import {treeFor,focusStatus,focusState,canStartFocus,startFocus,cancelFocus,focusCost,focusReportsFor,focusById} from './national-focus.js?v=archived-leads-1';
+import {COMPONENTS,CULTURE_NAMES,templatesFor,templateStats,saveTemplate,duplicateTemplate,deleteTemplate,validateTemplate,availableComponents,cultureOf,reorganizationQuote,reorganizeArmy,recruitmentQuote,recruitFormation,commanderSpecialty,commandConcentration,seedTemplates,formationState,outdatedArmies} from './legion-designer.js?v=archived-leads-1';
+import {ROLES,ROLE_NAMES,MODES,plansFor,planById,createPlan,assignRole,removeRole,approvePlan,pausePlan,cancelPlan,editPlan,assessPlan,adviserCounsel,approveRecommendation,legalStep} from './battle-plans.js?v=archived-leads-1';
 
 // IMPERIUM screens: national strategy tree, legion designer, operational planner.
 // UI state is local to this module; game state changes only through engine APIs.

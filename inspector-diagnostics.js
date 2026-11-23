@@ -1,6 +1,6 @@
-import {ROUTES,FACTIONS} from './data.js?v=intelligence-archive-1';
-import {SUBJECT_TYPES} from './suzerainty.js?v=intelligence-archive-1';
-import {LOCAL_GENERATION_BANDS,VILLAGE_GENERATION_BANDS} from './local-generation.js?v=intelligence-archive-1';
+import {ROUTES,FACTIONS} from './data.js?v=archived-leads-1';
+import {SUBJECT_TYPES} from './suzerainty.js?v=archived-leads-1';
+import {LOCAL_GENERATION_BANDS,VILLAGE_GENERATION_BANDS} from './local-generation.js?v=archived-leads-1';
 import {footholdStorageCapacity} from './foothold.js';
 // Read-only startup and deep state checks. Never migrates or mutates a save.
 export function inspectState(s,{mode=s?.dlc?'han':'roman',isLiuClan}={}){

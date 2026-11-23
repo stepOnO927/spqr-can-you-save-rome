@@ -42,7 +42,7 @@ test('future sightings cannot expose identities or open a political contact',asy
 });
 
 test('a partner cannot forward an intelligence report before receiving it',async()=>{
- const {queueMission,advanceOperations}=await import('../character-system.js?v=intelligence-archive-1');const s=newGame('caesar');s.alliances.push(['caesar','egypt']);s.knowledge.egypt.parthia.reports.unshift({kind:'strength',value:99999,source:'spy',year:s.year+1,month:s.month,observationYear:s.year,observationMonth:s.month});const result=queueMission(s,'caesar','parthia','exchange','strength','egypt');assert.equal(result.ok,true);const op=s.operations[0];while(!op.exchangeSealed){s.month++;advanceOperations(s)}assert.equal(op.exchangeSealed.available,false);
+ const {queueMission,advanceOperations}=await import('../character-system.js?v=archived-leads-1');const s=newGame('caesar');s.alliances.push(['caesar','egypt']);s.knowledge.egypt.parthia.reports.unshift({kind:'strength',value:99999,source:'spy',year:s.year+1,month:s.month,observationYear:s.year,observationMonth:s.month});const result=queueMission(s,'caesar','parthia','exchange','strength','egypt');assert.equal(result.ok,true);const op=s.operations[0];while(!op.exchangeSealed){s.month++;advanceOperations(s)}assert.equal(op.exchangeSealed.available,false);
 });
 
 test('pending and future meetings cannot reveal a fictional person’s name',()=>{

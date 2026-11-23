@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,region} from '../engine.js?v=intelligence-archive-1';
-import {renderTerritoryFacts} from '../map-lab/territory-facts.js?v=intelligence-archive-1';
+import {newGame,region} from '../engine.js?v=archived-leads-1';
+import {renderTerritoryFacts} from '../map-lab/territory-facts.js?v=archived-leads-1';
 
 test('territory record uses the actual friendly garrison and local food potential', () => {
  const s = newGame('caesar'), r = region(s, 'cisalpine');

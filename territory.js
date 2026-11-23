@@ -1,5 +1,5 @@
-import {ROUTES} from './data.js?v=intelligence-archive-1';
-import historical from './historical-territories.js?v=intelligence-archive-1';
+import {ROUTES} from './data.js?v=archived-leads-1';
+import historical from './historical-territories.js?v=archived-leads-1';
 
 // state.regions remains the only mutable territory registry. This module
 // enriches those records without maintaining a second ownership table.
