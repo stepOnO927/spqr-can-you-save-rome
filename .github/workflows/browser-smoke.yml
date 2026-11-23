@@ -53,6 +53,7 @@ jobs:
               node tools/frontier-response-smoke.mjs
               node tools/player-aid-letter-smoke.mjs
               node tools/player-coalition-mail-smoke.mjs
+              node tools/focus-agreement-consent-smoke.mjs
               node tools/family-courier-smoke.mjs
               node tools/dynastic-intelligence-contact-smoke.mjs
               node tools/commander-name-correspondence-smoke.mjs
@@ -69,6 +70,7 @@ jobs:
               node tools/conspiracy-name-smoke.mjs
               node tools/regency-tenure-smoke.mjs
               node tools/inquiry-inbox-smoke.mjs
+              node tools/incoming-official-inquiry-smoke.mjs
               node tools/meeting-observed-name-smoke.mjs
               node tools/personal-audience-mail-smoke.mjs
               node tools/player-request-aid-smoke.mjs

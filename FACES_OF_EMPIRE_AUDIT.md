@@ -6,6 +6,15 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Main through `536753c9` (#346) is integrated. Its incoming official inquiry
+letters retain the source court's institution name, offer player replies, and
+continue through save upgrades and monthly courier delivery. The merge needed
+the `answerOfficialInquiry` and `syncOfficialInquiryLetters` imports restored
+alongside the branch's eastern trade changes. Focused inquiry and module
+version tests pass 6/6. The merged Windows full suite passes 1,398/1,399;
+the existing 40 ms NPC East CPU gate measured 42.29 ms. Hosted checks for the
+merged head follow.
+
 Main through `62010d8a` (#343) is integrated. The new fourteenth pair of
 campaign-born portraits and its save migration were added to the branch's
 existing procedural portrait system, preserving both. Portrait, court, ruler
