@@ -6,6 +6,12 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Main through `f3b533e9` (#347) is integrated. Its peace-mail sender privacy
+uses the sending institution and retains the explicit browser assertions that
+the correct court is named without disclosing hidden rulers. The focused
+inquiry, peace-mail and module-version tests pass 17/17; hosted verification
+of the latest integration follows.
+
 Main through `536753c9` (#346) is integrated. Its incoming official inquiry
 letters retain the source court's institution name, offer player replies, and
 continue through save upgrades and monthly courier delivery. The merge needed
