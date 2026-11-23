@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,forecastEconomy,upgradeSave} from '../engine.js?v=office-intel-privacy-1';
-import {configureStartingDifficulty} from '../difficulty.js?v=office-intel-privacy-1';
-import {OFFICE_TYPES,canHoldOffice,localGovernor} from '../office-system.js?v=office-intel-privacy-1';
+import {newGame,forecastEconomy,upgradeSave} from '../engine.js?v=archived-exchange-1';
+import {configureStartingDifficulty} from '../difficulty.js?v=archived-exchange-1';
+import {OFFICE_TYPES,canHoldOffice,localGovernor} from '../office-system.js?v=archived-exchange-1';
 import {featherAdvice} from '../feather.js?v=travel-1';
 
 for(const faction of ['caesar','senate'])test(`Travel opens a staffed, well supplied ${faction} campaign and survives saving`,()=>{

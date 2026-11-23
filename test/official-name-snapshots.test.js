@@ -1,6 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=office-intel-privacy-1';
-import {initializeCursus,investigateGovernment,governmentReport,reportedOfficialName,officialKnowledge,offerEmployment,advanceCursus} from '../cursus-honorum.js?v=office-intel-privacy-1';
+import {newGame,upgradeSave} from '../engine.js?v=archived-exchange-1';
+import {initializeCursus,investigateGovernment,governmentReport,reportedOfficialName,officialKnowledge,offerEmployment,advanceCursus} from '../cursus-honorum.js?v=archived-exchange-1';
 function setup(){const s=newGame('caesar'),c=initializeCursus(s);s.month=3;s.factions.caesar.treasury=500;c.intel.caesar={parthia:{stage:2,reports:[]}};return {s,c,id:c.foreignPosts.parthia.administration}}
 function step(s){s.world.intelSeed=1000;s.month++;advanceCursus(s)}
 test('a foreign official name is recorded at observation and remains dated after a hidden rename or deletion',()=>{
