@@ -254,7 +254,13 @@ function prepareExchange(s,op){
  // Arrival order is not observation order: an older forwarded message must
  // not displace a fresher observation already held by the partner.
  const observedAt=r=>{const year=r.observationYear??r.year,month=r.observationMonth??r.month;return Number.isFinite(year)&&Number.isInteger(month)?year*12+month:-Infinity};
- const prior=(s.knowledge[partner]?.[op.target]?.reports||[]).filter(r=>isDeliveredReport(s,r)&&r.kind===op.subject&&(!op.subjectCharacter||r.character===op.subjectCharacter)).reduce((best,r)=>!best||observedAt(r)>observedAt(best)?r:best,null);
+ const knowledge=s.knowledge[partner]?.[op.target];let prior=null;
+ // An ally's delivered archive remains available after the active evidence
+ // window closes, without treating undelivered material as known.
+ for(const reports of [knowledge?.reports||[],knowledge?.reportArchive||[]])for(const r of reports){
+  if(!isDeliveredReport(s,r)||r.kind!==op.subject||op.subjectCharacter&&r.character!==op.subjectCharacter)continue;
+  if(!prior||observedAt(r)>observedAt(prior))prior=r;
+ }
  if(!access)return {available:false};
  // Trade is contact, not an obligation to share secrets. The recipient's own
  // relations influence its independent response; the sender learns only the
