@@ -5,7 +5,7 @@ const browser=await chromium.launch({headless:true,args:['--use-gl=angle','--use
 const page=await browser.newPage({viewport:{width:1600,height:1000}}),errors=[];
 page.on('pageerror',error=>errors.push(error.message));
 try{
- await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
+ await page.addInitScript(()=>{if(!localStorage.getItem('spqr-lang'))localStorage.setItem('spqr-lang','zh')});
  await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});
  await page.evaluate(async()=>{
   const {newGame}=await import('/engine.js?v=dossier-archive-1');
