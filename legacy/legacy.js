@@ -1,6 +1,6 @@
 import {BUILDINGS,GOODS,loadProfile,saveProfile,exportProfile,importProfile,purchase,applyCosmetic,createScenario,claimReward} from './legacy-core.js?v=18';
 import {PETITIONS,decidePetition,availablePetitions} from './civic.js?v=10';
-import {ARTIFACTS} from './museum.js?v=10';
+import {ARTIFACTS} from './museum.js?v=11';
 import {selectableDrivers,raceRivals,startRace,settleRace} from './race.js?v=12';
 import {availableActivities,resolveActivity} from './activities.js?v=9';
 import {harborDossier,beginHarborDossier,corroborateHarborDossier,closeHarborDossier,HARBOR_COSTS} from './intelligence-case.js?v=4';

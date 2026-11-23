@@ -9,3 +9,15 @@ Final prompt:
 The 1536 × 1024 generated PNG was converted locally to WebP quality 84 for the bundled game asset (585,428 bytes). The original generated PNG is not required at runtime.
 
 The Museum's bronze senatorial decree icon is original inline SVG artwork. It is a schematic plaque with abstract incised lines, not a copy or transcription of an ancient inscription. The exhibit text is informed by the [Kunsthistorisches Museum's Bacchanalia bronze tablet record](https://artsandculture.google.com/asset/senatus-consultum-de-bacchanalibus/zAEr3v_5qUsieA). That earlier object is presented as a teaching reference, not as an artifact from the game's 49 BCE campaign.
+
+## Museum exhibit source review
+
+The following five exhibit pictures are schematic game art, not photographs or claims that a particular object survived from the player's campaign. Their object IDs and unlock conditions remain unchanged in saved profiles.
+
+| Exhibit | Historical comparison | Limit in the game |
+| --- | --- | --- |
+| Caesar portrait | [Vatican Museums, *Julius Caesar*](https://www.museivaticani.va/content/museivaticani/en/collezioni/musei/museo-gregoriano-profano/cesare-c-d--chiaramonti.html) dates its comparison bust probably to 30–20 BCE. | The game's generated portrait is interpretive; the museum reference was probably made after Caesar died, so it cannot be presented as an observed 49 BCE likeness. |
+| Pompeian denarius | [Museums Victoria, NU 2181](https://collections.museumsvictoria.com.au/items/54758) catalogs a 49–48 BCE silver issue under Pompey's authority with Numa on its face and a ship's prow on the reverse. | The game's coin symbol is not a photograph or a portrait of Pompey. |
+| Republican sword | [*Greece & Rome*, study of the *gladius Hispaniensis*](https://www.cambridge.org/core/journals/greece-and-rome/article/new-sword-from-spain-the-roman-adoption-of-the-gladius-hispaniensis/0165E9027FEAF09D7B29C3C2540E1770) reviews pre-49 BCE archaeological swords and differing blade forms. | The game's crossed-sword icon does not depict an excavated weapon from this campaign. |
+| Cato portrait | The [Capitoline Museums catalog, Scu 565](https://capitolini.info/scu00565/?lang=en) rejects an old identification of a late Republican head as Cato. | The game's Cato portrait model is imaginary. The catalog does not establish the appearance of Cato the Younger. |
+| Tyrian purple | The [Metropolitan Museum of Art's Phoenician trade essay](https://www.metmuseum.org/exhibitions/listings/2014/assyria-to-iberia/blog/posts/phoenicia-and-the-bible) describes murex purple and its Mediterranean trade. | The color swatch is interpretive, not an excavated or surviving 49 BCE textile; buying it in the fictional Harbor Office does not prove a particular shipment. |
