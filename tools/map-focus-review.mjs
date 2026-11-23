@@ -43,14 +43,15 @@ try{
  if(close){
   const ariminum=page.locator('.grand-site[data-site="italiaN"]');
   assert.equal(await ariminum.isVisible(),true);
-  assert.equal(await ariminum.evaluate(el=>getComputedStyle(el).fontSize),'0px','Ariminum should use a compact mark beside the Italian levy at close zoom');
+  const cityAndFlag=()=>page.evaluate(()=>{const city=document.querySelector('.grand-site[data-site="italiaN"]'),flag=document.querySelector('.army[data-army="italy"]'),a=city.getBoundingClientRect(),b=flag.getBoundingClientRect();return {size:getComputedStyle(city).fontSize,named:city.textContent.trim().length>2,overlap:a.left<b.right&&b.left<a.right&&a.top<b.bottom&&b.top<a.bottom}});
+  assert.deepEqual(await cityAndFlag(),{size:'11px',named:true,overlap:false},'Ariminum should stay named beside the field standard without covering it');
   assert.match(await ariminum.getAttribute('aria-label'),/Ariminum|阿里米努姆/);
   await ariminum.focus();
-  assert.notEqual(await ariminum.evaluate(el=>getComputedStyle(el).fontSize),'0px','Keyboard focus should reveal the close-map city label');
+  assert.match(await ariminum.getAttribute('aria-label'),/Ariminum|阿里米努姆/,'keyboard focus should retain the city name');
   await ariminum.blur();
   await page.locator('#language').click();
-  assert.match(await ariminum.getAttribute('aria-label'),/Ariminum/);
-  assert.equal(await ariminum.evaluate(el=>getComputedStyle(el).fontSize),'0px','The close-map collision rule should survive a language switch');
+  assert.match(await ariminum.getAttribute('aria-label'),/阿里米努姆/);
+  assert.deepEqual(await cityAndFlag(),{size:'11px',named:true,overlap:false},'the close-map city and standard should stay separate after a language switch');
   await page.locator('#language').click();
  }
  await page.screenshot({path:resolve(output,`atlas-focus-before${suffix}.png`)});
