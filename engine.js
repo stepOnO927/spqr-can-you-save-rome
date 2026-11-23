@@ -9,18 +9,18 @@ import {IDEAS,MATERIALS,BUILDINGS,initializeDevelopment,advanceDevelopment,activ
 import {initializeReports,recordEvent,recordControl,recordBattle,recordSiege,recordMovement,recordDiplomacy,recordRebellion,updateObjectives,beginBriefing,finishBriefing} from './campaign-reports.js?v=14';
 import {advanceRecon,assessment,sendScouts,probePositions,latestRecon,requestReinforcements} from './reconnaissance.js?v=18';
 import {grandRegionsFrom,GRAND_ROUTES} from './grand-map-data.js';
-import {grandAdjacent,grandRoute,edgeMonths,armySupply,advanceOperationalState,encircled,flankFactor,canEmbark,supplyBottlenecks,strategicRetreat} from './grand-operations.js?v=43';
+import {grandAdjacent,grandRoute,edgeMonths,armySupply,advanceOperationalState,encircled,flankFactor,canEmbark,supplyBottlenecks,strategicRetreat} from './grand-operations.js?v=44';
 import {initializeLocalSociety,faithSatisfaction,advanceDemography,advanceReligion,setReligiousPolicy,productiveEstateRegion,provincialRitesCredit,foodShortageTier} from './local-society.js?v=9';
 import {initializeFigures,advanceFigures} from './great-figures.js';
-import {initializeNaval,advanceNaval,commitArmyTransport,cancelArmyTransport,reportedTransportDanger} from './naval.js?v=67';
+import {initializeNaval,advanceNaval,commitArmyTransport,cancelArmyTransport,finishArmyTransport,reconcileActiveTransports,reportedTransportDanger} from './naval.js?v=68';
 import {initializeAchievements,evaluateAchievements,endCampaign} from './achievement-system.js?v=5';
 import {militaryResult,settlementEligible,publicSettlementTerms,setCampaignOutcome} from './campaign-outcome.js?v=6';
 import {nationalBudget} from './national-budget.js?v=32';
 export {nationalBudget} from './national-budget.js?v=32';
 export {endCampaign,revealedAchievements} from './achievement-system.js?v=5';
-export {SEA_ZONES,SHIPS,NAVAL_JOBS,NAVAL_TACTICS,portZone,seaRoute,fleet,queueShip,cancelShipConstruction,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,reportedHostileFleets,reportedNonHostileFleets,supportPirates,dispatchWagonSupply,settleMerchantDispute} from './naval.js?v=67';
+export {SEA_ZONES,SHIPS,NAVAL_JOBS,NAVAL_TACTICS,portZone,seaRoute,fleet,queueShip,cancelShipConstruction,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,reportedHostileFleets,reportedNonHostileFleets,supportPirates,dispatchWagonSupply,settleMerchantDispute} from './naval.js?v=68';
 export {recruitFigure,figureStatus,figureActive} from './great-figures.js';
-export {holdPosition,strategicRetreat,armySupply,encircled,supplyNetwork,navalCapacity,availableNavalLift,supplyBottlenecks} from './grand-operations.js?v=43';
+export {holdPosition,strategicRetreat,armySupply,encircled,supplyNetwork,navalCapacity,availableNavalLift,supplyBottlenecks} from './grand-operations.js?v=44';
 export {knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,researchInnovation,adoptIdea,removeIdea,cancelIdeaAdoption,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials};
 export {setReligiousPolicy,provincialRitesCredit};
 export {queueMission};
@@ -111,7 +111,7 @@ export function upgradeSave(s){
  }
  if(s.victory&&!s.campaignOutcome)s.campaignOutcome={kind:'military',winner:s.player,loser:s.player==='caesar'?'senate':'caesar',year:s.year,month:s.month,legacy:true};
  if(romanCivilResult(s)&&isWar(s,'caesar','senate'))concludePeace(s,'caesar','senate');
- migrateRegionalPowers(s);migrateCyrene(s);initializeReports(s);updateObjectives(s,true);initializeFigures(initializeDevelopment(refreshReportConfidence(initializeGovernments(s))));initializeLocalSociety(s);initializeNaval(s);migrateGranaryReserves(s,(state,owner)=>nationalBudget(state,owner).foodCapacity);initializeAchievements(s);s.briefingBaseline ||= beginBriefing(s);return s;
+ migrateRegionalPowers(s);migrateCyrene(s);initializeReports(s);updateObjectives(s,true);initializeFigures(initializeDevelopment(refreshReportConfidence(initializeGovernments(s))));initializeLocalSociety(s);initializeNaval(s);reconcileActiveTransports(s);migrateGranaryReserves(s,(state,owner)=>nationalBudget(state,owner).foodCapacity);initializeAchievements(s);s.briefingBaseline ||= beginBriefing(s);return s;
 }
 
 export function previewMarch(s,armyId,destination){
@@ -487,9 +487,9 @@ export function resolveBattle(s,attacker,defender,target,options={}){
     if(!remaining){for(const unit of attackers)unit.region=target.id;target.owner=attacker.owner;target.loyalty=38;recordControl(s,target,previousOwner,'battle',{armyId:attacker.id,battleId:report.id,attacker:attacker.owner,defender:defender.owner})}
   } else {
     const retreat=adjacent(target.id,s).map(e=>region(s,e.to)).find(r=>r.owner===attacker.owner)?.id;
-    for(const unit of attackers){unit.siege=null;unit.region=retreat||unit.region}
+    for(const unit of attackers){unit.siege=null;if(!unit.move?.sea)unit.region=retreat||unit.region}
   }
-  for(const unit of attackers){unit.move=null;unit.coordinated=false;unit.experience=Math.min(5,unit.experience+1);unit.attackIntel=null}
+  for(const unit of attackers){finishArmyTransport(s,unit,{defeated:!meeting&&!attackerWins});if(!unit.move?.returning)unit.move=null;unit.coordinated=false;unit.experience=Math.min(5,unit.experience+1);unit.attackIntel=null}
   for(const unit of defenders)unit.coordinated=false;
   for(const unit of defenders)unit.experience=Math.min(5,unit.experience+1);
   if(attacker.owner===s.player||defender.owner===s.player){const playerAttacks=attacker.owner===s.player,ownLoss=playerAttacks?lossA:lossD,playerPrevailed=playerAttacks?attackerWins:!attackerWins,location=meeting?'opposing marches':target.name[0],locationZh=meeting?'反向行军途中':target.name[1];log(s,`${FACTIONS[s.player].short[0]} ${playerPrevailed?'prevailed':'was repulsed'} at ${location}. Casualties: own ${ownLoss.toLocaleString()}; enemy unknown.`,`${FACTIONS[s.player].short[1]}在${locationZh}${playerPrevailed?'占优':'失利'}。己方伤亡：${ownLoss.toLocaleString()}；敌方伤亡未知。`)}
@@ -507,16 +507,17 @@ function arrive(s,a){
   if(a.move.transportFleetId&&!a.move.transportReady){a.move.remaining=0;return}
   const target=region(s,a.move.to);
   const remainingPath=a.move.path||[];
-  if(target.owner!==a.owner&&!isWar(s,a.owner,target.owner)){a.move=null;a.attackIntel=null;return}
+  if(target.owner!==a.owner&&!isWar(s,a.owner,target.owner)){finishArmyTransport(s,a);a.move=null;a.attackIntel=null;return}
   const enemy=s.armies.find(other=>other.id!==a.id&&other.region===target.id&&other.owner!==a.owner&&isWar(s,a.owner,other.owner)&&!other.move);
   if(enemy){resolveBattle(s,a,enemy,target);return}
-  if(target.owner!==a.owner&&a.men<500){a.move=null;a.attackIntel=null;if(a.owner===s.player)log(s,`${a.name[0]} lacks the force to occupy ${target.name[0]}.`,`${a.name[1]}兵力不足，无法占领${target.name[1]}。`);return}
+  if(target.owner!==a.owner&&a.men<500){finishArmyTransport(s,a);a.move=null;a.attackIntel=null;if(a.owner===s.player)log(s,`${a.name[0]} lacks the force to occupy ${target.name[0]}.`,`${a.name[1]}兵力不足，无法占领${target.name[1]}。`);return}
   const siegeReduction=localBuildingEffects(region(s,a.region)).siegeReduction||0;
-  const from=a.region;a.region=target.id;a.move=null;a.coordinated=false;a.attackIntel=null;recordMovement(s,a,from);
+  const from=a.region,movement=a.move;a.region=target.id;a.move=null;a.coordinated=false;a.attackIntel=null;recordMovement(s,a,from);
   if(target.owner!==a.owner){
     if(target.fort>0){a.siege={region:target.id,remaining:Math.max(1,target.fort*2-siegeReduction)};recordSiege(s,target,a,'begun');if(a.owner===s.player||target.owner===s.player)log(s,`${a.name[0]} began a siege at ${target.name[0]}.`,`${a.name[1]}开始围攻${target.name[1]}。`)}
     else {const previousOwner=target.owner,witnessed=a.owner===s.player||target.owner===s.player;target.owner=a.owner;target.loyalty=38;recordControl(s,target,previousOwner,'occupation',{armyId:a.id,attacker:a.owner});if(witnessed)log(s,`${FACTIONS[a.owner].short[0]} occupied ${target.name[0]}.`,`${FACTIONS[a.owner].short[1]}占领了${target.name[1]}。`)}
   }
+  finishArmyTransport(s,{...a,move:movement});
   if(s.grandMap&&remainingPath.length&&!a.siege){
     const [next,...rest]=remainingPath,destination=region(s,next.id);
     if(destination&&(destination.owner===a.owner||isWar(s,a.owner,destination.owner))&&(!next.sea||canEmbark(s,a,region(s,a.region),destination))){

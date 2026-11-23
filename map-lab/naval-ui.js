@@ -1,5 +1,5 @@
-import {SEA_ZONES,SHIPS,SHIPYARD_MIN_WORKERS,shipyardWorkers,NAVAL_JOBS,NAVAL_TACTICS,reportedHostileFleets,reportedNonHostileFleets,portZone,fleetSpeed,fleetCargoCapacity,fleetUpkeepDue,wagonSupplyPlan,harborTradeCapacity} from '../naval.js?v=67';
-import {adjacent,previewMarch} from '../engine.js?v=247';
+import {SEA_ZONES,SHIPS,SHIPYARD_MIN_WORKERS,shipyardWorkers,NAVAL_JOBS,NAVAL_TACTICS,reportedHostileFleets,reportedNonHostileFleets,portZone,fleetSpeed,fleetCargoCapacity,fleetUpkeepDue,wagonSupplyPlan,harborTradeCapacity} from '../naval.js?v=68';
+import {adjacent,previewMarch} from '../engine.js?v=248';
 import {CHARACTER_CATALOG} from '../characters.js';
 import {FACTIONS} from '../data.js?v=9';
 

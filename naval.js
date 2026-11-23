@@ -494,6 +494,44 @@ export function commitArmyTransport(s,unit,from,to){const f=accessibleFleet(s,un
  const voyage=path.length?path:[portZone(to.id)];
  f.port=null;f.order={kind:'transport',target:to.id,targetPort:to.id,path:voyage,armyId:unit.id,departed:false};return {ok:true,fleetId:f.id,months:Math.max(1,voyage.length)}
 }
+// A troop voyage occupies its ships until the army actually disembarks or
+// fights. Reaching the destination sea zone does not grant hostile harbor use.
+export function finishArmyTransport(s,unit,{defeated=false}={}){
+ const movement=unit?.move;
+ if(!movement?.sea||!movement.transportFleetId||movement.returning)return;
+ const convoy=s.naval?.fleets.find(f=>f.id===movement.transportFleetId);
+ if(!convoy||convoy.owner!==unit.owner||convoy.order?.kind!=='transport'||convoy.order.armyId!==unit.id)return;
+ const destination=s.regions.find(r=>r.id===movement.to);
+ if(destination?.owner===convoy.owner&&destination.port&&convoy.zone===portZone(destination.id)){
+  convoy.port=destination.id;convoy.order=null;return;
+ }
+ const home=s.regions.filter(r=>r.owner===convoy.owner&&r.port).map(r=>({r,path:seaRoute(convoy.zone,portZone(r.id))})).filter(x=>x.path).sort((a,b)=>Number(b.r.id===unit.region)-Number(a.r.id===unit.region)||a.path.length-b.path.length)[0];
+ convoy.port=null;
+ if(defeated&&unit.men>0){
+  // Survivors of a failed amphibious assault cannot receive land orders
+  // until their actual ships carry them back to a friendly harbor.
+  Object.assign(movement,{to:home?.r.id||null,remaining:0,path:[],final:home?.r.id||null,transportReady:false,returning:true});
+  convoy.order={kind:'return',target:home?.r.id||null,targetPort:home?.r.id||null,path:home?.path||[],armyId:unit.id};
+ }else convoy.order=home?{kind:'return',target:home.r.id,targetPort:home.r.id,path:home.path}:null;
+}
+// Older saves could free a convoy as soon as it entered an enemy harbor,
+// while the army was still at sea. Reattach those ships on import.
+export function reconcileActiveTransports(s){
+ for(const unit of s.armies){
+  const movement=unit.move;
+  if(!movement?.sea||!movement.transportFleetId||movement.returning||!movement.transportReady)continue;
+  const convoy=s.naval?.fleets.find(f=>f.id===movement.transportFleetId&&f.owner===unit.owner);
+  if(!convoy){unit.move=null;unit.attackIntel=null;continue}
+  const destination=s.regions.find(r=>r.id===movement.to),zone=destination&&portZone(destination.id);
+  if(!zone){unit.move=null;unit.attackIntel=null;continue}
+  const path=seaRoute(convoy.zone,zone);
+  if(!path){unit.move=null;unit.attackIntel=null;continue}
+  const arrived=path.length===0;
+  convoy.order={kind:'transport',target:destination.id,targetPort:destination.id,path,armyId:unit.id,departed:true,...(arrived?{arrived:true}:{})};
+  convoy.port=arrived&&destination.owner===convoy.owner?destination.id:null;
+  if(!arrived){movement.transportReady=false;movement.remaining=0}
+ }
+}
 export function cancelArmyTransport(s,unit){
  const movement=unit?.move,convoy=s.naval?.fleets.find(f=>f.id===movement?.transportFleetId),origin=s.regions.find(r=>r.id===unit?.region);
  if(!movement?.transportFleetId)return {ok:true};
@@ -943,6 +981,13 @@ function settleAIMerchantDisputes(s){
   settleMerchantDispute(s,buyer,dispute.id);
  }
 }
+function markTransportArrival(s,f,order){
+ const army=s.armies.find(a=>a.id===order.armyId);
+ if(!army?.move?.sea||army.move.transportFleetId!==f.id||army.move.returning){f.port=null;f.order=null;return}
+ army.move.transportReady=true;order.arrived=true;
+ // The convoy may dock at a friendly harbor, but a hostile harbor remains closed.
+ f.port=s.regions.find(r=>r.id===order.targetPort)?.owner===f.owner?order.targetPort:null;
+}
 export function advanceNaval(s,log=()=>{}){initializeNaval(s);if(!s.naval)return;const n=s.naval,avoidedNavalBattles=new Set();reportInterruptedGrainShortages(s,log);advanceWagons(s,log);consumeMaritimeProvisions(s);produceGoods(s);for(const j of [...n.jobs]){const p=s.world?.characters?.[j.characterId],budget=s.factions[j.owner];if(!p?.alive||p.faction!==j.owner||j.port&&s.regions.find(r=>r.id===j.port)?.owner!==j.owner){n.jobs.splice(n.jobs.indexOf(j),1);continue}if(j.remaining>0){j.remaining--;continue}budget.treasury=Math.max(-100,budget.treasury-1);if(budget.treasury<0)p.loyalty=Math.max(0,p.loyalty-1);j.experience=(j.experience||0)+1;if(j.experience%12===0){const skill=navalSkill(p,j.kind);p.navalSkills[j.kind]=Math.min(100,skill+2)}}
  for(const f of n.fleets)finalizeDestroyedFleet(s,f,log);
 for(const q of [...n.queues]){
@@ -993,7 +1038,7 @@ for(const q of [...n.queues]){
   const army=s.armies.find(a=>a.id===order.armyId&&a.move?.returning&&a.move.transportFleetId===f.id);if(army){army.move.to=home.id;army.move.final=home.id}
   if(oldPort&&f.owner===s.player)log(s,'The return harbor was lost; the fleet diverted to another friendly port.','返航港口失守，舰队改驶另一友方港口。');
  }
- for(const f of n.fleets){if(!ships(f))continue;const budget=s.factions[f.owner];if(f.pendingCommanderId){f.pendingMonths--;if(f.pendingMonths<=0){const person=s.world?.characters?.[f.pendingCommanderId];if(person?.alive&&person.faction===f.owner&&!person.missing){f.commanderId=f.pendingCommanderId;f.morale=Math.min(100,f.morale+2)}f.pendingCommanderId=null;f.pendingMonths=0}}const upkeep=fleetUpkeepDue(f);budget.treasury=Math.max(-100,budget.treasury-upkeep);if(budget.treasury<0){f.morale=Math.max(10,f.morale-3);const commander=s.world?.characters?.[f.commanderId];if(commander)commander.loyalty=Math.max(0,commander.loyalty-1)}if(f.port){const dock=s.regions.find(r=>r.id===f.port);f.supply=Math.min(100,f.supply+25+(dock?.buildings?.includes('naval-depot')?12:0)+navalJobEffect(s,f.owner,'harbor',f.port)*4);if(!f.reserve&&dock?.buildings?.includes('shipyard')&&f.hull<100&&budget.treasury>=3&&(s.development?.[f.owner]?.materials?.timber||0)>=1){budget.treasury-=3;s.development[f.owner].materials.timber--;f.hull=Math.min(100,f.hull+8+(dock.buildings.includes('dockyard')?8:0)+(activeEffects(s,f.owner).navalRepair||0)+navalJobEffect(s,f.owner,'engineer',f.port)*3)}const crewNeeded=Object.entries(f.ships).reduce((n,[type,count])=>n+(SHIPS[type]?.crew||0)*count,0)-f.sailors;if(!f.reserve&&crewNeeded>0&&budget.treasury>=2&&budget.manpower>0){const recruited=Math.min(30,crewNeeded,budget.manpower);budget.treasury-=2;budget.manpower-=recruited;f.sailors+=recruited}if(!f.reserve&&dock?.buildings?.includes('naval-training'))f.experience=Math.min(100,f.experience+2)}else{f.supply=Math.max(0,f.supply-8+(activeEffects(s,f.owner).navalSupply||0));if(f.supply===0)f.morale=Math.max(10,f.morale-3)}maritimeHazards(s,f,log);const order=f.order;if(!order)continue;if(order.path.length){for(let step=0;step<fleetSpeed(f)&&order.path.length;step++){f.zone=order.path.shift();if(order.kind==='transport')order.departed=true}f.port=null}else if(order.targetPort){f.zone=portZone(order.targetPort);if(order.kind==='return'||order.kind==='transport'){f.port=order.targetPort;if(order.kind==='return'&&order.cargo){budget.food=Math.min(budget.foodCapacity||100,budget.food+order.cargo);report(s,{kind:'supply-return',owner:f.owner,port:order.targetPort,cargo:order.cargo})}if(order.kind==='return'&&order.armyId)completeTransportReturn(s,f,order,log);if(order.kind==='transport'){const a=s.armies.find(x=>x.id===order.armyId);if(a?.move)a.move.transportReady=true}f.order=null}}if(order.kind==='recon'&&!order.path.length){resolveReconOrder(s,f,avoidedNavalBattles,log);f.order=null}}
+ for(const f of n.fleets){if(!ships(f))continue;const budget=s.factions[f.owner];if(f.pendingCommanderId){f.pendingMonths--;if(f.pendingMonths<=0){const person=s.world?.characters?.[f.pendingCommanderId];if(person?.alive&&person.faction===f.owner&&!person.missing){f.commanderId=f.pendingCommanderId;f.morale=Math.min(100,f.morale+2)}f.pendingCommanderId=null;f.pendingMonths=0}}const upkeep=fleetUpkeepDue(f);budget.treasury=Math.max(-100,budget.treasury-upkeep);if(budget.treasury<0){f.morale=Math.max(10,f.morale-3);const commander=s.world?.characters?.[f.commanderId];if(commander)commander.loyalty=Math.max(0,commander.loyalty-1)}if(f.port){const dock=s.regions.find(r=>r.id===f.port);f.supply=Math.min(100,f.supply+25+(dock?.buildings?.includes('naval-depot')?12:0)+navalJobEffect(s,f.owner,'harbor',f.port)*4);if(!f.reserve&&dock?.buildings?.includes('shipyard')&&f.hull<100&&budget.treasury>=3&&(s.development?.[f.owner]?.materials?.timber||0)>=1){budget.treasury-=3;s.development[f.owner].materials.timber--;f.hull=Math.min(100,f.hull+8+(dock.buildings.includes('dockyard')?8:0)+(activeEffects(s,f.owner).navalRepair||0)+navalJobEffect(s,f.owner,'engineer',f.port)*3)}const crewNeeded=Object.entries(f.ships).reduce((n,[type,count])=>n+(SHIPS[type]?.crew||0)*count,0)-f.sailors;if(!f.reserve&&crewNeeded>0&&budget.treasury>=2&&budget.manpower>0){const recruited=Math.min(30,crewNeeded,budget.manpower);budget.treasury-=2;budget.manpower-=recruited;f.sailors+=recruited}if(!f.reserve&&dock?.buildings?.includes('naval-training'))f.experience=Math.min(100,f.experience+2)}else{f.supply=Math.max(0,f.supply-8+(activeEffects(s,f.owner).navalSupply||0));if(f.supply===0)f.morale=Math.max(10,f.morale-3)}maritimeHazards(s,f,log);const order=f.order;if(!order||order.kind==='transport'&&order.arrived)continue;if(order.path.length){for(let step=0;step<fleetSpeed(f)&&order.path.length;step++){f.zone=order.path.shift();if(order.kind==='transport')order.departed=true}f.port=null}else if(order.targetPort){f.zone=portZone(order.targetPort);if(order.kind==='return'||order.kind==='transport'){f.port=order.targetPort;if(order.kind==='return'&&order.cargo){budget.food=Math.min(budget.foodCapacity||100,budget.food+order.cargo);report(s,{kind:'supply-return',owner:f.owner,port:order.targetPort,cargo:order.cargo})}if(order.kind==='return'&&order.armyId)completeTransportReturn(s,f,order,log);if(order.kind==='transport')markTransportArrival(s,f,order);else f.order=null}}if(order.kind==='recon'&&!order.path.length){resolveReconOrder(s,f,avoidedNavalBattles,log);f.order=null}}
  for(const f of n.fleets)finalizeDestroyedFleet(s,f,log);
   // Sharing a sea zone does not expose a fleet sheltered in harbor to an
   // open-water encounter. It must sortie before a patrol can engage it.

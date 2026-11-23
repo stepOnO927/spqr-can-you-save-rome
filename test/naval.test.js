@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGrandGame,tick,moveArmy,cancelMarch,previewMarch,upgradeSave,aiTurn,startConstruction} from '../engine.js';
+import {newGrandGame,tick,moveArmy,cancelMarch,previewMarch,upgradeSave,aiTurn,startConstruction,resolveBattle as resolveLandBattle} from '../engine.js';
 import {SEA_ZONES,seaRoute,portZone,isPortBlockaded,queueShip,cancelShipConstruction,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,navalJobEffect,advanceNaval,resolveBattle,reportedHostileFleets,reportedNonHostileFleets,accessibleFleet,supportPirates,toggleTradeRoute,fleetSpeed,fleetCargoCapacity,fleetUpkeep,fleetUpkeepDue,wagonSupplyPlan,dispatchWagonSupply,harborTradeCapacity,settleMerchantDispute} from '../naval.js';
 import {tradeCard,renderNavalPanel} from '../map-lab/naval-ui.js';
 import {developmentPanel,constructionPanel} from '../development-ui.js';
@@ -1033,17 +1033,56 @@ test('AI can order a real army transport when a hostile coast is reachable by se
  const s=newGrandGame('caesar');for(const r of s.regions)r.owner='egypt';s.regions.find(r=>r.id==='italiaS').owner='senate';s.regions.find(r=>r.id==='t075').owner='caesar';s.armies=s.armies.filter(a=>a.id==='italy');s.armies[0].region='italiaS';
  aiTurn(s,'senate');assert.equal(s.armies[0].move?.sea,true);assert.equal(s.armies[0].move?.to,'t075');assert.equal(s.naval.fleets.find(f=>f.owner==='senate').order?.armyId,'italy');
 });
-test('same-zone Adriatic transport remains offshore for interception before docking',()=>{
+test('same-zone Adriatic transport remains offshore and committed until landing',()=>{
  const setup=()=>{const s=newGrandGame('senate'),army=s.armies.find(a=>a.id==='italy'),enemy=s.naval.fleets.find(f=>f.owner==='caesar');army.region='italiaS';army.men=5200;s.regions.find(r=>r.id==='t075').owner='caesar';enemy.zone=portZone('italiaS');enemy.port=null;return s};
  const exposed=setup();assert.equal(moveArmy(exposed,'italy','t075').ok,true);
  assert.deepEqual(exposed.naval.fleets.find(f=>f.id==='senate-adriatic').order.path,['adriatic']);
  advanceNaval(exposed);
  assert.equal(exposed.naval.fleets.find(f=>f.id==='senate-adriatic').port,null);
  assert.ok(exposed.naval.reports.some(r=>r.kind==='battle'&&r.zone==='adriatic'&&r.participants.includes('senate-adriatic')),'an enemy fleet in the crossing zone can engage the transport');
- const safe=setup();safe.naval.fleets=safe.naval.fleets.filter(f=>f.owner==='senate');assert.equal(moveArmy(safe,'italy','t075').ok,true);
+ const safe=setup(),hostile=safe.naval.fleets.find(f=>f.owner==='caesar');safe.naval.fleets=safe.naval.fleets.filter(f=>f.owner==='senate');assert.equal(moveArmy(safe,'italy','t075').ok,true);
  advanceNaval(safe);const loaded=upgradeSave(JSON.parse(JSON.stringify(safe))),fleet=loaded.naval.fleets.find(f=>f.id==='senate-adriatic');
  assert.equal(fleet.port,null);assert.equal(fleet.order?.kind,'transport');assert.equal(loaded.armies.find(a=>a.id==='italy').move.transportReady,false);
- advanceNaval(loaded);assert.equal(fleet.port,'t075');assert.equal(fleet.order,null);assert.equal(loaded.armies.find(a=>a.id==='italy').move.transportReady,true);
+ advanceNaval(loaded);assert.equal(fleet.port,null);assert.equal(fleet.order?.kind,'transport');assert.equal(fleet.order?.arrived,true);assert.equal(loaded.armies.find(a=>a.id==='italy').move.transportReady,true);
+ assert.equal(orderFleet(loaded,'senate',fleet.id,'blockade','cisalpine').ok,false,'the player cannot send embarked troops on another mission');
+ fleet.supply=50;fleet.hull=60;loaded.regions.find(r=>r.id==='t075').buildings.push('shipyard');
+ advanceNaval(loaded);assert.equal(fleet.port,null);assert.equal(fleet.supply,42,'an enemy harbor cannot provision the convoy');assert.equal(fleet.hull,60,'an enemy shipyard cannot repair it');
+ assert.equal(fleet.order?.kind,'transport','the convoy remains assigned until the army resolves its landing');
+ loaded.naval.fleets.push({...structuredClone(hostile),port:null,zone:fleet.zone});
+ advanceNaval(loaded);
+ assert.ok(loaded.naval.reports.some(r=>r.kind==='battle'&&r.participants.includes(fleet.id)),'a hostile fleet can still catch the waiting transport offshore');
+});
+test('imported saves reattach convoys that were freed at a hostile harbor',()=>{
+ const s=newGrandGame('senate'),unit=s.armies.find(a=>a.id==='italy'),convoy=s.naval.fleets.find(f=>f.id==='senate-adriatic');
+ unit.region='italiaS';s.regions.find(r=>r.id==='t075').owner='caesar';s.naval.fleets=s.naval.fleets.filter(f=>f.owner==='senate');
+ assert.equal(moveArmy(s,unit.id,'t075').ok,true);advanceNaval(s);advanceNaval(s);
+ assert.equal(unit.move.transportReady,true);
+ convoy.port='t075';convoy.order={kind:'blockade',target:'cisalpine',targetPort:'cisalpine',path:[]};
+ const loaded=upgradeSave(structuredClone(s)),ship=loaded.naval.fleets.find(f=>f.id===convoy.id),army=loaded.armies.find(a=>a.id===unit.id);
+ assert.equal(ship.port,null);assert.equal(ship.order?.kind,'transport');assert.equal(ship.order?.arrived,true);assert.equal(ship.order?.armyId,army.id);
+ assert.equal(orderFleet(loaded,'senate',ship.id,'patrol','adriatic').ok,false);
+ for(let i=0;i<8&&army.move;i++)tick(loaded);
+ assert.equal(army.region,'t075');assert.equal(army.move,null);assert.equal(ship.order,null);assert.equal(ship.port,'t075','ships dock only after their army occupies the harbor');
+ convoy.port=null;convoy.zone='ionian';convoy.order={kind:'patrol',target:'ionian',path:[]};
+ const diverted=upgradeSave(structuredClone(s)),divertedArmy=diverted.armies.find(a=>a.id===unit.id),divertedShip=diverted.naval.fleets.find(f=>f.id===convoy.id);
+ assert.equal(divertedArmy.move.transportReady,false,'a convoy on another sea must sail back before landing');
+ assert.equal(divertedShip.order?.kind,'transport');assert.deepEqual(divertedShip.order.path,['adriatic']);
+ advanceNaval(diverted);advanceNaval(diverted);
+ assert.equal(divertedArmy.move.transportReady,true);assert.equal(divertedShip.port,null);
+});
+test('survivors of a failed sea landing return aboard their real convoy',()=>{
+ const s=newGrandGame('senate'),unit=s.armies.find(a=>a.id==='italy'),defender=s.armies.find(a=>a.id==='xiii'),convoy=s.naval.fleets.find(f=>f.id==='senate-adriatic'),target=s.regions.find(r=>r.id==='t075');
+ unit.region='italiaS';defender.region=target.id;defender.men=8000;defender.morale=80;target.owner='caesar';
+ s.naval.fleets=s.naval.fleets.filter(f=>f.owner==='senate');
+ assert.equal(moveArmy(s,unit.id,target.id).ok,true);advanceNaval(s);advanceNaval(s);
+ assert.equal(convoy.order?.arrived,true);assert.equal(convoy.port,null);
+ assert.equal(resolveLandBattle(s,unit,defender,target),false);
+ assert.equal(unit.region,'italiaS','a failed landing does not teleport the army into enemy land');
+ assert.equal(unit.move?.returning,true);assert.equal(convoy.order?.kind,'return');assert.equal(convoy.order?.armyId,unit.id);
+ assert.equal(previewMarch(s,unit.id,target.id).ok,false,'troops aboard a return voyage cannot march');
+ const loaded=upgradeSave(structuredClone(s)),returning=loaded.armies.find(a=>a.id===unit.id),ship=loaded.naval.fleets.find(f=>f.id===convoy.id);
+ assert.equal(returning.move?.returning,true);advanceNaval(loaded);
+ assert.equal(returning.move,null);assert.equal(returning.region,'italiaS');assert.equal(ship.port,'italiaS');assert.equal(ship.order,null);
 });
 test('a defeated convoy aborts the landing even while its transports still have capacity',()=>{
  const s=newGrandGame('senate'),unit=s.armies.find(a=>a.id==='italy'),convoy=s.naval.fleets.find(f=>f.id==='senate-adriatic'),enemy=s.naval.fleets.find(f=>f.id==='caesar-adriatic');
