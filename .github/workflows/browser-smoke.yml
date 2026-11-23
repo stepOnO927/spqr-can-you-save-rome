@@ -65,6 +65,7 @@ jobs:
               node tools/asylum-courier-smoke.mjs
               node tools/agreement-courier-smoke.mjs
               node tools/all-agreement-types-smoke.mjs
+              node tools/military-access-effect-smoke.mjs
               node tools/alliance-courier-smoke.mjs
               node tools/family-letter-name-privacy-smoke.mjs
               node tools/future-family-reports-smoke.mjs
