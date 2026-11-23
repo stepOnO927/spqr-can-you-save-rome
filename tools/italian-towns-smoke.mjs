@@ -25,6 +25,12 @@ try{
  assert.match(await panel.innerText(),/Domitius Ahenobarbus/);
  assert.match(await panel.innerText(),/Local control: Senate/);
  assert.match(await panel.innerText(),/Source: Caesar, Civil Wars I/);
+ await page.locator('#town-route-army').selectOption('viii');
+ await page.locator('#town-route-plan').click();
+ assert.equal(await page.locator('.route-planner select').inputValue(),'italiaS');
+ assert.ok(await page.locator('.route-choice').count()>0);
+ await objective.evaluate(node=>node.click());
+ panel=page.locator('#command-detail');
  assert.equal(await page.locator('#town-siege').isDisabled(),false);
  await page.locator('#town-siege').click();
  assert.match(await panel.innerText(),/Siege takes/);
@@ -34,6 +40,7 @@ try{
  assert.equal(town.siege.actor,'caesar');
  assert.equal(town.legalSovereign,'senate');
  assert.equal(saved.regions.find(region=>region.id==='italiaS').owner,'senate');
+ assert.equal(saved.armies.find(army=>army.id==='viii').move,null);
  const iguvium=page.locator('.city-marker[data-city="IGUVIUM"]');
  await iguvium.waitFor({state:'visible'});
  await page.locator('[data-town-objective="iguvium"]').evaluate(node=>node.click());

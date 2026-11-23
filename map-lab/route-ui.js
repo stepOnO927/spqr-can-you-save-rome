@@ -1,6 +1,6 @@
 import {planRoutes} from '../route-planner.js';
 
-export function renderRoutePlanner({state, army, language, panel, onFirstStep, onStartExpedition}) {
+export function renderRoutePlanner({state, army, language, panel, onFirstStep, onStartExpedition, initialDestination=null}) {
   const zh = language === 'zh';
   const name = id => state.regions.find(region => region.id === id)?.name?.[zh ? 1 : 0] || id;
   const section = document.createElement('section'); section.className = 'help-list route-planner';
@@ -53,5 +53,9 @@ export function renderRoutePlanner({state, army, language, panel, onFirstStep, o
       results.append(row);
     }
   };
+  if(initialDestination&&[...select.options].some(option=>option.value===initialDestination)){
+    select.value=initialDestination;
+    button.click();
+  }
   return section;
 }
