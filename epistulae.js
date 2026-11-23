@@ -322,7 +322,7 @@ export function syncAgentReleaseLetters(s){
    subject:['Request to release an agent','释放情报人员请求'],
    body:[`${sender[0]} requests the release of an agent held by your government. Answer within six months; a reply and any handover take about two months and may be lost.`,` ${sender[1]}请求释放本方扣押的一名情报人员。请在六个月内答复；回信及可能的交接约需两个月，也可能遗失。`],
    options:['release_agent','refuse','ignore'],expires:monthIndex(s.year,s.month)+Math.max(0,r.remaining-1),context:{kind:'agent_release_request',captiveId:r.captiveId}});
-  if(result.ok){r.mailId=result.letter.id;result.letter.created={year:r.year,month:r.month};result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received'}
+  if(result.ok){result.letter.senderName=[...(FACTIONS[r.actor]?.name||['Another faction','另一势力'])];r.mailId=result.letter.id;result.letter.created={year:r.year,month:r.month};result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received'}
  }
 }
 
@@ -436,9 +436,9 @@ export function syncOfficialInquiryLetters(s){
  initializeMail(s);const subjects={leaders:['Who leads your government?','谁领导贵方政府？'],successor:['Who is the recognized successor?','谁是认可的继任人选？'],availability:['Is your government available for an audience?','贵方是否愿意安排会面？'],representative:['Who may represent your government?','谁可以代表贵方政府？'],clashes:['Are there reports of local fighting?','是否有地方武装冲突报告？']};
  for(const request of s.inquiries||[]){
   if(request.target!==s.player||request.actor===s.player||request.subject==='peace'||request.status!=='awaiting_decision'||request.mailId)continue;
-  const subject=subjects[request.subject];if(!subject)continue;const sender=name(request.actor);
+  const subject=subjects[request.subject];if(!subject)continue;const sender=FACTIONS[request.actor]?.name||['Another faction','另一势力'];
   const result=sendLetter(s,{senderInstitution:request.actor,senderFaction:request.actor,recipient:s.player,category:'diplomatic',priority:'important',subject:['Official inquiry','政府询问信'],body:[sender[0]+' asks: '+subject[0]+' A reply takes time and may be lost.',sender[1]+'来信询问：'+subject[1]+' 回信需要时间，也可能遗失。'],options:request.subject==='leaders'?['disclose_leaders','answer_limited','refuse','ignore']:['answer_limited','refuse','ignore'],expires:monthIndex(s.year,s.month)+Math.max(0,(request.remaining||1)-1),context:{kind:'official_inquiry',subject:request.subject}});
-  if(result.ok){request.mailId=result.letter.id;if(Number.isInteger(request.sentYear)&&Number.isInteger(request.sentMonth)&&request.sentMonth>=1&&request.sentMonth<=12)result.letter.created={year:request.sentYear,month:request.sentMonth};result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received'}
+  if(result.ok){result.letter.senderName=[...sender];request.mailId=result.letter.id;if(Number.isInteger(request.sentYear)&&Number.isInteger(request.sentMonth)&&request.sentMonth>=1&&request.sentMonth<=12)result.letter.created={year:request.sentYear,month:request.sentMonth};result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received'}
  }
 }
 

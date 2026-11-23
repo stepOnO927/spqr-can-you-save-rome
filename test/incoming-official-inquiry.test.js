@@ -1,6 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {newGame,upgradeSave,tick,sendInquiry,answerOfficialInquiry,replyToLetter} from '../engine.js?v=official-inquiries-1';
-import {receivedMail} from '../epistulae.js?v=official-inquiries-1';
+import {receivedMail,syncOfficialInquiryLetters} from '../epistulae.js?v=official-inquiries-1';
 import {mailboxHtml} from '../mail-ui.js?v=official-inquiries-1';
 const request=s=>s.inquiries.find(x=>x.actor==='egypt'&&x.target==='caesar'&&x.subject==='leaders');
 const letters=s=>receivedMail(s).filter(m=>m.context?.kind==='official_inquiry');
@@ -19,4 +19,8 @@ test('AI courts independently send inquiries to human and other AI courts',()=>{
 });
 test('AI-to-AI inquiries can be answered without a player decision',()=>{
  let answered=false;for(let seed=1;seed<=80&&!answered;seed++){const s=newGame('caesar');s.wars=[];assert.equal(sendInquiry(s,'egypt','parthia','leaders').ok,true);const r=s.inquiries[0];r.remaining=1;s.seed=(seed*7000013)>>>0;tick(s);if(r.status==='answered'){assert.ok(s.knowledge.egypt.parthia.reports.some(x=>x.source==='official'&&x.kind==='leaders'));assert.equal(letters(s).length,0);answered=true}}assert.ok(answered)
+});
+
+test('institutional correspondence does not disclose a live hidden Roman leader',()=>{
+ const s=newGame('senate');s.world.leadership.caesar=['antony'];s.world.characters.caesar.alive=false;s.world.characters.caesar.health='deceased';(s.inquiries||=[]).push({actor:'caesar',target:'senate',subject:'leaders',status:'awaiting_decision',remaining:6,sentYear:s.year,sentMonth:s.month});syncOfficialInquiryLetters(s);const m=letters(s)[0];assert.ok(m);assert.equal(m.senderId,null);assert.deepEqual(m.senderName,['Caesarian command','凯撒派军队']);assert.doesNotMatch(m.body[1],/盖乌斯|安东尼/);
 });

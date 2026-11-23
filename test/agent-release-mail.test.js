@@ -23,3 +23,7 @@ test('a decision from the security panel closes the same letter, and an old requ
 test('ignoring a delivered request sends no response and it eventually expires',()=>{
  const s=setup(1000),m=letters(s)[0];assert.equal(replyToLetter(s,m.id,'ignore',actions).ok,true);assert.equal(s.releaseRequests[0].status,'awaiting_decision');assert.equal(s.mail.messages.filter(x=>x.threadId===m.threadId).length,1);for(let i=0;i<6;i++)advanceAgentRequests(s);assert.equal(s.releaseRequests[0].status,'no_reply');assert.equal(s.world.captives[0].state,'held');
 });
+
+test('an institutional agent request does not reveal a hidden Roman leader',()=>{
+ const s=newGame('senate');s.world.captives.push({id:'foreign-roman',owner:'caesar',holder:'senate',state:'held'});s.world.leadership.caesar=['antony'];s.world.characters.caesar.alive=false;s.world.characters.caesar.health='deceased';assert.equal(requestAgentRelease(s,'caesar','foreign-roman').ok,true);advanceAgentRequests(s);s.world.intelSeed=1000;advanceAgentRequests(s);syncAgentReleaseLetters(s);const m=letters(s)[0];assert.ok(m);assert.equal(m.senderId,null);assert.deepEqual(m.senderName,['Caesarian command','凯撒派军队']);
+});
