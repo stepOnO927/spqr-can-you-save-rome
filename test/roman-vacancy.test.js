@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=roman-vacancy-1';
-import {initializeCursus} from '../cursus-honorum.js?v=roman-vacancy-1';
-import {createFictionalPerson} from '../dynasties.js?v=roman-vacancy-1';
-import {assignSuccession,successorFor} from '../characters.js?v=roman-vacancy-1';
-import {advanceGovernments,appointVacantRomanLeader,deriveGovernment,eligibleDeputies,planSuccession} from '../governance.js?v=roman-vacancy-1';
+import {newGame,upgradeSave} from '../engine.js?v=peace-outcome-1';
+import {initializeCursus} from '../cursus-honorum.js?v=peace-outcome-1';
+import {createFictionalPerson} from '../dynasties.js?v=peace-outcome-1';
+import {assignSuccession,successorFor} from '../characters.js?v=peace-outcome-1';
+import {advanceGovernments,appointVacantRomanLeader,deriveGovernment,eligibleDeputies,planSuccession} from '../governance.js?v=peace-outcome-1';
 
 const clearLeaders=s=>{for(const id of ['caesar','antony','lepidus']){s.world.characters[id].alive=false;s.world.characters[id].health='deceased'}s.world.leadership.caesar=[]};
 

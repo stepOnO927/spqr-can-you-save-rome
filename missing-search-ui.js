@@ -1,4 +1,4 @@
-import {fundMissingSearch,hasMissingSearchDestination} from './character-system.js?v=roman-vacancy-1';
+import {fundMissingSearch,hasMissingSearchDestination} from './character-system.js?v=peace-outcome-1';
 
 // The panel uses only the player's existing contact status, not the hidden fate.
 export function renderMissingSearch(s,id,zh=false){

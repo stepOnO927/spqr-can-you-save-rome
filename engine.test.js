@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick,moveArmy,previewMarch,recruit,setTax,diplomacy,resolveBattle,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,sendInquiry,answerPeaceOffer} from './engine.js?v=roman-vacancy-1';
+import {newGame,upgradeSave,tick,moveArmy,previewMarch,recruit,setTax,diplomacy,resolveBattle,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,sendInquiry,answerPeaceOffer} from './engine.js?v=peace-outcome-1';
 import historical from './historical-territories.js';
 import {REGIONS} from './data.js';
 import {identity,factionMark} from './identity.js';
@@ -38,7 +38,7 @@ test('peace offers remain in transit across saves and only end war on delivery',
  const seed=Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=.8&&q<.9});
  s.seed=seed;tick(s);assert.equal(s.inquiries[0].status,'pending');assert.equal(s.inquiries[0].sealed.status,'answered');assert.equal(s.inquiries[0].claim,undefined);assert.ok(isWar(s,'caesar','senate'));
  s=upgradeSave(JSON.parse(JSON.stringify(s)));for(const a of s.armies){a.move=null;a.siege=null}s.seed=seed;tick(s);
- assert.equal(s.inquiries[0].status,'answered');assert.equal(isWar(s,'caesar','senate'),false);assert.match(s.inquiries[0].claim[0],/war has ended/);
+ assert.equal(s.inquiries[0].status,'answered');assert.equal(isWar(s,'caesar','senate'),false);assert.match(s.inquiries[0].claim[0],/offer is accepted/);assert.equal(s.inquiries[0].peaceSettlement,'concluded');
  assert.equal(sendInquiry(s,'caesar','senate','peace').ok,false);
 });
 
@@ -327,3 +327,4 @@ test('war increases the chance of a reply being lost on its return journey',()=>
  function trial(war){const s=newGame('caesar');sendInquiry(s,'caesar','egypt');s.inquiries[0].remaining=1;s.inquiries[0].sealed={status:'answered',year:s.year,month:s.month,claim:['An answer','一封答复'],report:{kind:'leaders',leaders:['ptolemy']}};if(war)s.wars.push(['caesar','egypt']);s.seed=seed;tick(s);return s}
  const peace=trial(false),war=trial(true);assert.equal(peace.inquiries[0].status,'answered');assert.equal(peace.knowledge.caesar.egypt.reports.length,1);assert.equal(war.inquiries[0].status,'no_reply');assert.equal(war.knowledge.caesar.egypt.reports.length,0);assert.equal(war.inquiries[0].claim,undefined);
 });
+

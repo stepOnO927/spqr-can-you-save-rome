@@ -1,7 +1,7 @@
-import {storedCorrespondentName} from './person-knowledge.js?v=roman-vacancy-1';
-import {syncChronicleDispatches} from './chronicle.js?v=roman-vacancy-1';
-import {CHARACTER_CATALOG} from './characters.js?v=roman-vacancy-1';
-import {initializeDynasties} from './dynasties.js?v=roman-vacancy-1';
+import {storedCorrespondentName} from './person-knowledge.js?v=peace-outcome-1';
+import {syncChronicleDispatches} from './chronicle.js?v=peace-outcome-1';
+import {CHARACTER_CATALOG} from './characters.js?v=peace-outcome-1';
+import {initializeDynasties} from './dynasties.js?v=peace-outcome-1';
 
 export function canFinalizeCampaign(s){return !!(s.victory||s.defeat||s.peacefulVictory||s.world?.dynasties?.scenario?.stage==='resolved')}
 
