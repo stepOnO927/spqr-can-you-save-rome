@@ -90,7 +90,7 @@ export function sendLetter(s, spec) {
   const {senderId, senderInstitution, senderFaction, recipient, category = 'personal'} = spec;
   // A sealed aid reply can outlive the court that dispatched it; its arrival
   // must not disclose that court's subsequent hidden disappearance.
-  const formerAidSender=['aid_result','coalition_offer','coalition_result','commercial_league_offer','commercial_league_result','commercial_league_admission','commercial_league_admission_result','commercial_league_motion','commercial_league_motion_result','coalition_defense_call','agreement_result','asylum_result','coalition_aid_result','family_marriage_result','family_accord_result','agent_release_request','inquiry_result','personal_audience_result'].includes(spec.context?.kind)&&!senderId&&senderInstitution===senderFaction&&!!FACTIONS[senderFaction];
+  const formerAidSender=['aid_result','coalition_offer','coalition_result','commercial_league_offer','commercial_league_result','commercial_league_admission','commercial_league_admission_result','commercial_league_motion','commercial_league_motion_result','coalition_defense_call','agreement_result','asylum_result','coalition_aid_result','family_marriage_result','family_accord_result','agent_release_request','official_inquiry','inquiry_result','personal_audience_result'].includes(spec.context?.kind)&&!senderId&&senderInstitution===senderFaction&&!!FACTIONS[senderFaction];
   if ((!s.factions?.[senderFaction]&&!formerAidSender) || !s.factions?.[recipient] || (senderFaction === recipient && category === 'diplomatic')) return {ok:false, reason:'faction'};
   if (senderId && (!s.world?.characters?.[senderId]||!s.world.characters[senderId].alive||s.world.characters[senderId].faction!==senderFaction)) return {ok:false, reason:'sender'};
   if (!senderId && senderInstitution !== senderFaction) return {ok:false, reason:'sender'};
@@ -185,6 +185,10 @@ export function replyToLetter(s, id, choice, actions, details={}) {
     ok = actions.answerAgreementProposal?.(s,m.context.proposalId,choice).ok === true;
   } else if (m.context?.kind === 'coalition_offer') {
     ok = actions.answerCoalitionInvitation?.(s,m.context.invitationId,choice).ok === true;
+  } else if (m.context?.kind === 'official_inquiry') {
+    const request=(s.inquiries||[]).find(r=>r.mailId===m.id&&r.target===s.player&&r.status==='awaiting_decision'&&r.subject===m.context.subject);
+    if(!request)return {ok:false,reason:'unavailable'};
+    if(choice!=='ignore')ok=actions.answerOfficialInquiry?.(s,request.actor,request.subject,choice).ok===true;
   } else if (m.context?.kind === 'commercial_league_offer') {
     ok = actions.answerCommercialLeagueOffer?.(s,m.context.offerId,choice).ok === true;
   } else if (m.context?.kind === 'commercial_league_admission') {
@@ -341,7 +345,7 @@ export function replyToLetter(s, id, choice, actions, details={}) {
     resolved:!delayed});
   if(m.context?.kind==='personal_age'&&choice==='ask_why')replyNotice(s,m,['Why I asked','为何相问'],['I wished to know you better, and meant no offense.','只盼多了解阁下，并无冒犯之意。']);
   if(m.context?.kind==='personal_flavor'&&choice==='grant_favor')replyNotice(s,m,['A note of thanks','致谢短笺'],['I am grateful for the court’s assistance.','承蒙朝廷资助，谨致谢意。']);
-  if(!['ignore','acknowledge','seek_allies'].includes(choice)&&!['coalition_offer','commercial_league_offer','agreement_offer','agent_release_request'].includes(m.context?.kind)){
+  if(!['ignore','acknowledge','seek_allies'].includes(choice)&&!['coalition_offer','commercial_league_offer','agreement_offer','agent_release_request','official_inquiry'].includes(m.context?.kind)){
     const leader=senderFor(s,s.player),to=m.senderFaction;
     const phrase={accept:['We accept the proposed accord.','本朝接受所议协定。'],join_war:['We have agreed to enter the war.','本朝同意加入战争。'],send_war_aid:['We have dispatched treasury and food in support.','本朝已派出国库和粮食援助。'],refuse:['We decline the request.','本朝谢绝此项请求。'],reject:['We decline the proposed accord.','本朝谢绝所议协定。'],negotiate:['We request further negotiations.','本朝请求继续商议。'],condemn:['We condemn this declaration.','本朝谴责此项宣战。'],apologize:['We regret the strain between our courts.','两国关系紧张，本朝深表遗憾。'],defend:['Our court maintains its position.','本朝坚持原有立场。'],welcome:['We welcome this correspondence.','本朝欣然收到来函。'],send_aid:['We have committed five treasury units in support.','本朝决定提供五单位国库援助。'],concede:['We accept the requested settlement.','本朝同意所请和解。']}[choice]||[choice.replaceAll('_',' '),choice];
     if(to!==s.player){const sent=sendLetter(s,{senderId:leader,senderInstitution:leader?null:s.player,senderFaction:s.player,recipient:to,source:m.destination,destination:m.source,
@@ -365,7 +369,7 @@ export function syncAgentReleaseLetters(s){
    subject:['Request to release an agent','释放情报人员请求'],
    body:[`${sender[0]} requests the release of an agent held by your government. Answer within six months; a reply and any handover take about two months and may be lost.`,` ${sender[1]}请求释放本方扣押的一名情报人员。请在六个月内答复；回信及可能的交接约需两个月，也可能遗失。`],
    options:['release_agent','refuse','ignore'],expires:monthIndex(s.year,s.month)+Math.max(0,r.remaining-1),context:{kind:'agent_release_request',captiveId:r.captiveId}});
-  if(result.ok){r.mailId=result.letter.id;result.letter.created={year:r.year,month:r.month};result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received'}
+  if(result.ok){result.letter.senderName=[...(FACTIONS[r.actor]?.name||['Another faction','另一势力'])];r.mailId=result.letter.id;result.letter.created={year:r.year,month:r.month};result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received'}
  }
 }
 
@@ -590,6 +594,18 @@ export function syncStrategicOfferLetters(s){
    body:aid?[`${name(offer.actor)[0]} requests 12 treasury and 8 food for its war against ${target[0]}. Sending aid does not declare war. The shipment takes time and may be lost.`,`${name(offer.actor)[1]}请求12国库和8粮食，以支援其对${target[1]}的战争。提供物资不会宣战；运输需要时间且可能遗失。`]:[`${name(offer.actor)[0]} asks us to join its war against ${target[0]}. Accepting declares war immediately unless we are already at war; alliances may involve other states. A reply takes time and may be lost.`,` ${name(offer.actor)[1]}请求本方加入其对${target[1]}的战争。接受将立即宣战（若尚未交战），同盟可能使其他国家卷入。回信需要时间且可能遗失。`],
    options:aid?['send_war_aid','refuse','ignore']:['join_war','refuse','ignore'],expires:monthIndex(s.year,s.month)+Math.max(0,offer.remaining-1),context:{kind:'strategic_offer',offerId:offer.id}});
   if(result.ok){if(typeof offer.senderSnapshot?.id==='string'&&Array.isArray(offer.senderSnapshot.name)){result.letter.senderId=offer.senderSnapshot.id;result.letter.senderInstitution=null;result.letter.senderName=[...offer.senderSnapshot.name];result.letter.senderPortrait=offer.senderSnapshot.portrait||null}offer.mailId=result.letter.id;if(Number.isInteger(offer.year)&&Number.isInteger(offer.month)&&offer.month>=1&&offer.month<=12)result.letter.created={year:offer.year,month:offer.month};result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received';mail.generated['strategic:'+offer.id]=true}
+ }
+}
+
+// Only a courier that reached the player's court creates an inquiry letter.
+// A reply shares the authoritative inquiry's return trip and loss roll.
+export function syncOfficialInquiryLetters(s){
+ initializeMail(s);const subjects={leaders:['Who leads your government?','谁领导贵方政府？'],successor:['Who is the recognized successor?','谁是认可的继任人选？'],availability:['Is your government available for an audience?','贵方是否愿意安排会面？'],representative:['Who may represent your government?','谁可以代表贵方政府？'],clashes:['Are there reports of local fighting?','是否有地方武装冲突报告？']};
+ for(const request of s.inquiries||[]){
+  if(request.target!==s.player||request.actor===s.player||request.subject==='peace'||request.status!=='awaiting_decision'||request.mailId)continue;
+  const subject=subjects[request.subject];if(!subject)continue;const sender=FACTIONS[request.actor]?.name||['Another faction','另一势力'];
+  const result=sendLetter(s,{senderInstitution:request.actor,senderFaction:request.actor,recipient:s.player,category:'diplomatic',priority:'important',subject:['Official inquiry','政府询问信'],body:[sender[0]+' asks: '+subject[0]+' A reply takes time and may be lost.',sender[1]+'来信询问：'+subject[1]+' 回信需要时间，也可能遗失。'],options:request.subject==='leaders'?['disclose_leaders','answer_limited','refuse','ignore']:['answer_limited','refuse','ignore'],expires:monthIndex(s.year,s.month)+Math.max(0,(request.remaining||1)-1),context:{kind:'official_inquiry',subject:request.subject}});
+  if(result.ok){result.letter.senderName=[...sender];request.mailId=result.letter.id;if(Number.isInteger(request.sentYear)&&Number.isInteger(request.sentMonth)&&request.sentMonth>=1&&request.sentMonth<=12)result.letter.created={year:request.sentYear,month:request.sentMonth};result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received'}
  }
 }
 
