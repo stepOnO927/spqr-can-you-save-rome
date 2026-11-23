@@ -66,6 +66,15 @@ test('36 monthly population updates keep gradual migration recorded across three
  assert.ok(records.every(x=>x.to==='narbo'&&x.month===12&&x.count>0&&x.count<=800));
  assert.ok(records[0].count>=records[2].count,'movement should shrink as the origin loses population');
 });
+test('a restrictive policy can cause actual relocation when local conditions cross the hardship threshold',()=>{
+ const setup=()=>{const s=newGame('senate');for(const r of s.regions)r.population.satisfaction=65;s.regions.find(r=>r.id==='roma').population.satisfaction=45;s.regions.find(r=>r.id==='italiaN').population.satisfaction=90;s.factions.senate.food=100;s.month=12;return s};
+ const control=setup(),restricted=setup(),college=restricted.world.religiousInstitutions.find(o=>o.id==='roman_college');
+ assert.ok(religiousPolicy(restricted,'senate',college.id,'restrict').ok);
+ advanceReligion(control);advanceReligion(restricted);
+ assert.ok(!(control.world.populationMigrations||[]).some(x=>x.from==='roma'));
+ assert.ok(restricted.world.populationMigrations.some(x=>x.from==='roma'&&x.to==='italiaN'));
+ assert.ok(restricted.regions.find(r=>r.id==='roma').population.total<control.regions.find(r=>r.id==='roma').population.total);
+});
 test('new campaigns do not inherit fictional people created in another campaign',()=>{
  const first=newGame('caesar'),id=createFictionalPerson(first,{name:'Prior campaign only',faction:'senate',birthYear:-80,location:'roma'});assert.ok(first.world.characters[id]);
  const second=newGame('caesar');assert.equal(second.world.characters[id],undefined);assert.equal(second.world.religiousInstitutions.length,3);
