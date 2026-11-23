@@ -1,9 +1,9 @@
-import {FACTIONS,ROUTES} from './data.js?v=archived-exchange-1';
+import {FACTIONS,ROUTES} from './data.js?v=dossier-archive-1';
 import {localEntity,localTradeOpen} from './local-polities.js';
-import {initializeControlKnowledge,reportedControl} from './control-intelligence.js?v=archived-exchange-1';
-import {initializeLocalDiscovery,localDiscoveryLevel,LOCAL_DISCOVERY_LEVELS,recordLocalDiscovery} from './local-discovery.js?v=archived-exchange-1';
-import {sendLetter} from './epistulae.js?v=archived-exchange-1';
-import {nonMilitaryAccessStatus} from './border-access.js?v=archived-exchange-1';
+import {initializeControlKnowledge,reportedControl} from './control-intelligence.js?v=dossier-archive-1';
+import {initializeLocalDiscovery,localDiscoveryLevel,LOCAL_DISCOVERY_LEVELS,recordLocalDiscovery} from './local-discovery.js?v=dossier-archive-1';
+import {sendLetter} from './epistulae.js?v=dossier-archive-1';
+import {nonMilitaryAccessStatus} from './border-access.js?v=dossier-archive-1';
 
 const date=state=>state.year*12+state.month;
 const relation=(state,a,b)=>state.relations[[a,b].sort().join(':')]??0;

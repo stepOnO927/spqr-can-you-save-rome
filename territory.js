@@ -1,5 +1,5 @@
-import {ROUTES} from './data.js?v=archived-exchange-1';
-import historical from './historical-territories.js?v=archived-exchange-1';
+import {ROUTES} from './data.js?v=dossier-archive-1';
+import historical from './historical-territories.js?v=dossier-archive-1';
 
 // state.regions remains the only mutable territory registry. This module
 // enriches those records without maintaining a second ownership table.

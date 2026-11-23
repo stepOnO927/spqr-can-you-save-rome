@@ -7,9 +7,9 @@
 // structure. A schematic terrain layer (plateau, ranges, deserts, steppe,
 // marsh), lakes and rivers sits under the political colours.
 // Map modes: political 政区 · circuits 州部 · theatres 战区 · terrain 地形.
-import LAND from '../land.js?v=archived-exchange-1';
-import {REGIONS,ROUTES,ZHOU,THEATERS} from './data.js?v=archived-exchange-1';
-import {REGION_GEO,OUTSIDE,TERRAIN,LAKES,RIVERS,FRONTIER} from './geography.js?v=archived-exchange-1';
+import LAND from '../land.js?v=dossier-archive-1';
+import {REGIONS,ROUTES,ZHOU,THEATERS} from './data.js?v=dossier-archive-1';
+import {REGION_GEO,OUTSIDE,TERRAIN,LAKES,RIVERS,FRONTIER} from './geography.js?v=dossier-archive-1';
 
 export const VIEW={lon0:27,lon1:127,lat0:55,lat1:23,W:1400,H:760};
 export const project=([lon,lat])=>[Math.round((lon-VIEW.lon0)/(VIEW.lon1-VIEW.lon0)*VIEW.W*10)/10,Math.round((VIEW.lat0-lat)/(VIEW.lat0-VIEW.lat1)*VIEW.H*10)/10];

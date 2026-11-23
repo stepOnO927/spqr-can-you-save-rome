@@ -6,9 +6,9 @@
 // power. Rome learns about the East only through merchant reports carried
 // along the Silk Road and through Parthia: every report is years old when it
 // arrives, and Rome starts with nothing but an old account.
-import {newHanGame,tick as hanTick,loadHanSave} from './engine.js?v=archived-exchange-1';
-import {REGIONS,FACTIONS} from './data.js?v=archived-exchange-1';
-import {isLiuClan} from './dynasty.js?v=archived-exchange-1';
+import {newHanGame,tick as hanTick,loadHanSave} from './engine.js?v=dossier-archive-1';
+import {REGIONS,FACTIONS} from './data.js?v=dossier-archive-1';
+import {isLiuClan} from './dynasty.js?v=dossier-archive-1';
 
 export const DLC_KEY='hanWorld';
 const mi=(y,m)=>y*12+m;

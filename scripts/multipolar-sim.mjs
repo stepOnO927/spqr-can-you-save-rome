@@ -1,7 +1,7 @@
-import {newGame,tick} from '../engine.js?v=archived-exchange-1';
+import {newGame,tick} from '../engine.js?v=dossier-archive-1';
 import assert from 'node:assert/strict';
-import {proposeAgreement} from '../agreements.js?v=archived-exchange-1';
-import {warningLedger} from '../warning-ledger.js?v=archived-exchange-1';
+import {proposeAgreement} from '../agreements.js?v=dossier-archive-1';
+import {warningLedger} from '../warning-ledger.js?v=dossier-archive-1';
 
 // Identical unforced openings, different seeded random streams; both the
 // fully automated world and an ordinary passive Roman player are exercised.

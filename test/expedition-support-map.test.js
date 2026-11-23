@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame, startExpedition, upgradeSave} from '../engine.js';
 import {localEntity} from '../local-polities.js';
-import {proposeAgreement} from '../agreements.js?v=archived-exchange-1';
+import {proposeAgreement} from '../agreements.js?v=dossier-archive-1';
 import {expeditionSupportMap} from '../map-lab/expedition-support-map.js';
 import {planRoutes} from '../route-planner.js';
 
