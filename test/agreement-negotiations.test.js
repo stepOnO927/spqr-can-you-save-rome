@@ -1,7 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick,canFormAlliance,diplomacy} from '../engine.js?v=roman-vacancy-1';
-import {sendAgreementProposal,advanceAgreementProposals} from '../agreement-negotiations.js?v=roman-vacancy-1';
-import {syncAgreementLetters,receivedMail} from '../epistulae.js?v=roman-vacancy-1';
+import {newGame,upgradeSave,tick,canFormAlliance,diplomacy} from '../engine.js?v=peace-outcome-1';
+import {sendAgreementProposal,advanceAgreementProposals} from '../agreement-negotiations.js?v=peace-outcome-1';
+import {syncAgreementLetters,receivedMail} from '../epistulae.js?v=peace-outcome-1';
 const step=s=>{s.month++;if(s.month>12){s.month=1;s.year++}advanceAgreementProposals(s,{checkAlliance:canFormAlliance,concludeAlliance:(state,a,b)=>diplomacy(state,a,b,'alliance',{priorConsent:true})});syncAgreementLetters(s)};
 function fixture(seed,relation=60){const s=newGame('caesar');s.seed=seed;s.relations['caesar:egypt']=relation;s.factions.caesar.treasury=100;return s}
 function outcomes(relation=60){const values=new Map();for(let seed=1;seed<500&&values.size<3;seed++){const s=fixture((seed*1000003)>>>0,relation),start=sendAgreementProposal(s,'caesar','egypt','trade');assert.ok(start.ok);for(let i=0;i<4;i++)step(s);const x=s.world.agreementLetters[0];if(!values.has(x.status))values.set(x.status,{s,seed:(seed*1000003)>>>0})}return values}
@@ -21,7 +21,7 @@ test('old saves without proposal queues remain playable and the real monthly tic
 });
 
 test('every agreement type can be concluded by a delivered proposal with its original terms',async()=>{
- const {AGREEMENT_TYPES,visibleAgreements}=await import('../agreements.js?v=roman-vacancy-1');const seed=outcomes().get('accepted').seed;
+ const {AGREEMENT_TYPES,visibleAgreements}=await import('../agreements.js?v=peace-outcome-1');const seed=outcomes().get('accepted').seed;
  for(const [type,def] of Object.entries(AGREEMENT_TYPES)){const s=fixture(seed),cash=s.factions.caesar.treasury,subjectType=['protectorate','client_kingdom'].includes(type);assert.ok(sendAgreementProposal(s,'caesar','egypt',type,{secret:!subjectType}).ok,type);for(let i=0;i<4;i++)step(s);const letter=s.world.agreementLetters[0];assert.equal(letter.status,'accepted',type);const agreement=s.agreements.find(x=>x.id===letter.agreement);assert.equal(agreement.type,type);assert.equal(agreement.diplomaticCost,def.cost);assert.equal(agreement.duration,def.duration);assert.equal(s.factions.caesar.treasury,cash-2-def.cost);assert.equal(visibleAgreements(s,'parthia').some(x=>x.id===agreement.id),subjectType);assert.equal(receivedMail(s).find(x=>x.context?.kind==='agreement_result')?.confidentiality,subjectType?'ordinary':'secret')}
 });
 

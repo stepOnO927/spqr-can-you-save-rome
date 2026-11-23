@@ -1,6 +1,6 @@
-import {reportedControl} from '../control-intelligence.js?v=roman-vacancy-1';
-import {deriveGovernment} from '../governance.js?v=roman-vacancy-1';
-import {CHARACTER_CATALOG} from '../characters.js?v=roman-vacancy-1';
+import {reportedControl} from '../control-intelligence.js?v=peace-outcome-1';
+import {deriveGovernment} from '../governance.js?v=peace-outcome-1';
+import {CHARACTER_CATALOG} from '../characters.js?v=peace-outcome-1';
 
 // Project government authority from the viewer's own state or dated reports.
 // The theater-level political authority is not a claim of presence in a city.

@@ -1,5 +1,5 @@
-import {ROUTES,FACTIONS} from './data.js?v=roman-vacancy-1';
-import {reportedControl} from './control-intelligence.js?v=roman-vacancy-1';
+import {ROUTES,FACTIONS} from './data.js?v=peace-outcome-1';
+import {reportedControl} from './control-intelligence.js?v=peace-outcome-1';
 
 // Public announcements are learned by participants and adjacent observers.
 // Snapshots are not live links: an observer who loses contact keeps old news.

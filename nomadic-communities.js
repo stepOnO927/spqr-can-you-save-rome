@@ -1,4 +1,4 @@
-import {ROUTES} from './data.js?v=roman-vacancy-1';
+import {ROUTES} from './data.js?v=peace-outcome-1';
 
 const now=state=>state.year*12+state.month;
 const hostile=(state,a,b)=>a!==b&&(state.wars||[]).some(pair=>pair.includes(a)&&pair.includes(b));

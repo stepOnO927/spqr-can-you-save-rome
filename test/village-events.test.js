@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=roman-vacancy-1';
+import {newGame,upgradeSave} from '../engine.js?v=peace-outcome-1';
 import {localEntity} from '../local-polities.js';
 import {advanceVillages,startVillageProject} from '../local-villages.js';
 import {inspectState} from '../inspector-diagnostics.js';
-import {receivedMail,replyToLetter} from '../epistulae.js?v=roman-vacancy-1';
+import {receivedMail,replyToLetter} from '../epistulae.js?v=peace-outcome-1';
 
 test('a surplus supports one dated village gathering without repeated notifications', () => {
   const state = newGame('caesar'), site = localEntity(state, 'ravenna-farms'), village = site.village;

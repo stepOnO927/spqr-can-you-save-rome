@@ -1,8 +1,8 @@
-import {ROUTES} from './data.js?v=roman-vacancy-1';
-import {generatedLocalPolities,generatedIndependentVillages,generatedNomadicCommunities,generatedWildernessSites,historicalLocalProfile,historicalCivicLeadership,LOCAL_GENERATION_BANDS} from './local-generation.js?v=roman-vacancy-1';
-import {sendLetter} from './epistulae.js?v=roman-vacancy-1';
-import {nonMilitaryAccessStatus} from './border-access.js?v=roman-vacancy-1';
-import {localDiscoveryLevel,LOCAL_DISCOVERY_LEVELS} from './local-discovery.js?v=roman-vacancy-1';
+import {ROUTES} from './data.js?v=peace-outcome-1';
+import {generatedLocalPolities,generatedIndependentVillages,generatedNomadicCommunities,generatedWildernessSites,historicalLocalProfile,historicalCivicLeadership,LOCAL_GENERATION_BANDS} from './local-generation.js?v=peace-outcome-1';
+import {sendLetter} from './epistulae.js?v=peace-outcome-1';
+import {nonMilitaryAccessStatus} from './border-access.js?v=peace-outcome-1';
+import {localDiscoveryLevel,LOCAL_DISCOVERY_LEVELS} from './local-discovery.js?v=peace-outcome-1';
 
 // Settlement control is stored inside its host theater. An autonomous city
 // does not transfer the whole theater, and its point is not a border polygon.

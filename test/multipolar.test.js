@@ -1,20 +1,20 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrder,diplomacy} from '../engine.js?v=roman-vacancy-1';
-import {advanceStrategicWarnings,warningCandidates} from '../strategic-warnings.js?v=roman-vacancy-1';
-import {warningLedger} from '../warning-ledger.js?v=roman-vacancy-1';
-import {assessOpportunities,opportunityEvidenceSignature} from '../multipolar.js?v=roman-vacancy-1';
-import {observeDiplomacy,reportedDiplomacy} from '../diplomatic-knowledge.js?v=roman-vacancy-1';
-import {observeAttackPattern} from '../strategic-planning.js?v=roman-vacancy-1';
-import {buildChessboard} from '../chessboard.js?v=roman-vacancy-1';
-import {renderChessboard} from '../chessboard-ui.js?v=roman-vacancy-1';
-import {addReport,supportClaimant,requestAgentRelease,advanceAgentRequests} from '../character-system.js?v=roman-vacancy-1';
-import {advanceAgreements,proposeAgreement} from '../agreements.js?v=roman-vacancy-1';
-import {advanceAgreementProposals} from '../agreement-negotiations.js?v=roman-vacancy-1';
-import {advanceGovernments} from '../governance.js?v=roman-vacancy-1';
-import {advanceMovements} from '../movements.js?v=roman-vacancy-1';
-import {newRevolutionScenario} from '../scenarios.js?v=roman-vacancy-1';
+import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrder,diplomacy} from '../engine.js?v=peace-outcome-1';
+import {advanceStrategicWarnings,warningCandidates} from '../strategic-warnings.js?v=peace-outcome-1';
+import {warningLedger} from '../warning-ledger.js?v=peace-outcome-1';
+import {assessOpportunities,opportunityEvidenceSignature} from '../multipolar.js?v=peace-outcome-1';
+import {observeDiplomacy,reportedDiplomacy} from '../diplomatic-knowledge.js?v=peace-outcome-1';
+import {observeAttackPattern} from '../strategic-planning.js?v=peace-outcome-1';
+import {buildChessboard} from '../chessboard.js?v=peace-outcome-1';
+import {renderChessboard} from '../chessboard-ui.js?v=peace-outcome-1';
+import {addReport,supportClaimant,requestAgentRelease,advanceAgentRequests} from '../character-system.js?v=peace-outcome-1';
+import {advanceAgreements,proposeAgreement} from '../agreements.js?v=peace-outcome-1';
+import {advanceAgreementProposals} from '../agreement-negotiations.js?v=peace-outcome-1';
+import {advanceGovernments} from '../governance.js?v=peace-outcome-1';
+import {advanceMovements} from '../movements.js?v=peace-outcome-1';
+import {newRevolutionScenario} from '../scenarios.js?v=peace-outcome-1';
 import {rememberPoliticalEvent} from '../political-memory.js?v=grand-chessboard-2';
 
 test('a court reconsiders its own new memories and leadership without reading foreign memories',()=>{
@@ -361,6 +361,6 @@ test('old saves without a warning queue keep working and do not duplicate existi
  for(let i=0;i<3;i++)tick(save,{autoplayPlayer:true});assert.ok(Array.isArray(save.warningLetters));
  // The warning layer reuses courier, report and memory helpers; it does not call
  // the existing war, breach, aid or claimant-support decision paths.
- const source=fs.readFileSync(new URL('../strategic-warnings.js?v=roman-vacancy-1',import.meta.url),'utf8');
+ const source=fs.readFileSync(new URL('../strategic-warnings.js?v=peace-outcome-1',import.meta.url),'utf8');
  assert.doesNotMatch(source,/diplomacy\(|proposeAgreement|terminateAgreement|supportClaimant|wars\.push|alliances\.push|opportunistic_war|treaty_breach/);
 });

@@ -1,4 +1,4 @@
-import {eligibleCommercialLeagueTargets} from './commercial-league-politics.js?v=roman-vacancy-1';
+import {eligibleCommercialLeagueTargets} from './commercial-league-politics.js?v=peace-outcome-1';
 
 export function commercialLeagueCouncilHtml(s,lang,label,esc,onlyId=null){
  const zh=lang==='zh';

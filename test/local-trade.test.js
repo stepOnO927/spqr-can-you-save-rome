@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=roman-vacancy-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=peace-outcome-1';
 import {advanceLocalEntities,advanceLocalTrade,localContactQuote,localEntity,offerLocalContact} from '../local-polities.js';
-import {inspectState} from '../inspector-diagnostics.js?v=roman-vacancy-1';
+import {inspectState} from '../inspector-diagnostics.js?v=peace-outcome-1';
 
 function compact(){
  const state=newGame('caesar'),city=localEntity(state,'massilia');

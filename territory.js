@@ -1,5 +1,5 @@
-import {ROUTES} from './data.js?v=roman-vacancy-1';
-import historical from './historical-territories.js?v=roman-vacancy-1';
+import {ROUTES} from './data.js?v=peace-outcome-1';
+import historical from './historical-territories.js?v=peace-outcome-1';
 
 // state.regions remains the only mutable territory registry. This module
 // enriches those records without maintaining a second ownership table.

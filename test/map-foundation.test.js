@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,region} from '../engine.js?v=roman-vacancy-1';
-import {renderTerritoryFacts} from '../map-lab/territory-facts.js?v=roman-vacancy-1';
+import {newGame,region} from '../engine.js?v=peace-outcome-1';
+import {renderTerritoryFacts} from '../map-lab/territory-facts.js?v=peace-outcome-1';
 
 test('territory record uses the actual friendly garrison and local food potential', () => {
  const s = newGame('caesar'), r = region(s, 'cisalpine');

@@ -1,4 +1,4 @@
-import {FACTIONS} from './data.js?v=roman-vacancy-1';
+import {FACTIONS} from './data.js?v=peace-outcome-1';
 
 export function validPlayableCampaign(data){
  if(!data||!Array.isArray(data.regions)||!data.regions.length||!Array.isArray(data.armies)||!data.factions?.[data.player])return false;

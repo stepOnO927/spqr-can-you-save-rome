@@ -1,8 +1,8 @@
-import {coalitionInterest,formCoalition,normalizeCoalitionName} from './coalitions.js?v=roman-vacancy-1';
-import {reportedDiplomacy} from './diplomatic-knowledge.js?v=roman-vacancy-1';
-import {reportedControl} from './control-intelligence.js?v=roman-vacancy-1';
-import {ROUTES} from './data.js?v=roman-vacancy-1';
-import {rememberPoliticalEvent} from './political-memory.js?v=roman-vacancy-1';
+import {coalitionInterest,formCoalition,normalizeCoalitionName} from './coalitions.js?v=peace-outcome-1';
+import {reportedDiplomacy} from './diplomatic-knowledge.js?v=peace-outcome-1';
+import {reportedControl} from './control-intelligence.js?v=peace-outcome-1';
+import {ROUTES} from './data.js?v=peace-outcome-1';
+import {rememberPoliticalEvent} from './political-memory.js?v=peace-outcome-1';
 
 const relation=(s,a,b)=>s.relations[[a,b].sort().join(':')]??0;
 const AI_NAMES=['Concord of the Three Courts','Frontier Concord','League of the Crossroads','Council of the Rivers','Eastern Courts League','Western Courts League','Alliance of the Three Courts','Compact of the Frontier','League of the Sea Roads','Concord of the Hills','Council of the Border Courts','Pact of the Open Roads'];
