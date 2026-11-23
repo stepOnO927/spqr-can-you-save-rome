@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {newGame,upgradeSave} from '../engine.js?v=faces-name-disagreement-1';
 import {newHanGame,loadHanSave} from '../han/engine.js?v=faces-name-disagreement-1';
 import {MATERIALS,canConstruct,startConstruction} from '../inventions.js?v=mission-discount-1';
-import {placeTradeOrder,advanceMarkets} from '../trade-markets.js?v=faces-wheels-1';
+import {placeTradeOrder,advanceMarkets} from '../trade-markets.js?v=faces-import-passage-1';
 import {placeEasternTrade,advanceEasternMarkets} from '../han/markets.js?v=faces-wheels-1';
 import {advanceDate} from '../han/util.js?v=han-1';
 import {COMMODITIES,marketPrice} from '../market-goods.js?v=faces-wheels-1';

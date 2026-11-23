@@ -186,6 +186,22 @@ function routeFor(s,origin,destination,buyer,seller,{planFor=null}={}){
  return null;
 }
 
+// A cargo already purchased at an exchange still needs the same political
+// passage as any other market shipment. Its final carrier is hired by the
+// buying court, so that court supplies both sides of the access check.
+export function marketCarrierRoute(s,origin,destination,buyer,{planFor=null}={}){
+ const from=node(s,origin),owner=planFor&&region(s,origin)?reportedControl(s,planFor,origin)?.owner??openingOwner.get(origin):from?.owner;
+ if(!from||!permitted(s,owner,buyer,buyer,'campaign')||atWar(s,owner,buyer))return null;
+ return routeFor(s,origin,destination,buyer,buyer,{planFor});
+}
+export function marketCarrierRouteOpen(s,route,buyer){
+ if(!Array.isArray(route?.path)||!route.path.length||!marketCarrierRoute(s,route.path[0],route.path[0],buyer))return false;
+ const legs=Array.isArray(route.legs)?route.legs:route.path.slice(0,-1).map((from,i)=>{const to=route.path[i+1],link=tradeNeighbors.get(from)?.find(x=>x.to===to)?.link;return link&&{from,to,network:link.network}});
+ if(legs.length!==route.path.length-1)return false;
+ return legs.every((leg,i)=>{if(!leg||leg.from!==route.path[i]||leg.to!==route.path[i+1]||!tradeNeighbors.get(leg.from)?.some(x=>x.to===leg.to&&x.link.network===leg.network))return false;
+  const place=node(s,leg.to),owner=place?.owner;return place&&permitted(s,owner,buyer,buyer,leg.network)&&!atWar(s,owner,buyer)});
+}
+
 export function quoteTrade(s,{seller,buyer,origin,destination,commodity,quantity,saleOrderId,contractId,bidPremium=0}){
  const markets=initializeMarkets(s),from=region(s,origin),to=region(s,destination),stock=markets.regions[origin]?.goods?.[commodity];
  if(!COMMODITIES[commodity]||!Number.isSafeInteger(quantity)||quantity<1||quantity>20||!Number.isSafeInteger(bidPremium)||bidPremium<0||bidPremium>Math.ceil(COMMODITIES[commodity].basePrice*.5)||!from||!to||!s.factions[seller]||!s.factions[buyer]||from.owner!==seller||to.owner!==buyer||origin===destination)return {ok:false,reason:'invalid'};

@@ -79,7 +79,7 @@ try{
  await page.evaluate(async()=>{
   const {newGame}=await import('/engine.js?v=faces-name-disagreement-1');
   const {proposeAgreement}=await import('/agreements.js?v=focus-agreement-consent-1');
-  const {placeTradeOrder,advanceMarkets}=await import('/trade-markets.js?v=faces-wheels-1');
+  const {placeTradeOrder,advanceMarkets}=await import('/trade-markets.js?v=faces-import-passage-1');
   const state=newGame('han');state.relations['han:parthia']=45;
   if(!proposeAgreement(state,'han','parthia','trade').ok)throw Error('Trade treaty unavailable');
   const placed=placeTradeOrder(state,{seller:'han',buyer:'parthia',origin:'hanGuanzhong',destination:'parthia',commodity:'silk',quantity:1});
@@ -136,7 +136,7 @@ try{
  assert.match(await page.locator('#command-detail').innerText(),/Mounted scouts|骑乘侦察兵/);
  await page.evaluate(async()=>{
   const {newGame}=await import('/engine.js?v=faces-name-disagreement-1');
-  const {advanceMarkets}=await import('/trade-markets.js?v=faces-wheels-1');
+  const {advanceMarkets}=await import('/trade-markets.js?v=faces-import-passage-1');
   const state=newGame('caesar');state.armies.find(a=>a.owner==='senate').siege={region:'cisalpine',remaining:100};
   advanceMarkets(state);
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state}));

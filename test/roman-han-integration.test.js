@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,tick,upgradeSave} from '../engine.js?v=faces-name-disagreement-1';
-import {attachHanWorld,hanWorld} from '../han/world.js?v=faces-name-disagreement-1';
-import {advanceHanWorld} from '../han/world.js?v=faces-name-disagreement-1';
+import {attachHanWorld,hanWorld} from '../han/world.js?v=faces-import-passage-1';
+import {advanceHanWorld} from '../han/world.js?v=faces-import-passage-1';
 import {advanceDate} from '../han/util.js?v=han-1';
 import {seizeThrone} from '../han/dynasty.js?v=han-1';
 

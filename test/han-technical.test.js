@@ -11,7 +11,7 @@ import {drawMap} from '../han/map.js?v=faces-name-disagreement-1';
 import {validateTrees} from '../han/focus.js?v=han-1';
 import {EDICTS} from '../han/court.js?v=han-1';
 import {isLiuClan} from '../han/dynasty.js?v=han-1';
-import {attachHanWorld,advanceHanWorld,hanWorld,romanView,sendEmbassyToSeres,embassyConditions,RELAY_MONTHS} from '../han/world.js?v=faces-name-disagreement-1';
+import {attachHanWorld,advanceHanWorld,hanWorld,romanView,sendEmbassyToSeres,embassyConditions,RELAY_MONTHS} from '../han/world.js?v=faces-import-passage-1';
 import {eastPanel,eastMap} from '../han/east-ui.js?v=faces-name-disagreement-1';
 
 const roman=(o={})=>{const s=newGame(o.player||'caesar');if(o.dlc!==false)attachHanWorld(s,{seed:7});return s};

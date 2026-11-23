@@ -1,4 +1,4 @@
-import {COMMODITIES,initializeMarkets,quoteTrade,placeTradeOrder,postTradeSale,cancelTradeSale,proposeSupplyContract,cancelSupplyContract,setTradeTariffPolicy,setTradeExportRestriction,TARIFF_POLICIES,marketPrice,tradeRouteName,activeMerchantPrivilege,grantMerchantPrivilege} from '../trade-markets.js?v=faces-wheels-1';
+import {COMMODITIES,initializeMarkets,quoteTrade,placeTradeOrder,postTradeSale,cancelTradeSale,proposeSupplyContract,cancelSupplyContract,setTradeTariffPolicy,setTradeExportRestriction,TARIFF_POLICIES,marketPrice,tradeRouteName,activeMerchantPrivilege,grantMerchantPrivilege} from '../trade-markets.js?v=faces-import-passage-1';
 import {activeAgreement} from '../agreements.js?v=focus-agreement-consent-1';
 import {REGIONS,FACTIONS} from '../data.js?v=phase-x-1';
 import {campaignDate} from '../campaign-date.js?v=calendar-1';

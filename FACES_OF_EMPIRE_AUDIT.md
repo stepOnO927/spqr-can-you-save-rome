@@ -1603,18 +1603,28 @@ GitHub Actions run 45055145162 passed all three browser groups. Wider private-ne
 competition and additional commodity resale chains remain open.
 
 The Roman end of an eastern import now has a physical final leg. The Syrian
-exchange can deliver locally at once; Egypt and Anatolia require two months,
-and Achaia requires the Syrian–Anatolian road followed by a sea leg, five
-months in total. The purchase quote includes transport, the paid lot stays
-in transit through saves, and it reaches the destination market only on its
-arrival month. If the destination changes hands first, the lot returns to the
-exchange, the purchase price is refunded, and spent transport is retained.
+exchange can deliver locally at once; on the opening network, Egypt requires
+two months, Anatolia one, and Achaia four via the Syrian–Anatolian road and
+a sea leg. Quotes now reuse Roman market terrain and political access. A
+hostile corridor cannot be used to purchase; a paid lot delayed by a closed
+route waits and resumes only after passage reopens, including across saves.
+After twelve consecutive blocked months it returns to the exchange. The
+purchase quote includes transport, the paid lot stays in transit through
+saves, and it reaches the destination market only on its arrival month. If
+the destination changes hands first, the lot returns to the exchange, the
+purchase price is refunded, and spent transport is retained.
 The player gets a renewed opportunity to buy a returned lot. The bilingual
 East panel now shows port-specific totals, travel time, and cargo in transit.
 The expanded browser smoke exercises both local and Achaian purchases with
-save/load and timed delivery. Focused market bridge tests and the full
-`npm test` suite (1,390 tests after merging main #345) pass locally; the browser expansion awaits the
-GitHub Actions run on this commit.
+save/load and timed delivery. The previous head passed all three browser
+groups in GitHub Actions run 45118399053. Route closure, older in-transit
+save, and passage checks have focused simulations; the new route-access
+change awaits a hosted browser run and refreshed full-suite verification.
+The route-access, save and market tests pass 41/41, and the 120-month market
+simulation passes. The Windows full suite passes 1,392/1,393: its existing
+40 ms NPC East CPU gate measured medians of 48.75 and 40.33 ms on two runs.
+Profiling confirmed the new carrier route function was never called in that
+120-month performance fixture; hosted Linux verification remains pending.
 
 ## Existing foundations
 
