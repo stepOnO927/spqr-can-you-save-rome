@@ -122,6 +122,19 @@ export function appointDeputy(s,id){
  return {ok:true,cost};
 }
 
+// Fill an already vacant republican command; an absent but unconfirmed leader
+// remains nominally in office and cannot be displaced through this action.
+export function appointVacantRomanLeader(s,id){
+ initializeGovernments(s);const faction=s.player,g=deriveGovernment(s,faction);
+ if(!republican(s,faction)||g.kind!=='vacant'||!eligibleDeputies(s,faction).includes(id))return {ok:false,reason:'unavailable'};
+ if(s.factions[faction].treasury<5)return {ok:false,reason:'treasury'};
+ s.factions[faction].treasury-=5;s.world.leadership[faction]=[id];delete s.world.successionPlans[faction];delete s.world.appointments[faction];
+ s.world.governments[faction]=deriveGovernment(s,faction);
+ recordLifeEvent(s,id,'Appointed to a vacant Roman political command in the simulation.','在模拟中获任空缺的罗马政治指挥职位。');
+ s.log.unshift({year:s.year,month:s.month,en:`${CHARACTER_CATALOG[id].name[0]} was appointed to the vacant Roman command in the simulation.`,zh:`${CHARACTER_CATALOG[id].name[1]}在模拟中获任空缺的罗马指挥职位。`});s.log=s.log.slice(0,80);
+ return {ok:true,cost:5};
+}
+
 export function secureRegency(s){
  initializeGovernments(s);const faction=s.player,g=deriveGovernment(s,faction),regent=s.world.characters[g.acting[0]];
  if(g.kind!=='regency'||!regent)return {ok:false,reason:'unavailable'};
@@ -161,7 +174,7 @@ function advanceRegionalVacancy(s,faction,autoplayPlayer){
 export function advanceGovernments(s,{autoplayPlayer=false}={}){
  initializeGovernments(s);s.world.regencies||={};for(const faction of Object.keys(s.world.governments)){
   if(!s.factions[faction]||!s.regions.some(r=>r.owner===faction)){if(s.world.courtVacancies)delete s.world.courtVacancies[faction];continue}
-  const before=s.world.governments[faction];if(faction==='mauretania')assignSuccession(s,faction);
+  const before=s.world.governments[faction];if(faction==='mauretania'||republican(s,faction)&&(autoplayPlayer||faction!==s.player)&&deriveGovernment(s,faction).kind==='vacant')assignSuccession(s,faction);
   advanceRegionalVacancy(s,faction,autoplayPlayer);
   const after=deriveGovernment(s,faction);s.world.governments[faction]=after;
   if(after.kind==='regency'&&after.acting.length){
