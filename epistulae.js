@@ -85,10 +85,10 @@ export function gatheringPlan(s,m){
 export function sendLetter(s, spec) {
   const mail = initializeMail(s);
   const {senderId, senderInstitution, senderFaction, recipient, category = 'personal'} = spec;
-  // A sealed aid reply can outlive the court that dispatched it; its arrival
-  // must not disclose that court's subsequent hidden disappearance.
-  const formerAidSender=['aid_result','coalition_offer','coalition_result','agreement_offer','agreement_confirmation','agreement_result','asylum_result','family_marriage_result','family_accord_result','agent_release_request','official_inquiry','inquiry_result','personal_audience_result'].includes(spec.context?.kind)&&!senderId&&senderInstitution===senderFaction&&!!FACTIONS[senderFaction];
-  if ((!s.factions?.[senderFaction]&&!formerAidSender) || !s.factions?.[recipient] || (senderFaction === recipient && category === 'diplomatic')) return {ok:false, reason:'faction'};
+  // A dispatched institutional letter can outlive its sending court; arrival
+  // must not disclose a later, undiscovered disappearance.
+  const formerInstitutionalSender=['aid_result','coalition_offer','coalition_result','agreement_offer','agreement_confirmation','agreement_result','asylum_result','family_marriage_result','family_accord_result','agent_release_request','official_inquiry','peace','inquiry_result','personal_audience_result'].includes(spec.context?.kind)&&!senderId&&senderInstitution===senderFaction&&!!FACTIONS[senderFaction];
+  if ((!s.factions?.[senderFaction]&&!formerInstitutionalSender) || !s.factions?.[recipient] || (senderFaction === recipient && category === 'diplomatic')) return {ok:false, reason:'faction'};
   if (senderId && (!s.world?.characters?.[senderId]||!s.world.characters[senderId].alive||s.world.characters[senderId].faction!==senderFaction)) return {ok:false, reason:'sender'};
   if (!senderId && senderInstitution !== senderFaction) return {ok:false, reason:'sender'};
   const source = spec.source || (senderId ? s.world.characters[senderId].location : null) || home(s, senderFaction);
@@ -458,13 +458,16 @@ export function syncPeaceLetters(s) {
       }
     }
     if (inquiry.status !== 'awaiting_decision' || inquiry.mailId) continue;
-    const senderId=senderFor(s,inquiry.actor);
-    const result=sendLetter(s,{senderId,senderInstitution:senderId?null:inquiry.actor,senderFaction:inquiry.actor,
+    // Peace inquiries have no recorded personal author. Resolve the sender
+    // as an institution, never from the foreign court's live leadership.
+    const sender=FACTIONS[inquiry.actor]?.name||['Another faction','另一势力'];
+    const result=sendLetter(s,{senderInstitution:inquiry.actor,senderFaction:inquiry.actor,
       recipient:s.player,category:'diplomatic',priority:'important',
       subject:['Peace proposal','议和提议'],
-      body:[`${name(inquiry.actor)[0]} requests an end to the present war. The war continues until an acceptance reaches the sender.`,`${name(inquiry.actor)[1]}请求结束当前战争。接受书送达发信方之前，战争仍将继续。`],
+      body:[`${sender[0]} requests an end to the present war. The war continues until an acceptance reaches the sender.`,`${sender[1]}请求结束当前战争。接受书送达发信方之前，战争仍将继续。`],
       options:['accept','refuse','war_council'],expires:monthIndex(s.year,s.month)+Math.max(0,(inquiry.remaining||1)-1),context:{kind:'peace'}});
     if (result.ok) {
+      result.letter.senderName=[...sender];
       inquiry.mailId=result.letter.id;
       if(Number.isInteger(inquiry.sentYear)&&Number.isInteger(inquiry.sentMonth)&&inquiry.sentMonth>=1&&inquiry.sentMonth<=12)result.letter.created={year:inquiry.sentYear,month:inquiry.sentMonth};
       result.letter.arrival=monthIndex(s.year,s.month);
