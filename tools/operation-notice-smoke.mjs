@@ -30,7 +30,7 @@ try{
    if(m.delivery==='received'){localStorage.setItem('spqr-lang','zh');sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:s}));return}
   }throw Error('No delivered fixture');
  });
- await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});await page.locator('#mail-open').click();
+ await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});await page.locator('#atlas-mail').click();
  await page.locator('[data-mail-select]').filter({hasText:'盟军作战通报'}).click();assert.match(await page.locator('.mail-letter').innerText(),/发信时的意向/);assert.match(await page.locator('.mail-letter').innerText(),/独立决定/);assert.deepEqual(errors,[]);
  console.log('Player shares an approved operation through paid confirmation, persists it, and can read a delivered allied notice in the atlas.');
 }finally{await browser.close()}
