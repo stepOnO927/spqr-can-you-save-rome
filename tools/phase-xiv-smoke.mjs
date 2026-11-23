@@ -94,7 +94,7 @@ try{
   assert.match(ideaLinks['tech-armenian-highland-provisioning'],/Crassus/);
   assert.match(ideaLinks['tech-galatian-auxiliary-muster'],/Civil_Wars\/3A/);
   assert.match(ideaText('philosophical-patronage'),/Philosophical and Scholarly Patronage[\s\S]*National-idea research discount \+3/);
-  assert.match(ideaLinks['tech-philosophical-patronage'],/Letters_to_Atticus\/4\.8a/);
+  assert.match(ideaLinks['tech-philosophical-patronage'],/attalus\.org\/cicero\/atticus4\.html/);
   console.log('Phase XIV: idea card audit complete; starting research');
   assert.equal(await page.locator('[data-research="legion-training"]').isDisabled(),false);
   // The focused seasonal smoke separately exercises a physical research click.

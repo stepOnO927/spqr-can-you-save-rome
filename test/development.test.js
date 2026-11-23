@@ -44,7 +44,7 @@ test('every building reference has a distinct drawing and names its cited histor
 });
 test('period engineering references name the checked source instead of only its host',()=>{
  for(const [id,title] of [
-  ['roadmaking','UNESCO, Via Appia. Regina Viarum'],
+  ['roadmaking','Italian Ministry of Culture, Via Appia. Regina Viarum'],
   ['bridge-engineering','Caesar, Civil Wars 1.40–41, 1.48–54'],
   ['stone-fortification','MuséoParc Alésia, Archaeology of the Siege'],
   ['supply-organization','Javier Salido Dominguez, Architecture in the Service of the Roman Army (2015)'],
@@ -56,7 +56,9 @@ test('period engineering references name the checked source instead of only its 
   assert.match(developmentPanel(newGrandGame('senate'),'en','material'),new RegExp(title.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));
  }
  const dam=MATERIALS.find(x=>x.id==='dam-engineering');
+ const road=MATERIALS.find(x=>x.id==='roadmaking');
  const bridge=BUILDINGS.find(x=>x.id==='bridge');
+ assert.equal(road.source.url,'https://unesco.cultura.gov.it/projects/via-appia-regina-viarum/');
  assert.equal(MATERIALS.find(x=>x.id==='stone-fortification').source.url,'https://alesia.com/en/archaeology/');
  assert.match(bridge.context[0],/Sicoris.*simulation values/);
  assert.match(bridge.context[1],/西科里斯河.*模拟数值/);
@@ -845,8 +847,8 @@ test('granaries hold finite provincial food, buffer shortages, and migrate old n
 test('scholarly patronage connects an owned collection to future idea research only',()=>{
  const id='philosophical-patronage',s=newGrandGame('senate'),d=development(s,'senate'),idea=IDEAS.find(x=>x.id===id);
  s.wars=[];s.factions.senate.treasury=500;s.factions.senate.food=500;
- assert.match(idea.source.url,/en\.wikisource\.org\/wiki\/Letters_to_Atticus\/4\.8a/);
- assert.match(idea.source.title,/Cicero, Letters to Atticus 4\.8a/);
+ assert.match(idea.source.url,/attalus\.org\/cicero\/atticus4\.html/);
+ assert.match(idea.source.title,/Cicero, Letters to Atticus 4\.8$/);
  assert.match(developmentPanel(s,'en','idea'),/Philosophical and Scholarly Patronage/);
  assert.match(developmentPanel(s,'zh','idea'),/哲学与学术赞助/);
  assert.match(developmentPanel(s,'en','idea'),/National-idea research discount \+3/);
@@ -1184,7 +1186,7 @@ test('each constructed building has its own bilingual encyclopedia entry and his
 test('Republican-era source corrections retain save IDs and avoid later public-library claims',()=>{
  const fort=MATERIALS.find(x=>x.id==='stone-fortification'),library=MATERIALS.find(x=>x.id==='library-organization');
  assert.match(fort.name[0],/Fortification Planning/);
- assert.match(fort.source.url,/musee-archeologienationale/);
+ assert.match(fort.source.url,/alesia\.com\/en\/archaeology/);
  assert.match(library.name[0],/Private Collection/);
  assert.deepEqual(library.prerequisites,['craft-workshops']);
  assert.match(BUILDINGS.find(x=>x.id==='library').name[0],/Private Book Collection/);
@@ -1743,8 +1745,12 @@ test('waterworks and libraries change real food losses and research spending',()
   const base=newGame('senate');base.year=-47;base.month=6;base.factions.senate.food=200;
   const dry=structuredClone(base),protectedState=structuredClone(base);
   protectedState.regions.find(r=>r.id==='italiaN').buildings.push('dam');
+  assert.equal(nationalBudget(protectedState,'senate').buildingFood-nationalBudget(dry,'senate').buildingFood,3);
+  const dam=BUILDINGS.find(item=>item.id==='dam');
+  assert.match(dam.context[0],/3 food.*monthly national budget.*dry-month harvest loss/);
+  assert.match(dam.context[1],/每月为国家粮食收支增加3.*干旱月份的收成损失/);
   tick(dry);tick(protectedState);
-  assert.ok(protectedState.factions.senate.food>dry.factions.senate.food);
+  assert.equal(protectedState.factions.senate.food-dry.factions.senate.food,9,'3 monthly food plus 6 avoided July loss');
   const plain=newGame('egypt'),learned=newGame('egypt');
   learned.regions.find(r=>r.id==='egypt').buildings.push('library');
   const beforePlain=plain.factions.egypt.treasury,beforeLearned=learned.factions.egypt.treasury;
