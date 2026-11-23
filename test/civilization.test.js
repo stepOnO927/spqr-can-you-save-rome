@@ -100,3 +100,12 @@ test('older campaign saves gain empty Prestige without changing treasury, people
  assert.equal(restored.regions.find(r=>r.id==='roma').population.total,before.people);
  assert.equal(JSON.stringify(restored.inventions.senate),before.research);
 });
+
+test('ordinary monthly AI turn initiates a specialist invitation from a known lead',()=>{
+ const s=newGame('caesar');s.wars=[];s.relations['egypt:senate']=80;
+ s.factions.egypt.treasury=500;s.civilization.prestige.egypt=8;
+ s.knowledge.egypt.senate.reports.push({kind:'office_finance',value:'cicero',year:s.year,month:s.month});
+ tick(s);
+ assert.deepEqual(s.civilization.recruitment.map(x=>[x.owner,x.id,x.status]),[['egypt','cicero','pending']]);
+ assert.equal(s.civilization.prestige.egypt,0);
+});
