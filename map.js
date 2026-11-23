@@ -1,5 +1,5 @@
 import {campaignYear,campaignDate} from './campaign-date.js?v=calendar-1';
-import {identity,factionMark} from './identity.js?v=breakaway-kits-1';
+import {identity,factionMark} from './identity.js?v=identity-encyclopedia-1';
 import land from './land.js?v=phase-x-1';
 import rivers from './rivers.js?v=phase-x-1';
 import historical from './historical-territories.js?v=phase-x-1';

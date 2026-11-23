@@ -9,7 +9,7 @@ try{
  await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
  const force=await page.evaluate(async()=>{
   const {newGame}=await import('/engine.js?v=faces-name-disagreement-1');
-  const {advanceMovements}=await import('/movements.js?v=faces-name-disagreement-1');
+  const {advanceMovements}=await import('/movements.js?v=breakaway-kits-1');
   const {observeControl}=await import('/control-intelligence.js?v=control-delivery-1');
   const state=newGame('caesar'),gaul=state.regions.find(r=>r.id==='gaul'),court=state.factions.caesar;
   gaul.loyalty=5;gaul.population.satisfaction=10;court.stability=20;court.legitimacy=25;court.tax='high';

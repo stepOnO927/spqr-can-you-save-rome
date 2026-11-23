@@ -5,7 +5,7 @@ import {generateFictionalName} from './fictional-names.js?v=faces-wheels-1';
 import {hasNationalIdea} from './national-ideas.js?v=grand-chessboard-2';
 import {activeAgreement,terminateAgreement} from './agreements.js?v=focus-agreement-consent-1';
 import {reportedPersonalContact} from './person-knowledge.js?v=faces-name-disagreement-1';
-import {ensureBreakawayIdentity,identity as factionIdentity} from './identity.js?v=breakaway-kits-1';
+import {ensureBreakawayIdentity,identity as factionIdentity} from './identity.js?v=identity-encyclopedia-1';
 
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const log=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.log.slice(0,80)};

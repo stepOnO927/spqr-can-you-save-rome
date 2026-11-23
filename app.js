@@ -7,7 +7,7 @@ import {startupDiagnostics} from './inspector-diagnostics.js';
 import {campaignYear,campaignDate} from './campaign-date.js?v=calendar-1';
 import {stageHandoff,receiveHandoff} from './view-handoff.js?v=faces-name-disagreement-1';
 import {visibleLogText,visibleArmyForPlayer} from './visibility.js?v=faces-name-disagreement-1';
-import {identity,factionMark as renderFactionMark} from './identity.js?v=breakaway-kits-1';
+import {identity,factionMark as renderFactionMark} from './identity.js?v=identity-encyclopedia-1';
 import {reportedControl,reportedFortification} from './control-intelligence.js?v=control-delivery-1';
 import {CHARACTER_CATALOG} from './characters.js?v=faces-name-disagreement-1';
 import {REGIONS,ROUTES,FACTIONS,SOURCES} from './data.js?v=phase-x-1';
