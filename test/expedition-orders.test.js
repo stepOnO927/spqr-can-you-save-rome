@@ -45,6 +45,41 @@ test('a confirmed multi-theater expedition advances one validated leg at a time 
   assert.equal(startupDiagnostics(state).warnings.length, 0);
 });
 
+test('a selected stocked staging stop pauses the march until the player resumes it', () => {
+  const state = newGame('caesar'), legion = state.armies.find(unit => unit.id === 'xiii');
+  const nodes = routeTo(state, 'gaul');
+  assert.deepEqual(nodes, ['cisalpine', 'narbo', 'gaul']);
+  assert.equal(startExpedition(state, legion.id, nodes, state.player, {stagingStops: ['gaul']}).reason, 'invalid_staging');
+  assert.equal(startExpedition(state, legion.id, nodes, state.player, {stagingStops: ['narbo', 'narbo']}).reason, 'invalid_staging');
+  assert.equal(legion.move, null);
+  assert.equal(startExpedition(state, legion.id, nodes, state.player, {stagingStops: ['narbo']}).ok, true);
+  tick(state); tick(state);
+  assert.equal(legion.region, 'narbo');
+  assert.equal(legion.move, null);
+  assert.equal(legion.expedition.status, 'paused');
+  assert.equal(legion.expedition.reason, 'staging');
+  assert.equal(legion.expedition.nextIndex, 2);
+  assert.deepEqual(upgradeSave(JSON.parse(JSON.stringify(state))).armies.find(unit => unit.id === legion.id).expedition.stagingStops, ['narbo']);
+  assert.equal(startupDiagnostics(state).warnings.length, 0);
+  tick(state);
+  assert.equal(legion.region, 'narbo');
+  assert.equal(legion.move, null);
+  state.regions.find(place => place.id === 'gaul').owner = 'parthia';
+  observeControl(state);
+  assert.equal(resumeExpedition(state, legion.id).ok, false);
+  assert.equal(legion.expedition.reason, 'permission');
+  assert.equal(legion.move, null);
+  state.regions.find(place => place.id === 'gaul').owner = 'caesar';
+  observeControl(state);
+  assert.equal(resumeExpedition(state, legion.id).ok, true);
+  assert.equal(legion.move.to, 'gaul');
+  assert.equal(legion.expedition.status, 'active');
+  const saved=legion.expedition.stagingStops;
+  legion.expedition.stagingStops=['not-on-route'];
+  assert.ok(startupDiagnostics(state).warnings.some(item => item.code === 'invalid-expedition-order'));
+  legion.expedition.stagingStops=saved;
+});
+
 test('changed border control pauses the route without an illegal crossing and can be rechecked', () => {
   const state = newGame('caesar'), legion = state.armies.find(unit => unit.id === 'xiii');
   assert.equal(startExpedition(state, legion.id, routeTo(state, 'gaul')).ok, true);

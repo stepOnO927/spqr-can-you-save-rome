@@ -18,8 +18,10 @@ try{
  await brief.locator('summary').click();
  const text=await brief.innerText();
  for(const phrase of ['Territorial objective: Further Gaul','Home base: Cisalpine Gaul','Planned theater stops','Own forward outposts','Administration of own controlled theaters','Supply requirement','Political access by leg','Known risks'])assert.ok(text.includes(phrase),phrase);
+ await page.locator('.route-choice').first().locator('.route-staging input[value="narbo"]').check();
  await page.locator('.route-choice').first().getByRole('button',{name:'START EXPEDITION'}).click();
  assert.match(await page.locator('#command-detail').innerText(),/LEG-BY-LEG EXPEDITION/);
+ assert.match(await page.locator('#command-detail').innerText(),/Planned staging: Narbonensis/);
  await page.locator('#map-mode').selectOption('expedition');
  assert.match(await page.locator('#map-mode-note').innerText(),/your known plans or shipments/);
  assert.match(await page.locator('#map-mode-details').innerText(),/Expedition objective.*Legio XIII/i);
@@ -29,10 +31,20 @@ try{
  assert.match(await page.locator('#map-mode-details').innerText(),/Expedition objective/);
  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')));
  assert.equal(saved.armies.find(army=>army.id==='xiii').expedition.destination,'gaul');
+ assert.deepEqual(saved.armies.find(army=>army.id==='xiii').expedition.stagingStops,['narbo']);
  await page.locator('#factions').click();
  await page.locator('[data-faction="caesar"]').click();
  await page.locator('[data-faction-army="xiii"]').click();
  assert.match(await page.locator('#command-detail').innerText(),/LEG-BY-LEG EXPEDITION/);
+ await page.locator('#advance').click();
+ await page.locator('#advance').click();
+ await page.locator('[data-faction-army="xiii"]').click();
+ assert.match(await page.locator('#command-detail').innerText(),/At staging point; awaiting resume order/);
+ await page.locator('#advance').click();
+ await page.locator('[data-faction-army="xiii"]').click();
+ assert.match(await page.locator('#command-detail').innerText(),/At staging point; awaiting resume order/);
+ await page.getByRole('button',{name:'RECHECK AND RESUME'}).click();
+ assert.match(await page.locator('#command-detail').innerText(),/In progress/);
  await page.evaluate(async()=>{
   const {newGame}=await import('/engine.js?v=dossier-archive-1');
   const state=newGame('caesar'),army=state.armies.find(unit=>unit.id==='pompey');

@@ -30,6 +30,7 @@ export function renderRoutePlanner({state, army, language, panel, onFirstStep, o
       const label = document.createElement('strong'); label.textContent = `${recommended ? (zh ? '推荐 · ' : 'RECOMMENDED · ') : ''}${route.nodes.map(name).join(' → ')}`; row.append(label);
       const detail = document.createElement('p'); detail.textContent = `${statusText[route.status]} · ${zh ? '约' : 'about '}${route.months}${zh ? '个月' : ' months'}${route.seaCost ? ` · ${zh ? '预计海运' : 'estimated sea transport'} ${route.seaCost}` : ''}`; row.append(detail);
       const brief=route.brief;
+      const stagingInputs=[];
       if(brief){
         const dossier=document.createElement('details');dossier.className='route-brief';
         const summary=document.createElement('summary');summary.textContent=zh?'远征简报：目标、补给与风险':'EXPEDITION BRIEF: OBJECTIVE, SUPPLY & RISKS';dossier.append(summary);
@@ -37,6 +38,8 @@ export function renderRoutePlanner({state, army, language, panel, onFirstStep, o
         line(zh?'战区目标':'Territorial objective',name(brief.objective));
         line(zh?'本土基地':'Home base',brief.homeBase?name(brief.homeBase):(zh?'当前路线没有已整合的本土基地':'No integrated home base on this route'));
         line(zh?'已知集结候选点':'Known staging candidates',brief.staging.length?brief.staging.map(point=>`${name(point.theater)}${point.kind==='depot'?` (${zh?'仓库存粮':'depot food'} ${point.storedFood}；${zh?'出发时重新核实联络线':'connection rechecked on departure'})`:''}`).join(' · '):(zh?'未发现已整合战区或有粮仓库':'No integrated theater or stocked depot found'));
+        const staging=brief.staging.filter(point=>route.nodes.slice(1,-1).includes(point.theater));
+        if(staging.length){const choices=document.createElement('fieldset');choices.className='route-staging';const legend=document.createElement('legend');legend.textContent=zh?'选择途中停靠据点（抵达后等待继续命令）':'Pause at staging points (resume by order after arrival)';choices.append(legend);for(const point of staging){const label=document.createElement('label'),input=document.createElement('input');input.type='checkbox';input.value=point.theater;label.append(input,document.createTextNode(` ${name(point.theater)}${point.kind==='depot'?` · ${zh?'存粮':'food'} ${point.storedFood}`:''}`));choices.append(label);stagingInputs.push(input)}dossier.append(choices)}
         line(zh?'计划停靠战区':'Planned theater stops',brief.stops.map(stop=>`${name(stop.theater)} (${stop.months}${zh?'个月':' months'}${stop.sea?zh?'，海路':', sea':''}；${zh?'公布的基础补给上限':'published baseline capacity'} ${stop.baselineSupply.toLocaleString()})`).join(' → '));
         line(zh?'己方前沿据点':'Own forward outposts',brief.outposts.length?brief.outposts.map(post=>`${name(post.theater)} · ${post.entityId} (${zh?'等级':'level'} ${post.level}；${zh?'存粮':'stored food'} ${post.storedFood})`).join(' · '):(zh?'本路线没有己方据点':'No own outpost on this route'));
         const administrativeStatus={occupied:zh?'军事占领':'Military occupation',administered:zh?'已设行政机构，仍待整合':'Administered, not integrated',disputed:zh?'主权争议':'Disputed'};
@@ -49,7 +52,7 @@ export function renderRoutePlanner({state, army, language, panel, onFirstStep, o
         row.append(dossier);
       }
       const first = document.createElement('button'); first.textContent = zh ? `查看第一步：${name(route.firstStep)}` : `Inspect first step: ${name(route.firstStep)}`; first.onclick = () => onFirstStep(route.firstStep); row.append(first);
-      const start = document.createElement('button'); start.textContent = zh ? '按此路线远征' : 'START EXPEDITION'; start.disabled = !['legal', 'treaty', 'supply_risk'].includes(route.status) || route.legs.some(leg => !['legal', 'treaty'].includes(leg.status)); start.onclick = () => { const outcome = onStartExpedition(route.nodes); if (!outcome.ok) { const error = document.createElement('p'); error.textContent = zh ? '路线或军队状态已经变化，请重新比较路线。' : 'Route or army status changed; compare routes again.'; row.append(error); } }; row.append(start);
+      const start = document.createElement('button'); start.textContent = zh ? '按此路线远征' : 'START EXPEDITION'; start.disabled = !['legal', 'treaty', 'supply_risk'].includes(route.status) || route.legs.some(leg => !['legal', 'treaty'].includes(leg.status)); start.onclick = () => { const outcome = onStartExpedition(route.nodes,{stagingStops:stagingInputs.filter(input=>input.checked).map(input=>input.value)}); if (!outcome.ok) { const error = document.createElement('p'); error.textContent = zh ? '路线或军队状态已经变化，请重新比较路线。' : 'Route or army status changed; compare routes again.'; row.append(error); } }; row.append(start);
       results.append(row);
     }
   };

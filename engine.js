@@ -257,7 +257,7 @@ export function issueMilitaryOrder(s,armyId,kind,targetId=null,owner=s.player,{e
   return {ok:false,reason:'unavailable'};
 }
 
-export function startExpedition(s,armyId,nodes,owner=s.player,{localObjectiveId=null}={}){
+export function startExpedition(s,armyId,nodes,owner=s.player,{localObjectiveId=null,stagingStops=[]}={}){
   const unit=army(s,armyId),destination=Array.isArray(nodes)?nodes.at(-1):null;
   if(!unit||unit.owner!==owner||unit.men<=0||unit.move||unit.siege||unit.reorg||planControlled(s,armyId)||!Array.isArray(nodes)||nodes.length<2||nodes[0]!==unit.region)return {ok:false,reason:'unavailable'};
   const localObjective=localObjectiveId?localEntity(s,localObjectiveId):null;
@@ -265,11 +265,13 @@ export function startExpedition(s,armyId,nodes,owner=s.player,{localObjectiveId=
   const plan=planRoutes(s,armyId,destination);
   const chosen=plan.routes?.find(route=>route.nodes.length===nodes.length&&route.nodes.every((id,index)=>id===nodes[index]));
   if(!chosen||!['legal','treaty','supply_risk'].includes(chosen.status)||chosen.legs.some(leg=>!['legal','treaty'].includes(leg.status)))return {ok:false,reason:'route_unconfirmed'};
+  const candidates=new Set(chosen.brief?.staging?.map(point=>point.theater)||[]),interior=new Set(nodes.slice(1,-1));
+  if(!Array.isArray(stagingStops)||new Set(stagingStops).size!==stagingStops.length||stagingStops.some(id=>!interior.has(id)||!candidates.has(id)))return {ok:false,reason:'invalid_staging'};
   const next=nodes[1],march=previewMarch(s,armyId,next);
   if(!march.ok||march.unauthorized||!march.reportedOwner)return {ok:false,reason:march.reason||'route_unconfirmed'};
   const order=issueMilitaryOrder(s,armyId,march.hostile?'attack':'move',next,owner);
   if(!order.ok)return order;
-  unit.expedition={destination,nodes:[...nodes],nextIndex:1,status:'active',reason:null,started:{year:s.year,month:s.month},...(localObjectiveId?{localObjectiveId}:{})};
+  unit.expedition={destination,nodes:[...nodes],nextIndex:1,status:'active',reason:null,started:{year:s.year,month:s.month},...(stagingStops.length?{stagingStops:nodes.filter(id=>stagingStops.includes(id))}:{}),...(localObjectiveId?{localObjectiveId}:{})};
   return {ok:true,expedition:unit.expedition};
 }
 
@@ -295,13 +297,14 @@ function advanceExpeditionOrders(s,units=s.armies,{ignoreRecentBattle=false}={})
     const stop=reason=>{order.status='paused';order.reason=reason};
     if(unit.siege){stop('siege');continue}
     if(planControlled(s,unit.id)){stop('battle_plan');continue}
-    if(order.reason==='battle'||order.reason==='diverted')continue;
+    if(order.reason==='battle'||order.reason==='diverted'||order.reason==='staging')continue;
     const expected=order.nodes[order.nextIndex],previous=order.nodes[order.nextIndex-1];
     if(unit.region!==expected&&unit.region!==previous){stop('diverted');continue}
     if(!ignoreRecentBattle&&(s.battles||[]).some(battle=>battle.year===s.year&&battle.month===s.month&&battle.attacker?.id===unit.id&&battle.region===expected)){stop('battle');continue}
     if(unit.region===expected){
       if(expected===order.destination){order.status='completed';order.reason=null;order.finished={year:s.year,month:s.month};continue}
       order.nextIndex++;
+      if(Array.isArray(order.stagingStops)&&order.stagingStops.includes(expected)){stop('staging');continue}
     }
     const next=order.nodes[order.nextIndex],report=reportedControl(s,unit.owner,next),access=militaryAccessStatus(s,unit.owner,next,report?.owner??null);
     if(!report?.owner||!access.allowed||access.basis==='unconfirmed'){stop('permission');continue}
