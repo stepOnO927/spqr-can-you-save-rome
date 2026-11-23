@@ -928,7 +928,7 @@ body.atlas .spqr-version{left:auto;right:10px}
   :root .rail-item span{font-size:21px}
   :root .rail-foot{display:none}
   :root .map-wrap{position:absolute;inset:0;height:auto}
-  :root .inspector{left:0;right:0;top:auto;bottom:0;width:auto;max-height:58%;padding:0 var(--iv-3) var(--iv-4);border-left:0;border-right:0;border-bottom:0;border-top:2px solid var(--iv-bronze);box-shadow:0 -12px 30px #000c;z-index:7}
+  :root .inspector{left:0;right:0;top:auto;bottom:var(--iv-rail-h);width:auto;max-height:58%;padding:0 var(--iv-3) var(--iv-4);border-left:0;border-right:0;border-bottom:0;border-top:2px solid var(--iv-bronze);box-shadow:0 -12px 30px #000c;z-index:7}
   :root .panel-heading{margin:0 calc(var(--iv-3) * -1) var(--iv-2);padding:var(--iv-3) 56px var(--iv-2) var(--iv-3)}
   :root .panel-heading::before{content:"";position:absolute;left:50%;top:5px;width:36px;height:3px;margin-left:-18px;background:var(--iv-line)}
   :root .panel-close{width:44px;height:44px;right:4px;top:2px}
