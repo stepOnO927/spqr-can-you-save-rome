@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=institutional-senders-1';
-import {localDiscoveryLevel,recordLocalDiscovery} from '../local-discovery.js?v=institutional-senders-1';
-import {observeArrival,requestControlReport,advanceControlScouts} from '../control-intelligence.js?v=institutional-senders-1';
+import {newGame,upgradeSave} from '../engine.js?v=multipolar-review-1';
+import {localDiscoveryLevel,recordLocalDiscovery} from '../local-discovery.js?v=multipolar-review-1';
+import {observeArrival,requestControlReport,advanceControlScouts} from '../control-intelligence.js?v=multipolar-review-1';
 import {localEntity} from '../local-polities.js';
-import {inspectState} from '../inspector-diagnostics.js?v=institutional-senders-1';
+import {inspectState} from '../inspector-diagnostics.js?v=multipolar-review-1';
 
 test('opening local knowledge distinguishes nearby, public Roman and distant minor polities',()=>{
  const s=newGame('caesar');

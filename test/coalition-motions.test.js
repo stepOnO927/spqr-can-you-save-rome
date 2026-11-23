@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,estimatedStrength} from '../engine.js?v=institutional-senders-1';
-import {formCoalition} from '../coalitions.js?v=institutional-senders-1';
-import {proposeCoalitionMotion,voteCoalitionMotion,advanceCoalitionMotions,proposeCoalitionMotionsAI} from '../coalition-motions.js?v=institutional-senders-1';
-import {syncCoalitionMotionLetters,receivedMail,replyToLetter} from '../epistulae.js?v=institutional-senders-1';
-import {inspectState} from '../inspector-diagnostics.js?v=institutional-senders-1';
-import {advanceCoalitionAdmissions} from '../coalition-admissions.js?v=institutional-senders-1';
+import {newGame,upgradeSave,estimatedStrength} from '../engine.js?v=multipolar-review-1';
+import {formCoalition} from '../coalitions.js?v=multipolar-review-1';
+import {proposeCoalitionMotion,voteCoalitionMotion,advanceCoalitionMotions,proposeCoalitionMotionsAI} from '../coalition-motions.js?v=multipolar-review-1';
+import {syncCoalitionMotionLetters,receivedMail,replyToLetter} from '../epistulae.js?v=multipolar-review-1';
+import {inspectState} from '../inspector-diagnostics.js?v=multipolar-review-1';
+import {advanceCoalitionAdmissions} from '../coalition-admissions.js?v=multipolar-review-1';
 
 function council(){
  const s=newGame('caesar');s.relations['caesar:egypt']=40;s.relations['caesar:numidia']=40;s.relations['egypt:senate']=-30;s.relations['numidia:senate']=-30;

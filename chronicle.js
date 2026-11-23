@@ -1,7 +1,7 @@
-import {campaignYear,campaignDate} from './campaign-date.js?v=institutional-senders-1';
-import {ROUTES,FACTIONS} from './data.js?v=institutional-senders-1';
-import {CHARACTER_CATALOG} from './characters.js?v=institutional-senders-1';
-import {reportedControl} from './control-intelligence.js?v=institutional-senders-1';
+import {campaignYear,campaignDate} from './campaign-date.js?v=multipolar-review-1';
+import {ROUTES,FACTIONS} from './data.js?v=multipolar-review-1';
+import {CHARACTER_CATALOG} from './characters.js?v=multipolar-review-1';
+import {reportedControl} from './control-intelligence.js?v=multipolar-review-1';
 
 const copy=x=>JSON.parse(JSON.stringify(x));
 const name=(id,lang)=>FACTIONS[id]?.short?.[lang==='zh'?1:0]||id;

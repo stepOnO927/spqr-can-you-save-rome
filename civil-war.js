@@ -1,7 +1,7 @@
-import {isDeliveredReport} from './person-knowledge.js?v=institutional-senders-1';
-import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=institutional-senders-1';
-import {reportedControl} from './control-intelligence.js?v=institutional-senders-1';
-import {ROUTES} from './data.js?v=institutional-senders-1';
+import {isDeliveredReport} from './person-knowledge.js?v=multipolar-review-1';
+import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=multipolar-review-1';
+import {reportedControl} from './control-intelligence.js?v=multipolar-review-1';
+import {ROUTES} from './data.js?v=multipolar-review-1';
 import {transferTerritory} from './territory.js';
 
 // Alternate-history claimant commands use real game theaters and armies.

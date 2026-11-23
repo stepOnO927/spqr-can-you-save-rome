@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame, upgradeSave, diplomacy, isWar, tick} from '../engine.js?v=institutional-senders-1';
-import {proposeAgreement, advanceAgreements, terminateAgreement} from '../agreements.js?v=institutional-senders-1';
-import {subjectRelation, subjectAidQuote, requestSubjectAid, subjectTerms} from '../suzerainty.js?v=institutional-senders-1';
-import {militaryAccessStatus, nonMilitaryAccessStatus} from '../border-access.js?v=institutional-senders-1';
-import {inspectState} from '../inspector-diagnostics.js?v=institutional-senders-1';
-import {suzeraintyColor} from '../map-lab/suzerainty-map.js?v=institutional-senders-1';
+import {newGame, upgradeSave, diplomacy, isWar, tick} from '../engine.js?v=multipolar-review-1';
+import {proposeAgreement, advanceAgreements, terminateAgreement} from '../agreements.js?v=multipolar-review-1';
+import {subjectRelation, subjectAidQuote, requestSubjectAid, subjectTerms} from '../suzerainty.js?v=multipolar-review-1';
+import {militaryAccessStatus, nonMilitaryAccessStatus} from '../border-access.js?v=multipolar-review-1';
+import {inspectState} from '../inspector-diagnostics.js?v=multipolar-review-1';
+import {suzeraintyColor} from '../map-lab/suzerainty-map.js?v=multipolar-review-1';
 
 const friends = (state, a, b) => { state.relations[[a, b].sort().join(':')] = 70; };
 function client() {

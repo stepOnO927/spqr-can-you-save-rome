@@ -1,8 +1,8 @@
-import {ROUTES} from './data.js?v=institutional-senders-1';
-import {generatedLocalPolities,generatedIndependentVillages,generatedNomadicCommunities,generatedWildernessSites,historicalLocalProfile,historicalCivicLeadership,LOCAL_GENERATION_BANDS} from './local-generation.js?v=institutional-senders-1';
-import {sendLetter} from './epistulae.js?v=institutional-senders-1';
-import {nonMilitaryAccessStatus} from './border-access.js?v=institutional-senders-1';
-import {localDiscoveryLevel,LOCAL_DISCOVERY_LEVELS} from './local-discovery.js?v=institutional-senders-1';
+import {ROUTES} from './data.js?v=multipolar-review-1';
+import {generatedLocalPolities,generatedIndependentVillages,generatedNomadicCommunities,generatedWildernessSites,historicalLocalProfile,historicalCivicLeadership,LOCAL_GENERATION_BANDS} from './local-generation.js?v=multipolar-review-1';
+import {sendLetter} from './epistulae.js?v=multipolar-review-1';
+import {nonMilitaryAccessStatus} from './border-access.js?v=multipolar-review-1';
+import {localDiscoveryLevel,LOCAL_DISCOVERY_LEVELS} from './local-discovery.js?v=multipolar-review-1';
 
 // Settlement control is stored inside its host theater. An autonomous city
 // does not transfer the whole theater, and its point is not a border polygon.

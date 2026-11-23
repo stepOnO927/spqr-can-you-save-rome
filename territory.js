@@ -1,5 +1,5 @@
-import {ROUTES} from './data.js?v=institutional-senders-1';
-import historical from './historical-territories.js?v=institutional-senders-1';
+import {ROUTES} from './data.js?v=multipolar-review-1';
+import historical from './historical-territories.js?v=multipolar-review-1';
 
 // state.regions remains the only mutable territory registry. This module
 // enriches those records without maintaining a second ownership table.

@@ -1,7 +1,7 @@
-import {ROUTES} from './data.js?v=institutional-senders-1';
-import {reportedControl} from './control-intelligence.js?v=institutional-senders-1';
-import {reportedDiplomacy} from './diplomatic-knowledge.js?v=institutional-senders-1';
-import {normalizeCoalitionName} from './coalitions.js?v=institutional-senders-1';
+import {ROUTES} from './data.js?v=multipolar-review-1';
+import {reportedControl} from './control-intelligence.js?v=multipolar-review-1';
+import {reportedDiplomacy} from './diplomatic-knowledge.js?v=multipolar-review-1';
+import {normalizeCoalitionName} from './coalitions.js?v=multipolar-review-1';
 
 const now=s=>s.year*12+s.month;
 const relation=(s,a,b)=>s.relations[[a,b].sort().join(':')]??0;
