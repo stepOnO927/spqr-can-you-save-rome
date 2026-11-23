@@ -17,6 +17,18 @@ import {nationalBudget} from '../national-budget.js';
 import {afterActionHtml} from '../recon-ui.js';
 import {budgetHtml} from '../budget-ui.js';
 
+test('construction panel shows a bilingual cash runway before paying for works',()=>{
+ const s=newGrandGame('caesar'),site=s.regions.find(r=>r.owner==='caesar');
+ const openingNet=nationalBudget(s,'caesar').projectedNet;
+ assert.ok(openingNet<0);
+ const months=Math.ceil(s.factions.caesar.treasury/-openingNet);
+ assert.match(constructionPanel(s,'en',site),new RegExp(`Treasury outlook:[\\s\\S]*current monthly balance ${openingNet}¤[\\s\\S]*about ${months} months`));
+ assert.match(constructionPanel(s,'zh',site),new RegExp(`国库预估：[\\s\\S]*当前每月收支 ${openingNet}¤[\\s\\S]*约 ${months} 个月后国库耗尽`));
+ s.factions.caesar.treasury=0;
+ assert.match(constructionPanel(s,'en',site),/Funds are already exhausted/);
+ assert.match(constructionPanel(s,'zh',site),/国库已耗尽/);
+});
+
 test('every building reference has a distinct drawing and names its cited historical source',()=>{
  const drawings=BUILDINGS.map(buildingIllustration);
  assert.equal(new Set(drawings).size,BUILDINGS.length);
