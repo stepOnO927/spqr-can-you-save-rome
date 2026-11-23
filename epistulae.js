@@ -99,7 +99,7 @@ export function sendLetter(s, spec) {
   if (senderId && (!s.world?.characters?.[senderId]||!s.world.characters[senderId].alive||s.world.characters[senderId].faction!==senderFaction)) return {ok:false, reason:'sender'};
   if (!senderId && senderInstitution !== senderFaction) return {ok:false, reason:'sender'};
   const source = spec.source || (senderId ? s.world.characters[senderId].location : null) || home(s, senderFaction);
-  const destination = spec.destination || home(s, recipient);
+  const destination = spec.destinationKnown===false ? null : spec.destination || home(s, recipient);
   const sent = monthIndex(s.year, s.month);
   const travel = courierMonths(s, source, destination, spec.priority === 'critical');
   const id = 'mail:' + mail.nextId++;

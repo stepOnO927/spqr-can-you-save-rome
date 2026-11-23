@@ -32,6 +32,8 @@ jobs:
           case "${{ matrix.part }}" in
             1)
               node tools/imperium-visual-smoke.mjs
+              node tools/roman-conclusion-smoke.mjs
+              node tools/operation-notice-smoke.mjs
               node tools/poki-mobile-smoke.mjs
               node tools/short-screen-smoke.mjs
               node tools/runtime-storage-failure-smoke.mjs
