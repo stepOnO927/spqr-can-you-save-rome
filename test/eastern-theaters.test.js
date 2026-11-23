@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,region,adjacent,upgradeSave} from '../engine.js?v=official-inquiries-1';
-import {reportedControl} from '../control-intelligence.js?v=official-inquiries-1';
+import {newGame,region,adjacent,upgradeSave} from '../engine.js?v=peace-sender-1';
+import {reportedControl} from '../control-intelligence.js?v=peace-sender-1';
 import historical from '../historical-territories.js';
 
 test('eastern theaters share the sourced realm outline without asserting an internal border',()=>{
