@@ -1,6 +1,6 @@
 import {isDeliveredReport,isCompletedMeeting,reportedPersonalContact,storedCorrespondentName} from '../person-knowledge.js?v=faces-name-disagreement-1';
 import {campaignYear,campaignDate} from '../campaign-date.js?v=calendar-1';
-import {identityKnowledge} from './identity-knowledge.js?v=faces-name-disagreement-1';
+import {identityKnowledge} from './identity-knowledge.js?v=archived-identity-merged-1';
 import {fictionalPortraitKey,observedFictionalPortrait,observedProceduralPortrait,proceduralPortraitSvg} from '../portrait-registry.js?v=missing-fate-privacy-1';
 import {HISTORICAL_DEATHS,HISTORICAL_BIRTH_ESTIMATES,HISTORICAL_NAME_FORMS,HISTORICAL_RELATIONSHIPS} from '../historical-reference.js?v=phase-x-1';
 import {officeOf} from '../office-system.js?v=faces-name-disagreement-1';
