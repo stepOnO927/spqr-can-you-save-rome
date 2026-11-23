@@ -20,8 +20,13 @@ try{
  for(const phrase of ['Territorial objective: Further Gaul','Home base: Cisalpine Gaul','Planned theater stops','Own forward outposts','Administration of own controlled theaters','Supply requirement','Political access by leg','Known risks'])assert.ok(text.includes(phrase),phrase);
  await page.locator('.route-choice').first().getByRole('button',{name:'START EXPEDITION'}).click();
  assert.match(await page.locator('#command-detail').innerText(),/LEG-BY-LEG EXPEDITION/);
+ await page.locator('#map-mode').selectOption('expedition');
+ assert.match(await page.locator('#map-mode-note').innerText(),/your known plans or shipments/);
+ assert.match(await page.locator('#map-mode-details').innerText(),/Expedition objective.*Legio XIII/i);
+ assert.equal(await page.locator('#map-mode-details details').evaluate(el=>el.open),true);
  await page.locator('#save').click();
  await page.locator('#load').click();
+ assert.match(await page.locator('#map-mode-details').innerText(),/Expedition objective/);
  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')));
  assert.equal(saved.armies.find(army=>army.id==='xiii').expedition.destination,'gaul');
  await page.locator('#factions').click();
