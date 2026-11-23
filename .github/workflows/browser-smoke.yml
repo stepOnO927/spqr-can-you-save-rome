@@ -104,6 +104,7 @@ jobs:
               node tools/family-loan-visibility-smoke.mjs
               node tools/contact-credit-privacy-smoke.mjs
               node tools/archived-political-contact-smoke.mjs
+              node tools/claimant-diplomatic-directory-smoke.mjs
               node tools/missing-leadership-smoke.mjs
               node tools/commander-age-uncertainty-smoke.mjs
               node tools/claimant-aid-forces-smoke.mjs

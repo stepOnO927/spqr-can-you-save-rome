@@ -36,6 +36,8 @@ export function startPoliticalWar(s,parent,plot){
 export function knownDynasticFactions(s,viewer){
  return Object.values(CONFIG).map(x=>x.rival).filter(id=>s.regions.some(r=>reportedControl(s,viewer,r.id)?.owner===id)||Object.values(s.knowledge[viewer]?.[id]?.sightings||{}).some(r=>isDeliveredReport(s,r))||s.knowledge[viewer]?.[id]?.reportedLeaders?.length>0);
 }
+// A diplomatic directory uses recorded identities, including stale ones, rather than live faction existence.
+export function knownDiplomaticTargets(s,viewer,opening){return [...new Set([...opening,...knownDynasticFactions(s,viewer)])].filter(id=>id!==viewer)}
 
 export function startDynasticWar(s,parent,claimant){
  const cfg=CONFIG[parent],dispute=s.world.disputes?.[parent],person=s.world.characters?.[claimant],base=s.factions[parent],home=cfg?.theater?s.regions.find(r=>r.id===cfg.theater):s.regions.find(r=>r.owner===parent&&r.id!=='roma'&&!s.armies.some(a=>a.region===r.id&&a.men>0));
