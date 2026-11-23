@@ -1,7 +1,7 @@
-import {newGame,tick} from '../engine.js?v=official-inquiries-1';
+import {newGame,tick} from '../engine.js?v=peace-sender-1';
 import assert from 'node:assert/strict';
-import {proposeAgreement} from '../agreements.js?v=official-inquiries-1';
-import {warningLedger} from '../warning-ledger.js?v=official-inquiries-1';
+import {proposeAgreement} from '../agreements.js?v=peace-sender-1';
+import {warningLedger} from '../warning-ledger.js?v=peace-sender-1';
 
 // Identical unforced openings, different seeded random streams; both the
 // fully automated world and an ordinary passive Roman player are exercised.

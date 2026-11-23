@@ -1,14 +1,14 @@
-import {storedCorrespondentName,isDeliveredReport} from './person-knowledge.js?v=official-inquiries-1';
-import {CHARACTER_CATALOG,successionModel,HISTORICAL_BIO,ageRange} from './characters.js?v=official-inquiries-1';
-import {personAge,isKnownMinor,isKnownAdult,proposeMarriage,adoptHeir,makeWill,revokeWill,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,reportedDynasticContacts,offerForeignMarriage,requestClaimantAsylum,offerFamilyAccord,retryEstateTransfer,reclaimEstateTransfer,retryEstateRulingNotice} from './dynasties.js?v=official-inquiries-1';
-import {deriveGovernment,secureRegency,reformRomanGovernment,appointCoEmperor,successionCandidates,planSuccession,withdrawSuccessionPlan,validSuccessionPlan} from './governance.js?v=official-inquiries-1';
-import {FACTIONS} from './data.js?v=official-inquiries-1';
-import {fictionalPortraitKey} from './portrait-registry.js?v=official-inquiries-1';
-import {visiblePersonName} from './character-system.js?v=official-inquiries-1';
-import {bindGenealogyPersonalActions} from './genealogy-personal-actions.js?v=official-inquiries-1';
-import {localAdministrator} from './office-system.js?v=official-inquiries-1';
-import {legendDossier,legendName,grantLegendHonor,EPITHETS} from './legend.js?v=official-inquiries-1';
-import {renderMissingSearch,bindMissingSearch} from './missing-search-ui.js?v=official-inquiries-1';
+import {storedCorrespondentName,isDeliveredReport} from './person-knowledge.js?v=peace-sender-1';
+import {CHARACTER_CATALOG,successionModel,HISTORICAL_BIO,ageRange} from './characters.js?v=peace-sender-1';
+import {personAge,isKnownMinor,isKnownAdult,proposeMarriage,adoptHeir,makeWill,revokeWill,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,reportedDynasticContacts,offerForeignMarriage,requestClaimantAsylum,offerFamilyAccord,retryEstateTransfer,reclaimEstateTransfer,retryEstateRulingNotice} from './dynasties.js?v=peace-sender-1';
+import {deriveGovernment,secureRegency,reformRomanGovernment,appointCoEmperor,successionCandidates,planSuccession,withdrawSuccessionPlan,validSuccessionPlan} from './governance.js?v=peace-sender-1';
+import {FACTIONS} from './data.js?v=peace-sender-1';
+import {fictionalPortraitKey} from './portrait-registry.js?v=peace-sender-1';
+import {visiblePersonName} from './character-system.js?v=peace-sender-1';
+import {bindGenealogyPersonalActions} from './genealogy-personal-actions.js?v=peace-sender-1';
+import {localAdministrator} from './office-system.js?v=peace-sender-1';
+import {legendDossier,legendName,grantLegendHonor,EPITHETS} from './legend.js?v=peace-sender-1';
+import {renderMissingSearch,bindMissingSearch} from './missing-search-ui.js?v=peace-sender-1';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const name=(id,zh)=>CHARACTER_CATALOG[id]?.name?.[zh?1:0]||(String(id).startsWith('fictional:')?(zh?'身份未记录的人物':'Unidentified person'):id);

@@ -1,6 +1,6 @@
-import {ROUTES,REGIONS} from './data.js?v=official-inquiries-1';
-import {reportedControl} from './control-intelligence.js?v=official-inquiries-1';
-import {militaryAccessStatus} from './border-access.js?v=official-inquiries-1';
+import {ROUTES,REGIONS} from './data.js?v=peace-sender-1';
+import {reportedControl} from './control-intelligence.js?v=peace-sender-1';
+import {militaryAccessStatus} from './border-access.js?v=peace-sender-1';
 
 const graph = new Map();
 for (const [from, to, type] of ROUTES) {

@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,estimatedStrength,upgradeSave,tick} from '../engine.js?v=official-inquiries-1';
-import {formCoalition} from '../coalitions.js?v=official-inquiries-1';
+import {newGame,estimatedStrength,upgradeSave,tick} from '../engine.js?v=peace-sender-1';
+import {formCoalition} from '../coalitions.js?v=peace-sender-1';
 import {sendCoalitionAdmission,advanceCoalitionAdmissions,answerCoalitionAdmission,proposeCoalitionAdmissionsAI} from '../coalition-admissions.js';
-import {syncCoalitionAdmissionLetters,receivedMail,replyToLetter} from '../epistulae.js?v=official-inquiries-1';
-import {inspectState} from '../inspector-diagnostics.js?v=official-inquiries-1';
+import {syncCoalitionAdmissionLetters,receivedMail,replyToLetter} from '../epistulae.js?v=peace-sender-1';
+import {inspectState} from '../inspector-diagnostics.js?v=peace-sender-1';
 
 const roll=()=>.5;
 function playerCoalition(){

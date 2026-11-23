@@ -1,10 +1,10 @@
-import {FACTIONS,ROUTES} from './data.js?v=official-inquiries-1';
-import {CHARACTER_CATALOG} from './characters.js?v=official-inquiries-1';
-import {createFictionalPerson} from './dynasties.js?v=official-inquiries-1';
-import {hasNationalIdea} from './national-ideas.js?v=official-inquiries-1';
-import {activeAgreement,terminateAgreement} from './agreements.js?v=official-inquiries-1';
+import {FACTIONS,ROUTES} from './data.js?v=peace-sender-1';
+import {CHARACTER_CATALOG} from './characters.js?v=peace-sender-1';
+import {createFictionalPerson} from './dynasties.js?v=peace-sender-1';
+import {hasNationalIdea} from './national-ideas.js?v=peace-sender-1';
+import {activeAgreement,terminateAgreement} from './agreements.js?v=peace-sender-1';
 import {transferTerritory} from './territory.js';
-import {reportedPersonalContact} from './person-knowledge.js?v=official-inquiries-1';
+import {reportedPersonalContact} from './person-knowledge.js?v=peace-sender-1';
 
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const log=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.log.slice(0,80)};

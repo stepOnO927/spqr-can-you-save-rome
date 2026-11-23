@@ -1,9 +1,9 @@
-import {visiblePersonName,storedCorrespondentName,isDeliveredReport,reportedPeople} from './person-knowledge.js?v=official-inquiries-1';
-import {CHARACTER_CATALOG,ageRange} from './characters.js?v=official-inquiries-1';
-import {startDynasticWar} from './civil-war.js?v=official-inquiries-1';
-import {ROUTES} from './data.js?v=official-inquiries-1';
-import {assignBornPortrait,assignCourtPortrait,assignLegendPortrait} from './portrait-registry.js?v=official-inquiries-1';
-import {initializeLegend,recordLegendEvidence} from './legend.js?v=official-inquiries-1';
+import {visiblePersonName,storedCorrespondentName,isDeliveredReport,reportedPeople} from './person-knowledge.js?v=peace-sender-1';
+import {CHARACTER_CATALOG,ageRange} from './characters.js?v=peace-sender-1';
+import {startDynasticWar} from './civil-war.js?v=peace-sender-1';
+import {ROUTES} from './data.js?v=peace-sender-1';
+import {assignBornPortrait,assignCourtPortrait,assignLegendPortrait} from './portrait-registry.js?v=peace-sender-1';
+import {initializeLegend,recordLegendEvidence} from './legend.js?v=peace-sender-1';
 
 // Family records are campaign facts. The encyclopedia remains an independent
 // account of documented history. In particular, names never establish kinship.

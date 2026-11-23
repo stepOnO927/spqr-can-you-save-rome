@@ -1,7 +1,7 @@
-import {receivedMail,unreadCount,gatheringPlan} from './epistulae.js?v=official-inquiries-1';
-import {wartimePolicy} from './epistulae-personnel.js?v=official-inquiries-1';
-import {CHARACTER_CATALOG} from './characters.js?v=official-inquiries-1';
-import {campaignDate} from './campaign-date.js?v=official-inquiries-1';
+import {receivedMail,unreadCount,gatheringPlan} from './epistulae.js?v=peace-sender-1';
+import {wartimePolicy} from './epistulae-personnel.js?v=peace-sender-1';
+import {CHARACTER_CATALOG} from './characters.js?v=peace-sender-1';
+import {campaignDate} from './campaign-date.js?v=peace-sender-1';
 
 const safe=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const local=(value,zh)=>Array.isArray(value)?value[zh?1:0]:value;

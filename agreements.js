@@ -1,8 +1,8 @@
-import {rememberPoliticalEvent,politicalMemoryAdjustment} from './political-memory.js?v=official-inquiries-1';
-import {hasNationalIdea} from './national-ideas.js?v=official-inquiries-1';
-import {ROUTES} from './data.js?v=official-inquiries-1';
-import {nonMilitaryAccessStatus} from './border-access.js?v=official-inquiries-1';
-import {SUBJECT_TYPES,subjectRelation,mayBecomeSubject,subjectTerms,advanceSubjectTreaty,advanceSubjectAidShipments} from './suzerainty.js?v=official-inquiries-1';
+import {rememberPoliticalEvent,politicalMemoryAdjustment} from './political-memory.js?v=peace-sender-1';
+import {hasNationalIdea} from './national-ideas.js?v=peace-sender-1';
+import {ROUTES} from './data.js?v=peace-sender-1';
+import {nonMilitaryAccessStatus} from './border-access.js?v=peace-sender-1';
+import {SUBJECT_TYPES,subjectRelation,mayBecomeSubject,subjectTerms,advanceSubjectTreaty,advanceSubjectAidShipments} from './suzerainty.js?v=peace-sender-1';
 // Agreements supplement the existing full-alliance pairs; they do not copy them.
 // All effects are derived from the active agreement itself, so expiration or a
 // breach immediately removes its privileges.

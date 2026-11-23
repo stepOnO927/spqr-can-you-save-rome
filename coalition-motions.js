@@ -1,4 +1,4 @@
-import {eligibleCoalitionAdmissionTargets,sendCoalitionAdmission} from './coalition-admissions.js?v=official-inquiries-1';
+import {eligibleCoalitionAdmissionTargets,sendCoalitionAdmission} from './coalition-admissions.js?v=peace-sender-1';
 
 const date=s=>s.year*12+s.month;
 const relation=(s,a,b)=>s.relations[[a,b].sort().join(':')]??0;

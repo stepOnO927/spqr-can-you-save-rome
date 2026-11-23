@@ -1,5 +1,5 @@
-import {activeAgreement,proposeAgreement} from './agreements.js?v=official-inquiries-1';
-import {subjectRelation} from './suzerainty.js?v=official-inquiries-1';
+import {activeAgreement,proposeAgreement} from './agreements.js?v=peace-sender-1';
+import {subjectRelation} from './suzerainty.js?v=peace-sender-1';
 
 export const BORDER_ACCESS_CATEGORIES = Object.freeze([
   'closed', 'civilian', 'commercial', 'diplomatic',

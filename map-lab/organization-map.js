@@ -1,4 +1,4 @@
-import {reportedDiplomacy} from '../diplomatic-knowledge.js?v=official-inquiries-1';
+import {reportedDiplomacy} from '../diplomatic-knowledge.js?v=peace-sender-1';
 
 // A nonmember sees only a dated diplomatic report. A member may inspect its
 // own current charter even before the monthly report cycle runs.

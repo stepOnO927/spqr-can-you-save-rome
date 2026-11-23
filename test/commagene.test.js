@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick} from '../engine.js?v=official-inquiries-1';
+import {newGame,upgradeSave,tick} from '../engine.js?v=peace-sender-1';
 import {localEntity,localEntityRevenue,localContactQuote,offerLocalContact,localSiegeQuote,besiegeLocalEntity,localAdministrationQuote,startLocalAdministration,advanceLocalEntities} from '../local-polities.js';
 import {footholdQuote,startFoothold,advanceFootholds} from '../foothold.js';
-import {inspectState} from '../inspector-diagnostics.js?v=official-inquiries-1';
+import {inspectState} from '../inspector-diagnostics.js?v=peace-sender-1';
 
 test('Commagene begins as an independent sourced microstate, separate from Syria',()=>{
  const state=newGame('senate'),city=localEntity(state,'commagene');
