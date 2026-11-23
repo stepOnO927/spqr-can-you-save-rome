@@ -2,6 +2,15 @@
 
 This tracker records the state of the **independent development branch**. A working mechanic is not a claim that every phase directive has been fulfilled. The 49 BCE Roman campaign remains the main playable scenario.
 
+## Current unfinished checklist
+
+- **Map:** The close atlas is still soft in places, and the present-day Po mouth is not a verified 49 BCE shoreline. Finish a coherent art and geography pass, then inspect it on real player hardware.
+- **Development:** Verify every technology and idea claim against its cited source, review image and data rights, and finish the deeper material and national-idea catalog requested in Phase XIV.
+- **Campaign balance:** Play long, adaptive human-directed Caesar and Senate campaigns with investment, retreat, diplomacy and supply choices; compare them with matched simulations before tuning the economy or AI.
+- **Legacy:** Complete and test the remaining city activities and progression beyond the implemented museum, festival, race and other individual activities.
+- **Maritime:** Extend usable harbor connections beyond fourteen curated army sea edges; deepen useful fleet and invasion AI, outstanding maritime events, and a complete player-directed naval campaign.
+- **Public preview:** The latest confirmed READY Vercel build is `724f575`; later fixes are uploaded to the independent GitHub branch, but that public build is behind. Verify a new deployment at the branch head before presenting it as current.
+
 ## Implemented and checked
 
 - **Five more playable embarkations and AI supply priority, 23 November 2026:** Alexandria can now dispatch a transport-backed army to Laodicea or Halicarnassus; Ostia–Panormus, Neapolis–Messana and Brundisium–Dyrrhachium are also legal sea edges. A coastline audit finds zero land crossings among the fourteen army sea edges. The route from Alexandria to Halicarnassus was tested through an actual committed army and transport fleet, while a merchant-only fleet leaves only the land route. An AI fleet with one transport and one merchant now supplies an under-supplied army at Ostia before reserving its transport for a distant landing, including the shipbuilding decision. The full rules suite, bilingual naval and Senate reconnaissance browser flows, mobile Senate tutorial, grand browser flow, Legacy city mobile layout, three hostile-sea amphibious samples, and twelve 120-month Roman observer seeds pass. The latter remain nine Caesar settlements, one Senate victory, two ongoing wars. A trial Massilia–Tarraco sea edge was excluded after it shifted that balance and broke a grain-project regression. These are game-scale operational edges, not documented civil-war voyages. Wider port coverage, useful AI amphibious campaigns and a full human naval playthrough remain open.
