@@ -15,13 +15,15 @@ Object.assign(choices,{grant_local_charter:['Grant household charter · 5 treasu
 Object.assign(choices,{accept_local_trade:['Send acceptance · compact starts when reply arrives','寄出同意书 · 回信送达后协定生效']});
 Object.assign(choices,{release_agent:['Approve agent handover','同意交接']});
 const priority={critical:0,important:1,routine:2};
-const senderKey=m=>['strongman_charter_request','local_trade_petition'].includes(m.context?.kind)?m.context.polityId:m.senderId||m.senderFaction;
+// Local petitions retain a separate correspondent entry without conflating
+// a person and a state that happen to share an ID (notably Caesar).
+const senderKey=m=>['strongman_charter_request','local_trade_petition'].includes(m.context?.kind)?'polity:'+m.context.polityId:m.senderId?'person:'+m.senderId:'faction:'+m.senderFaction;
 
 export function mailboxHtml(s,{lang='en',filter='inbox',query='',sort='newest',sender='',selected=null}={}){
  const zh=lang==='zh',all=s.mail?.messages||[],now=s.year*12+s.month;
  let letters=filter==='sent'?all.filter(m=>m.senderFaction===s.player&&m.recipient!==s.player):receivedMail(s).filter(m=>filter==='archive'?m.archived:!m.archived&&(filter==='inbox'||filter==='unread'&&!m.read||m.category===filter));
  if(query){const q=query.toLocaleLowerCase();letters=letters.filter(m=>[m.senderName,m.subject,m.body,m.eventId].some(v=>String(local(v,zh)||'').toLocaleLowerCase().includes(q)))}
- if(sender)letters=letters.filter(m=>senderKey(m)===sender);
+ if(sender)letters=letters.filter(m=>senderKey(m)===sender||(!/^(person|faction|polity):/.test(sender)&&((m.senderId||m.senderFaction)===sender||senderKey(m)==='polity:'+sender)));
  letters.sort((a,b)=>sort==='oldest'?a.arrival-b.arrival:sort==='priority'?(priority[a.priority]??2)-(priority[b.priority]??2)||b.arrival-a.arrival:b.arrival-a.arrival);
  const current=letters.find(m=>m.id===selected)||letters[0]||null;
  const senders=[...new Map(receivedMail(s).map(m=>[senderKey(m),m.senderName])).entries()];
