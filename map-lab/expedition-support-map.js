@@ -62,6 +62,18 @@ export function expeditionSupportMap(state, coordinatesByTheater) {
   for (const army of state.armies || []) {
     const order = army.expedition;
     if (army.owner !== viewer || !['active', 'paused', 'completed'].includes(order?.status)) continue;
+    if (order.status !== 'completed' && Array.isArray(order.nodes) && Array.isArray(order.stagingStops)) {
+      for (const theaterId of order.stagingStops) {
+        const index = order.nodes.indexOf(theaterId);
+        const arrived = order.reason === 'staging' && army.region === theaterId;
+        if (index < 1 || index >= order.nodes.length - 1 || index < order.nextIndex && !arrived) continue;
+        const coordinates = theaterPoint(theaterId), theater = state.regions.find(region => region.id === theaterId);
+        if (!coordinates || !theater) continue;
+        const status = arrived ? 'arrived' : 'planned';
+        entries.push({kind: 'staging', id: army.id, theaterId, name: theater.name, armyName: army.name, status});
+        points.push(feature('staging', coordinates, theater.name?.en || theater.name || theaterId, {id: army.id, theaterId, status}));
+      }
+    }
     const localGoal = order.localObjectiveId && state.regions.flatMap(region => region.localEntities || [])
       .find(entity => entity.id === order.localObjectiveId && entity.theater === order.destination);
     // Arrival leaves the town decision open. Completed generic routes and secured towns are no longer objectives.

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame, startExpedition, upgradeSave} from '../engine.js';
+import {newGame, startExpedition, resumeExpedition, tick, upgradeSave} from '../engine.js';
 import {localEntity} from '../local-polities.js';
 import {proposeAgreement} from '../agreements.js?v=dossier-archive-1';
 import {expeditionSupportMap} from '../map-lab/expedition-support-map.js';
@@ -19,6 +19,19 @@ test('own depot, in-transit food and expedition order appear without changing th
  assert.ok(view.points.features.some(item=>item.properties.kind==='objective'));
  assert.ok(view.lines.features.some(item=>item.properties.kind==='expedition'));
  assert.deepEqual(expeditionSupportMap(upgradeSave(structuredClone(state)),coordinates).entries,view.entries);
+});
+
+test('a selected staging order appears on the map until the army resumes its next leg',()=>{
+ const state=newGame('caesar'),route=['cisalpine','narbo','gaul'];
+ assert.equal(startExpedition(state,'xiii',route,state.player,{stagingStops:['narbo']}).ok,true);
+ const planned=expeditionSupportMap(state,coordinates);
+ assert.ok(planned.entries.some(entry=>entry.kind==='staging'&&entry.id==='xiii'&&entry.theaterId==='narbo'&&entry.status==='planned'));
+ assert.ok(planned.points.features.some(item=>item.properties.kind==='staging'&&item.properties.theaterId==='narbo'));
+ assert.deepEqual(expeditionSupportMap(upgradeSave(structuredClone(state)),coordinates).entries,planned.entries);
+ tick(state);tick(state);
+ assert.ok(expeditionSupportMap(state,coordinates).entries.some(entry=>entry.kind==='staging'&&entry.status==='arrived'));
+ assert.equal(resumeExpedition(state,'xiii').ok,true);
+ assert.equal(expeditionSupportMap(state,coordinates).entries.some(entry=>entry.kind==='staging'),false);
 });
 
 test('a saved town objective uses its own site point and name in the expedition map',()=>{

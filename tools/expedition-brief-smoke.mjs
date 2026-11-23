@@ -25,6 +25,7 @@ try{
  await page.locator('#map-mode').selectOption('expedition');
  assert.match(await page.locator('#map-mode-note').innerText(),/your known plans or shipments/);
  assert.match(await page.locator('#map-mode-details').innerText(),/Expedition objective.*Legio XIII/i);
+ assert.match(await page.locator('#map-mode-details').innerText(),/Staging stop.*Narbonensis.*Legio XIII/i);
  assert.equal(await page.locator('#map-mode-details details').evaluate(el=>el.open),true);
  await page.locator('#save').click();
  await page.locator('#load').click();
