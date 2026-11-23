@@ -193,7 +193,8 @@ test('military reports from different observation months do not invent a dispute
  ];
  let reports=reconReports(s,'senate','cisalpine');
  assert.ok(reports.every(r=>!r.disputed&&!r.corroborated&&r.confidence==='unverified'));
- assert.match(intelligenceHtml(assessment(s,'italy','cisalpine'),region(s,'cisalpine'),'en'),/Compare intelligence reports/);
+ assert.match(intelligenceHtml(assessment(s,'italy','cisalpine'),region(s,'cisalpine'),'en'),/Compare intelligence reports[\s\S]*Only separate sources observing the same month/);
+ assert.match(intelligenceHtml(assessment(s,'italy','cisalpine'),region(s,'cisalpine'),'zh'),/比较情报报告[\s\S]*只有同月观察、来源不同的报告/);
  s.militaryRecon[0].observationMonth=3;
  reports=reconReports(s,'senate','cisalpine');
  assert.ok(reports.every(r=>r.disputed&&r.confidence==='disputed'),'same-month independent estimates that cannot overlap are conflicting');

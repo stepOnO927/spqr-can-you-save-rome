@@ -37,7 +37,7 @@ import {objectiveDefinitions,eventText,unreadCount,markRead,latestCritical,campa
 import {leadershipIntelligence} from './intelligence-summary.js?v=2';
 import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=9';
 import {assessment,firstHostileOnRoute,sendScouts,probePositions,delayAttack,markReconRegion,requestReinforcements,latestRecon} from '../reconnaissance.js?v=18';
-import {intelligenceHtml,afterActionHtml,fortificationText,reconSummaryHtml,reconLabel,reconDate} from '../recon-ui.js?v=16';
+import {intelligenceHtml,afterActionHtml,fortificationText,reconSummaryHtml,reconLabel,reconDate} from '../recon-ui.js?v=17';
 import {renderNavalPanel} from './naval-ui.js?v=87';
 import {SEA_ZONES,reportedHostileFleets,toggleTradeRoute} from '../naval.js?v=63';
 import {maritimeMapIntel} from './maritime-map-intel.js?v=1';
