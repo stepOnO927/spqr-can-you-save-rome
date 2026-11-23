@@ -5,9 +5,9 @@ import {transferTerritory} from '../territory.js';
 import {localEntity, localSubmissionQuote, offerLocalSubmission, advanceLocalEntities, localSiegeQuote, besiegeLocalEntity, startLocalAdministration} from '../local-polities.js';
 import {startupDiagnostics} from '../inspector-diagnostics.js';
 
-test('three sourced Italian towns are local settlements, not extra sovereign theaters', () => {
+test('five sourced Italian towns are local settlements, not extra sovereign theaters', () => {
   const state = newGame('caesar');
-  for (const id of ['ariminum', 'capua', 'brundisium']) {
+  for (const id of ['ariminum', 'iguvium', 'corfinium', 'capua', 'brundisium']) {
     const town = localEntity(state, id);
     assert.equal(town.type, 'roman_town');
     assert.equal(town.controller, 'senate');
@@ -15,6 +15,10 @@ test('three sourced Italian towns are local settlements, not extra sovereign the
     assert.ok(town.source.includes('/Caesar/Civil_Wars/1A'));
     assert.ok(Array.isArray(town.coordinates));
   }
+  assert.equal(localEntity(state,'iguvium').coordinateSource,'https://pleiades.stoa.org/places/413174');
+  assert.equal(localEntity(state,'corfinium').coordinateSource,'https://pleiades.stoa.org/places/413105');
+  assert.equal(localEntity(state,'iguvium').theater,'italiaN');
+  assert.equal(localEntity(state,'corfinium').theater,'italiaS');
   assert.equal(state.regions.length, 24);
   assert.equal(startupDiagnostics(state).fatal.length, 0);
 });

@@ -86,6 +86,7 @@ jobs:
               node tools/local-campaign-smoke.mjs
               node tools/village-petition-smoke.mjs
               node tools/village-foothold-smoke.mjs
+              node tools/italian-towns-smoke.mjs
               node tools/strongman-charter-smoke.mjs
               node tools/nomadic-camp-smoke.mjs
               node tools/wilderness-smoke.mjs

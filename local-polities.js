@@ -28,6 +28,20 @@ export const LOCAL_ENTITY_TEMPLATES = Object.freeze([
     initialController: 'senate', maxFootholdLevel: 3, militia: 450, fort: 0, treasury: 6, food: 8
   },
   {
+    id: 'iguvium', type: 'roman_town', name: ['Iguvium', '伊古维乌姆'], theater: 'italiaN',
+    coordinates: [12.5734, 43.3554], source: 'https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/1A%2A.html',
+    coordinateSource: 'https://pleiades.stoa.org/places/413174', historical: true, spatialAccuracy: 'approximate_site_point',
+    description: ['Umbrian town held by the Pompeian praetor Thermus before its inhabitants welcomed Curio. The site point is not a theater border; local forces and stores are gameplay estimates.', '庞培派法务官特尔穆斯曾驻守的翁布里亚城镇，居民随后欢迎库里奥。地点标记并非战区边界；当地兵力与存粮为游戏估算。'],
+    initialController: 'senate', maxFootholdLevel: 3, militia: 450, fort: 0, treasury: 6, food: 8
+  },
+  {
+    id: 'corfinium', type: 'roman_town', name: ['Corfinium', '科尔菲尼乌姆'], theater: 'italiaS',
+    coordinates: [13.842185, 42.123814], source: 'https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/1A%2A.html',
+    coordinateSource: 'https://pleiades.stoa.org/places/413105', historical: true, spatialAccuracy: 'approximate_site_point',
+    description: ['Paelignian town where Domitius Ahenobarbus surrendered to Caesar in 49 BCE. The site point is not a theater border; local forces and stores are gameplay estimates.', '佩利格尼人的城镇；公元前49年多米提乌斯·阿赫诺巴尔布斯在此向凯撒投降。地点标记并非战区边界；当地兵力与存粮为游戏估算。'],
+    initialController: 'senate', maxFootholdLevel: 3, militia: 750, fort: 1, treasury: 9, food: 10
+  },
+  {
     id: 'capua', type: 'roman_town', name: ['Capua', '卡普亚'], theater: 'italiaS',
     coordinates: [14.251, 41.107], source: 'https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/1A%2A.html', historical: true,
     description: ['Roman colony used for Pompeian recruitment', '庞培派曾征募兵员的罗马殖民城市'],
