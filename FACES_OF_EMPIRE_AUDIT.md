@@ -6,6 +6,12 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+The Roman eastern final carrier now advances each saved road or sea leg. A
+captured current stop blocks the shipment; losing the old Syrian gate after
+the cargo has reached Anatolia does not stop its final Achaian leg. Older
+in-transit receipts without leg progress keep their existing ETA. The focused
+bridge tests pass 21/21, and the hosted browser leg-progress check follows.
+
 Main through `f3b533e9` (#347) is integrated. Its peace-mail sender privacy
 uses the sending institution and retains the explicit browser assertions that
 the correct court is named without disclosing hidden rulers. The focused

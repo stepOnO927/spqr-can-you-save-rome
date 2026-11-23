@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave} from '../engine.js?v=faces-name-disagreement-1';
-import {placeTradeOrder} from '../trade-markets.js?v=faces-import-passage-1';
+import {placeTradeOrder} from '../trade-markets.js?v=faces-import-legs-1';
 import {proposeAgreement} from '../agreements.js?v=agreement-courier-1';
 import {buildTradeMapView} from '../trade-map-view.js?v=faces-wheels-1';
 

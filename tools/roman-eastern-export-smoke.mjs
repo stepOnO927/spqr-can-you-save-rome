@@ -10,9 +10,9 @@ try{
  await page.goto(base+'/',{waitUntil:'domcontentloaded'});
  const shipmentId=await page.evaluate(async()=>{
   const {newGame}=await import('/engine.js?v=faces-name-disagreement-1');
-  const {attachHanWorld,advanceHanWorld}=await import('/han/world.js?v=faces-import-passage-1');
+  const {attachHanWorld,advanceHanWorld}=await import('/han/world.js?v=faces-import-legs-1');
   const {proposeAgreement}=await import('/agreements.js?v=focus-agreement-consent-1');
-  const {postTradeSale,advanceMarketAI,advanceMarkets}=await import('/trade-markets.js?v=faces-import-passage-1');
+  const {postTradeSale,advanceMarketAI,advanceMarkets}=await import('/trade-markets.js?v=faces-import-legs-1');
   const {advanceDate}=await import('/han/util.js?v=han-1');
   const s=newGame('caesar'),w=attachHanWorld(s,{seed:49});
   s.regions.find(r=>r.id==='syria').owner='caesar';s.relations['caesar:parthia']=70;

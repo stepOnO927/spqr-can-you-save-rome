@@ -198,8 +198,11 @@ export function marketCarrierRouteOpen(s,route,buyer){
  if(!Array.isArray(route?.path)||!route.path.length||!marketCarrierRoute(s,route.path[0],route.path[0],buyer))return false;
  const legs=Array.isArray(route.legs)?route.legs:route.path.slice(0,-1).map((from,i)=>{const to=route.path[i+1],link=tradeNeighbors.get(from)?.find(x=>x.to===to)?.link;return link&&{from,to,network:link.network}});
  if(legs.length!==route.path.length-1)return false;
- return legs.every((leg,i)=>{if(!leg||leg.from!==route.path[i]||leg.to!==route.path[i+1]||!tradeNeighbors.get(leg.from)?.some(x=>x.to===leg.to&&x.link.network===leg.network))return false;
-  const place=node(s,leg.to),owner=place?.owner;return place&&permitted(s,owner,buyer,buyer,leg.network)&&!atWar(s,owner,buyer)});
+ return legs.every((leg,i)=>leg?.from===route.path[i]&&leg.to===route.path[i+1]&&marketCarrierLegOpen(s,leg,buyer));
+}
+export function marketCarrierLegOpen(s,leg,buyer){
+ if(!leg||!tradeNeighbors.get(leg.from)?.some(x=>x.to===leg.to&&x.link.network===leg.network))return false;
+ return [leg.from,leg.to].every(id=>{const place=node(s,id),owner=place?.owner;return place&&permitted(s,owner,buyer,buyer,leg.network)&&!atWar(s,owner,buyer)});
 }
 
 export function quoteTrade(s,{seller,buyer,origin,destination,commodity,quantity,saleOrderId,contractId,bidPremium=0}){

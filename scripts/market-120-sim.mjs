@@ -4,7 +4,7 @@ import {newHanGame,tick as tickHan,loadHanSave} from '../han/engine.js?v=faces-n
 import {rulerPortrait} from '../han/rulers.js';
 import {courtPortraitSrc} from '../han/court-portrait.js';
 import {proposeAgreement} from '../agreements.js?v=focus-agreement-consent-1';
-import {advanceMarketAI} from '../trade-markets.js?v=faces-import-passage-1';
+import {advanceMarketAI} from '../trade-markets.js?v=faces-import-legs-1';
 
 const state=newGame('han');
 for(const [a,b] of [['senate','egypt'],['armenia','parthia'],['armenia','galatia'],['senate','galatia']]){

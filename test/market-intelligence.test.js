@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave} from '../engine.js?v=faces-name-disagreement-1';
 import {proposeAgreement} from '../agreements.js?v=agreement-courier-1';
-import {placeTradeOrder,advanceMarkets} from '../trade-markets.js?v=faces-import-passage-1';
+import {placeTradeOrder,advanceMarkets} from '../trade-markets.js?v=faces-import-legs-1';
 import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=faces-name-disagreement-1';
 import {propose} from '../han/frontier.js?v=han-1';
 import {placeEasternTrade,advanceEasternMarkets} from '../han/markets.js?v=faces-wheels-1';

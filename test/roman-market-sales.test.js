@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave} from '../engine.js?v=faces-name-disagreement-1';
 import {proposeAgreement} from '../agreements.js?v=agreement-courier-1';
-import {advanceMarketAI,advanceMarkets,cancelTradeSale,placeTradeOrder,postTradeSale,quoteTrade} from '../trade-markets.js?v=faces-import-passage-1';
+import {advanceMarketAI,advanceMarkets,cancelTradeSale,placeTradeOrder,postTradeSale,quoteTrade} from '../trade-markets.js?v=faces-import-legs-1';
 
 function setup(){
  const s=newGame('armenia');s.relations['armenia:parthia']=45;

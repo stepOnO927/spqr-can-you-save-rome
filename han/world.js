@@ -9,7 +9,7 @@
 import {newHanGame,tick as hanTick,loadHanSave} from './engine.js?v=faces-name-disagreement-1';
 import {REGIONS,FACTIONS} from './data.js?v=han-1';
 import {isLiuClan} from './dynasty.js?v=han-1';
-import {initializeMarkets,marketCarrierRoute,marketCarrierRouteOpen} from '../trade-markets.js?v=faces-import-passage-1';
+import {initializeMarkets,marketCarrierRoute,marketCarrierRouteOpen,marketCarrierLegOpen} from '../trade-markets.js?v=faces-import-legs-1';
 import {COMMODITIES,marketPrice} from '../market-goods.js?v=faces-wheels-1';
 
 export const DLC_KEY='hanWorld';
@@ -95,7 +95,7 @@ function importAtPort(s,w,cargo,port){
  // The external buyer paid Han at the gate. This court buys the same finite
  // cargo from that buyer; the price stays in escrow during the final leg.
  gate.stock-=quantity;s.factions[port.owner].treasury-=quote.total;roman.transportSpent+=quote.transport;
- const receipt={status:quote.months?'in_transit':'delivered',hanShipment:cargo.id,merchantId:cargo.merchantId||null,port:port.id,owner:port.owner,commodity:cargo.commodity,quantity,price,transport:quote.transport,path:quote.path,legs:quote.legs,arrivalAt:mi(s.year,s.month)+quote.months,blockedMonths:0,year:s.year,month:s.month};
+ const receipt={status:quote.months?'in_transit':'delivered',hanShipment:cargo.id,merchantId:cargo.merchantId||null,port:port.id,owner:port.owner,commodity:cargo.commodity,quantity,price,transport:quote.transport,path:quote.path,legs:quote.legs,leg:0,remaining:quote.legs[0]?.months||0,arrivalAt:mi(s.year,s.month)+quote.months,blockedMonths:0,year:s.year,month:s.month};
  bridge.settled[cargo.id]=receipt;
  if(!quote.months){roman.regions[port.id].goods[cargo.commodity].stock+=quantity;h.tradeMarkets.externalTreasury+=price;if(port.owner===s.player&&cargo.commodity==='silk')w.known.silkCargoes=(w.known.silkCargoes||0)+quantity}
  roman.transactions.push({shipment:`han-import:${cargo.id}`,linkedHanShipment:cargo.id,merchantId:cargo.merchantId||null,seller:'external',buyer:port.owner,origin:'mediterranean_gate',destination:port.id,commodity:cargo.commodity,quantity,price,transport:quote.transport,tariffs:[],status:quote.months?'in_transit':'imported',year:s.year,month:s.month});
@@ -113,14 +113,19 @@ function advanceRomanImportTransits(s,w){
    if(receipt.owner===s.player)romanLog(s,`The route to ${port?.name?.[0]||receipt.port} closed before the eastern cargo arrived. Its purchase price was refunded; transport was spent.`,`东方货物抵达前，通往${port?.name?.[1]||receipt.port}的路线中断。货款已退，运费不返。`);
    continue;
   }
-  if(!marketCarrierRouteOpen(s,receipt,receipt.owner)){
+  // Older in-flight saves recorded only a path and ETA; keep their original
+  // timing. New purchases advance one saved road or sea leg at a time.
+  const stepped=Array.isArray(receipt.legs)&&Number.isSafeInteger(receipt.leg)&&receipt.leg>=0&&Number.isSafeInteger(receipt.remaining)&&receipt.remaining>0;
+  const passage=stepped?marketCarrierLegOpen(s,receipt.legs[receipt.leg],receipt.owner):marketCarrierRouteOpen(s,receipt,receipt.owner);
+  if(!passage){
    receipt.blockedMonths=(receipt.blockedMonths||0)+1;receipt.arrivalAt=Math.max(receipt.arrivalAt+1,now+1);
    if(receipt.blockedMonths>=12){returnRomanImport(s,w,receipt,tx,now);if(receipt.owner===s.player)romanLog(s,'The eastern cargo returned to the exchange after a year without passage. Its goods price was refunded; transport was spent.','东方货物因通路封闭一年而退回交易口。货款已退，运费不返。')}
    else if(receipt.blockedMonths===1&&receipt.owner===s.player)romanLog(s,'Eastern cargo is delayed because its planned route is closed.','东方货物因原定路线封闭而延误。');
    continue;
   }
   receipt.blockedMonths=0;
-  if(receipt.arrivalAt>now)continue;
+  if(stepped){receipt.remaining--;if(receipt.remaining>0)continue;receipt.leg++;if(receipt.leg<receipt.legs.length){receipt.remaining=receipt.legs[receipt.leg].months;continue}}
+  else if(receipt.arrivalAt>now)continue;
   roman.regions[receipt.port].goods[receipt.commodity].stock+=receipt.quantity;
   w.state.tradeMarkets.externalTreasury+=receipt.price;receipt.status='delivered';if(tx)tx.status='imported';
   if(receipt.owner===s.player){if(receipt.commodity==='silk')w.known.silkCargoes=(w.known.silkCargoes||0)+receipt.quantity;romanLog(s,`${COMMODITIES[receipt.commodity].name[0]} reached ${port.name[0]} after its final journey.`,`东方货物${COMMODITIES[receipt.commodity].name[1]}经末程运输抵达${port.name[1]}。`)}

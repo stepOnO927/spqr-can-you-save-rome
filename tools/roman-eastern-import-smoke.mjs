@@ -10,7 +10,7 @@ try{
  await page.goto(base+'/',{waitUntil:'domcontentloaded'});
  await page.evaluate(async()=>{
   const {newGame}=await import('/engine.js?v=faces-name-disagreement-1');
-  const {attachHanWorld}=await import('/han/world.js?v=faces-import-passage-1');
+  const {attachHanWorld}=await import('/han/world.js?v=faces-import-legs-1');
   const s=newGame('caesar'),w=attachHanWorld(s,{seed:43}),id='eastern-shipment:browser-import';
   s.regions.find(r=>r.id==='syria').owner='caesar';s.regions.find(r=>r.id==='anatolia').owner='caesar';s.regions.find(r=>r.id==='achaia').owner='caesar';s.regions.find(r=>r.id==='egypt').owner='senate';s.factions.caesar.treasury=100;
   w.state.tradeMarkets.shipments.push({id,buyer:'external',seller:'han',destination:'mediterranean_gate',commodity:'silk',quantity:1,price:7,status:'delivered',deliveredAt:s.year*12+s.month});
@@ -60,7 +60,12 @@ try{
  assert.equal(travelling.factions.caesar.treasury,84);
  await page.reload({waitUntil:'domcontentloaded'});await page.locator('[data-slot="load"]').click();await page.locator('[data-tab="east"]').click();
  assert.match(await page.locator('.inspector').innerText(),/Your cargo in transit/);
- for(let i=0;i<4;i++)await page.locator('#step').click();
+ await page.locator('#step').click();
+ await page.evaluate(()=>document.querySelector('#save').click());
+ const atAnatolia=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')));
+ assert.equal(atAnatolia.world.hanWorld.bridge.settled[achaia].leg,1);
+ assert.equal(atAnatolia.world.hanWorld.bridge.settled[achaia].remaining,3);
+ for(let i=0;i<3;i++)await page.locator('#step').click();
  await page.locator('[data-tab="east"]').click();
  assert.doesNotMatch(await page.locator('.inspector').innerText(),/Your cargo in transit/);
  await page.evaluate(()=>document.querySelector('#save').click());

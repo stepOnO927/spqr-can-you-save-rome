@@ -17,7 +17,7 @@ import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from 
 import {initializeDynasties,seedOpeningFictionalHouseholds,seedOpeningCommanders,seedHanCommanders,seedHanCourt,seedHanFrontierPeople,advanceDynasties,assignFictionalFieldCommander,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=faces-name-disagreement-1';
 import {advanceLegend} from './legend.js?v=names-of-legend-1';
 import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=faces-name-disagreement-1';
-import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=faces-import-passage-1';
+import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=faces-import-legs-1';
 import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from './strategic-planning.js?v=multipolar-2';
 import {advancePersonalPlans} from './personal-plans.js?v=multipolar-2';
 import {initializeInventions,advanceInventions,aiInnovation,activeModifiers as inventionModifiers,buildingModifiers} from './inventions.js?v=mission-discount-1';
@@ -30,7 +30,7 @@ const imperiumOn=s=>s.world?.imperium?.enabled!==false;
 // IMPERIUM: completed national focuses add to the same modifier table as policies.
 const activeModifiers=(s,id)=>{const out={...inventionModifiers(s,id)};for(const [k,v] of Object.entries(focusModifiers(s,id)))out[k]=(out[k]||0)+v;return out};
 import {initializeAgreements,activeAgreement,advanceAgreements,proposeAgreement,terminateAgreement,fullAllianceTerms} from './agreements.js?v=focus-agreement-consent-1';
-import {initializeMarkets,advanceMarkets,advanceMarketAI,advanceMarketDiplomacy} from './trade-markets.js?v=faces-import-passage-1';
+import {initializeMarkets,advanceMarkets,advanceMarketAI,advanceMarketDiplomacy} from './trade-markets.js?v=faces-import-legs-1';
 import {RATION_SOLDIER_MONTHS} from './market-goods.js?v=faces-wheels-1';
 import {assessOpportunities,opportunityEvidenceSignature} from './multipolar.js?v=faces-name-disagreement-1';
 import {respondToFrontierReports} from './frontier-response.js?v=faces-name-disagreement-1';
