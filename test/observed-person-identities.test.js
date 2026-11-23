@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,queueMission} from '../engine.js?v=dossier-archive-1';
-import {addReport,advanceOperations,visiblePersonName} from '../character-system.js?v=dossier-archive-1';
-import {createFictionalPerson} from '../dynasties.js?v=dossier-archive-1';
+import {newGame,upgradeSave,queueMission} from '../engine.js?v=faces-name-disagreement-1';
+import {addReport,advanceOperations,visiblePersonName} from '../character-system.js?v=faces-name-disagreement-1';
+import {createFictionalPerson} from '../dynasties.js?v=faces-name-disagreement-1';
 
 test('a general mission can discover a usable name without tracking later hidden renames',()=>{
  let base=newGame('caesar');const id=createFictionalPerson(base,{name:['Observed person','发现的人物'],faction:'egypt',birthYear:-73,location:'egypt'});

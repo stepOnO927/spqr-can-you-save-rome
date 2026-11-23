@@ -8,9 +8,12 @@ try{
   const errors=[];page.on('pageerror',error=>errors.push(error.message));
   await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
   await page.locator('#start-campaign').waitFor();
+  // The optional guided start deliberately opens the terrain atlas; this smoke covers the main campaign UI.
+  await page.locator('.setup-advanced summary').click();
+  await page.locator('#campaign-guide').uncheck();
   await page.locator('#start-campaign').click();
   await page.locator('.victory-progress').waitFor({state:'attached'});
-  if(width>700)await page.locator('#close-panel').click();
+  if(width>700&&await page.locator('#close-panel').isVisible())await page.locator('#close-panel').click();
   const visual=await page.evaluate((widthForTest)=>({
    sheet:[...document.styleSheets].some(sheet=>sheet.href?.includes('imperium-visual.css')),
    background:getComputedStyle(document.body).backgroundColor,

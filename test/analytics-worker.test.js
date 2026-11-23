@@ -22,4 +22,3 @@ test('preflight allows only the game origin',async()=>{
  assert.equal(good.headers.get('Access-Control-Allow-Origin'),'https://stepono927.github.io');
  assert.equal(bad.headers.get('Access-Control-Allow-Origin'),null);
 });
-

@@ -1,6 +1,6 @@
-import {reportedPeople,reportedPersonalContact} from './person-knowledge.js?v=dossier-archive-1';
-import {initializeWorld} from './characters.js?v=dossier-archive-1';
-import {politicalAmbition} from './conspiracies.js?v=dossier-archive-1';
+import {reportedPeople,reportedPersonalContact} from './person-knowledge.js?v=faces-name-disagreement-1';
+import {initializeWorld} from './characters.js?v=faces-name-disagreement-1';
+import {politicalAmbition} from './conspiracies.js?v=faces-name-disagreement-1';
 const random=s=>{s.world.intelSeed=(Math.imul(s.world.intelSeed,1664525)+1013904223)>>>0;return s.world.intelSeed/4294967296};
 const pair=(a,b)=>[a,b].sort().join(':');
 const current=s=>s.year*12+s.month;
@@ -52,4 +52,3 @@ export function advancePoliticalContacts(s,addReport){
   addReport(s,agent.actor,agent.target,{kind:'conspiracy',character:suspect,value:suspect?'suspected':'unknown',source:'spy',confidence:'unverified',reliability:'low'});
  }
 }
-

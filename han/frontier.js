@@ -9,8 +9,9 @@
 // Every AI decision uses the deciding faction's own intelligence picture
 // (s.intel[faction]); nobody reads the true map.
 import {OASIS,STEPPE,FACTIONS,PLAYABLE} from './data.js?v=han-1';
-import {neighbours,templateStats,routeBetween,marchMonths} from './military.js?v=han-1';
+import {neighbours,templateStats,routeBetween,marchMonths,recruit,recruitQuote,provisionArmy} from './military.js?v=han-1';
 import {roll,clamp,log,monthIndex} from './util.js?v=han-1';
+import {rulerMilitaryJudgment} from './rulers.js';
 
 const key=(a,b)=>[a,b].sort().join(':');
 export const relation=(s,a,b)=>a===b?100:(s.relations[key(a,b)]??0);
@@ -91,6 +92,7 @@ export const TREATY_TYPES={
  hostage:['Hostage exchange','遣质子'],caravan:['Caravan agreement','商队协议'],market:['Frontier markets','关市互市'],protection:['Protection','请求保护'],recognition:['Recognition of a ruler','承认君位']
 };
 export function propose(s,from,to,type,{terms={}}={}){
+ if(s.finalized)return {ok:false,reason:'finalized'};
  if(!TREATY_TYPES[type]||from===to)return {ok:false,reason:'invalid'};
  if(treaty(s,type,from,to))return {ok:false,reason:'exists'};
  const p={id:s.nextProposal=(s.nextProposal||1)+1,from,to,type,terms,month:monthIndex(s),status:'pending'};s.proposals.push(p);
@@ -128,8 +130,8 @@ export function acceptProposal(s,p){
  if(OASIS.includes(p.from)&&p.to==='han'){const st=s.protectorate.oasis[p.from];st.han=clamp(st.han+10)}
  log(s,['%FACTION% accepts: '+TREATY_TYPES[p.type][0]+'.','%FACTION%接受：'+TREATY_TYPES[p.type][1]+'。'],{faction:p.to,kind:'diplomacy'});
 }
-export function answerProposal(s,id,accept){const p=s.proposals.find(x=>x.id===id&&x.status==='pending');if(!p)return {ok:false};if(accept)acceptProposal(s,p);else{p.status='rejected';shiftRelation(s,p.from,p.to,-3)}return {ok:true}}
-export function declareWar(s,a,b){if(atWar(s,a,b)||a===b)return {ok:false};s.wars.push([a,b]);s.treaties=s.treaties.filter(t=>!(t.parties.includes(a)&&t.parties.includes(b)));setRelation(s,a,b,Math.min(-40,relation(s,a,b)-40));
+export function answerProposal(s,id,accept){if(s.finalized)return {ok:false,reason:'finalized'};const p=s.proposals.find(x=>x.id===id&&x.status==='pending');if(!p)return {ok:false};if(accept)acceptProposal(s,p);else{p.status='rejected';shiftRelation(s,p.from,p.to,-3)}return {ok:true}}
+export function declareWar(s,a,b){if(s.finalized)return {ok:false,reason:'finalized'};if(atWar(s,a,b)||a===b)return {ok:false};s.wars.push([a,b]);s.treaties=s.treaties.filter(t=>!(t.parties.includes(a)&&t.parties.includes(b)));setRelation(s,a,b,Math.min(-40,relation(s,a,b)-40));
  // defensive coalitions: oasis states rally against an aggressor that attacks one of them
  if(OASIS.includes(b))for(const o of OASIS)if(o!==b&&o!==a&&relation(s,o,b)>20&&relation(s,o,a)<10&&roll(s,'coal'+o+a)<0.5){if(!s.coalitions.some(c=>c.against===a&&c.members.includes(o))){const c=s.coalitions.find(c=>c.against===a)||(s.coalitions.push({against:a,members:[b]}),s.coalitions[s.coalitions.length-1]);c.members.push(o);shiftRelation(s,o,a,-15)}}
  log(s,['%FACTION% declares war on %FACTION2%.','%FACTION%向%FACTION2%宣战。'],{faction:a,faction2:b,kind:'war'});return {ok:true}}
@@ -150,7 +152,7 @@ function steppeDecides(s,f){
  const r=roll(s,'steppe'+f);
  if(f==='huhanye'){
   // a dependent ally: needs grain; may ask Han for aid, may drift if neglected
-  if(s.factions.huhanye.grain<30&&r<0.2&&!s.pendingRequests.some(x=>x.from==='huhanye')){s.pendingRequests.push({id:s.nextProposal=(s.nextProposal||1)+1,from:'huhanye',to:'han',kind:'grain_aid',amount:40,deadline:3});log(s,['Huhanye asks the Han court for grain for his people.','呼韩邪请汉廷赐粮赈其部众。'],{faction:'huhanye',kind:'diplomacy'})}
+  if(s.factions.huhanye.grain<30&&r<0.2&&!s.pendingRequests.some(x=>x.from==='huhanye')){s.pendingRequests.push({id:s.nextProposal=(s.nextProposal||1)+1,from:'huhanye',to:'han',kind:'grain_aid',amount:40,deadline:3});const ruler=s.rulers?.huhanye?.name||['The allied chanyu','归附单于'];log(s,[`${ruler[0]} asks the Han court for grain.`,`${ruler[1]}请汉廷赐粮。`],{faction:'huhanye',kind:'diplomacy'})}
   if(relation(s,'huhanye','han')<20&&r<0.05)shiftRelation(s,'huhanye','zhizhi',5);
  }
  if(f==='zhizhi'){
@@ -159,7 +161,7 @@ function steppeDecides(s,f){
   if(target&&r<0.06)declareWar(s,'zhizhi',target);
   if(r>0.95&&!treaty(s,'alliance','zhizhi','kangju'))propose(s,'zhizhi','kangju','alliance');
   // court oasis kings who resent Han garrisons
-  for(const o of OASIS){const st=s.protectorate.oasis[o];if(st.concern>45&&roll(s,'zz'+o)<0.1){st.xiongnu=clamp(st.xiongnu+6);log(s,['Zhizhi offers support to %FACTION%.','郅支向%FACTION%示好，许以援助。'],{faction:o,kind:'frontier'});s.westernCrisis={oasis:o,month:monthIndex(s)}}}
+  for(const o of OASIS){const st=s.protectorate.oasis[o];if(st.concern>45&&roll(s,'zz'+o)<0.1){st.xiongnu=clamp(st.xiongnu+6);const ruler=s.rulers?.zhizhi?.name||['The northern chanyu','北部单于'];log(s,[`${ruler[0]} offers support to %FACTION%.`,`${ruler[1]}向%FACTION%示好，许以援助。`],{faction:o,kind:'frontier'});s.westernCrisis={oasis:o,month:monthIndex(s)}}}
  }
  if(f==='wusun'||f==='wusun_lesser'){
   // the kunmi weigh the balance between Han and the Xiongnu
@@ -170,6 +172,7 @@ function steppeDecides(s,f){
  if(f==='kangju'&&r<0.03&&relation(s,'kangju','wusun')<0)shiftRelation(s,'kangju','zhizhi',3);
 }
 export function answerRequest(s,id,accept){
+ if(s.finalized)return {ok:false,reason:'finalized'};
  const q=s.pendingRequests.find(x=>x.id===id);if(!q)return {ok:false};
  if(accept&&s.factions.han.grain>=q.amount){s.factions.han.grain-=q.amount;s.factions[q.from].grain+=q.amount;shiftRelation(s,q.from,'han',12)}else shiftRelation(s,q.from,'han',-8);
  s.pendingRequests=s.pendingRequests.filter(x=>x.id!==id);return {ok:true};
@@ -186,14 +189,53 @@ function garrisonWatch(s){
 }
 
 // ---------- AI military ----------
+function observedFronts(s,f){
+ return s.regions.filter(r=>r.owner===f).map(r=>{
+  // A hostile army remains a threat even while standing in neutral land.
+  // knownStrength already filters armies by actual wars in the dated report.
+  const reports=[r.id,...neighbours(r.id)].map(id=>knownStrength(s,f,id)).filter(k=>k&&k.age>=0&&k.age<=6&&k.men>0);
+  const enemy=Math.max(0,...reports.map(k=>k.men));
+  const defenders=s.armies.filter(a=>a.owner===f&&a.region===r.id&&a.men>0).reduce((n,a)=>n+a.men,0);
+  return {r,enemy,defenders,importance:(r.kind==='capital'?4:0)+(r.frontier||r.kind==='protectorate'?2:0)+(r.supply>=5?1:0)};
+ }).filter(x=>x.enemy>0);
+}
+function recruitHanReserve(s,fronts){
+ if(!fronts.length||s.month%3!==0)return;
+ const underDefended=fronts.some(x=>x.defenders+neighbours(x.r.id).reduce((n,id)=>n+s.armies.filter(a=>a.owner==='han'&&a.region===id&&a.men>0).reduce((sum,a)=>sum+a.men,0),0)<x.enemy*0.8);
+ if(!underDefended||monthIndex(s)-(s.aiHanDefense?.lastRecruitMonth??-Infinity)<6)return;
+ const home=s.regions.filter(r=>r.owner==='han'&&r.supply>=6).map(r=>({r,headroom:r.supply*2500-s.armies.filter(a=>a.owner==='han'&&a.region===r.id&&a.men>0).reduce((n,a)=>n+a.men,0)})).filter(x=>x.headroom>=5000).sort((a,b)=>b.headroom-a.headroom)[0]?.r;
+ if(!home)return;
+ (s.aiHanDefense||={}).reserveDepot=home.id;
+ const quote=recruitQuote(s,'han',home.id,'field',5000),f=s.factions.han;
+ if(!quote.ok||f.treasury<quote.quote.treasury+200||f.grain<quote.quote.grain+100)return;
+ const result=recruit(s,'han',home.id,'field',{men:5000,log:(msg,meta)=>{if(s.player==='han'||s.intel[s.player]?.[home.id]?.month===monthIndex(s))log(s,msg,{...meta,kind:'recruit'})}});
+ if(result.ok)(s.aiHanDefense||={}).lastRecruitMonth=monthIndex(s);
+}
 export function aiMilitary(s,f,{issueMove}){
  if(f===s.player)return;
+ const fronts=s.wars.some(w=>w.includes(f))?observedFronts(s,f):[],byRegion=new Map(fronts.map(x=>[x.r.id,x]));
+ if(f==='han'){
+  recruitHanReserve(s,fronts);
+  if(s.wars.some(w=>w.includes('han')))for(const a of s.armies.filter(x=>x.owner==='han'&&x.men>0&&!x.move&&(x.fieldRations||0)<x.men))provisionArmy(s,'han',a.id);
+ }
  for(const a of s.armies.filter(x=>x.owner===f&&x.men>0&&!x.move&&!x.forming)){
   if(a.withdrawing){const back=neighbours(a.region).find(n=>{const r=s.regions.find(x=>x.id===n);return r.owner===f||access(s,f,r.owner)});if(back)issueMove(a,back);a.withdrawing=false;continue}
+  const current=byRegion.get(a.region);
+  // Keep defenders at an observed threatened position. Adjacent reserves can
+  // join only where the local supply capacity can support their arrival.
+  if(current&&current.enemy>current.defenders*0.7)continue;
+  const relief=neighbours(a.region).map(id=>byRegion.get(id)).filter(x=>x&&x.defenders<x.enemy*0.9&&x.r.supply*2500>=x.defenders+a.men)
+   .sort((x,y)=>y.importance-x.importance||y.enemy-y.defenders-(x.enemy-x.defenders))[0];
+  if(relief&&(!current||current.defenders-a.men>=current.enemy*0.8)){
+   const order=issueMove(a,relief.r.id);
+   if(order?.ok){relief.defenders+=a.men;continue}
+  }
   const mine=a.men;
   const options=neighbours(a.region).map(n=>{const r=s.regions.find(x=>x.id===n),k=knownStrength(s,f,n);return {n,r,k}})
-   .filter(o=>o.r.owner&&atWar(s,f,o.r.owner)&&o.k&&o.k.age<=6);
-  const target=options.filter(o=>o.k.men<mine*0.8).sort((x,y)=>x.k.men-y.k.men)[0];
+   .filter(o=>o.k?.owner&&o.k.age>=0&&o.k.age<=6&&atWar(s,f,o.k.owner));
+  // The reigning ruler's military judgment changes risk tolerance. Only
+  // dated observations in knownStrength may inform the target choice.
+  const target=options.filter(o=>o.k.men<mine*rulerMilitaryJudgment(s,f)).sort((x,y)=>x.k.men-y.k.men)[0];
   if(target)issueMove(a,target.n);
  }
 }

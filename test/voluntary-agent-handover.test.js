@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick} from '../engine.js?v=dossier-archive-1';
-import {offerAgentHandover,advanceAgentRequests,requestAgentRelease,availableAgents} from '../character-system.js?v=dossier-archive-1';
+import {newGame,upgradeSave,tick} from '../engine.js?v=faces-name-disagreement-1';
+import {offerAgentHandover,advanceAgentRequests,requestAgentRelease,availableAgents} from '../character-system.js?v=faces-name-disagreement-1';
 
 function fixture(owner='senate',holder='caesar'){const s=newGame('caesar');s.world.captives.push({id:'handover-1',owner,holder,state:'held'});return s}
 function month(s){if(++s.month>12){s.month=1;s.year++}advanceAgentRequests(s)}
@@ -20,4 +20,10 @@ test('AI factions can complete handovers without revealing them to the player ea
 });
 test('AI may arrange handovers through regular turns',()=>{
  let offers=0;for(let seed=1;seed<=60;seed++){const s=fixture('parthia','egypt');s.month=3;s.seed=seed;s.wars=[];s.relations['egypt:parthia']=50;tick(s);if(s.releaseRequests.some(r=>r.initiatedByHolder&&r.captiveId==='handover-1'))offers++}assert.ok(offers>0&&offers<60,`expected occasional autonomous offers; got ${offers}`);
+});
+test('completed handover restores the saved agent person rather than leaving a captive identity',()=>{
+ const s=fixture(),captive=s.world.captives[0],personId='scipio';captive.personId=personId;s.world.characters[personId].detainedBy='caesar';
+ assert.equal(s.world.characters[personId].detainedBy,'caesar');
+ assert.equal(offerAgentHandover(s,'caesar',captive.id).ok,true);month(s);s.world.intelSeed=1000;month(s);
+ assert.equal(captive.state,'released');assert.equal(captive.personId,personId);assert.equal(s.world.characters[personId].detainedBy,undefined);
 });

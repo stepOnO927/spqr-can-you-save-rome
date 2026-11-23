@@ -1,9 +1,10 @@
-import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=dossier-archive-1';
-import {initializeWorld,successorFor,CHARACTER_CATALOG,characterAgeRange,successionModel,assignSuccession,mauretanianSeatHolders} from './characters.js?v=dossier-archive-1';
-import {recordLifeEvent,dynastyRoll,personAge,isKnownAdult,createFictionalPerson} from './dynasties.js?v=dossier-archive-1';
+import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=faces-name-disagreement-1';
+import {initializeWorld,successorFor,assignSuccession,mauretanianSeatHolders,eligibleLiuImperial,CHARACTER_CATALOG,characterAgeRange,successionModel} from './characters.js?v=faces-name-disagreement-1';
+import {recordLifeEvent,dynastyRoll,personAge,createFictionalPerson} from './dynasties.js?v=faces-name-disagreement-1';
+import {generateFictionalName} from './fictional-names.js?v=faces-wheels-1';
 import {FACTIONS} from './data.js?v=phase-x-1';
-import {startDynasticWar} from './civil-war.js?v=dossier-archive-1';
-import {courtNomineeName,recordLegendEvidence} from './legend.js?v=dossier-archive-1';
+import {startDynasticWar} from './civil-war.js?v=faces-name-disagreement-1';
+import {courtNomineeName,recordLegendEvidence} from './legend.js?v=names-of-legend-1';
 
 const unable=c=>!c?.alive||!!c.missing||['seriously_ill','dying','deceased'].includes(c.health);
 const roman=faction=>faction==='caesar'||faction==='senate';
@@ -25,7 +26,7 @@ export const eligibleDeputies=(s,faction)=>successorFor(s,faction).filter(id=>{
 
 // This describes the simulated arrangement, not a historical medical or constitutional claim.
 export function deriveGovernment(s,faction){
- initializeWorld(s);const nominal=(s.world.leadership[faction]||[]).filter(id=>(s.world.characters[id]?.alive||s.world.characters[id]?.missing)&&s.world.characters[id].faction===faction);
+ initializeWorld(s);const nominal=(s.world.leadership[faction]||[]).filter(id=>(s.world.characters[id]?.alive||s.world.characters[id]?.missing)&&s.world.characters[id].faction===faction&&(faction!=='han'||eligibleLiuImperial(s,id)));
  // These are separate kingdoms represented by one campaign faction. Never
  // invent a single shared regency, even if both kings are absent or dead.
  if(faction==='mauretania'){
@@ -59,7 +60,7 @@ export function reformRomanGovernment(s,target){
 
 export function appointCoEmperor(s,id){
  initializeGovernments(s);const faction=s.player,person=s.world.characters[id],model=successionModel(faction,s);
- if(model!=='later_empire'||!successorFor(s,faction).includes(id)||!person?.alive||!isKnownAdult(s,id))return {ok:false,reason:'eligibility'};
+ if(model!=='later_empire'||!successorFor(s,faction).includes(id)||!person?.alive||personAge(s,id)<18)return {ok:false,reason:'eligibility'};
  if(s.world.coEmperors?.[faction]===id)return {ok:false,reason:'already'};
  if(s.factions[faction].treasury<12)return {ok:false,reason:'treasury'};
  s.factions[faction].treasury-=12;s.world.coEmperors||={};s.world.coEmperors[faction]=id;
@@ -70,7 +71,7 @@ export function appointCoEmperor(s,id){
 }
 
 export function initializeGovernments(s){
- initializeWorld(s);s.world.appointments||={};s.world.successionPlans||={};s.world.governments||={};for(const faction of Object.keys(s.factions).filter(x=>x!=='rebels'))if(!s.world.governments[faction])s.world.governments[faction]=deriveGovernment(s,faction);return s;
+ initializeWorld(s);s.world.appointments||={};s.world.successionPlans||={};s.world.governments||={};if(s.factions.han){assignSuccession(s,'han');if(!validSuccessionPlan(s,'han'))delete s.world.successionPlans.han;s.world.governments.han=deriveGovernment(s,'han')}for(const faction of Object.keys(s.factions).filter(x=>x!=='rebels'))if(!s.world.governments[faction])s.world.governments[faction]=deriveGovernment(s,faction);return s;
 }
 
 export function successionCandidates(s,faction){
@@ -145,15 +146,16 @@ export function secureRegency(s){
  return {ok:true,cost:8};
 }
 
-// These courts have no documented successor in the opening catalog. A later
-// nominee is explicitly fictional, never a historical person or implied heir.
-const regionalCourts={armenia:['Armenian','亚美尼亚'],numidia:['Numidian','努米底亚'],galatia:['Galatian','加拉太'],bosporus:['Bosporan','博斯普鲁斯']};
+// Once every eligible recorded successor is gone, a surviving court may
+// nominate an explicitly fictional adult. This never asserts an unknown
+// historical identity or invents a family tie to the previous dynasty.
+const regionalCourts=new Set(['egypt','parthia','armenia','numidia','galatia','bosporus','shanshan']);
 function advanceRegionalVacancy(s,faction,autoplayPlayer){
- if(!regionalCourts[faction]||faction===s.player&&!autoplayPlayer)return;
+ if(!regionalCourts.has(faction)||faction===s.player&&!autoplayPlayer)return;
  const vacancies=s.world.courtVacancies||={},now=s.year*12+s.month;
  if((s.world.leadership[faction]||[]).some(id=>(s.world.characters[id]?.alive||s.world.characters[id]?.missing)&&s.world.characters[id].faction===faction)){delete vacancies[faction];return}
  // An unresolved claimant must retain autonomy; do not appoint over them.
- if(s.world.disputes?.[faction]||(s.world.claimants?.[faction]||[]).some(id=>s.world.characters[id]?.alive))return;
+ if(s.world.disputes?.[faction]?.war||(s.world.claimants?.[faction]||[]).some(id=>s.world.characters[id]?.alive))return;
  assignSuccession(s,faction);
  if((s.world.leadership[faction]||[]).length){delete vacancies[faction];return}
  let vacancy=vacancies[faction];if(!vacancy||!Number.isFinite(vacancy.nextReview))vacancy=vacancies[faction]={started:now,nextReview:now+6,attempts:0};
@@ -164,11 +166,12 @@ function advanceRegionalVacancy(s,faction,autoplayPlayer){
  const atWar=s.wars.some(w=>w.includes(faction)),chance=Math.max(.15,Math.min(.75,.35+(f.stability||0)/250-(atWar?.15:0)));
  if(dynastyRoll(s)>=chance)return;
  const serials=s.world.courtNomineeSerials||={},serial=(serials[faction]||0)+1;serials[faction]=serial;
- const [en,zh]=regionalCourts[faction],place=s.regions.find(r=>r.owner===faction)?.id;
+ const place=s.regions.find(r=>r.owner===faction)?.id;
  const sex=serial===1?(faction==='bosporus'?'female':'male'):faction==='bosporus'&&serial%4===2?'male':'unknown';
+ const name=generateFictionalName(s,{originFaction:faction,location:place});
  const generated=courtNomineeName(s,faction,serial,()=>dynastyRoll(s));
- const id=createFictionalPerson(s,{name:generated?.name||[`Fictional ${en} court nominee ${serial}`,`虚构${zh}宫廷人选${serial}`],regnalName:generated?.regnalName||null,homage:generated?.homage||null,appearance:generated?.appearance||null,faction,birthYear:s.year-35,location:place,sex,role:['Fictional court nominee in this campaign','本战役虚构宫廷人选'],origin:'court_nominee'});
- f.treasury-=5;s.world.leadership[faction]=[id];delete vacancies[faction];
+ const id=createFictionalPerson(s,{...name,name:generated?.name||name.name,regnalName:generated?.regnalName||null,homage:generated?.homage||null,appearance:generated?.appearance||null,faction,birthYear:s.year-35,location:place,sex,role:['Fictional court nominee in this campaign','本战役虚构宫廷人选'],origin:'court_nominee'});
+ f.treasury-=5;assignSuccession(s,faction);delete vacancies[faction];
 }
 
 export function advanceGovernments(s,{autoplayPlayer=false}={}){

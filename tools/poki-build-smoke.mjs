@@ -14,6 +14,9 @@ async function context(){const c=await browser.newContext({viewport:{width:640,h
 try{
  let c=await context(),p=await c.newPage(),errors=[];p.on('pageerror',e=>errors.push(e.message));
  await p.goto(origin+'/',{waitUntil:'domcontentloaded'});
+ await p.locator('.setup-advanced').evaluate(el=>el.open=true);
+ await p.locator('#campaign-guide').uncheck();
+ await p.locator('#start-campaign').scrollIntoViewIfNeeded();
  await p.locator('#start-campaign').tap();
  await p.waitForFunction(()=>window._pokiEvents?.includes('start'));
  assert.deepEqual(await p.evaluate(()=>_pokiEvents.slice(0,2)),['load','start']);

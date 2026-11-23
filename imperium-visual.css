@@ -1029,6 +1029,16 @@ body.atlas .spqr-version{left:auto;right:10px}
   :root .controls #open-atlas{display:none}
 }
 
+/* The compact layout may hide routine progress, but an approaching or completed defeat
+   must remain visible without opening another panel. */
+@media(max-width:1050px){
+  :root .shell .victory-progress:is(.defeat-warning,.defeat),
+  :root .shell:has(.inspector:not(.closed)) .victory-progress:is(.defeat-warning,.defeat){
+    display:flex;left:var(--iv-2);right:var(--iv-2);top:94px;bottom:auto;
+    max-width:min(440px,calc(100% - 2 * var(--iv-2)));max-height:92px;overflow:auto;z-index:6
+  }
+}
+
 /* ---------- 11. Motion ---------- */
 @keyframes iv-fade{from{opacity:0}to{opacity:1}}
 @keyframes iv-rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}

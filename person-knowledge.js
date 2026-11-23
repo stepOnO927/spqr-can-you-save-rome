@@ -1,4 +1,4 @@
-import {CHARACTER_CATALOG} from './characters.js?v=dossier-archive-1';
+import {CHARACTER_CATALOG} from './characters.js?v=faces-name-disagreement-1';
 
 export const namedReportSubjects=r=>['leaders','claimants'].includes(r.kind)?r.leaders||[]:r.kind==='authority'&&r.value&&typeof r.value==='object'?r.value.actors||[]:r.kind==='conspiracy'&&r.value==='suspected'&&typeof r.character==='string'?[r.character]:r.kind?.startsWith('office_')||r.kind==='succession'?[r.value]:[];
 const reportAge=(s,r)=>(s.year-(r.observationYear??r.year))*12+s.month-(r.observationMonth??r.month);
@@ -38,7 +38,8 @@ export function reportedPeople(s,actor,target){
  const knowledge=s.knowledge?.[actor]?.[target],reports=knowledge?.reports||[];
  const meetings=(s.meetings||[]).filter(m=>isCompletedMeeting(s,m)&&((m.actor===actor&&m.targetFaction===target)||(m.targetFaction===actor&&m.actor===target))).map(m=>m.actor===actor?m.target:m.person);
  const leads=reports.filter(r=>isDeliveredReport(s,r)).flatMap(r=>[...namedReportSubjects(r),...(['health','age','location','conspiracy'].includes(r.kind)?[r.character]:[])]);
- return [...new Set([...(knowledge?.reportedLeaders||[]),...Object.values(knowledge?.sightings||{}).filter(x=>isDeliveredReport(s,x)).map(x=>x.commanderId),...(knowledge?.commanderReports||[]).filter(x=>isDeliveredReport(s,x)).map(x=>x.commanderId),...leads,...meetings,...archivedPersonIndex(s,knowledge).leads].filter(id=>CHARACTER_CATALOG[id]))];
+ const claimants=reports.filter(r=>isDeliveredReport(s,r)&&r.kind==='claimants').flatMap(r=>r.leaders||[]);
+ return [...new Set([...(knowledge?.reportedLeaders||[]),...claimants,...Object.values(knowledge?.sightings||{}).filter(x=>isDeliveredReport(s,x)).map(x=>x.commanderId),...(knowledge?.commanderReports||[]).filter(x=>isDeliveredReport(s,x)).map(x=>x.commanderId),...leads,...meetings,...archivedPersonIndex(s,knowledge).leads].filter(id=>CHARACTER_CATALOG[id]))];
 }
 // A contact can be used by either participant's faction. Never reconstruct
 // a foreign relationship from its live trust value: older meetings without a
