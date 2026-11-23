@@ -1,16 +1,16 @@
-import {recordLegendEvidence} from './legend.js?v=institutional-senders-1';
-import {namedReportSubjects,reportedPersonName,visiblePersonName,isDeliveredReport,isCompletedMeeting,reportedPersonalContacts,reportedPeople} from './person-knowledge.js?v=institutional-senders-1';
-import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange,characterAgeRange} from './characters.js?v=institutional-senders-1';
-import {settleInheritance,dynastyRoll} from './dynasties.js?v=institutional-senders-1';
+import {recordLegendEvidence} from './legend.js?v=multipolar-review-1';
+import {namedReportSubjects,reportedPersonName,visiblePersonName,isDeliveredReport,isCompletedMeeting,reportedPersonalContacts,reportedPeople} from './person-knowledge.js?v=multipolar-review-1';
+import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange,characterAgeRange} from './characters.js?v=multipolar-review-1';
+import {settleInheritance,dynastyRoll} from './dynasties.js?v=multipolar-review-1';
 import {FACTIONS,ROUTES} from './data.js?v=phase-x-1';
-import {deriveGovernment,validSuccessionPlan} from './governance.js?v=institutional-senders-1';
-import {potentialConspirators} from './conspiracies.js?v=institutional-senders-1';
-import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=institutional-senders-1';
-import {reportedControl} from './control-intelligence.js?v=institutional-senders-1';
-import {canHoldOffice,localGovernor} from './office-system.js?v=institutional-senders-1';
-import {activeAgreement} from './agreements.js?v=institutional-senders-1';
+import {deriveGovernment,validSuccessionPlan} from './governance.js?v=multipolar-review-1';
+import {potentialConspirators} from './conspiracies.js?v=multipolar-review-1';
+import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=multipolar-review-1';
+import {reportedControl} from './control-intelligence.js?v=multipolar-review-1';
+import {canHoldOffice,localGovernor} from './office-system.js?v=multipolar-review-1';
+import {activeAgreement} from './agreements.js?v=multipolar-review-1';
 import {activeModifiers} from './inventions.js?v=mission-discount-1';
-import {registerMissionPersonnel} from './epistulae-personnel.js?v=institutional-senders-1';
+import {registerMissionPersonnel} from './epistulae-personnel.js?v=multipolar-review-1';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 // A visual impression is less precise than the historical birth estimate.
 // Unknown birth dates remain unknown, rather than becoming invented ages.
