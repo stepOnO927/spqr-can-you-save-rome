@@ -9,7 +9,8 @@ try{
   await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
   await page.locator('#start-campaign').waitFor();
   await page.locator('#start-campaign').click();
-  await page.locator('.victory-progress').waitFor();
+  await page.locator('.victory-progress').waitFor({state:'attached'});
+  if(width>700)await page.locator('#close-panel').click();
   const visual=await page.evaluate((widthForTest)=>({
    sheet:[...document.styleSheets].some(sheet=>sheet.href?.includes('imperium-visual.css')),
    background:getComputedStyle(document.body).backgroundColor,
