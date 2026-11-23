@@ -79,7 +79,7 @@ function moveCaravans(s){
   const r=s.regions.find(x=>x.id===b),guarded=s.armies.some(x=>x.region===b&&x.owner==='han'&&x.men>0)||r.fort>=2;
   const risk=(r.unrest?0.06:0)+(guarded?0:0.02)-(s.silk.security||0)*0.01;
   if(roll(s,'bandit'+c.id+b)<risk){c.status='lost';log(s,['A caravan is plundered near %REGION%.','商队在%REGION%遭劫。'],{region:b,kind:'silk'});continue}
-  if(owner==='parthia'&&s.silk.contact.anxi.level==='hearsay')s.silk.contact.anxi={level:'trade',heardAt:monthIndex(s)};
+  if(r.owner==='parthia'&&s.silk.contact.anxi.level==='hearsay')s.silk.contact.anxi={level:'trade',heardAt:monthIndex(s)};
   // Older saved caravans have no prepaid buyer or cargo ledger. They still
   // carry delayed reports, but may not mint new toll or sale income.
   c.pos++;c.wait=Math.max(0,leg.link.months-1);

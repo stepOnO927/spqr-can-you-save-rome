@@ -5,7 +5,7 @@ import {newHanGame,tick,moveArmy} from '../han/engine.js?v=faces-name-disagreeme
 import {ROUTES,REGIONS,OASIS} from '../han/data.js?v=han-1';
 import {PRESETS,templateStats,supplyFor,resolveBattle,marchMonths,recruitQuote,recruit,validateMix,saveTemplate} from '../han/military.js?v=han-1';
 import {propose,proposalScore,protectorateAction,access,declareWar,knownStrength,aiMilitary,observe,relation} from '../han/frontier.js?v=han-1';
-import {tradePath,legOpen,advanceSilk,embassyConditions,sendTradeEmbassy} from '../han/silk-road.js?v=han-1';
+import {tradePath,legOpen,advanceSilk,embassyConditions,sendTradeEmbassy} from '../han/silk-road.js?v=legacy-route-1';
 import {monthIndex} from '../han/util.js?v=han-1';
 
 const game=(p='han',o={})=>newHanGame(p,{seed:5,...o});

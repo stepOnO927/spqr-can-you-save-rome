@@ -4,7 +4,7 @@ import {newHanGame,loadHanSave,serialize,tick} from '../han/engine.js?v=faces-na
 import {declareWar,propose,setRelation} from '../han/frontier.js?v=han-1';
 import {activeEasternMerchantPrivilege,advanceEasternMarkets,advanceHanMilitarySupply,cancelEasternSale,grantEasternMerchantPrivilege,placeEasternTrade,postEasternSale,quoteEasternTrade,easternAvailableMerchants,easternMarketOffers,proposeEasternSupplyContract,cancelEasternSupplyContract,requisitionEasternHorses,setEasternExportRestriction,setEasternTariffPolicy} from '../han/markets.js?v=faces-wheels-1';
 import {recruit,recruitQuote,provisionArmy} from '../han/military.js?v=han-1';
-import {advanceSilk,protectRoute,ROUTE_PROTECTION_COST} from '../han/silk-road.js?v=han-1';
+import {advanceSilk,protectRoute,ROUTE_PROTECTION_COST} from '../han/silk-road.js?v=legacy-route-1';
 import {roll} from '../han/util.js?v=han-1';
 import {createMarketMerchant} from '../han/field-identities.js';
 
@@ -834,6 +834,15 @@ test('a legacy caravan without prepaid goods carries reports without minting mon
  advanceSilk(s);assert.equal(s.silk.caravans.find(c=>c.id===778).status,'arrived');
  assert.equal(s.silk.farWestDeliveries||0,deliveries);
  assert.equal(s.factions.han.treasury,treasury);
+});
+
+test('a legacy caravan can traverse another route leg after loading without minting trade income',()=>{
+ let s=newHanGame('han',{seed:6});s.month=1;s.silk.security=5;
+ s.silk.caravans.push({id:779,path:['changan','tianshui'],pos:0,wait:0,goods:['silk'],value:18,start:s.year*12+s.month,tolls:0,status:'travelling'});
+ s=loadHanSave(serialize(s));const before={treasury:s.factions.han.treasury,trade:s.silk.income.han||0,deliveries:s.silk.farWestDeliveries||0};
+ advanceSilk(s);
+ const caravan=s.silk.caravans.find(c=>c.id===779);
+ assert.equal(caravan.pos,1);assert.equal(caravan.status,'travelling');assert.equal(s.factions.han.treasury,before.treasury);assert.equal(s.silk.income.han||0,before.trade);assert.equal(s.silk.farWestDeliveries||0,before.deliveries);
 });
 
 test('autonomous Han buyers seek another horse supplier after a wartime blockade',()=>{

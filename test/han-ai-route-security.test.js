@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=faces-name-disagreement-1';
 import {advanceEasternMarkets} from '../han/markets.js?v=faces-wheels-1';
-import {advanceSilk,protectRoute,ROUTE_PROTECTION_COST} from '../han/silk-road.js?v=han-1';
+import {advanceSilk,protectRoute,ROUTE_PROTECTION_COST} from '../han/silk-road.js?v=legacy-route-1';
 import {roll} from '../han/util.js?v=han-1';
 
 test('AI Han funds route guards after its own paid caravan is actually raided',()=>{

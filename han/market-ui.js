@@ -4,7 +4,7 @@ import {atWar,propose,treaty} from './frontier.js?v=han-1';
 import {FACTIONS} from './data.js?v=han-1';
 import {campaignDate} from '../campaign-date.js?v=calendar-1';
 import {ownMarketIntelligence} from '../trade-intelligence.js?v=faces-wheels-1';
-import {protectRoute,ROUTE_PROTECTION_COST} from './silk-road.js?v=han-1';
+import {protectRoute,ROUTE_PROTECTION_COST} from './silk-road.js?v=legacy-route-1';
 import {merchantPortraitSrc} from './merchant-portrait.js';
 
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

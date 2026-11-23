@@ -209,7 +209,7 @@ try{
  assert.match(await page.locator('#inspector').innerText(),/Merchant-funded escort 2¤.*Raided routes 1/s);
   await page.evaluate(async()=>{
    const {newHanGame,serialize,SAVE_KEY}=await import('/han/engine.js?v=faces-name-disagreement-1');
-   const {advanceSilk}=await import('/han/silk-road.js?v=han-1');
+   const {advanceSilk}=await import('/han/silk-road.js?v=legacy-route-1');
    const {advanceEasternMarkets}=await import('/han/markets.js?v=faces-wheels-1');
    const {roll}=await import('/han/util.js?v=han-1');
    const state=newHanGame('shanshan',{seed:38});state.tradeMarkets.embeddedRoman=true;state.month=2;advanceSilk(state);

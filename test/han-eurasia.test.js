@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newHanGame,tick,moveArmy,serialize,loadHanSave} from '../han/engine.js?v=faces-name-disagreement-1';
 import {REGIONS,ROUTES,PLAYABLE} from '../han/data.js?v=han-1';
-import {tradePath,TRADE_END} from '../han/silk-road.js?v=han-1';
+import {tradePath,TRADE_END} from '../han/silk-road.js?v=legacy-route-1';
 import {declareWar} from '../han/frontier.js?v=han-1';
 import {changeDependency,dependencyOf} from '../han/dependencies.js';
 import {drawMap} from '../han/map.js?v=faces-name-disagreement-1';
