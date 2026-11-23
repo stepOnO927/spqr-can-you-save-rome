@@ -273,6 +273,7 @@ export function initializeDevelopment(s){
 }
 export const development = (s,id) => (initializeDevelopment(s),s.development[id]);
 const knowledgeInProgress=(d,branch,id)=>d.research?.branch===branch&&d.research.id===id||d.trade.some(t=>t.branch===branch&&t.id===id);
+const guardedMerchantIdeas=new Set(['court-informant-patronage','maritime-intelligence']);
 const visitingScholarFor=(s,owner,branch,id)=>development(s,owner)?.visitingScholars.find(visit=>visit.remaining>0&&!visit.travelRemaining&&(!visit.route||visit.currentRegion===visit.destination)&&(!visit.id||visit.branch===branch&&visit.id===id));
 export function scholarResearchBonus(s,owner,branch,id){return !!visitingScholarFor(s,owner,branch,id)}
 export function merchantResearchLead(s,owner,branch,id){
@@ -293,7 +294,7 @@ export function recordMerchantContact(s,route){
  if(recipient.merchantLeads.length>=3)return null;
  const eligible=branch=>{
   const catalog=branch==='material'?MATERIALS:IDEAS,known=branch==='material'?'knownMaterial':'knownIdeas';
-  return catalog.find(candidate=>(branch==='material'? !strategicKnowledge.has(candidate.id):['economy','culture'].includes(candidate.category)||['commercial-agreements','commercial-treaties'].includes(candidate.id))&&source[known].includes(candidate.id)&&!recipient[known].includes(candidate.id)&&!knowledgeInProgress(recipient,branch,candidate.id)&&candidate.prerequisites.every(id=>recipient[known].includes(id))&&!recipient.merchantLeads.some(lead=>(lead.branch||'material')===branch&&lead.id===candidate.id));
+  return catalog.find(candidate=>(branch==='material'?!strategicKnowledge.has(candidate.id):candidate.category!=='military'&&!guardedMerchantIdeas.has(candidate.id))&&source[known].includes(candidate.id)&&!recipient[known].includes(candidate.id)&&!knowledgeInProgress(recipient,branch,candidate.id)&&candidate.prerequisites.every(id=>recipient[known].includes(id))&&!recipient.merchantLeads.some(lead=>(lead.branch||'material')===branch&&lead.id===candidate.id));
  };
  const order=contact.pairs%2?['material','idea']:['idea','material'];
  const picked=order.map(branch=>({branch,item:eligible(branch)})).find(choice=>choice.item);

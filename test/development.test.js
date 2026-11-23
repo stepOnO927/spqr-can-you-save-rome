@@ -975,6 +975,26 @@ test('repeated paid voyages can teach a civilian idea without granting or equipp
  months(s,s.development.senate.adoption.remaining);
  assert.equal(activeEffects(s,'senate').navalTrade,1);
 });
+test('merchant-learned foreign government practice still needs a supported local culture',()=>{
+ let s=newGrandGame('senate');s.wars=[];s.factions.senate.treasury=1000;s.factions.senate.food=100;
+ s.development.egypt.knownMaterial=[...s.development.senate.knownMaterial];
+ s.development.egypt.knownIdeas=['legion-training','court-informant-patronage','maritime-intelligence','egyptian-multiscript-decrees'];
+ for(const route of s.naval.routes)if(route.id!=='egypt-papyrus')route.pausedBy=[s.regions.find(r=>r.id===route.from).owner];
+ for(let turn=0;turn<12&&!s.development.senate.merchantLeads.some(lead=>lead.branch==='idea');turn++){
+  s.year=-49+Math.floor(turn/12);s.month=turn%12+1;advanceNaval(s);
+ }
+ const lead=s.development.senate.merchantLeads.find(item=>item.branch==='idea');
+ assert.equal(lead?.id,'egyptian-multiscript-decrees','public foreign practice can spread through paid trade');
+ assert.ok(!s.development.senate.merchantLeads.some(item=>['legion-training','court-informant-patronage','maritime-intelligence'].includes(item.id)),'guarded practices remain private');
+ assert.equal(researchInnovation(s,'senate','idea',lead.id).ok,true);
+ months(s,s.development.senate.research.remaining);
+ s=upgradeSave(structuredClone(s));
+ assert.equal(adoptIdea(s,'senate',lead.id).reason,'cultural-base','learning does not create an Egyptian community');
+ const egypt=s.regions.find(r=>r.id==='egypt');egypt.owner='senate';egypt.civicSatisfaction=65;
+ assert.equal(adoptIdea(s,'senate',lead.id).ok,true);
+ months(s,s.development.senate.adoption.remaining);
+ assert.equal(activeEffects(s,'senate').egyptianDecrees,1);
+});
 
 test('Egyptian multiscript decrees require adoption and affect only Egyptian-culture integration',()=>{
  const id='egyptian-multiscript-decrees',idea=IDEAS.find(x=>x.id===id),s=newGrandGame('egypt');

@@ -1,5 +1,5 @@
 import {adjacent, army, region, isWar} from './engine.js';
-import {activeEffects} from './development.js?v=64';
+import {activeEffects} from './development.js?v=65';
 import {recordEvent} from './campaign-reports.js?v=14';
 import {armySupply} from './grand-operations.js?v=42';
 
