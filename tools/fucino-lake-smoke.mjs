@@ -30,7 +30,9 @@ try{
   assert.equal(await page.locator('[data-physical-label="fucinus"]').innerText(),label);
   assert.equal(await page.locator('[data-physical-label="fucinus"]').isVisible(),true);
   assert.match(await page.locator('#map-mode-note').innerText(),note);
+  assert.doesNotMatch(await page.locator('#map-mode-note').innerText(),lang==='zh'?/台伯河与阿诺河/:/Tiber and Arno/,'Unrelated central-Italy river note should not crowd the Fucino view');
   assert.match(await page.locator('.legend').innerText(),lang==='zh'?/古湖岸参考线/:/Approximate ancient lakeshore/);
+  if(lang==='zh')assert.ok(await page.locator('.strength-line b').last().evaluate(el=>el.getBoundingClientRect().height)<24,'The Chinese unknown-strength label must remain on one line');
   const found=await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.queryRenderedFeatures(map.project([13.547222,41.995]),{layers:['fucino-historical-fill']}).map(feature=>feature.properties.name)});
   assert.ok(found.includes('Lacus Fucinus'),`Missing rendered historical lake in ${lang}: ${found}`);
   await page.screenshot({path:resolve(out,`${lang}.png`)});
