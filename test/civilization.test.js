@@ -90,3 +90,13 @@ test('AI courts pay the same recruitment costs and only use their received leads
  assert.equal(s.civilization.prestige.egypt,0);
  assert.equal(s.factions.egypt.treasury,before-20);
 });
+
+test('older campaign saves gain empty Prestige without changing treasury, people or research',()=>{
+ const original=newGame('senate'),before={treasury:original.factions.senate.treasury,people:original.regions.find(r=>r.id==='roma').population.total,research:JSON.stringify(original.inventions.senate)};
+ delete original.civilization;
+ const restored=upgradeSave(JSON.parse(JSON.stringify(original)));
+ assert.equal(restored.civilization.prestige.senate,0);
+ assert.equal(restored.factions.senate.treasury,before.treasury);
+ assert.equal(restored.regions.find(r=>r.id==='roma').population.total,before.people);
+ assert.equal(JSON.stringify(restored.inventions.senate),before.research);
+});
