@@ -1,5 +1,5 @@
 import {analytics} from '../analytics.js';
-import {DIRECTIONS,init,act,control,lesson,replay,refresh,recommendations,objectives} from './experience.js?v=intelligence-archive-1';
+import {DIRECTIONS,init,act,control,lesson,replay,refresh,recommendations,objectives} from './experience.js?v=archived-leads-1';
 import {treeFor,focusState,focusStatus,startFocus} from './focus.js?v=han-1';
 import {OFFICES,FACTIONS} from './data.js?v=han-1';
 import {appoint} from './court.js?v=han-1';
