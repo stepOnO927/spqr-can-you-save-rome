@@ -37,6 +37,12 @@ try{
  await page.locator('#nav-museum').click();
  assert.equal(await page.locator('.museum-halls button').count(),8);
  assert.equal(await page.locator('.museum-standing strong').innerText(),'12');
+ const decree=page.locator('.artifact').filter({has:page.locator('h3', {hasText:'元老院决议铜铭板'})});
+ assert.equal(await decree.count(),1);
+ assert.match(await decree.innerText(),/早于本战役/);
+ assert.equal(await decree.locator('.artifact-source').getAttribute('href'),'https://artsandculture.google.com/asset/senatus-consultum-de-bacchanalibus/zAEr3v_5qUsieA');
+ assert.equal((await decree.locator('img').getAttribute('src')).startsWith('data:image/svg+xml'),true);
+ await decree.screenshot({path:path.join(root,'outputs','legacy-bronze-decree-mobile.png')});
  assert.equal(await page.locator('[data-feature]').count(),4);
  assert.equal(await page.locator('.artifact h3').filter({hasText:'尤利乌斯·凯撒胸像'}).count(),0,'unearned campaign portrait stays undisclosed');
  for(const id of ['senate-tablet','legion-sword','cato-bust','votive-lamp'])await page.locator(`[data-feature="${id}"]`).click();
@@ -47,6 +53,8 @@ try{
  assert.match(await page.locator('.museum-grid').innerText(),/小加图胸像/);
  await page.locator('#nav-lang').click();
  assert.match(await page.locator('.museum-showcase').innerText(),/Featured collection/);
+ await page.locator('[data-filter="all"]').click();
+ assert.match(await page.locator('.artifact').filter({has:page.locator('h3',{hasText:'Bronze senatorial decree'})}).innerText(),/earlier inscription is not a document from this campaign/);
  await page.reload();await page.locator('#nav-museum').click();
  assert.equal(await page.locator('.museum-pedestal:not(.empty)').count(),3);
  await page.locator('[data-unfeature="cato-bust"]').click();
