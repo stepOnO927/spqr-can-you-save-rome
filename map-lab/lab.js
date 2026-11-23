@@ -39,7 +39,7 @@ import rivers from '../rivers.js?v=phase-x-1';
 import {forecastEconomy,projectTaxPath,newGame, moveArmy, issueMilitaryOrder, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, recruitEquipmentStock, provisionRomanArmy, diplomacy, sendInquiry, inquiryCost, answerPeaceOffer, queueMission, setTax, personalDiplomaticCredit, PLAYABLE} from '../engine.js?v=faces-name-disagreement-1';
 import {RATION_SOLDIER_MONTHS} from '../market-goods.js?v=faces-wheels-1';
 import {FACTIONS} from '../data.js?v=phase-x-1';
-import {identity,factionMark} from '../identity.js?v=phase-x-1';
+import {identity as factionIdentity,factionMark as renderFactionMark} from '../identity.js?v=breakaway-kits-1';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO,characterAgeRange} from '../characters.js?v=faces-name-disagreement-1';
 import {createCharacterUI} from './character-ui.js?v=roman-vacancy-ui-1';
 import {fictionalPortraitKey} from '../portrait-registry.js?v=missing-fate-privacy-1';
@@ -56,6 +56,7 @@ import {receivedMail,unreadCount} from '../epistulae.js?v=faces-name-disagreemen
 
 const received=receiveHandoff(sessionStorage,'atlas',upgradeSave);
 let state = received || newGame();
+const identity=id=>factionIdentity(id,state),factionMark=(id,variant='insignia')=>renderFactionMark(id,variant,state);
 analytics.setContext({campaign:state.scenario||'roman',civilization:state.player,difficulty:state.difficulty||'standard'});
 analytics.setGameRunning(!!received&&!state.defeat);
 let objectivesOpen=true;let currentMapMode='political';let reliefEnabled=localStorage.getItem('spqr-relief')!=='off';

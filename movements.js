@@ -5,6 +5,7 @@ import {generateFictionalName} from './fictional-names.js?v=faces-wheels-1';
 import {hasNationalIdea} from './national-ideas.js?v=grand-chessboard-2';
 import {activeAgreement,terminateAgreement} from './agreements.js?v=focus-agreement-consent-1';
 import {reportedPersonalContact} from './person-knowledge.js?v=faces-name-disagreement-1';
+import {ensureBreakawayIdentity} from './identity.js?v=breakaway-kits-1';
 
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const log=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.log.slice(0,80)};
@@ -14,7 +15,8 @@ const capable=c=>!!c?.alive&&!c.missing&&!c.travel&&!['seriously_ill','dying','d
 export function initializeMovements(s){
  s.world.movements||=[];s.world.movementUnrest||={};s.world.movementUnrestOwner||={};s.world.movementFactionCatalog||={};s.world.movementKnowledge||={};s.world.movementContacts||=[];s.world.movementRecognitions||={};s.world.nextMovementId||=1;
  for(const m of s.world.movements){m.cohesion??=70;m.internalFactions||={moderate:70,hardline:30};m.schismMonths??=0}
- for(const [id,description] of Object.entries(s.world.movementFactionCatalog))FACTIONS[id]=description;
+ const origins=new Map(s.world.movements.filter(m=>m.force).map(m=>[m.force,m.parent]));
+ for(const [id,description] of Object.entries(s.world.movementFactionCatalog)){FACTIONS[id]=description;const origin=origins.get(id);if(origin)description.color=ensureBreakawayIdentity(s,id,origin).map}
  return s;
 }
 function grievances(s,r){
@@ -43,7 +45,7 @@ function raiseUprising(s,m,r){
  const government=s.factions[m.parent],leader=s.world.characters[m.leader];
  if(!capable(leader)||leader.faction!==m.parent||!government||r.owner!==m.parent||m.funds<8||m.supporters<3000||r.population.total<3000||s.armies.some(a=>a.owner===m.parent&&a.region===r.id&&a.men>0&&!a.move))return false;
  const id=m.id.replace('movement:','movement_force:'),name=[`${r.name[0]} movement`,`${r.name[1]}运动军`],definition={name,short:name,color:'#8a7365',ruler:CHARACTER_CATALOG[m.leader]?.name||['Local organizer','地方组织者']};
- s.world.movementFactionCatalog[id]=definition;FACTIONS[id]=definition;m.force=id;
+ s.world.movementFactionCatalog[id]=definition;FACTIONS[id]=definition;m.force=id;definition.color=ensureBreakawayIdentity(s,id,m.parent).map;
  const soldiers=Math.min(3000,m.supporters,r.population.total),food=Math.min(8,Math.max(0,government.food));government.food-=food;r.population.total-=soldiers;m.supporters-=soldiers;m.recruited=soldiers;
  s.factions[id]={treasury:m.funds,food,manpower:0,stability:45,legitimacy:35,tax:'normal',research:0};m.funds=0;
  for(const personId of m.network){const member=s.world.characters[personId];if(member?.alive&&member.faction===m.parent&&!s.armies.some(a=>a.characterId===personId))member.faction=id}

@@ -40,7 +40,7 @@ import {advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBa
 import {sendCoalitionInvitation,advanceCoalitionInvitations} from './coalition-negotiations.js?v=faces-name-disagreement-1';
 import {offerPoliticalContact,advancePoliticalContacts} from './political-contacts.js?v=faces-name-disagreement-1';
 import {initializeReligion,advanceReligion,populationFactor,religiousTaxCost,religiousPolicy} from './religion.js?v=faces-name-disagreement-1';
-import {initializeMovements,advanceMovements,reportedMovements,offerMovementSupport,recognizeMovement} from './movements.js?v=faces-name-disagreement-1';
+import {initializeMovements,advanceMovements,reportedMovements,offerMovementSupport,recognizeMovement} from './movements.js?v=breakaway-kits-1';
 import {initializeDiplomaticKnowledge,observeDiplomacy,reportedDiplomacy} from './diplomatic-knowledge.js?v=control-delivery-1';
 import {initializeWheels,advanceWheels} from './history-wheels.js?v=faces-name-disagreement-1';
 export {queueMission};

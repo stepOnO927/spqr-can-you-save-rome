@@ -32,10 +32,23 @@ const motifs={
  grain:'<path d="M20 33V12M20 18c-5-1-7-4-7-7 5 0 7 3 7 7zm0 5c5-1 7-4 7-7-5 0-7 3-7 7zM15 33h10"/>',
  bands:'<path d="M10 13h20M10 20h20M10 27h20"/>'
 };
-export function identity(id){return IDENTITIES[id]||IDENTITIES.shared}
-export function factionMark(id,variant='insignia'){
- const f=identity(id),art=motifs[f.motif],isBanner=variant==='banner',isStandard=variant==='standard';
- const shape=id==='parthia'?'M4 4h31l-6 13 6 17-15-3L4 37z':id==='egypt'?'M5 4h30v25L20 38 5 29z':id==='armenia'?'M5 4h30v31l-8-4-7 6-7-6-8 4z':'M4 4h32v29l-16 4L4 33z';
+const breakawayPalette=['#714b40','#4c6670','#706044','#53694e','#70546b','#796443','#496767','#815747'];
+const breakawayDetails=['<path d="M8 32l5-5m14 0 5 5"/>','<path d="M7 31h7m12 0h7"/>','<path d="M9 30l4 3m14 0 4-3"/>','<circle cx="20" cy="34" r="2"/>'];
+const hashId=id=>{let n=2166136261;for(const c of String(id))n=Math.imul(n^c.charCodeAt(0),16777619);return n>>>0};
+const validSavedKit=f=>!!f&&typeof f==='object'&&[f.primary,f.accent,f.map].every(c=>typeof c==='string'&&/^#[0-9a-fA-F]{6}$/.test(c))&&typeof f.abbr==='string'&&/^[A-Z0-9]{2,10}$/.test(f.abbr)&&Object.hasOwn(motifs,f.motif)&&Number.isInteger(f.detail)&&f.detail>=0&&f.detail<breakawayDetails.length&&Number.isInteger(f.cut)&&f.cut>=0&&f.cut<=2;
+// Saved game artwork: a breakaway state keeps its origin's motif and receives
+// a distinct field and device. This does not claim an attested ancient flag.
+export function ensureBreakawayIdentity(s,id,parent){
+ s.world.factionIdentities||={};
+ if(validSavedKit(s.world.factionIdentities[id]))return s.world.factionIdentities[id];
+ const origin=identity(parent,s),number=Number(String(id).split(':').at(-1))||hashId(id),index=hashId(id),primary=breakawayPalette[index%breakawayPalette.length];
+ const kit={primary,accent:origin.accent,map:primary,abbr:`${origin.abbr.slice(0,2)}${number.toString(36).toUpperCase()}`,motif:origin.motif,detail:index%breakawayDetails.length,cut:index%3,origin:parent,reconstruction:true};
+ s.world.factionIdentities[id]=kit;return kit;
+}
+export function identity(id,s){const saved=s?.world?.factionIdentities?.[id];return validSavedKit(saved)?saved:IDENTITIES[id]||IDENTITIES.shared}
+export function factionMark(id,variant='insignia',s){
+ const f=identity(id,s),art=motifs[f.motif]||motifs.bands,isBanner=variant==='banner',isStandard=variant==='standard';
+ const shape=f.cut===1?'M4 4h32v29l-8-3-8 7-8-7-8 3z':f.cut===2?'M4 4h32v31l-16-6-16 6z':id==='parthia'?'M4 4h31l-6 13 6 17-15-3L4 37z':id==='egypt'?'M5 4h30v25L20 38 5 29z':id==='armenia'?'M5 4h30v31l-8-4-7 6-7-6-8 4z':'M4 4h32v29l-16 4L4 33z';
  const frame=isBanner||isStandard?`<path d="${shape}" fill="var(--identity-primary)" stroke="var(--identity-accent)" stroke-width="${isStandard?1.5:1.2}"/>`:'<circle cx="20" cy="20" r="18" fill="var(--identity-primary)" stroke="var(--identity-accent)" stroke-width="1.5"/>';
- return `<svg class="faction-mark faction-${variant}" viewBox="0 0 40 40" aria-hidden="true" style="--identity-primary:${f.primary};--identity-accent:${f.accent};color:${f.accent}">${frame}<g fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round">${art}</g></svg>`;
+ return `<svg class="faction-mark faction-${variant}" viewBox="0 0 40 40" aria-hidden="true" style="--identity-primary:${f.primary};--identity-accent:${f.accent};color:${f.accent}">${frame}<g fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round">${art}${Number.isInteger(f.detail)?breakawayDetails[f.detail]:''}</g></svg>`;
 }
