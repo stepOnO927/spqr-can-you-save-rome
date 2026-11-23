@@ -2,7 +2,7 @@
 
 状态：**仅准备；尚未部署、切换域名或更改 GitHub 仓库可见性。** 在 Cloudflare 公网站点完整测试并获得明确切换批准前，仓库必须保持公开，现有 GitHub Pages 保持运行。
 
-最新审查提交 `ee3b39e3` 已纳入公开 `main` 至 `9a2eaf52`，同时保留主战役新视觉界面并接入九类条约的真实浏览器核对。[托管规则检查](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45261274833)通过 **1,397/1,397** 项，[Pages 包与三个入口浏览器](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45261274868)、[Poki](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45261275064)、[36 个月浏览器](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45261274954)和[三组深入浏览器](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45261274931)全部通过。第一组逐项检查九类条约和桌面/手机界面；第二组验证竞争政权的情报可见性、城镇目标和归档联系人。公开包 **339 个文件、5.15 MiB、最大单文件 1.06 MiB**。Cloudflare 实际域名尚未部署或验收。
+最新审查提交 `cae7191e` 已纳入公开 `main` 至 `a465f99b`，保留主战役新视觉界面，并把玩家选择的集结点接入远征、存档和支援地图。[托管规则检查](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45276175469)通过 **1,401/1,401** 项，[Pages 包与三个入口浏览器](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45276175769)、[Poki](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45276175855)、[36 个月浏览器](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45276175521)和[三组深入浏览器](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45276175498)全部通过。第一组实测军事通行、条约战争与存读档；第二组实测玩家选择集结点、抵达待命和手动继续。公开包 **339 个文件、5.16 MiB、最大单文件 1.06 MiB**。Cloudflare 实际域名尚未部署或验收。
 
 审查分支 `838d35b9` 已合入公开 `main` 至 `26b1368b`，同时保留前一轮已实测的新主战役界面，并接入依赖玩家已送达情报的竞争政权外交列表。10 项相关规则检查通过；托管复测结果见上方更新后的合并头。2026 年 11 月 23 日再次尝试对旧 GitHub Pages 作只读访问时，本机 DNS 解析失败，不能据此推断旧站已关闭；更早同日的三入口请求均曾返回 HTTP 200，GitHub API 仍显示仓库公开且启用 Pages。未执行旧部署或仓库可见性更改。
 
