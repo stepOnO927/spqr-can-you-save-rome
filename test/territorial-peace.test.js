@@ -57,7 +57,7 @@ test('a delivered acceptance cannot take land from a third party after circumsta
  assert.ok(found);
 });
 test('a human recipient sees the territory and decides without immediate transfer',()=>{
- const s=setup();assert.ok(sendInquiry(s,'senate','caesar','peace',{offerRegion:'hispaniaN'}).ok);const l=s.inquiries[0];l.status='awaiting_decision';l.remaining=6;syncPeaceLetters(s);
+ const s=setup();s.factions.senate.treasury=30;assert.ok(sendInquiry(s,'senate','caesar','peace',{offerRegion:'hispaniaN'}).ok);const l=s.inquiries[0];l.status='awaiting_decision';l.remaining=6;syncPeaceLetters(s);
  const mail=receivedMail(s).find(m=>m.id===l.mailId);assert.match(mail.body[1],/近西班牙.*有效回信送达前/);
  assert.ok(answerPeaceOffer(s,'senate','accept').ok);assert.equal(s.regions.find(r=>r.id==='hispaniaN').owner,'senate');assert.ok(isWar(s,'caesar','senate'));
  assert.equal(l.phase,'return');assert.equal(l.sealed.status,'answered');
