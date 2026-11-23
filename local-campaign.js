@@ -43,7 +43,7 @@ export function startLocalCampaign(state,id){
  city.militia-=field;
  state.player=id;
  state.scenario='local_city';
- state.localCampaign={id,startedAt:date(state),survived:0,tradeOffer:null,peerTradeOffer:null,protectionOffer:null,independenceOffer:null,tradeCompleted:0};
+ state.localCampaign={id,startedAt:date(state),survived:0,tradeOffer:null,peerTradeOffer:null,peerContacts:{},protectionOffer:null,independenceOffer:null,tradeCompleted:0};
  state.factions[id]={treasury:city.treasury,food:city.food,manpower:Math.floor(city.population*.05),stability:65,legitimacy:60,tax:'normal',research:0};
  state.armies.push({id:`local-field:${id}`,name:['City militia','城邦民兵'],owner:id,region:city.theater,men:field,morale:62,skill:Math.max(1,Math.floor(city.strategy/2)),experience:0,commander:[...city.civicOfficers?.captain?.name||city.ruler.name],move:null,siege:null});
  state.world.leadership[id]=[];
@@ -80,6 +80,14 @@ export function localPeerTradeOffer(state,peerId){
  f.treasury-=3;city.treasury=f.treasury;
  state.localCampaign.peerTradeOffer={host:peerId,remaining:2};
  return true;
+}
+
+// A city's simulated ruler is a political actor, rather than a cosmetic name.
+// This changes the trust required to accept a compact without adding a random
+// roll or disclosing the peer's current reserves when the envoy is dispatched.
+const PEER_TRADE_PERSONALITY={cautious:12,pragmatic:-6,bold:-4,ambitious:6};
+export function peerTradeTrustNeeded(peer){
+ return -25+Math.min(15,Math.max(0,peer.strategy||0))+(PEER_TRADE_PERSONALITY[peer.ruler?.personality]||0);
 }
 
 export function localProtectionOffer(state){
@@ -126,12 +134,16 @@ export function advanceLocalCampaign(state){
  }
  if(campaign.peerTradeOffer&&--campaign.peerTradeOffer.remaining<=0){
   const peer=localEntity(state,campaign.peerTradeOffer.host),reserve=peer&&Math.max(4,Math.ceil((peer.population||3000)/3000));
-  const accepted=!!(peer&&peer.type==='city_state'&&peer.controller===peer.id&&!peer.siege&&peer.food>=reserve+4&&peerRouteOpen(state,city,peer)&&relation(state,city.id,peer.id)>=-25+Math.min(15,peer.strategy||0)&&!state.wars.some(war=>war.includes(city.id)&&war.includes(peer.id)));
+  const routeOpen=!!peer&&peerRouteOpen(state,city,peer);
+  const accepted=!!(peer&&peer.type==='city_state'&&peer.controller===peer.id&&!peer.siege&&peer.food>=reserve+4&&routeOpen&&relation(state,city.id,peer.id)>=peerTradeTrustNeeded(peer)&&!state.wars.some(war=>war.includes(city.id)&&war.includes(peer.id)));
   if(accepted){city.peerTradeRights||={};city.peerTradeRights[peer.id]=date(state)+24}
   const name=peer?.name||[campaign.peerTradeOffer.host,campaign.peerTradeOffer.host];
+  const speaker=peer?.type==='city_state'&&peer.controller===peer.id&&!peer.siege&&routeOpen&&peer.ruler?.name?peer.ruler:null;
+  if(speaker){campaign.peerContacts||={};campaign.peerContacts[peer.id]={rulerId:speaker.id,name:[...speaker.name],year:state.year,month:state.month,accepted}}
   state.log.unshift({year:state.year,month:state.month,en:`${name[0]} ${accepted?'accepted':'declined'} the city-to-city food compact.`,zh:`${name[1]}${accepted?'接受':'拒绝'}了城邦间粮食贸易协定。`});
-  const sent=sendLetter(state,{senderInstitution:city.id,senderFaction:city.id,recipient:city.id,category:'government',priority:'important',source:city.theater,destination:city.theater,subject:['City envoy returned','城邦使者回报'],body:[`${name[0]} ${accepted?'accepted a two-year food compact; actual quarterly shipments still require food, treasury and an open route.':'declined the proposal; no goods or rights were transferred.'}`,`${name[1]}${accepted?'接受为期两年的粮食协定；每季度实际交易仍须有粮食、国库与通商路线。':'拒绝提议；未转移物资或授予贸易权。'}`],options:['acknowledge'],context:{kind:'local_peer_trade_result',polityId:city.id,host:peer?.id||campaign.peerTradeOffer.host,accepted}});
-  if(sent.ok){sent.letter.arrival=date(state);sent.letter.delivery='received';sent.letter.senderName=['City envoys','城邦使者']}
+  const speakerEn=speaker?.name[0]||name[0],speakerZh=speaker?.name[1]||name[1];
+  const sent=sendLetter(state,{senderInstitution:city.id,senderFaction:city.id,recipient:city.id,category:'government',priority:'important',source:peer?.theater||city.theater,destination:city.theater,subject:['City envoy returned','城邦使者回报'],body:[`${speakerEn} ${accepted?'accepted a two-year food compact; actual quarterly shipments still require food, treasury and an open route.':'declined the proposal; no goods or rights were transferred.'}`,`${speakerZh}${accepted?'接受为期两年的粮食协定；每季度实际交易仍须有粮食、国库与通商路线。':'拒绝提议；未转移物资或授予贸易权。'}`],options:['acknowledge'],context:{kind:'local_peer_trade_result',polityId:city.id,host:peer?.id||campaign.peerTradeOffer.host,accepted,...(speaker?{rulerId:speaker.id,rulerName:[...speaker.name]}:{})}});
+  if(sent.ok){sent.letter.arrival=date(state);sent.letter.delivery='received';sent.letter.senderName=speaker?[...speaker.name]:['City envoys','城邦使者']}
   campaign.peerTradeOffer=null;
  }
  if(campaign.protectionOffer&&--campaign.protectionOffer.remaining<=0){

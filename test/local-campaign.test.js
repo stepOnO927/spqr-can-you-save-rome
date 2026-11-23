@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,tick,upgradeSave} from '../engine.js';
 import {configureStartingDifficulty} from '../difficulty.js';
-import {playableLocalCities,startLocalCampaign,localCampaignCity,localRecruit,localTradeOffer,localTradePartners,localPeerCities,localPeerTradeOffer,localProtectionOffer,localIndependenceOffer,advanceLocalCampaign} from '../local-campaign.js';
+import {playableLocalCities,startLocalCampaign,localCampaignCity,localRecruit,localTradeOffer,localTradePartners,localPeerCities,localPeerTradeOffer,peerTradeTrustNeeded,localProtectionOffer,localIndependenceOffer,advanceLocalCampaign} from '../local-campaign.js';
 import {receivedMail} from '../epistulae.js';
 import {armyExpeditionSupply} from '../expedition-supply.js';
 import {validPlayableCampaign} from '../local-campaign-save.js';
@@ -19,6 +19,8 @@ test('generated city is a playable site without transferring its host theater',(
  assert.ok(state.armies.some(army=>army.owner===state.player&&army.region===city.theater));
  assert.equal(armyExpeditionSupply(state,state.armies.find(army=>army.owner===state.player)).status,'full');
  assert.equal(validPlayableCampaign(state),true);
+ assert.match(localCouncilHtml(state),/CAMPAIGN COUNCIL/);
+ assert.match(localCouncilHtml(state),/Steward/);
  assert.equal(localRecruit(state),true);
  assert.equal(city.population,localCampaignCity(state).population);
 });
@@ -116,12 +118,43 @@ test('generated city can make a real finite-resource compact with another autono
  tick(state);assert.equal(city.peerTradeRights?.[peer.id],undefined);
  tick(state);assert.ok(city.peerTradeRights?.[peer.id]>state.year*12+state.month);
  assert.ok(receivedMail(state).some(letter=>letter.context?.kind==='local_peer_trade_result'&&letter.context.host===peer.id&&letter.context.accepted));
+ const reply=receivedMail(state).find(letter=>letter.context?.kind==='local_peer_trade_result'&&letter.context.host===peer.id);
+ assert.equal(reply.context.rulerId,peer.ruler.id);assert.deepEqual(reply.senderName,peer.ruler.name);
+ assert.equal(state.localCampaign.peerContacts[peer.id].rulerId,peer.ruler.id);
+ assert.match(localCouncilHtml(state),/CITY CORRESPONDENCE/);
+ assert.match(localCouncilHtml(state),new RegExp(peer.ruler.name[0]));
+ assert.equal(validPlayableCampaign(upgradeSave(structuredClone(state))),true);
  const before={cityFood:state.factions[city.id].food,cityCash:state.factions[city.id].treasury,peerFood:peer.food,peerCash:peer.treasury,trades:state.localCampaign.tradeCompleted};
  for(let i=0;i<4;i++)tick(state);
  assert.ok(state.localCampaign.tradeCompleted>before.trades);
  assert.ok(peer.food<before.peerFood+8,'peer food is a finite source');
  assert.ok(peer.treasury>=before.peerCash+3);
  assert.ok(state.factions[city.id].food>=before.cityFood);
+});
+
+test('a generated peer ruler personality changes a real trade decision at the same trust',()=>{
+ const scenario=personality=>{
+  const state=configureStartingDifficulty(newGame('caesar'),'hard',false,{localSeed:273});
+  startLocalCampaign(state,'generated:narbo');
+  const peer=localPeerCities(state).find(item=>item.id==='massilia');
+  peer.ruler.personality=personality;
+  state.relations[[state.player,peer.id].sort().join(':')]=-15;
+  assert.equal(localPeerTradeOffer(state,peer.id),true);
+  tick(state);tick(state);
+  return {state,peer,reply:receivedMail(state).find(letter=>letter.context?.kind==='local_peer_trade_result'&&letter.context.host===peer.id)};
+ };
+ const cautious=scenario('cautious'),pragmatic=scenario('pragmatic');
+ assert.ok(peerTradeTrustNeeded(cautious.peer)>-15);
+ assert.ok(peerTradeTrustNeeded(pragmatic.peer)<=-15);
+ assert.equal(cautious.reply.context.accepted,false);
+ assert.equal(pragmatic.reply.context.accepted,true);
+ assert.equal(cautious.state.localCampaign.peerContacts.massilia.accepted,false);
+ assert.equal(pragmatic.state.localCampaign.peerContacts.massilia.accepted,true);
+ const tampered=structuredClone(pragmatic.state);tampered.localCampaign.peerContacts.massilia.name=['<script>','x'];
+ assert.equal(validPlayableCampaign(tampered),true,'a displayed name is escaped rather than rejected for punctuation');
+ assert.doesNotMatch(localCouncilHtml(tampered),/<script>/);
+ tampered.localCampaign.peerContacts.massilia.rulerId='forged';
+ assert.equal(validPlayableCampaign(tampered),false);
 });
 
 test('peer compact stops when food reserve or city treasury cannot fund a shipment',()=>{
