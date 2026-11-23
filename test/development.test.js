@@ -47,13 +47,18 @@ test('period engineering references name the checked source instead of only its 
   ['roadmaking','UNESCO, Via Appia. Regina Viarum'],
   ['bridge-engineering','UNESCO, Via Appia. Regina Viarum'],
   ['stone-fortification','Musée d’Archéologie nationale, Vercingetorix and Alesia'],
-  ['supply-organization','Javier Salido Dominguez, Architecture in the Service of the Roman Army (2015)']
+  ['supply-organization','Javier Salido Dominguez, Architecture in the Service of the Roman Army (2015)'],
+  ['dam-engineering','Alyzia Dam archaeological and engineering study (ISSMGE, 2026)']
  ]){
   const item=MATERIALS.find(x=>x.id===id);
   assert.equal(item.source.title,title);
   assert.match(item.source.url,/^https:\/\//);
   assert.match(developmentPanel(newGrandGame('senate'),'en','material'),new RegExp(title.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));
  }
+ const dam=MATERIALS.find(x=>x.id==='dam-engineering');
+ assert.match(dam.context[0],/Alyzia.*mid-fourth to third century BCE/);
+ assert.match(dam.context[1],/阿利齐亚.*前4世纪中叶至前3世纪/);
+ assert.doesNotMatch(dam.context.join(' '),/Alcantarilla|阿尔坎塔里利亚/);
 });
 
 test('agreed grain-dues commutation converts only real surplus after paid adoption',()=>{

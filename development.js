@@ -31,7 +31,7 @@ const catoCraftSource='https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Cato/D
 const ciceroTrainingSource='https://www.attalus.org/cicero/caelius.html';
 const pompeiiForumSource='https://pompeiisites.org/wp-content/uploads/A-Guide-to-the-Pompeii-Excavations-2.pdf';
 const auximumCisternSource='https://sabapancona.cultura.gov.it/auximum-romana-il-sistema-di-raccolta-delle-acque/';
-const alcantarillaSource='https://whc.unesco.org/uploads/nominations/1315.pdf';
+const alyziaDamSource='https://www.issmge.org/uploads/publications/145/146/tc301-2026-107.pdf';
 const scipioInscriptionSource='https://www.museivaticani.va/content/museivaticani/en/collezioni/musei/museo-pio-clementino/sarcofago-scipione-barbato.html';
 const militaryGranarySource='https://journals.ub.uni-heidelberg.de/index.php/germania/article/download/33997/27684';
 const gallicTrainingSource='https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Gallic_War/2%2A.html';
@@ -114,7 +114,7 @@ export const BUILDINGS = [
 // Further historically plausible families. Each entry has a distinct bilingual
 // encyclopedia summary; dates denote adaptation rather than first invention.
 const additionalMaterials=[
- ['dam-engineering',['Dam Engineering','堤坝工程'],'dam',alcantarillaSource,['A UNESCO nomination suggests the Alcantarilla dam may reach back to the second century BCE; its date is uncertain and this card is local adaptation.','一份联合国教科文组织申遗文件认为阿尔坎塔里利亚堤坝或可追溯至前2世纪；年代仍有争议，此卡代表地方改造。'],31,5,['water-control']],
+ ['dam-engineering',['Dam Engineering','堤坝工程'],'dam',alyziaDamSource,['The stone dam near Alyzia in western Greece dates to roughly the mid-fourth to third century BCE; this card adapts a known ancient practice, not a Roman invention in 49 BCE.','希腊西部阿利齐亚附近的石堤坝约建于前4世纪中叶至前3世纪；此卡代表对古代已有工程的改造，并非前49年的罗马新发明。'],31,5,['water-control']],
  ['reservoir-design',['Reservoir Design','蓄水池设计'],'reservoir',auximumCisternSource,['Italian heritage officials tentatively date Auximum’s forum cistern to the second century BCE; this card represents local water storage.','意大利文保机构初步把奥克西穆姆广场蓄水池定于前2世纪；此卡代表地方储水。'],22,3,['water-control']],
  ['aqueduct-refinement',['Aqueduct Refinement','渡槽改进'],'aqueduct',marciaSource,['Rome’s Aqua Marcia was built in 144 BCE; this node refines water distribution rather than inventing aqueducts.','罗马的马尔基亚水道建于前144年；此项改进配水，而非发明渡槽。'],27,4,['water-control']],
  ['sewer-improvement',['Sewer Improvement','下水道改进'],'sewer',cloacaSource,['The Cloaca Maxima combined drainage with later sewer functions; this is an improvement of existing works, not a claim of modern hygiene.','罗马大下水道兼有排涝和后来的排污功能；此项改进旧有工程，不宣称现代卫生效果。'],29,5,['urban-drainage']],
@@ -137,7 +137,7 @@ const additionalMaterials=[
  ['shipyard-craft',['Shipyard Craft','造船工艺'],'shipyard',massiliaSource,['Caesar reports twelve warships made at Arelate in 49 BCE and equipped before deployment; the card represents local yard organization.','凯撒记载前49年阿雷拉特建造并装备十二艘战船；此卡代表地方船厂组织。'],28,5,['port-facilities']]
 ];
 const checkedMaterialSourceTitles={
- 'dam-engineering':'Shushtar Historical Hydraulic System, UNESCO nomination file (2009)',
+ 'dam-engineering':'Alyzia Dam archaeological and engineering study (ISSMGE, 2026)',
  'reservoir-design':'Italian Ministry of Culture, Auximum water collection system',
  'supply-organization':'Javier Salido Dominguez, Architecture in the Service of the Roman Army (2015)',
  'bridge-engineering':'UNESCO, Via Appia. Regina Viarum'
@@ -196,7 +196,7 @@ const buildingEntries={
  mine:['The mine gazetteer records Roman-period extraction without precisely dating every deposit. This game mine needs a metal-bearing hill and local labor; output falls with population, while upkeep and local political strain remain.','矿业资料记录了罗马时期的采掘，却无法精确确定每处矿藏的年代。游戏矿场须有含金属的山地和地方劳力；人口下降会降低产量，维护费及地方政治压力仍会存在。'],
  granary:['Cato’s grain-storage advice concerns protecting an existing harvest. A completed granary holds a finite local reserve and adds limited national capacity; deposits transfer real food and shortage releases can delay, but not abolish, famine.','加图的谷仓建议针对已有收成的保存。建成的粮仓持有有限的地方储粮并增加少量全国容量；入库转移真实粮食，荒年出库只能延缓、不能消除饥荒。'],
  drain:['The Cloaca Maxima began as drainage long before 49 BCE. This urban drainage project costs stone and upkeep and improves local political conditions; it does not imply modern disease control.','罗马大下水道作为排水工程早于前49年很久。此项城市排水建设消耗石材和维护费，改善地方政治状况；它不代表现代疾病防控。'],
- dam:['The proposed early date of Alcantarilla remains uncertain. A dam in this game needs a suitable water site, costs substantial materials and upkeep, and reduces a local dry-month harvest loss rather than preventing every drought.','阿尔坎塔里利亚堤坝可能始于早期的年代仍有争议。游戏堤坝须建在适宜水域，消耗大量材料和维护费，只减轻当地干旱月份的收成损失，不会阻止所有旱灾。'],
+ dam:['The pre-49 BCE Alyzia dam was built in a narrow limestone gorge; its construction does not establish a universal Roman design. A game dam needs suitable water terrain, materials and upkeep, and only reduces local dry-month harvest loss.','前49年已存在的阿利齐亚堤坝建于狭窄石灰岩峡谷，不能据此推定罗马各地采用相同设计。游戏堤坝仍须适宜水域、材料及维护费，也只能减轻当地干旱月份的收成损失。'],
  reservoir:['Auximum’s cistern is provisionally associated with Republican planning. A game reservoir adds bounded food storage and some output at a water site, with paid upkeep; the numbers are not ancient measurements.','奥克西穆姆蓄水池与共和国时期规划的关联仍属初步判断。游戏蓄水池在有水的地点增加有限储粮和部分产出，并需付费维护；数值不是古代实测。'],
  aqueduct:['Aqua Marcia predates Caesar’s civil war. This local aqueduct improvement requires an actual water site and construction materials, then adds food and loyalty; it is an adaptation of existing engineering.','马尔基亚水道早于凯撒内战。此项地方渡槽改进须有水源并投入建筑材料，建成后增加粮食和忠诚；它是已有工程的地方改造。'],
  sewer:['The Cloaca Maxima was altered across many periods. A costly urban sewer here offers modest civic and character-health effects with maintenance, without presenting ancient drains as modern sanitation.','罗马大下水道在不同时期多次改造。这里昂贵的城市下水道带来有限的城市与人物健康效果，并需维护；古代排水设施不能等同于现代卫生系统。'],
