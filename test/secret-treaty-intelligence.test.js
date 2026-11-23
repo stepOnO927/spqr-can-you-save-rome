@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick,estimatedStrength} from '../engine.js?v=multipolar-review-1';
-import {proposeAgreement} from '../agreements.js?v=multipolar-review-1';
-import {queueMission,advanceOperations,addReport,reportEvidence} from '../character-system.js?v=multipolar-review-1';
-import {buildChessboard} from '../chessboard.js?v=multipolar-review-1';
-import {assessOpportunities,opportunityEvidenceSignature} from '../multipolar.js?v=multipolar-review-1';
+import {newGame,upgradeSave,tick,estimatedStrength} from '../engine.js?v=roman-vacancy-1';
+import {proposeAgreement} from '../agreements.js?v=roman-vacancy-1';
+import {queueMission,advanceOperations,addReport,reportEvidence} from '../character-system.js?v=roman-vacancy-1';
+import {buildChessboard} from '../chessboard.js?v=roman-vacancy-1';
+import {assessOpportunities,opportunityEvidenceSignature} from '../multipolar.js?v=roman-vacancy-1';
 
 const seedFor=(min,max)=>Array.from({length:100000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=min&&q<max});
 function setup(){const s=newGame('caesar');s.relations['egypt:parthia']=60;assert.ok(proposeAgreement(s,'egypt','parthia','defensive',{secret:true}).ok);return s}

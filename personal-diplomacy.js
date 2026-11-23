@@ -1,10 +1,10 @@
-import {reportedControl,observeArrival} from './control-intelligence.js?v=multipolar-review-1';
-import {initializeWorld, CHARACTER_CATALOG} from './characters.js?v=multipolar-review-1';
+import {reportedControl,observeArrival} from './control-intelligence.js?v=roman-vacancy-1';
+import {initializeWorld, CHARACTER_CATALOG} from './characters.js?v=roman-vacancy-1';
 import {ROUTES} from './data.js?v=phase-x-1';
-import {addReport,reportedHealthSubjects,reportedPersonName,apparentAgeRange} from './character-system.js?v=multipolar-review-1';
-import {officeOf} from './office-system.js?v=multipolar-review-1';
-import {fictionalPortraitKey} from './portrait-registry.js?v=multipolar-review-1';
-import {isCompletedMeeting,isDeliveredReport,storedCorrespondentName} from './person-knowledge.js?v=multipolar-review-1';
+import {addReport,reportedHealthSubjects,reportedPersonName,apparentAgeRange} from './character-system.js?v=roman-vacancy-1';
+import {officeOf} from './office-system.js?v=roman-vacancy-1';
+import {fictionalPortraitKey} from './portrait-registry.js?v=roman-vacancy-1';
+import {isCompletedMeeting,isDeliveredReport,storedCorrespondentName} from './person-knowledge.js?v=roman-vacancy-1';
 
 const atWar=(s,a,b)=>a!==b&&s.wars.some(w=>w.includes(a)&&w.includes(b));
 // A commander in transit has not arrived in a theater where an audience can occur.

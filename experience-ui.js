@@ -1,5 +1,5 @@
-import {DIRECTIONS,refreshExperience,tutorialStep,tutorialLessons,recommendations,objectives,setDirection,setGuide,replayLesson,recordExperience} from './experience.js?v=multipolar-review-1';
-import {AMBITIONS,availableAmbitions,ambitionStatus,chooseAmbition,initializeWheels,AMBITION_CHANGE_COST} from './history-wheels.js?v=multipolar-review-1';
+import {DIRECTIONS,refreshExperience,tutorialStep,tutorialLessons,recommendations,objectives,setDirection,setGuide,replayLesson,recordExperience} from './experience.js?v=roman-vacancy-1';
+import {AMBITIONS,availableAmbitions,ambitionStatus,chooseAmbition,initializeWheels,AMBITION_CHANGE_COST} from './history-wheels.js?v=roman-vacancy-1';
 
 let open='';
 const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
