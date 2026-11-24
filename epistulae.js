@@ -8,7 +8,7 @@ import {fictionalPortraitKey,observedFictionalPortrait} from './portrait-registr
 import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
 import {canMediate,requestMediation} from './civil-war.js?v=dossier-archive-1';
 import {storedCorrespondentName} from './person-knowledge.js?v=dossier-archive-1';
-import {peaceTermsText} from './peace-terms.js?v=territorial-peace-1';
+import {peaceTermsText,peaceWarIsCurrent} from './peace-terms.js?v=territorial-peace-1';
 
 const monthIndex = (year, month) => year * 12 + month;
 const pair = (a, b) => [a, b].sort().join(':');
@@ -191,6 +191,8 @@ export function replyToLetter(s, id, choice, actions, details={}) {
     if(!request)return {ok:false,reason:'unavailable'};
     if(choice!=='ignore')ok=actions.answerOfficialInquiry?.(s,request.actor,request.subject,choice).ok===true;
   } else if (m.context?.kind === 'peace') {
+    const request=(s.inquiries||[]).find(x=>x.mailId===m.id&&x.actor===m.senderFaction&&x.target===s.player&&x.subject==='peace'&&x.status==='awaiting_decision'&&peaceWarIsCurrent(s,x));
+    if(!request)return {ok:false,reason:'unavailable'};
     ok = actions.answerPeaceOffer?.(s,m.senderFaction,choice).ok === true;
   } else if (m.context?.kind === 'war' && choice === 'negotiate') {
     ok = actions.sendInquiry(s, s.player, m.senderFaction, 'peace').ok;
