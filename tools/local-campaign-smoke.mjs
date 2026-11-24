@@ -65,7 +65,7 @@ try{
  await page.locator('#new').click();await page.locator('[data-slot="save"]').click();
  const released=await page.evaluate(id=>JSON.parse(localStorage.getItem('spqr-save-1')).regions.flatMap(region=>region.localEntities||[]).find(city=>city.id===id).overlord,preparedCity.id);
  assert.equal(released,null);
- const neighbor=configureStartingDifficulty(newGame('caesar'),'standard',false,{localSeed:6}),neighborCity=playableLocalCities(neighbor).find(entity=>entity.procedural);
+ const neighbor=configureStartingDifficulty(newGame('caesar'),'standard',false,{localSeed:6}),neighborCity=playableLocalCities(neighbor).find(entity=>entity.id==='generated:anatolia');
  startLocalCampaign(neighbor,neighborCity.id);
  await page.evaluate(value=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state:value})),neighbor);
  await page.goto(`${base}/`,{waitUntil:'domcontentloaded'});
