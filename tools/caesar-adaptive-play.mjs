@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {writeFileSync} from 'node:fs';
-import {newGrandGame,upgradeSave,tick,army,region,adjacent,moveArmy,previewMarch,recruit,holdPosition,reserveFleet,nationalBudget,collectWarContributions,collectEmergencyProvisions,seizeAerarium,diplomacy,respondCivilSettlement,researchInnovation,constructionCheck,startConstruction} from '../engine.js';
+import {newGrandGame,upgradeSave,tick,army,region,adjacent,moveArmy,previewMarch,recruit,holdPosition,reserveFleet,nationalBudget,setTax,collectWarContributions,collectEmergencyProvisions,seizeAerarium,diplomacy,respondCivilSettlement,researchInnovation,constructionCheck,startConstruction} from '../engine.js';
 import {assessment,sendScouts,probePositions,requestReinforcements} from '../reconnaissance.js';
 import {afterActionHtml} from '../recon-ui.js';
 import {campaignEndingHtml} from '../achievement-ui.js';
@@ -13,6 +13,8 @@ import {publicSettlementTerms} from '../campaign-outcome.js';
 // This is an automated player path, not evidence of human-play balance.
 // SPQR_ADAPTIVE_PRIORITY=cash compares workshop-first investment with the
 // default food-first route while preserving the same military orders and seed.
+// SPQR_ADAPTIVE_FISCAL=1 tries two months of high tax only during a cash
+// deficit with adequate public support, then waits at least a year.
 let s=newGrandGame('caesar');
 const selectedSeed=Number(process.env.SPQR_ADAPTIVE_SEED||s.seed);
 assert.ok(Number.isSafeInteger(selectedSeed)&&selectedSeed>0);
@@ -21,10 +23,11 @@ const limit=Math.max(36,Math.min(120,Number(process.env.SPQR_ADAPTIVE_MONTHS)||1
 const front=process.env.SPQR_ADAPTIVE_FRONT||'west';
 assert.ok(['west','italy'].includes(front));
 const invest=process.env.SPQR_ADAPTIVE_INVEST==='1';
+const fiscal=process.env.SPQR_ADAPTIVE_FISCAL==='1';
 const priority=process.env.SPQR_ADAPTIVE_PRIORITY||'food';
 assert.ok(['food','cash'].includes(priority));
 const log=[],snapshots=[],seenBattles=new Set(),orders=new Map(),goals=new Map();
-let lastRecruitTurn=-Infinity,groupedAssaultBattles=0;
+let lastRecruitTurn=-Infinity,lastTaxBurstTurn=-Infinity,highTaxUntil=-Infinity,groupedAssaultBattles=0;
 const act=(label,result)=>{if(result?.ok){log.push(`${s.year}/${s.month} ${label}`);return true}return false};
 const owner=id=>region(s,id)?.owner;
 const ours=()=>s.armies.filter(unit=>unit.owner==='caesar'&&unit.men>=600);
@@ -98,6 +101,15 @@ function maintainEconomy(){
  const site=sites.find(candidate=>constructionCheck(s,'caesar',candidate.id,building).ok);
  if(site)act(`build ${building} ${site.id}`,startConstruction(s,'caesar',site.id,building));
 }
+function manageTax(){
+ if(!fiscal)return;
+ const turn=s.year*12+s.month,f=s.factions.caesar;
+ if(f.tax==='high'&&turn>=highTaxUntil){assert.equal(setTax(s,'caesar','normal'),true);log.push(`${s.year}/${s.month} end emergency high taxation`);return}
+ const owned=s.regions.filter(site=>site.owner==='caesar'),average=(key)=>owned.reduce((sum,site)=>sum+(site[key]??site.loyalty),0)/Math.max(1,owned.length);
+ if(f.tax!=='high'&&turn-lastTaxBurstTurn>=12&&f.treasury<70&&nationalBudget(s,'caesar').projectedNet<-5&&f.stability>=45&&average('loyalty')>=65&&average('civicSatisfaction')>=60){
+  assert.equal(setTax(s,'caesar','high'),true);lastTaxBurstTurn=turn;highTaxUntil=turn+2;log.push(`${s.year}/${s.month} begin two-month emergency taxation`);
+ }
+}
 
 act('reserve Adriatic fleet',reserveFleet(s,'caesar','caesar-adriatic'));
 for(let elapsed=0;elapsed<limit&&!s.achievementState.finalized;elapsed++){
@@ -110,6 +122,7 @@ for(let elapsed=0;elapsed<limit&&!s.achievementState.finalized;elapsed++){
  if(f.treasury<35&&budget.projectedNet<0)act('collect war contributions',collectWarContributions(s,'caesar'));
  if(f.food<18&&budget.foodNet<0)act('collect emergency provisions',collectEmergencyProvisions(s,'caesar'));
  if(owner('roma')==='caesar'&&!s.aerariumSeizure&&f.treasury<55)act('take the Aerarium',seizeAerarium(s,'caesar'));
+ manageTax();
  maintainEconomy();
  const turn=s.year*12+s.month;
  if(fieldMen()<5000&&f.treasury>=24&&f.food>=12&&f.manpower>=3000&&turn-lastRecruitTurn>=6){
@@ -137,7 +150,7 @@ for(let elapsed=0;elapsed<limit&&!s.achievementState.finalized;elapsed++){
  assert.equal(s.regions.length,121);
  assert.ok(s.armies.every(unit=>Number.isFinite(unit.men)&&unit.men>=0));
  assert.ok(Object.values(s.factions).every(faction=>[faction.treasury,faction.food,faction.manpower].every(Number.isFinite)));
- if(elapsed%6===5||s.achievementState.finalized)snapshots.push({date:`${s.year}/${s.month}`,territories:s.regions.filter(site=>site.owner==='caesar').length,rome:owner('roma'),treasury:f.treasury,food:f.food,net:nationalBudget(s,'caesar').projectedNet,foodNet:nationalBudget(s,'caesar').foodNet,field:fieldMen(),battles:seenBattles.size,armies:['xiii','viii'].map(id=>{const unit=army(s,id);return unit?{id,region:unit.region,siteOwner:owner(unit.region),men:unit.men,move:unit.move?.to||null,siege:unit.siege?.regionId||null,recon:!!unit.reconPending,training:unit.trainingRemaining||0}:null})});
+ if(elapsed%6===5||s.achievementState.finalized)snapshots.push({date:`${s.year}/${s.month}`,territories:s.regions.filter(site=>site.owner==='caesar').length,rome:owner('roma'),treasury:f.treasury,food:f.food,tax:f.tax,stability:f.stability,averageLoyalty:Math.round(s.regions.filter(site=>site.owner==='caesar').reduce((sum,site)=>sum+site.loyalty,0)/Math.max(1,s.regions.filter(site=>site.owner==='caesar').length)),net:nationalBudget(s,'caesar').projectedNet,foodNet:nationalBudget(s,'caesar').foodNet,field:fieldMen(),battles:seenBattles.size,armies:['xiii','viii'].map(id=>{const unit=army(s,id);return unit?{id,region:unit.region,siteOwner:owner(unit.region),men:unit.men,move:unit.move?.to||null,siege:unit.siege?.regionId||null,recon:!!unit.reconPending,training:unit.trainingRemaining||0}:null})});
  if([11,35,71].includes(elapsed)&&!s.achievementState.finalized){
   const before=savedEvidence(s);
   s=upgradeSave(JSON.parse(JSON.stringify(s)));
@@ -146,7 +159,7 @@ for(let elapsed=0;elapsed<limit&&!s.achievementState.finalized;elapsed++){
  }
  if(!s.achievementState.finalized)assert.deepEqual(revealedAchievements(s),[]);
 }
-const result={seed:selectedSeed,front,invest,priority,date:`${s.year}/${s.month}`,finalized:s.achievementState.finalized,outcome:s.campaignOutcome?.winner||s.achievementState.result||'ongoing',civilWarKind:s.campaignOutcome?.kind||s.civilWarOutcome?.kind||null,territories:s.regions.filter(site=>site.owner==='caesar').length,rome:owner('roma'),treasury:s.factions.caesar.treasury,food:s.factions.caesar.food,field:fieldMen(),battles:seenBattles.size,groupedAssaultBattles,snapshots,log};
+const result={seed:selectedSeed,front,invest,priority,fiscal,date:`${s.year}/${s.month}`,finalized:s.achievementState.finalized,outcome:s.campaignOutcome?.winner||s.achievementState.result||'ongoing',civilWarKind:s.campaignOutcome?.kind||s.civilWarOutcome?.kind||null,territories:s.regions.filter(site=>site.owner==='caesar').length,rome:owner('roma'),treasury:s.factions.caesar.treasury,food:s.factions.caesar.food,field:fieldMen(),battles:seenBattles.size,groupedAssaultBattles,snapshots,log};
 if(process.env.SPQR_ADAPTIVE_FINALIZE==='1'&&s.victory&&!s.achievementState.finalized){
  assert.deepEqual(revealedAchievements(s),[],'continuing after victory must keep achievements private');
  const finished=endCampaign(s,'retired');assert.equal(finished.ok,true);
