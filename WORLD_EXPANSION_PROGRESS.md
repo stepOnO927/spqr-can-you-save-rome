@@ -269,6 +269,8 @@ This file tracks the four supplied specifications as one development goal. The e
 
 ### Current review-branch increment
 
+- A deep browser partition reached the fixed four-minute limit inside the long territorial-peace scenario after all six outgoing negotiation cases passed. The hosted workflow now grants this scenario eight minutes and the full partition 45 minutes; a new run is required to confirm the remaining cases. This was a timeout, not a failed gameplay assertion.
+
 - Village AI now selects one affordable project each half-year from its own controlled villages. It prioritizes actual food deficits, road petitions, wartime insecurity and low satisfaction, then useful storage and trade development. It pays the same quoted treasury and food cost as the player and cannot build in a lost or already busy village. Focused village, village-event and generated-world tests pass 50/50; an additional campaign-turn check confirms that an AI court starts fields when its residents cannot be fed. Hosted checks for this increment are pending.
 
 - [Hosted live migration from the original GitHub Pages address](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45411656511) now passes: disposable Roman and Han saves were exported from `stepono927.github.io/spqr-can-you-save-rome/` and imported and loaded on the Cloudflare preview. Reimport preserved existing slots; an unknown save key was rejected. The old deployment was read only. This closes the actual old-to-new-domain save-transfer preparation gate; repeat the check after any approved custom-domain cutover.

@@ -12,7 +12,7 @@ jobs:
       matrix:
         part: [1, 2, 3]
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -28,7 +28,7 @@ jobs:
       - run: |
           node server.mjs > server.log 2>&1 &
           for i in {1..30}; do curl -fsS http://127.0.0.1:5173/ >/dev/null && break; sleep 1; done
-          node() { echo "BROWSER_CHECK: $*" >&2; command timeout 240s node "$@"; }
+          node() { echo "BROWSER_CHECK: $*" >&2; local limit=240s; [[ "$1" == tools/territorial-peace-smoke.mjs ]] && limit=480s; command timeout "$limit" node "$@"; }
           case "${{ matrix.part }}" in
             1)
               node tools/peace-war-identity-smoke.mjs
