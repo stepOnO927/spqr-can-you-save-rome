@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,resolveBattle,region,tick,upgradeSave,diplomacy,setTax,isWar} from '../engine.js?v=dossier-archive-1';
-import {observeArmies,reportedArmies} from '../character-system.js?v=dossier-archive-1';
-import {battleSideForPlayer,visibleLogText,visibleArmyForPlayer,visibleSummaryEvidence} from '../visibility.js?v=dossier-archive-1';
+import {newGame,resolveBattle,region,tick,upgradeSave,diplomacy,setTax,isWar} from '../engine.js?v=faces-name-disagreement-1';
+import {observeArmies,reportedArmies} from '../character-system.js?v=faces-name-disagreement-1';
+import {battleSideForPlayer,visibleLogText,visibleArmyForPlayer,visibleSummaryEvidence} from '../visibility.js?v=faces-name-disagreement-1';
 
 test('battle projection hides opponent details while preserving actual simulation evidence',()=>{
  const s=newGame('caesar'),a=s.armies.find(x=>x.id==='xiii'),d=s.armies.find(x=>x.id==='italy');resolveBattle(s,a,d,region(s,'italiaN'));const b=s.battles[0],own=battleSideForPlayer(b,'caesar','attacker'),enemy=battleSideForPlayer(b,'caesar','defender');
@@ -58,4 +58,3 @@ test('diplomacy involving the player and wars entered through alliances remain v
  const direct=newGame('caesar');direct.log=[];assert.equal(diplomacy(direct,'caesar','egypt','improve'),true);assert.match(direct.log[0].en,/improved relations/);
  for(const side of ['egypt','parthia']){const s=newGame('caesar');s.log=[];s.alliances.push(['caesar',side]);assert.equal(diplomacy(s,'egypt','parthia','war'),true);const enemy=side==='egypt'?'parthia':'egypt';assert.equal(isWar(s,'caesar',enemy),true);assert.equal(s.log.length,1);assert.match(s.log[0].en,/Treaty obligations have brought your faction into war/);assert.equal(s.log[0].other,enemy);assert.match(s.log[0].en,new RegExp(enemy==='egypt'?'Egypt':'Parthia'));}
 });
-

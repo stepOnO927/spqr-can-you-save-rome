@@ -9,6 +9,16 @@ const storage=(initial={})=>{
 const roman=JSON.stringify({player:'caesar',regions:[{id:'italy'}],armies:[],factions:{caesar:{}}});
 const han=JSON.stringify({dlc:'mandate-of-heaven',regions:[],armies:[],factions:{},persons:{},genealogy:{},throne:{},court:{}});
 
+test('transfers main-campaign saves for Han and regional factions without rewriting their identity',()=>{
+  const eastern=JSON.stringify({player:'han',regions:[{id:'roma'}],armies:[],factions:{han:{treasury:47}}});
+  const egyptian=JSON.stringify({player:'egypt',regions:[{id:'egypt'}],armies:[],factions:{egypt:{treasury:31}}});
+  const destination=storage();
+  const result=importSaves(exportSaves(storage({'spqr-save-1':eastern,'spqr-save-2':egyptian})),destination);
+  assert.deepEqual(result.imported,['spqr-save-1','spqr-save-2']);
+  assert.equal(destination.getItem('spqr-save-1'),eastern);
+  assert.equal(destination.getItem('spqr-save-2'),egyptian);
+});
+
 test('exports only known SPQR saves without changing storage',()=>{
   const source=storage({'spqr-save-1':roman,'spqr-han-save-browser':han,'unrelated-secret':'keep'});
   const bundle=exportSaves(source);

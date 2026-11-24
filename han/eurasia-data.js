@@ -96,7 +96,7 @@ export const EURASIAN_ROUTES=[
 ];
 export const DEPENDENCIES=POLITIES.filter(p=>p.overlord).map(p=>({subject:p.id,overlord:p.overlord,kind:p.overlord==='han'?'protectorate':p.overlord==='yuezhi'?'confederation_member':p.overlord==='kangju'?'political_influence':'client_or_influence',confidence:p.confidence,autonomy:70,tribute:0}));
 export const EURASIAN_RULERS=[
- {id:'orodes-ii',name:['Orodes II','奥罗德斯二世'],faction:'parthia',record:'historical',source:SOURCES.orodes},
- {id:'artavasdes-ii',name:['Artavasdes II','阿尔塔瓦兹德二世'],faction:'armenia',record:'historical',source:SOURCES.orodes},
- {id:'antiochus-i-commagene',name:['Antiochus I Theos','安条克一世'],faction:'commagene',record:'historical',source:SOURCES.commagene}
+ {id:'orodes-ii',name:['Orodes II','奥罗德斯二世'],faction:'parthia',record:'historical',portrait:'orodes',source:SOURCES.orodes},
+ {id:'artavasdes-ii',name:['Artavasdes II','阿尔塔瓦兹德二世'],faction:'armenia',record:'historical',portrait:'artavasdes',source:SOURCES.orodes},
+ {id:'antiochus-i-commagene',name:['Antiochus I Theos','安条克一世'],faction:'commagene',record:'historical',portrait:'han-antiochus-commagene',source:SOURCES.commagene}
 ];

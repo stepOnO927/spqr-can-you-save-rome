@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=dossier-archive-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=faces-name-disagreement-1';
 import {MATERIALS,IDEAS,CATEGORIES,activeModifiers,buildingModifiers,startResearch,startConstruction,equipIdea,removeIdea,expandSlot,requestKnowledge,offerKnowledge,inviteScholars,canEquip} from '../inventions.js?v=mission-discount-1';
 
 const advance=(s,n)=>{for(let i=0;i<n;i++)tick(s)};
 test('material research unlocks a local building, with separate construction and real income',()=>{
- const s=newGame('egypt');assert.equal(MATERIALS.length,15);assert.equal(new Set(MATERIALS.map(i=>i.image)).size,15);
+ const s=newGame('egypt');assert.ok(MATERIALS.length>=16);assert.equal(new Set(MATERIALS.map(i=>i.image)).size,MATERIALS.length);
  assert.equal(startConstruction(s,'egypt','egyptUpper','granaries').reason,'knowledge');
  assert.equal(startResearch(s,'egypt','granaries').ok,true);assert.deepEqual(s.regions.find(r=>r.id==='egyptUpper').buildings,[]);
  advance(s,4);assert.ok(s.inventions.egypt.knownMaterial.includes('granaries'));

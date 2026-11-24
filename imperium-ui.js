@@ -1,14 +1,14 @@
 import {campaignYear,campaignDate} from './campaign-date.js?v=calendar-1';
-import {reportedControl} from './control-intelligence.js?v=dossier-archive-1';
+import {reportedControl} from './control-intelligence.js?v=control-delivery-1';
 import {REGIONS,ROUTES,FACTIONS} from './data.js?v=phase-x-1';
-import {CHARACTER_CATALOG} from './characters.js?v=dossier-archive-1';
-import {mapPoint} from './map.js?v=dossier-archive-1';
+import {CHARACTER_CATALOG} from './characters.js?v=faces-name-disagreement-1';
+import {mapPoint} from './map.js?v=breakaway-kits-1';
 import {BRANCH_NAMES,PATH_NAMES} from './imperium-focus-data.js?v=imperium-1';
-import {treeFor,focusStatus,focusState,canStartFocus,startFocus,cancelFocus,focusCost,focusReportsFor,focusById} from './national-focus.js?v=dossier-archive-1';
-import {COMPONENTS,CULTURE_NAMES,templatesFor,templateStats,saveTemplate,duplicateTemplate,deleteTemplate,validateTemplate,availableComponents,cultureOf,reorganizationQuote,reorganizeArmy,recruitmentQuote,recruitFormation,commanderSpecialty,commandConcentration,seedTemplates,formationState,outdatedArmies} from './legion-designer.js?v=dossier-archive-1';
-import {ROLES,ROLE_NAMES,MODES,plansFor,planById,createPlan,assignRole,removeRole,approvePlan,pausePlan,cancelPlan,editPlan,assessPlan,adviserCounsel,approveRecommendation,legalStep} from './battle-plans.js?v=dossier-archive-1';
+import {treeFor,focusStatus,focusState,canStartFocus,startFocus,cancelFocus,focusCost,focusReportsFor,focusById} from './national-focus.js?v=faces-name-disagreement-1';
+import {COMPONENTS,CULTURE_NAMES,templatesFor,templateStats,saveTemplate,duplicateTemplate,deleteTemplate,validateTemplate,availableComponents,cultureOf,reorganizationQuote,reorganizeArmy,recruitmentQuote,recruitFormation,commanderSpecialty,commandConcentration,seedTemplates,formationState,outdatedArmies} from './legion-designer.js?v=faces-name-disagreement-1';
+import {ROLES,ROLE_NAMES,MODES,plansFor,planById,createPlan,assignRole,removeRole,approvePlan,pausePlan,cancelPlan,editPlan,assessPlan,adviserCounsel,approveRecommendation,legalStep} from './battle-plans.js?v=faces-name-disagreement-1';
 import {operationPartners,shareOperation,operationNoticeRoute} from './operation-intelligence.js?v=operation-notices-1';
-import {sendLetter,courierMonths} from './epistulae.js?v=dossier-archive-1';
+import {sendLetter,courierMonths} from './epistulae.js?v=faces-name-disagreement-1';
 import {jointOperationsPanel,bindJointOperations} from './joint-operations-ui.js?v=joint-operations-1';
 
 // IMPERIUM screens: national strategy tree, legion designer, operational planner.
@@ -134,10 +134,10 @@ export function designerScreen(state,lang){
  const commanders=Object.values(state.world.characters).filter(c=>c.alive&&c.faction===owner);
  const spec=d.commander?commanderSpecialty(state,d.commander):null,conc=d.commander?commandConcentration(state,owner,d.commander):null;
  const own=templatesFor(state,owner),armies=state.armies.filter(a=>a.owner===owner&&a.men>0),regions=state.regions.filter(r=>r.owner===owner);
- const q=d.id&&d.army?reorganizationQuote(state,owner,d.army,d.id):null,rq=d.id?recruitmentQuote(state,owner,d.id):null;
+ const q=d.id&&d.army?reorganizationQuote(state,owner,d.army,d.id):null,rq=d.id?recruitmentQuote(state,owner,d.id,d.region):null,weaponStock=state.markets?.regions?.[d.region]?.goods?.weapons?.stock??0;
  const outdated=d.id?outdatedArmies(state,owner).filter(id=>state.armies.find(a=>a.id===id)?.formation?.templateId===d.id):[];
  const cmp=ui.compare.map(id=>formationState(state).templates[id]).filter(t=>t&&t.owner===owner);
- const reasonText=r=>({location:lang==='zh'?'军队须位于己方战区':'Army must be in friendly territory',busy:lang==='zh'?'军队正在行军、围攻或改编':'Army is marching, besieging or reorganizing',enemy:lang==='zh'?'敌军在场':'Enemy present',supply:lang==='zh'?'没有通往己方补给中心的路线':'No route to a friendly supply center',template:lang==='zh'?'模板无效':'Template invalid',resources:lang==='zh'?'资源不足':'Not enough resources',unknown:'—'})[r]||r;
+ const reasonText=r=>({location:lang==='zh'?'军队须位于己方战区':'Army must be in friendly territory',busy:lang==='zh'?'军队正在行军、围攻或改编':'Army is marching, besieging or reorganizing',enemy:lang==='zh'?'敌军在场':'Enemy present',supply:lang==='zh'?'没有通往己方补给中心的路线':'No route to a friendly supply center',template:lang==='zh'?'模板无效':'Template invalid',resources:lang==='zh'?'资源不足':'Not enough resources',weapons:lang==='zh'?'当地兵器不足':'Insufficient local weapons',unknown:'—'})[r]||r;
  return `<div class="imp-designer"><header><h2>${L2.designer}</h2><small>${esc(L(lang,CULTURE_NAMES[cultureOf(owner)]))}</small></header>
  <section class="imp-col-list"><h3>${L2.templates}</h3><ul>${own.map(t=>`<li class="${d.id===t.id?'on':''}"><label class="imp-cmp"><input type="checkbox" data-imp-compare="${t.id}" ${ui.compare.includes(t.id)?'checked':''} aria-label="${L2.compare}"></label><button data-imp-template="${t.id}">${esc(lang==='zh'&&t.nameZh?t.nameZh:t.name)}<small>${templateStats(t).personnel.toLocaleString()} · ${esc(L2.profiles[templateStats(t).profile])}</small></button></li>`).join('')}</ul><button class="action" data-imp-new-template>${L2.newT}</button><p class="hint">${L2.compareHint}</p></section>
  <section class="imp-col-edit"><label for="imp-tname">${L2.name}</label><input id="imp-tname" maxlength="48" value="${esc(d.name)}"><label for="imp-commander">${L2.commander}</label><select id="imp-commander"><option value="">${L2.noCommander}</option>${commanders.map(c=>`<option value="${c.id}" ${d.commander===c.id?'selected':''}>${esc(cname(c.id,lang))}</option>`).join('')}</select>
@@ -148,7 +148,7 @@ export function designerScreen(state,lang){
   <h4>${L2.terrain}</h4><ul class="imp-terrain">${Object.entries(st.terrain).map(([k,v])=>`<li><span>${esc({plain:['Plain','平原'],hills:['Hills','丘陵'],forest:['Forest','森林'],urban:['Urban','城市'],desert:['Desert','沙漠']}[k][lang==='zh'?1:0])}</span>${bar(v)}<b class="${v<1?'neg':v>1?'pos':''}">${v.toFixed(2)}</b></li>`).join('')}</ul>`:'<p class="hint">—</p>'}
   ${spec?`<h4>${L2.commander}</h4><p class="hint">${lang==='zh'?`模拟专长：骑兵 ${spec.cavalry} · 工程 ${spec.engineering} · 谨慎 ${spec.caution}（游戏设定，非史实评价）`:`Simulated specialties: cavalry ${spec.cavalry} · engineering ${spec.engineering} · caution ${spec.caution} (gameplay traits, not historical judgments)`}</p><p class="imp-conc l-${conc.level}">${L2.concentration}: ${esc(L2.levels[conc.level])} · ${conc.share}%</p>`:''}
   <h4>${L2.apply}</h4><div class="imp-row"><label class="sr" for="imp-army">${L2.army}</label><select id="imp-army"><option value="">${L2.army}</option>${armies.map(a=>`<option value="${a.id}" ${d.army===a.id?'selected':''}>${esc(L(lang,a.name))} · ${a.men.toLocaleString()} · ${esc(rname(a.region,lang))}</option>`).join('')}</select><button class="action" data-imp-apply ${!q?.ok?'disabled':''}>${L2.apply.split('（')[0].split(' (')[0]}</button></div>${q?(q.ok?`<p class="hint">${L2.quote}: ${q.manpower.toLocaleString()} ${lang==='zh'?'兵员':'men'}, ${q.treasury} ¤, ${q.food} ${lang==='zh'?'粮':'grain'}, ${q.months} ${L2.months}${q.partial?` · ${L2.partial} ${Math.round(q.fraction*100)}%`:''}</p>`:`<p class="imp-err">${esc(reasonText(q.reason))}</p>`):''}
-  <h4>${L2.raise}</h4><div class="imp-row"><label class="sr" for="imp-region">${L2.region}</label><select id="imp-region"><option value="">${L2.region}</option>${regions.map(r=>`<option value="${r.id}" ${d.region===r.id?'selected':''}>${esc(rname(r.id,lang))}</option>`).join('')}</select><button class="action" data-imp-raise ${!d.id||!d.region?'disabled':''}>${L2.raise}</button></div>${rq?`<p class="hint">${L2.quote}: ${rq.treasury} ¤, ${rq.manpower.toLocaleString()} ${lang==='zh'?'兵员':'men'}, ${rq.food} ${lang==='zh'?'粮':'grain'}, ${lang==='zh'?'训练':'training'} ${rq.training} ${L2.months}</p>`:''}
+  <h4>${L2.raise}</h4><div class="imp-row"><label class="sr" for="imp-region">${L2.region}</label><select id="imp-region"><option value="">${L2.region}</option>${regions.map(r=>`<option value="${r.id}" ${d.region===r.id?'selected':''}>${esc(rname(r.id,lang))}</option>`).join('')}</select><button class="action" data-imp-raise ${!d.id||!d.region||rq?.weapons>weaponStock?'disabled':''}>${L2.raise}</button></div>${rq?`<p class="hint">${L2.quote}: ${rq.treasury} ¤, ${rq.manpower.toLocaleString()} ${lang==='zh'?'兵员':'men'}, ${rq.food} ${lang==='zh'?'粮':'grain'}, ${rq.weapons} ${lang==='zh'?'批当地兵器':'local weapons batch(es)'} (${lang==='zh'?'现有':'stock'} ${weaponStock}), ${lang==='zh'?'训练':'training'} ${rq.training} ${L2.months}</p>`:''}
   ${outdated.length?`<p class="hint">${L2.outdated}: ${outdated.map(id=>esc(L(lang,state.armies.find(a=>a.id===id)?.name))).join(', ')}</p>`:''}</section>
  ${cmp.length>1?`<section class="imp-compare"><h3>${L2.compare}</h3><div class="imp-scroll"><table><thead><tr><th></th>${cmp.map(t=>`<th>${esc(t.name)}</th>`).join('')}</tr></thead><tbody>${[['personnel',x=>x.personnel.toLocaleString()],['recruit',x=>x.recruitCost+x.equipment+' ¤'],['upkeep',x=>x.upkeep],['food',x=>x.food],['speed',x=>L2.speeds[x.speed]],['attack',x=>x.attack],['defense',x=>x.defense],['recon',x=>x.recon],['siege',x=>x.siege],['training',x=>x.training]].map(([k,f])=>`<tr><th>${L2[k]}</th>${cmp.map(t=>`<td>${esc(f(templateStats(t)))}</td>`).join('')}</tr>`).join('')}</tbody></table></div></section>`:''}</div>`;
 }
@@ -231,7 +231,7 @@ export function bindImperium({state,lang,render,flash,log}){
  all('[data-imp-dup]').forEach(el=>el.onclick=()=>{const r=duplicateTemplate(state,owner,ui.draft.id,`${ui.draft.name} II`);if(r.ok){ui.draft={...ui.draft,id:r.template.id,name:r.template.name}}render()});
  all('[data-imp-del]').forEach(el=>el.onclick=()=>{deleteTemplate(state,owner,ui.draft.id);ui.draft=null;ui.compare=ui.compare.filter(x=>formationState(state).templates[x]);render()});
  all('[data-imp-apply]').forEach(el=>el.onclick=()=>{const r=reorganizeArmy(state,owner,ui.draft.army,ui.draft.id,{log});if(!r.ok)flash(r.reason);render()});
- all('[data-imp-raise]').forEach(el=>el.onclick=()=>{const r=recruitFormation(state,owner,ui.draft.region,ui.draft.id,{log});if(!r.ok)flash(lang==='zh'?'资源不足或战区无效。':'Not enough resources or invalid theater.');render()});
+ all('[data-imp-raise]').forEach(el=>el.onclick=()=>{const r=recruitFormation(state,owner,ui.draft.region,ui.draft.id,{log});if(!r.ok)flash(r.reason==='weapons'?(lang==='zh'?'当地兵器不足，须等待运抵。':'Local weapons are insufficient; await delivery.'):(lang==='zh'?'资源不足或战区无效。':'Not enough resources or invalid theater.'));render()});
  // planner
  all('[data-imp-plan]').forEach(el=>el.onclick=()=>{ui.plan=el.dataset.impPlan;ui.drawing=null;render()});
  all('[data-imp-new-plan]').forEach(el=>el.onclick=()=>{const r=createPlan(state,owner,{name:$('#imp-pname')?.value||'',mode:'assisted'});if(r.ok)ui.plan=r.plan.id;render()});
@@ -255,7 +255,7 @@ export function bindImperium({state,lang,render,flash,log}){
   all('[data-imp-approve]').forEach(el=>el.onclick=()=>{const r=approvePlan(state,owner,plan.id,{log});if(!r.ok)flash(r.reason);render()});
   all('[data-imp-pause]').forEach(el=>el.onclick=()=>{pausePlan(state,owner,plan.id);render()});
   all('[data-imp-cancel-plan]').forEach(el=>el.onclick=()=>{cancelPlan(state,owner,plan.id);ui.drawing=null;render()});
-  all('[data-imp-rec]').forEach(el=>el.onclick=async()=>{const {issueMilitaryOrder}=await import('./engine.js?v=dossier-archive-1');const r=approveRecommendation(state,owner,plan.id,Number(el.dataset.impRec),{issueOrder:issueMilitaryOrder});if(!r.ok)flash(r.reason||'');render()});
+  all('[data-imp-rec]').forEach(el=>el.onclick=async()=>{const {issueMilitaryOrder}=await import('./engine.js?v=faces-name-disagreement-1');const r=approveRecommendation(state,owner,plan.id,Number(el.dataset.impRec),{issueOrder:issueMilitaryOrder});if(!r.ok)flash(r.reason||'');render()});
  }
  // Route drawing captures map clicks before the normal region selection.
  if(ui.drawing){all('[data-map-group]').forEach(el=>el.addEventListener('click',e=>{e.stopImmediatePropagation();e.preventDefault();const a=state.armies.find(x=>x.id===ui.drawing.armyId);if(!a)return;const last=ui.drawing.path.at(-1)||a.region,ids=el.dataset.mapGroup.split(','),next=ids.find(id=>legalStep(state,owner,last,id).ok);

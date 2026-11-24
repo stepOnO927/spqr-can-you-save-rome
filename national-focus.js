@@ -1,11 +1,11 @@
 import {FOCUS_TREES,TREE_ALIASES,BRANCHES,ICONS} from './imperium-focus-data.js?v=imperium-1';
 import {ROUTES,FACTIONS} from './data.js?v=phase-x-1';
 import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
-import {sendAgreementProposal} from './agreement-negotiations.js?v=dossier-archive-1';
-import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=dossier-archive-1';
-import {successionCandidates} from './governance.js?v=dossier-archive-1';
-import {reportedControl} from './control-intelligence.js?v=dossier-archive-1';
-import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=dossier-archive-1';
+import {sendAgreementProposal} from './agreement-negotiations.js?v=focus-agreement-consent-1';
+import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=faces-name-disagreement-1';
+import {successionCandidates} from './governance.js?v=faces-name-disagreement-1';
+import {reportedControl} from './control-intelligence.js?v=control-delivery-1';
+import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=faces-name-disagreement-1';
 
 // IMPERIUM national focus engine. One primary focus per state progresses with
 // the monthly tick. Costs are paid when a focus starts and shown beforehand;
@@ -147,7 +147,7 @@ export function applyFocusEffects(s,actor,f,{log=()=>{},sendInquiry=null,autopla
   if(e.foreignTrust){const leaders=new Set(s.world.leadership?.[e.foreignTrust.faction]||[]);for(const c of factionCharacters(s,e.foreignTrust.faction).filter(c=>!leaders.has(c.id)))c.loyalty=Math.max(0,Math.min(100,(c.loyalty??60)-Math.round(e.foreignTrust.n/2)));rememberPoliticalEvent(s,e.foreignTrust.faction,actor,'clemency',e.foreignTrust.n/2)}
   // Diplomatic effects open a proposal; the other court decides with existing rules.
   if(e.peaceLetter&&isWar(s,actor,e.peaceLetter)&&sendInquiry){const r=sendInquiry(s,actor,e.peaceLetter,'peace');notes.push(['peace_letter',e.peaceLetter,r.ok?'sent':r.reason])}
-  if(e.propose)for(const target of e.propose.targets){if(isWar(s,actor,target))continue;const [from,to]=e.propose.reverse?[target,actor]:[actor,target];if(!autoplayPlayer&&from===s.player&&actor!==s.player){notes.push(['proposal',target,e.propose.type,'player_decision']);continue}const r=sendAgreementProposal(s,from,to,e.propose.type);notes.push(['proposal',target,e.propose.type,r.ok?'sent':r.reason])}
+  if(e.propose)for(const target of e.propose.targets){if(!holds(s,target)||isWar(s,actor,target))continue;const [from,to]=e.propose.reverse?[target,actor]:[actor,target];if(!autoplayPlayer&&from===s.player&&actor!==s.player){notes.push(['proposal',target,e.propose.type,'player_decision']);continue}const r=sendAgreementProposal(s,from,to,e.propose.type);notes.push(['proposal',target,e.propose.type,r.ok?'sent':r.reason])}
   if(e.perceive)for(const o of contacts(s,actor)){rememberPoliticalEvent(s,o,actor,'strategic_threat',-e.perceive);notes.push(['perceived',o])}
   if(e.succession&&leader){const heir=(successionCandidates(s,actor)||[]).find(id=>id&&id!==leader&&s.world.characters[id]?.alive);if(heir){s.world.successionPlans||={};s.world.successionPlans[actor]=heir;notes.push(['succession',heir])}else notes.push(['succession',null])}
  }
@@ -202,7 +202,7 @@ export function focusReportsFor(s,viewer){return (s.world.focusReports?.[viewer]
 // AIs weigh anticipated threats; nobody sees future random events.
 export function scoreFocus(s,actor,f){
  const fac=s.factions[actor],ai=f.ai||{},level=s.difficulty||'standard',personality=s.world.strategicPersonalities?.[actor]?.personality||'survivor';
- const atWar=s.wars.some(w=>w.includes(actor)),now=date(s);
+ const atWar=s.wars.some(w=>w.includes(actor));
  const sightings=Object.values(s.knowledge?.[actor]||{}).flatMap(k=>Object.values(k.sightings||{})).filter(x=>isDeliveredReport(s,x)&&sightingAge(s,x)>=0&&sightingAge(s,x)<=6&&x.owner!==actor);
  const ownRegions=new Set(s.regions.filter(r=>r.owner===actor).map(r=>r.id));
  const near=sightings.filter(x=>ownRegions.has(x.region)||ROUTES.some(([a,b])=>(a===x.region&&ownRegions.has(b))||(b===x.region&&ownRegions.has(a)))).filter(x=>isWar(s,actor,x.owner)||(s.relations[pair(actor,x.owner)]??0)<0).length;

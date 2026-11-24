@@ -14,7 +14,7 @@ function valid(key,raw){
   if(typeof raw!=='string')return false;
   let data;
   try{data=JSON.parse(raw)}catch{return false}
-  if(ROMAN_KEYS.includes(key))return !!data&&['caesar','senate'].includes(data.player)&&Array.isArray(data.regions)&&data.regions.length>0&&Array.isArray(data.armies)&&!!data.factions?.[data.player];
+  if(ROMAN_KEYS.includes(key))return !!data&&typeof data.player==='string'&&data.player.length>0&&Array.isArray(data.regions)&&data.regions.length>0&&Array.isArray(data.armies)&&!!data.factions&&Object.hasOwn(data.factions,data.player);
   if(key===HAN_KEY)return !!data&&data.dlc==='mandate-of-heaven'&&Array.isArray(data.regions)&&Array.isArray(data.armies)&&!!data.factions&&!!data.persons&&!!data.genealogy&&!!data.throne&&!!data.court;
   return key===ARCHIVE_KEY&&Array.isArray(data);
 }

@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {initializeMail,sendLetter,advanceMail,receivedMail,unreadCount,markRead,archiveLetter,replyToLetter,treatyLetter,warLetters,syncPeaceLetters,chronicleLetters} from '../epistulae.js?v=dossier-archive-1';
-import {newGame,diplomacy,tick,upgradeSave,answerPeaceOffer,queueMission} from '../engine.js?v=dossier-archive-1';
-import {setWartimePolicy} from '../epistulae-personnel.js?v=dossier-archive-1';
-import {initializeMailReports,advanceMailReports} from '../mail-reports.js?v=dossier-archive-1';
-import {mailboxHtml} from '../mail-ui.js?v=dossier-archive-1';
+import {initializeMail,sendLetter,advanceMail,receivedMail,unreadCount,markRead,archiveLetter,replyToLetter,treatyLetter,warLetters,syncPeaceLetters,chronicleLetters} from '../epistulae.js?v=faces-name-disagreement-1';
+import {newGame,diplomacy,tick,upgradeSave,answerPeaceOffer,queueMission} from '../engine.js?v=faces-name-disagreement-1';
+import {setWartimePolicy} from '../epistulae-personnel.js?v=faces-name-disagreement-1';
+import {initializeMailReports,advanceMailReports} from '../mail-reports.js?v=faces-name-disagreement-1';
+import {mailboxHtml} from '../mail-ui.js?v=faces-name-disagreement-1';
 
 const state = () => {
   const factions = Object.fromEntries(['caesar','senate','egypt','parthia'].map(id => [id,{treasury:100}]));
@@ -246,6 +246,19 @@ test('five-year campaign keeps message identities, categories and delivery state
   assert.equal(loaded.mail.messages.length,s.mail.messages.length);
   assert.deepEqual(loaded.mail.reportSnapshot,s.mail.reportSnapshot);
   assert.match(mailboxHtml(loaded,{lang:'zh'}),/帝国来信/);
+});
+
+test('an older active envoy keeps one person identity when mailbox personnel are migrated',()=>{
+  const s=newGame('caesar');
+  assert.equal(queueMission(s,'egypt','caesar','envoy','relations').ok,true);
+  const op=s.operations[0],agentId=op.agentId;
+  delete op.id;delete op.personnelId;delete s.nextOperationId;delete s.mail;
+  const restored=upgradeSave(JSON.parse(JSON.stringify(s)));
+  const mission=restored.operations[0],personnel=restored.mail.personnel;
+  assert.ok(mission.id);assert.equal(mission.personnelId,agentId);
+  assert.equal(personnel.length,1);assert.equal(personnel[0].characterId,agentId);
+  const again=upgradeSave(JSON.parse(JSON.stringify(restored)));
+  assert.equal(again.operations[0].id,mission.id);assert.equal(again.mail.personnel.length,1);
 });
 
 test('an outdated foreign treaty expires safely when either court disappears before arrival',()=>{

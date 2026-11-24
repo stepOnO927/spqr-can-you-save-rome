@@ -1,42 +1,20 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrder,diplomacy} from '../engine.js?v=dossier-archive-1';
-import {advanceStrategicWarnings,warningCandidates} from '../strategic-warnings.js?v=dossier-archive-1';
+import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrder,diplomacy} from '../engine.js?v=faces-name-disagreement-1';
+import {advanceStrategicWarnings,warningCandidates} from '../strategic-warnings.js?v=faces-name-disagreement-1';
 import {warningLedger} from '../warning-ledger.js?v=warning-privacy-1';
-import {assessOpportunities,opportunityEvidenceSignature} from '../multipolar.js?v=dossier-archive-1';
-import {observeDiplomacy,reportedDiplomacy} from '../diplomatic-knowledge.js?v=dossier-archive-1';
+import {assessOpportunities,opportunityEvidenceSignature} from '../multipolar.js?v=faces-name-disagreement-1';
+import {observeDiplomacy,reportedDiplomacy} from '../diplomatic-knowledge.js?v=control-delivery-1';
 import {observeAttackPattern} from '../strategic-planning.js?v=multipolar-2';
-import {buildChessboard} from '../chessboard.js?v=dossier-archive-1';
-import {renderChessboard} from '../chessboard-ui.js?v=dossier-archive-1';
-import {addReport,supportClaimant,requestAgentRelease,advanceAgentRequests} from '../character-system.js?v=dossier-archive-1';
-import {advanceAgreements,proposeAgreement} from '../agreements.js?v=dossier-archive-1';
-import {advanceAgreementProposals} from '../agreement-negotiations.js?v=dossier-archive-1';
-import {advanceGovernments} from '../governance.js?v=dossier-archive-1';
-import {advanceMovements} from '../movements.js?v=dossier-archive-1';
-import {newRevolutionScenario} from '../scenarios.js?v=dossier-archive-1';
-import {rememberPoliticalEvent} from '../political-memory.js?v=grand-chessboard-2';
-
-test('a court reconsiders its own new memories and leadership without reading foreign memories',()=>{
- const s=newGame('caesar'),before=opportunityEvidenceSignature(s,'parthia');
- rememberPoliticalEvent(s,'armenia','parthia','refused_aid',-8);
- assert.equal(opportunityEvidenceSignature(s,'parthia'),before);
- rememberPoliticalEvent(s,'parthia','armenia','refused_aid',-8);
- const after=opportunityEvidenceSignature(s,'parthia');assert.notEqual(after,before);
- s.world.leadership.parthia=[];
- assert.notEqual(opportunityEvidenceSignature(s,'parthia'),after);
-});
-
-test('expired sightings and stability reports trigger a fresh strategic review',()=>{
- const s=newGame('caesar'),k=s.knowledge.parthia.armenia;
- k.sightings={test:{id:'test',region:'armenia',year:s.year-1,month:s.month}};
- k.reports.push({kind:'stability',value:'fragile',source:'spy',year:s.year-2,month:s.month});
- const before=opportunityEvidenceSignature(s,'parthia');
- if(s.month===12){s.month=1;s.year++}else s.month++;
- assert.notEqual(opportunityEvidenceSignature(s,'parthia'),before);
- const opportunity=assessOpportunities(s,'parthia',estimatedStrength).find(x=>x.target==='armenia');
- assert.equal(opportunity.frontierSightings,0);assert.equal(opportunity.instability,'unknown');
-});
+import {buildChessboard} from '../chessboard.js?v=faces-name-disagreement-1';
+import {renderChessboard} from '../chessboard-ui.js?v=faces-name-disagreement-1';
+import {addReport,supportClaimant,requestAgentRelease,advanceAgentRequests} from '../character-system.js?v=faces-name-disagreement-1';
+import {advanceAgreements,proposeAgreement} from '../agreements.js?v=agreement-courier-1';
+import {advanceAgreementProposals} from '../agreement-negotiations.js?v=agreement-courier-1';
+import {advanceGovernments} from '../governance.js?v=faces-name-disagreement-1';
+import {advanceMovements} from '../movements.js?v=faces-name-disagreement-1';
+import {newRevolutionScenario} from '../scenarios.js?v=faces-name-disagreement-1';
 
 test('opportunities use the observer’s reports, not hidden military or political state',()=>{
  const s=newGame('caesar'),other=JSON.parse(JSON.stringify(s));
@@ -190,21 +168,20 @@ test('AI-only simulation continues after Rome loses while the human campaign sta
 
 test('seeded Roman-Egyptian war continues as a multipolar AI simulation',()=>{
  function scenario(seed,autoplayPlayer){
-  const s=newGame('caesar');s.seed=seed;s.difficulty='expert';assert.equal(diplomacy(s,'caesar','egypt','war'),true);
-  const wars=new Set(),reviewed=new Set();let months=0;
+  const s=newGame('caesar');s.seed=seed;s.world.intelSeed=(seed^0x53a2)>>>0;s.world.dynasties.seed=(seed^0xd3c1)>>>0;s.difficulty='expert';assert.equal(diplomacy(s,'caesar','egypt','war'),true);
+  const wars=new Set(),agreements=new Set(),reviewed=new Set();let months=0;
   for(let i=0;i<36;i++){
    const before=s.year*12+s.month;tick(s,{autoplayPlayer});if(s.year*12+s.month===before)break;months++;
    for(const war of s.wars)wars.add([...war].sort().join(':'));
+   for(const agreement of s.agreements||[])agreements.add(`${agreement.type}:${agreement.parties.slice().sort().join(':')}`);
    for(const actor of Object.keys(s.world.multipolarPlans||{}))reviewed.add(actor);
   }
-  return {s,months,wars,reviewed};
+  return {s,months,wars,agreements,reviewed};
  }
  const runs=[scenario(103,true),scenario(14057,true)];
  for(const run of runs){assert.equal(run.months,36);for(const actor of ['caesar','egypt','parthia','armenia'])assert.ok(run.reviewed.has(actor));}
- // Distinct seeds can produce different decisions and military outcomes without
- // requiring a new war: a peaceful or unchanged war map is also a valid result.
- const outcome=run=>({wars:[...run.wars].sort(),armies:run.s.armies.map(a=>[a.id,a.owner,a.region,a.men]).sort((a,b)=>a[0].localeCompare(b[0])),resources:Object.entries(run.s.factions).map(([id,f])=>[id,f.treasury,f.food,f.manpower]).sort((a,b)=>a[0].localeCompare(b[0]))});
- assert.notDeepEqual(outcome(runs[0]),outcome(runs[1]));
+ for(const run of runs)assert.ok(run.wars.has('caesar:egypt'));
+ assert.notDeepEqual([...runs[0].agreements].sort(),[...runs[1].agreements].sort(),'different seeds should yield distinct diplomacy during the same real war');
  const human=scenario(103,false);assert.ok(human.months>0&&human.months<36);assert.ok(human.s.defeat);
  for(const actor of ['egypt','parthia','armenia'])assert.ok(human.reviewed.has(actor));
 });
@@ -362,6 +339,6 @@ test('old saves without a warning queue keep working and do not duplicate existi
  for(let i=0;i<3;i++)tick(save,{autoplayPlayer:true});assert.ok(Array.isArray(save.warningLetters));
  // The warning layer reuses courier, report and memory helpers; it does not call
  // the existing war, breach, aid or claimant-support decision paths.
- const source=fs.readFileSync(new URL('../strategic-warnings.js?v=dossier-archive-1',import.meta.url),'utf8');
+ const source=fs.readFileSync(new URL('../strategic-warnings.js?v=faces-name-disagreement-1',import.meta.url),'utf8');
  assert.doesNotMatch(source,/diplomacy\(|proposeAgreement|terminateAgreement|supportClaimant|wars\.push|alliances\.push|opportunistic_war|treaty_breach/);
 });

@@ -1,10 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick} from '../engine.js?v=dossier-archive-1';
+import {newGame,upgradeSave,tick} from '../engine.js?v=faces-name-disagreement-1';
 import {FACTIONS} from '../data.js?v=phase-x-1';
-import {advanceMovements,respondToMovement,reportedMovements,movementReportLeaderName,offerMovementSupport,recognizeMovement} from '../movements.js?v=dossier-archive-1';
-import {newRevolutionScenario} from '../scenarios.js?v=dossier-archive-1';
-import {plotFormationChance} from '../conspiracies.js?v=dossier-archive-1';
+import {advanceMovements,respondToMovement,reportedMovements,offerMovementSupport,recognizeMovement} from '../movements.js?v=faces-name-disagreement-1';
+import {newRevolutionScenario} from '../scenarios.js?v=faces-name-disagreement-1';
+import {plotFormationChance} from '../conspiracies.js?v=faces-name-disagreement-1';
+import {identity,identityStory,factionMark} from '../identity.js?v=identity-encyclopedia-1';
+import {drawMap} from '../map.js?v=breakaway-kits-1';
+import {observeControl} from '../control-intelligence.js?v=control-delivery-1';
 
 function crisis(){const s=newGame('caesar'),r=s.regions.find(x=>x.id==='gaul'),f=s.factions.caesar;r.loyalty=5;r.population.satisfaction=10;f.stability=20;f.legitimacy=25;f.tax='high';return {s,r,f}}
 function month(s){s.month++;if(s.month>12){s.month=1;s.year++}advanceMovements(s)}
@@ -25,9 +28,23 @@ test('a crisis can recruit from the actual population and fight with its own arm
  assert.ok(army);assert.equal(army.men,3000);assert.equal(beforePeople-r.population.total,3000);assert.equal(beforeFood-f.food,8);assert.equal(r.owner,m.force);assert.ok(s.wars.some(w=>w.includes(m.force)&&w.includes('caesar')));assert.ok(s.factions[m.force].treasury>=8);assert.ok(s.world.characters[m.leader].alive);
  s=upgradeSave(JSON.parse(JSON.stringify(s)));const restored=s.world.movements.find(x=>x.id===m.id);assert.ok(FACTIONS[restored.force]);assert.equal(s.armies.find(a=>a.owner===restored.force).men,3000);assert.equal(s.world.characters[restored.leader].faction,restored.force);
 });
+test('an armed breakaway keeps a distinct inherited emblem on the map and through old saves',()=>{
+ const {s}=crisis(),m=organize(s);arm(s,m);
+ const kit=structuredClone(identity(m.force,s)),origin=identity('caesar');
+ assert.equal(kit.origin,'caesar');assert.equal(kit.motif,origin.motif);assert.notEqual(kit.map,origin.map);assert.notEqual(kit.primary,identity('shared').primary);assert.equal(s.world.movementFactionCatalog[m.force].color,kit.map);
+ assert.equal(identityStory(m.force,s,'zh').originFaction,'caesar');assert.match(identityStory(m.force,s,'en').provenance,/not a documented ancient national flag/);
+ assert.notEqual(factionMark(m.force,'standard',s),factionMark('caesar','standard',s));
+ observeControl(s);
+ const map=drawMap(s,{selectedRegion:'gaul',selectedArmy:null,mode:'political',lang:'en',view:[0,0,1200,650]});
+ assert.ok(map.includes(`fill="${kit.map}"`),'the actual breakaway map color must be rendered');
+ s.world.characters[m.leader].alive=false;assert.deepEqual(identity(m.force,s),kit,'a ruler death must not change the state emblem');
+ const saved=upgradeSave(structuredClone(s));assert.deepEqual(identity(m.force,saved),kit);
+ const legacy=structuredClone(s);delete legacy.world.factionIdentities;legacy.world.movementFactionCatalog[m.force].color='#8a7365';const restored=upgradeSave(legacy);assert.deepEqual(identity(m.force,restored),kit,'older saves rebuild the same emblem');assert.equal(restored.world.movementFactionCatalog[m.force].color,kit.map);
+});
 test('victory changes the real government and defeat removes the independent force',()=>{
- const a=crisis(),m=organize(a.s);arm(a.s,m);for(const r of a.s.regions.filter(x=>x.owner==='caesar'))r.owner=m.force;a.s.armies=a.s.armies.filter(x=>x.owner!=='caesar');month(a.s);
- assert.equal(m.stage,'victorious');assert.deepEqual(a.s.world.leadership.caesar,[m.leader]);assert.equal(a.s.factions[m.force],undefined);assert.equal(a.r.owner,'caesar');
+ const a=crisis(),m=organize(a.s);arm(a.s,m);const victoriousKit=structuredClone(identity(m.force,a.s));for(const r of a.s.regions.filter(x=>x.owner==='caesar'))r.owner=m.force;a.s.armies=a.s.armies.filter(x=>x.owner!=='caesar');month(a.s);
+ assert.equal(m.stage,'victorious');assert.deepEqual(a.s.world.leadership.caesar,[m.leader]);assert.equal(a.s.factions[m.force],undefined);assert.equal(a.r.owner,'caesar');assert.equal(identity('caesar',a.s).map,victoriousKit.map);assert.equal(identity('caesar',a.s).politicalOrigin,m.force);assert.equal(identity('caesar',upgradeSave(structuredClone(a.s))).map,victoriousKit.map);
+ assert.match(identityStory('caesar',a.s,'zh').origin,/新政府沿用/);
  const b=crisis(),n=organize(b.s);arm(b.s,n);b.r.owner='caesar';b.s.armies=b.s.armies.filter(x=>x.owner!==n.force);month(b.s);assert.equal(n.stage,'defeated');assert.equal(b.s.factions[n.force],undefined);assert.equal(b.s.world.characters[n.leader].faction,'caesar');
 });
 test('a movement can establish a new government even if its first leader dies',()=>{
@@ -62,14 +79,6 @@ test('foreign reports are dated observations and do not track hidden subsequent 
  const s=newGame('caesar'),r=s.regions.find(x=>x.id==='italiaN'),f=s.factions.senate;r.loyalty=5;r.population.satisfaction=10;f.stability=20;f.legitimacy=25;f.tax='high';f.treasury=0;
  for(let i=0;i<12;i++)month(s);const m=s.world.movements.find(x=>x.region===r.id);const report=reportedMovements(s,'caesar').find(x=>x.id===m.id);assert.ok(report);assert.ok(report.leader);assert.equal(reportedMovements(s,'egypt').some(x=>x.id===m.id),false);
  s.regions.find(x=>x.id==='cisalpine').owner='senate';m.supporters+=9000;m.stage='crisis';month(s);assert.deepEqual(reportedMovements(s,'caesar').find(x=>x.id===m.id),report);
-});
-test('a reported movement preserves the observed fictional name and legacy reports remain anonymous',()=>{
- let s=newGame('caesar'),r=s.regions.find(x=>x.id==='italiaN'),f=s.factions.senate;r.loyalty=5;r.population.satisfaction=10;f.stability=20;f.legitimacy=25;f.tax='high';f.treasury=0;
- for(let i=0;i<12;i++)month(s);const report=reportedMovements(s,'caesar').find(x=>x.region==='italiaN');assert.ok(report?.leader);const original=movementReportLeaderName(report);assert.ok(original);
- s.world.movementKnowledge.caesar[report.id].leaderName[0]='Record changed';assert.notEqual(report.leaderName[0],'Record changed');s.world.movementKnowledge.caesar[report.id].leaderName=[...original];
- s.regions.find(x=>x.id==='cisalpine').owner='senate';s.world.dynasties.catalog[report.leader].name=['Hidden rename','秘密改名'];s=upgradeSave(structuredClone(s));month(s);
- assert.deepEqual(movementReportLeaderName(reportedMovements(s,'caesar').find(x=>x.id===report.id)),original);
- delete s.world.movementKnowledge.caesar[report.id].leaderName;assert.equal(movementReportLeaderName(reportedMovements(s,'caesar').find(x=>x.id===report.id)),null);
 });
 test('foreign financing requires reported contact, takes time, spends actual treasury and never gives control',()=>{
  let s=newGame('caesar'),r=s.regions.find(x=>x.id==='italiaN'),f=s.factions.senate;r.loyalty=5;r.population.satisfaction=10;f.stability=20;f.legitimacy=25;f.tax='high';f.treasury=0;

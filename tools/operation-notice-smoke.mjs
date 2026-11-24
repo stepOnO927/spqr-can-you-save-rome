@@ -6,7 +6,7 @@ try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
  await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
  await page.evaluate(async()=>{
-  const {newGame}=await import('/engine.js?v=dossier-archive-1'),{createPlan,assignRole,approvePlan}=await import('/battle-plans.js?v=dossier-archive-1'),s=newGame('caesar');
+  const {newGame}=await import('/engine.js?v=faces-name-disagreement-1'),{createPlan,assignRole,approvePlan}=await import('/battle-plans.js?v=faces-name-disagreement-1'),s=newGame('caesar');
   s.alliances.push(['caesar','egypt']);s.factions.caesar.treasury=300;
   const p=createPlan(s,'caesar',{name:'Italia coordination',mode:'assisted',objective:'italiaN'}).plan;
   if(!assignRole(s,'caesar',p.id,{armyId:'xiii',role:'offensive',path:['italiaN']}).ok)throw Error('No role');approvePlan(s,'caesar',p.id);
@@ -20,7 +20,7 @@ try{
  await page.locator('#new').click();await page.locator('[data-slot="load"]').click();s=await save();assert.equal(s.factions.caesar.treasury,299);assert.equal(s.mail.messages.filter(m=>m.context?.kind==='operation_notice').length,1);
  await page.locator('#lang').click();await page.locator('[data-tab="plans"]').click();await page.locator('[data-imp-plan]').first().click();assert.match(await page.locator('[data-operation-sharing]').innerText(),/receipt not independently confirmed/);
  await page.evaluate(async()=>{
-  const {newGame}=await import('/engine.js?v=dossier-archive-1'),{createPlan,assignRole,approvePlan}=await import('/battle-plans.js?v=dossier-archive-1'),{shareOperation}=await import('/operation-intelligence.js?v=operation-notices-1'),{sendLetter,advanceMail}=await import('/epistulae.js?v=dossier-archive-1'),{observeControl}=await import('/control-intelligence.js?v=dossier-archive-1');
+  const {newGame}=await import('/engine.js?v=faces-name-disagreement-1'),{createPlan,assignRole,approvePlan}=await import('/battle-plans.js?v=faces-name-disagreement-1'),{shareOperation}=await import('/operation-intelligence.js?v=operation-notices-1'),{sendLetter,advanceMail}=await import('/epistulae.js?v=faces-name-disagreement-1'),{observeControl}=await import('/control-intelligence.js?v=control-delivery-1');
   for(let seed=1;seed<100;seed++){
    const s=newGame('senate');s.seed=seed*100003;s.regions.find(r=>r.id==='africa').owner='caesar';s.wars.push(['numidia','caesar']);s.alliances.push(['numidia','senate']);observeControl(s);
    const a=s.armies.find(a=>a.owner==='numidia'),p=createPlan(s,'numidia',{mode:'automatic',objective:'africa',ai:true}).plan;
@@ -34,4 +34,3 @@ try{
  await page.locator('[data-mail-select]').filter({hasText:'盟军作战通报'}).click();assert.match(await page.locator('.mail-letter').innerText(),/发信时的意向/);assert.match(await page.locator('.mail-letter').innerText(),/独立决定/);assert.deepEqual(errors,[]);
  console.log('Player shares an approved operation through paid confirmation, persists it, and can read a delivered allied notice in the atlas.');
 }finally{await browser.close()}
-

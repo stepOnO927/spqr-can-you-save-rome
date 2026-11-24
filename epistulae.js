@@ -1,13 +1,13 @@
-import {earnedEpithets,legendName} from './legend.js?v=dossier-archive-1';
+import {earnedEpithets,legendName} from './legend.js?v=names-of-legend-1';
 import {ROUTES, FACTIONS} from './data.js?v=phase-x-1';
-import {CHARACTER_CATALOG,ageRange} from './characters.js?v=dossier-archive-1';
-import {AGREEMENT_TYPES} from './agreements.js?v=dossier-archive-1';
-import {formatChronicleEntry} from './chronicle.js?v=dossier-archive-1';
-import {initializePersonnel,applyWarPersonnel} from './epistulae-personnel.js?v=dossier-archive-1';
-import {fictionalPortraitKey,observedFictionalPortrait} from './portrait-registry.js?v=dossier-archive-1';
+import {CHARACTER_CATALOG,ageRange} from './characters.js?v=faces-name-disagreement-1';
+import {AGREEMENT_TYPES} from './agreements.js?v=focus-agreement-consent-1';
+import {formatChronicleEntry} from './chronicle.js?v=faces-name-disagreement-1';
+import {initializePersonnel,applyWarPersonnel} from './epistulae-personnel.js?v=faces-name-disagreement-1';
+import {fictionalPortraitKey,observedFictionalPortrait} from './portrait-registry.js?v=missing-fate-privacy-1';
 import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
-import {canMediate,requestMediation} from './civil-war.js?v=dossier-archive-1';
-import {storedCorrespondentName} from './person-knowledge.js?v=dossier-archive-1';
+import {canMediate,requestMediation} from './civil-war.js?v=faces-name-disagreement-1';
+import {storedCorrespondentName} from './person-knowledge.js?v=faces-name-disagreement-1';
 import {peaceTermsText,peaceWarIsCurrent} from './peace-terms.js?v=territorial-peace-1';
 
 const monthIndex = (year, month) => year * 12 + month;
@@ -80,7 +80,7 @@ export function gatheringPlan(s,m){
   if(!knownLocation(host)||!knownLocation(guest)||host.id===guest.id||!s.regions.some(r=>r.id===host.location)||!s.regions.some(r=>r.id===guest.location))return null;
   const date=monthIndex(s.year,s.month)+courierMonths(s,guest.location,host.location);
   const identified=p=>{const id=p?.id,entry=CHARACTER_CATALOG[id],saved=s.world?.dynasties?.catalog?.[id];return typeof id==='string'&&Array.isArray(entry?.name)&&entry.name.length>=2&&entry.name.every(x=>typeof x==='string'&&x.trim())&&(!id.startsWith('fictional:')||(saved?.fictional&&Array.isArray(saved.name)&&JSON.stringify(saved.name)===JSON.stringify(entry.name)))};
-  const oldEnough=p=>{const age=ageRange(p.id,s.year);return age?age[0]>=16:!p.id.startsWith('fictional:')};
+  const oldEnough=p=>{if(p.id.startsWith('fictional:')){const birth=s.world.dynasties?.catalog?.[p.id]?.birth;return Number.isFinite(p.birthYear)&&Array.isArray(birth)&&birth.length===2&&birth.every(Number.isFinite)&&s.year-Math.max(...birth)-1>=16}const age=ageRange(p.id,s.year);return age?age[0]>=16:true};
   const candidates=Object.values(s.world.characters).filter(p=>p.id!==guest.id&&p.id!==host.id&&identified(p)&&oldEnough(p)&&presentAtGathering(s,p,guest.location)&&
     !(s.mail?.events||[]).some(e=>e.status==='scheduled'&&e.date===date&&e.participantId===p.id)).map(p=>p.id);
   return {date,venue:host.location,candidates};

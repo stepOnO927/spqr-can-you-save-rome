@@ -69,4 +69,3 @@ test('a threatened AI can itself offer a frontier while the Roman player is pass
   assert.ok(s.inquiries.some(l=>l.actor==='egypt'&&l.target==='parthia'&&l.peaceTerms?.region==='syria'));
  }
 });
-

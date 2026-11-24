@@ -1,26 +1,63 @@
-import {recordLegendEvidence} from './legend.js?v=dossier-archive-1';
-import {namedReportSubjects,reportedPersonName,visiblePersonName,isDeliveredReport,isCompletedMeeting,reportedPersonalContacts,reportedPeople} from './person-knowledge.js?v=dossier-archive-1';
-import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange,characterAgeRange} from './characters.js?v=dossier-archive-1';
-import {settleInheritance,dynastyRoll} from './dynasties.js?v=dossier-archive-1';
+import {namedReportSubjects,reportedPersonalContacts,reportedPeople,isDeliveredReport,visiblePersonName} from './person-knowledge.js?v=faces-name-disagreement-1';
+import {recordLegendEvidence} from './legend.js?v=names-of-legend-1';
+import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange,characterAgeRange} from './characters.js?v=faces-name-disagreement-1';
+import {settleInheritance,dynastyRoll,assignFictionalFieldCommander,createFictionalPerson} from './dynasties.js?v=faces-name-disagreement-1';
+import {generateFictionalName} from './fictional-names.js?v=faces-wheels-1';
 import {FACTIONS,ROUTES} from './data.js?v=phase-x-1';
-import {deriveGovernment,validSuccessionPlan} from './governance.js?v=dossier-archive-1';
-import {potentialConspirators} from './conspiracies.js?v=dossier-archive-1';
-import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=dossier-archive-1';
-import {reportedControl} from './control-intelligence.js?v=dossier-archive-1';
-import {canHoldOffice,localGovernor} from './office-system.js?v=dossier-archive-1';
-import {activeAgreement} from './agreements.js?v=dossier-archive-1';
+import {deriveGovernment,validSuccessionPlan} from './governance.js?v=faces-name-disagreement-1';
+import {potentialConspirators} from './conspiracies.js?v=faces-name-disagreement-1';
+import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=faces-name-disagreement-1';
+import {reportedControl} from './control-intelligence.js?v=control-delivery-1';
+import {canHoldOffice,localGovernor} from './office-system.js?v=faces-name-disagreement-1';
+import {activeAgreement} from './agreements.js?v=focus-agreement-consent-1';
 import {activeModifiers} from './inventions.js?v=mission-discount-1';
-import {registerMissionPersonnel} from './epistulae-personnel.js?v=dossier-archive-1';
+import {registerMissionPersonnel} from './epistulae-personnel.js?v=faces-name-disagreement-1';
+export {reportedPersonName,visiblePersonName} from './person-knowledge.js?v=faces-name-disagreement-1';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 // A visual impression is less precise than the historical birth estimate.
 // Unknown birth dates remain unknown, rather than becoming invented ages.
 export function apparentAgeRange(id,year,s){const age=s?characterAgeRange(s,id,year):ageRange(id,year);return age?[Math.max(0,Math.floor((age[0]-5)/5)*5),Math.ceil((age[1]+5)/5)*5]:null}
 const claimantAvailable=c=>!!c?.alive&&!c.missing&&!c.travel&&!c.asylumHost&&!['seriously_ill','dying','deceased'].includes(c.health);
 const rand=s=>{s.world.intelSeed=(Math.imul(s.world.intelSeed,1664525)+1013904223)>>>0;return s.world.intelSeed/4294967296};
+// Newly added historical people have a saved personal stream, preserving the
+// random sequence of existing courts and intelligence in migrated campaigns.
+const independentHistoricalRoll=(s,c)=>{if(!Number.isInteger(c.healthSeed)){let h=(s.seed??1)>>>0;for(const ch of c.id)h=Math.imul(h^ch.charCodeAt(0),16777619)>>>0;c.healthSeed=h}c.healthSeed=(Math.imul(c.healthSeed,1664525)+1013904223)>>>0;return c.healthSeed/4294967296};
 const notify=(s,en,zh,metadata={})=>{s.log.unshift({year:s.year,month:s.month,en,zh,...metadata});s.log=s.log.slice(0,80)};
 const healthNames={healthy:['healthy','健康'],recovering:['recovering','康复中'],wounded:['wounded','受伤'],frail:['frail','衰弱'],ill:['ill','患病'],seriously_ill:['seriously ill','重病'],dying:['dying','垂危'],deceased:['deceased','已故']};
 const configs={spy:{cost:12,months:4},counter:{cost:8,months:3},envoy:{cost:8,months:3},travelers:{cost:4,months:2},audience:{cost:10,months:4},exchange:{cost:6,months:3}};
 export const MISSION_RULES=configs;
+const missionRoles={spy:['Fictional intelligence officer','虚构情报官'],counter:['Fictional security officer','虚构保安官'],envoy:['Fictional envoy','虚构使者'],travelers:['Fictional trader','虚构商旅'],audience:['Fictional envoy','虚构使者'],exchange:['Fictional courier','虚构信使']};
+function nameMissionActor(s,op){
+ if(!missionRoles[op.type])return null;
+ if(op.agentId&&s.world.characters[op.agentId])return op.agentId;
+ const location=s.regions.find(r=>r.owner===op.actor)?.id||null,identity=generateFictionalName(s,{originFaction:op.actor,location});
+ const hash=[op.actor,op.target,op.type,op.sentYear,op.sentMonth,s.world.dynasties?.nextPerson].join(':').split('').reduce((h,c)=>(Math.imul(h,31)+c.charCodeAt(0))>>>0,0);
+ const id=createFictionalPerson(s,{...identity,faction:op.actor,birthYear:s.year-35,location,sex:'unknown',role:missionRoles[op.type],ambition:20+hash%60,personalitySeed:hash});
+ const person=s.world.characters[id];person.institutionalOnly=true;person.profession=op.type;person.title=[...missionRoles[op.type]];
+ op.agentId=id;return id;
+}
+// Older active missions and captives gain records once. Completed old missions
+// remain historical records without retroactively inventing a participant.
+export function upgradeMissionIdentities(s){
+ initializeWorld(s);
+ for(const op of s.operations||[])if(['pending','captured'].includes(op.status)&&missionRoles[op.type]){
+  nameMissionActor(s,op);
+  if(op.status==='pending'&&op.actor!==op.target&&['envoy','travelers'].includes(op.type)&&!op.personnelId){
+   if(!op.id){do{op.id=`mission:${s.nextOperationId||1}`;s.nextOperationId=(s.nextOperationId||1)+1}while(s.operations.some(other=>other!==op&&other.id===op.id))}
+   registerMissionPersonnel(s,op);
+  }
+ }
+ for(const captive of s.world.captives||[]){
+  if(!captive.personId){const op=s.operations.find(o=>o.captiveId===captive.id&&o.agentId);if(op)captive.personId=op.agentId}
+  if(!captive.personId&&captive.state==='held')captive.personId=nameMissionActor(s,{actor:captive.owner,target:captive.holder,type:'spy',sentYear:captive.year??s.year,sentMonth:captive.month??s.month});
+  if(captive.state==='held'&&captive.personId&&s.world.characters[captive.personId])s.world.characters[captive.personId].detainedBy=captive.holder;
+ }
+ return s;
+}
+function releaseAgent(s,c){
+ c.state='released';c.releasedYear=s.year;c.releasedMonth=s.month;
+ const person=s.world.characters[c.personId];if(person){delete person.detainedBy;person.location=s.regions.find(r=>r.owner===c.owner)?.id||null}
+}
 // The active intelligence network reduces each investigation expense by one; never below one.
 export function missionCost(s,actor,type){const cfg=configs[type];return cfg?Math.max(1,cfg.cost-(activeModifiers(s,actor).intelligence||0)):null}
 // This is a theater-graph estimate, not a reconstruction of an actual ancient route.
@@ -72,24 +109,23 @@ export function advanceAgentRequests(s,{autoplayPlayer=false}={}){initializeWorl
  if(!['pending','returning'].includes(request.status)||request.initiatedByHolder&&request.year===s.year&&request.month===s.month||--request.remaining>0)continue;
  const c=s.world.captives.find(x=>x.id===request.captiveId),q=rand(s);
  if(request.phase==='outbound'){
-  if(!c||c.state!=='held'||c.holder!==request.holder||q<.2){request.status='no_reply';request.phase='lost';continue}
+  if(!c||c.state!=='held'||c.holder!==request.holder||q<.2){request.status='no_reply';request.phase='lost';if(request.initiatedByHolder&&request.holder===s.player)notify(s,'The voluntary handover was not completed; the agent remains held if still in custody.','主动交接未完成；若人员仍在押，可再次安排。');continue}
   if(autoplayPlayer&&request.holder===s.player){const war=s.wars.some(w=>w.includes(request.actor)&&w.includes(request.holder));request.decision=q<(war?.65:.45)?'refuse':'release';request.status='returning';request.phase='return';request.remaining=2;request.answeredYear=s.year;request.answeredMonth=s.month;continue}
   request.status='awaiting_decision';request.phase='at_court';request.remaining=6;
   if(request.holder===s.player)notify(s,'A letter from '+(FACTIONS[request.actor]?.short[0]||'another faction')+' requests release of a detained agent.',(FACTIONS[request.actor]?.short[1]||'另一势力')+'来信请求释放被扣押的情报人员。');continue;
  }
  if(request.phase==='return'){
-  if(!c||c.state!=='held'||c.holder!==request.holder||q<.2){request.status='no_reply';request.phase='lost';if(request.initiatedByHolder&&request.holder===s.player)notify(s,'The voluntary handover was not completed; the agent remains held if still in custody.','主动交接未完成；若人员仍在押，可再次安排。');continue}
+  if(!c||c.state!=='held'||c.holder!==request.holder||q<.2){request.status='no_reply';request.phase='lost';continue}
   request.status=request.decision==='release'?'released':'refused';request.phase='delivered';
-  if(request.status==='released'){c.state='released';c.releasedYear=s.year;c.releasedMonth=s.month;if(request.initiatedByHolder){const key=[request.holder,request.actor].sort().join(':');s.relations[key]=Math.min(100,(s.relations[key]||0)+3);if(request.holder===s.player)notify(s,'The voluntary agent handover was completed; relations improved by up to 3.','主动交接情报人员已完成；双方关系最多提高3。');if(request.actor===s.player)notify(s,'A detained agent returned after a foreign handover.','一名被扣押的情报人员已由对方交还。')}const ruler=(s.world.leadership[request.holder]||[]).find(id=>s.world.characters[id]?.alive);if(ruler)recordLegendEvidence(s,ruler,'mercy',{reference:`agent-release:${request.captiveId}:${request.year}:${request.month}`,audiences:[request.holder,request.actor],detail:['Released a captive agent after a completed handover.','完成交接后释放一名被俘情报人员。']})}continue;
+  if(request.status==='released'){releaseAgent(s,c);if(request.initiatedByHolder){const key=[request.holder,request.actor].sort().join(':');s.relations[key]=Math.min(100,(s.relations[key]||0)+3);if(request.holder===s.player)notify(s,'The voluntary agent handover was completed; relations improved by up to 3.','主动交接情报人员已完成；双方关系最多提高3。');if(request.actor===s.player)notify(s,`${CHARACTER_CATALOG[c.personId]?.name?.[0]||'A detained agent'} returned after a foreign handover.`,`${CHARACTER_CATALOG[c.personId]?.name?.[1]||'一名被扣押的情报人员'}已由对方交还。`)}const ruler=(s.world.leadership[request.holder]||[]).find(id=>s.world.characters[id]?.alive);if(ruler)recordLegendEvidence(s,ruler,'mercy',{reference:`agent-release:${request.captiveId}:${request.year}:${request.month}`,audiences:[request.holder,request.actor],detail:['Released a captive agent after a completed handover.','完成交接后释放一名被俘情报人员。']})}continue;
  }
- const war=s.wars.some(w=>w.includes(request.actor)&&w.includes(request.holder));if(!c||c.state!=='held'||!s.regions.some(r=>r.owner===request.holder)||q<.2)request.status='no_reply';else if(q<(war?.65:.45))request.status='refused';else{request.status='released';c.state='released';c.releasedYear=s.year;c.releasedMonth=s.month}if(request.actor===s.player)notify(s,request.status==='released'?'The unnamed agent was released and is available again.':request.status==='refused'?'The court refused to release the agent.':'No response arrived; the correspondence may have been lost.',request.status==='released'?'未具名人员获释，情报人手恢复。':request.status==='refused'?'对方拒绝释放人员。':'未收到回信；书信可能遗失。');
+ const war=s.wars.some(w=>w.includes(request.actor)&&w.includes(request.holder));if(!c||c.state!=='held'||!s.regions.some(r=>r.owner===request.holder)||q<.2)request.status='no_reply';else if(q<(war?.65:.45))request.status='refused';else{request.status='released';releaseAgent(s,c)}if(request.actor===s.player)notify(s,request.status==='released'?`${CHARACTER_CATALOG[c.personId]?.name?.[0]||'The agent'} was released and is available again.`:request.status==='refused'?'The court refused to release the agent.':'No response arrived; the correspondence may have been lost.',request.status==='released'?`${CHARACTER_CATALOG[c.personId]?.name?.[1]||'情报人员'}获释，情报人手恢复。`:request.status==='refused'?'对方拒绝释放人员。':'未收到回信；书信可能遗失。');
 }}
 const sourceFamily=r=>{const source=r.originSource||r.source;return ({official:'court',envoy:'court',audience:'court',exchange:'unknown'}[source]||source||'unknown')};
 const reportAge=(s,r)=>(s.year-(r.observationYear??r.year))*12+s.month-(r.observationMonth??r.month);
-// Only names actually included in a delivered report are recorded. Legacy and
-// forwarded records must never be filled from the foreign court's live state.
-export function snapshotReportedPeople(report){const result={};for(const id of namedReportSubjects(report)){const name=CHARACTER_CATALOG[id]?.name;if(Array.isArray(name)&&name.length===2&&name.every(x=>typeof x==='string'&&x.length>0))result[id]=[...name]}return result}
-export {reportedPersonName,visiblePersonName};
+// Preserve only names present when a report was made. Forwarded and legacy
+// reports never acquire a new name from the foreign court's current state.
+export function snapshotReportedPeople(report,s=null){const result={};for(const id of namedReportSubjects(report)){const name=s?.world?.dynasties?.catalog?.[id]?.name||CHARACTER_CATALOG[id]?.name;if(Array.isArray(name)&&name.length===2&&name.every(x=>typeof x==='string'&&x.length>0))result[id]=[...name]}return result}
 const knownReport=x=>['leaders','claimants'].includes(x.kind)?Array.isArray(x.leaders)&&x.leaders.length>0:x.value!=='unknown'&&x.value!=null;
 const validStrengthRange=r=>r.kind==='strength'&&Array.isArray(r.range)&&r.range.length===2&&r.range.every(Number.isFinite)&&r.range[0]>=0&&r.range[0]<=r.range[1];
 const strengthRange=r=>validStrengthRange(r)?r.range:Number.isFinite(r.value)?[r.value,r.value]:null;
@@ -117,17 +153,15 @@ export function reportEvidence(s,actor,target,report){
 export function addReport(s,actor,target,report){
  initializeWorld(s);const k=s.knowledge[actor]?.[target];if(!k)return;
  const r={...report,year:s.year,month:s.month,baseConfidence:report.baseConfidence||report.confidence||'unverified',verified:false};
- // A transferred undated record has an arrival date, not a newly observed
- // date. Leave year/month absent so age-based consumers cannot treat it as fresh.
+ // Receipt time is not an observation date for an undated transferred record.
  if(report.source==='exchange'&&report.observationUndated){delete r.year;delete r.month;r.receivedYear=s.year;r.receivedMonth=s.month}
  if(report.source==='exchange'||report.peopleNames||report.observationYear!=null||report.observationMonth!=null)r.peopleNames=structuredClone(report.peopleNames||{});
- else r.peopleNames=snapshotReportedPeople(r);
+ else r.peopleNames=snapshotReportedPeople(r,s);
  // An older forwarded message may be useful evidence but must not replace a newer report.
  const newerLeader=r.kind==='leaders'&&k.reports.some(x=>isDeliveredReport(s,x)&&x.kind==='leaders'&&knownReport(x)&&reportAge(s,x)<reportAge(s,r));
  k.reports.unshift(r);
- // Preserve delivered history separately from the bounded active evidence set.
- // A future-dated record stays active until delivery, even when older reports
- // are archived; moving it early would prevent its eventual use by the AI.
+ // Keep delivered history separately from the bounded active evidence set.
+ // Undelivered records must stay active until they reach their observer.
  let delivered=0;const kept=[],archived=[];for(const item of k.reports){if(isDeliveredReport(s,item)&&++delivered>30)archived.push(item);else kept.push(item)}
  k.reports=kept;if(archived.length){if(!Array.isArray(k.reportArchive))k.reportArchive=[];k.reportArchive.push(...archived.reverse())}
  // Recalculate after trimming so a source that is no longer retained cannot
@@ -137,7 +171,9 @@ export function addReport(s,actor,target,report){
 }
 export function publicLeaderClaim(s,target){initializeWorld(s);const ids=s.world.leadership[target]||[];return [ids.length?names(ids,0):'Authority uncertain',ids.length?names(ids,1):'执政者不明']}
 export function reportedClaimants(s,actor,target){initializeWorld(s);return [...new Set((s.knowledge[actor]?.[target]?.reports||[]).filter(r=>isDeliveredReport(s,r)&&r.kind==='claimants').flatMap(r=>r.leaders||[]).filter(id=>CHARACTER_CATALOG[id]))]}
-export function reportedHealthSubjects(s,actor,target){initializeWorld(s);return reportedPeople(s,actor,target)}
+export function reportedHealthSubjects(s,actor,target){
+ initializeWorld(s);return reportedPeople(s,actor,target);
+}
 export function claimantRepresentatives(s,actor,claimant){
  initializeWorld(s);const contacts=reportedPersonalContacts(s,actor,claimant);return Object.values(s.world.characters).filter(c=>c.faction===actor&&c.alive&&!c.missing&&!['seriously_ill','dying','deceased'].includes(c.health)&&CHARACTER_CATALOG[c.id]&&(contacts.get(c.id)?.credit||0)>0).map(c=>c.id);
 }
@@ -205,26 +241,25 @@ export function previewMission(s,actor,target,type,subject='health',partnerId=nu
 export function queueMission(s,actor,target,type,subject='health',partnerId=null,characterId=null){
  const plan=previewMission(s,actor,target,type,subject,partnerId,characterId);if(!plan.ok)return plan;
  const {duration,partner,cost}=plan,subjectCharacter=['health','age','location'].includes(subject)?(characterId===''?null:(characterId||(['health','location'].includes(subject)&&type!=='exchange'?reportedHealthSubjects(s,actor,target)[0]:null)||null)):null;
- s.factions[actor].treasury-=cost;
  const subjectName=subjectCharacter&&visiblePersonName(s,actor,subjectCharacter);
  const knownName=Array.isArray(subjectName)&&subjectName.length===2&&!['Unrecorded name','Name reports differ'].includes(subjectName[0])?subjectName:null;
- const operation={id:`mission:${s.nextOperationId||1}`,actor,target,type,subject,...(partner?{partner}:{}),...(target.endsWith('_claimant')&&type!=='exchange'?{targetGeneration:s.world.dynasticGenerations?.[target]||0}:{}),subjectCharacter,...(knownName?{subjectName:[...knownName]}:{}),remaining:duration,duration,status:'pending',sentYear:s.year,sentMonth:s.month};
- s.nextOperationId=(s.nextOperationId||1)+1;s.operations.unshift(operation);
- if(actor!==target&&['envoy','travelers'].includes(type))registerMissionPersonnel(s,operation);
- if(actor===s.player)notify(s,`${type} mission dispatched; estimated ${duration} months.`,`已派出${({spy:'间谍',counter:'内部调查',envoy:'使者',travelers:'商旅',audience:'会面请求',exchange:'情报交换'})[type]}，预计${duration}个月。`);return {ok:true,duration};
+ s.factions[actor].treasury-=cost;
+ let id;do{id=`mission:${s.nextOperationId||1}`;s.nextOperationId=(s.nextOperationId||1)+1}while(s.operations.some(x=>x.id===id));
+ const op={id,actor,target,type,subject,...(partner?{partner}:{}),...(target.endsWith('_claimant')&&type!=='exchange'?{targetGeneration:s.world.dynasticGenerations?.[target]||0}:{}),subjectCharacter,...(knownName?{subjectName:[...knownName]}:{}),remaining:duration,duration,status:'pending',sentYear:s.year,sentMonth:s.month};
+ const agentId=nameMissionActor(s,op);s.operations.unshift(op);
+ if(actor!==target&&['envoy','travelers'].includes(type))registerMissionPersonnel(s,op);
+ if(actor===s.player)notify(s,`${type} mission dispatched; estimated ${duration} months. ${CHARACTER_CATALOG[agentId].name[0]} leads it.`,`已派出${({spy:'间谍',counter:'内部调查',envoy:'使者',travelers:'商旅',audience:'会面请求',exchange:'情报交换'})[type]}，预计${duration}个月；由${CHARACTER_CATALOG[agentId].name[1]}负责。`,{characterId:agentId});return {ok:true,duration,agentId};
 }
 // The ally selects its own record when the request reaches it. The sealed
 // response stays out of the recipient's knowledge until the return journey.
 function prepareExchange(s,op){
  const partner=op.partner,access=intelligencePartnerAccess(s,op.actor,partner);
- // Arrival order is not observation order: a recently forwarded old message
- // must not displace a fresher observation already held by the partner.
- // Undated legacy reports remain usable, but cannot outrank dated evidence.
+ // Arrival order is not observation order: an older forwarded message must
+ // not displace a fresher observation already held by the partner.
  const observedAt=r=>{const year=r.observationYear??r.year,month=r.observationMonth??r.month;return Number.isFinite(year)&&Number.isInteger(month)?year*12+month:-Infinity};
  const knowledge=s.knowledge[partner]?.[op.target];let prior=null;
- // Old delivered reports remain part of the partner's records even after the
- // bounded active evidence window moves them into its archive. Search both
- // stores without promoting undelivered or undated material into fresh facts.
+ // An ally's delivered archive remains available after the active evidence
+ // window closes, without treating undelivered material as known.
  for(const reports of [knowledge?.reports||[],knowledge?.reportArchive||[]])for(const r of reports){
   if(!isDeliveredReport(s,r)||r.kind!==op.subject||op.subjectCharacter&&r.character!==op.subjectCharacter)continue;
   if(!prior||observedAt(r)>observedAt(prior))prior=r;
@@ -259,7 +294,7 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
  if((op.type!=='exchange'&&(!s.regions.some(r=>r.owner===op.target)||replacedCourt))||q<.18){op.status='failed';delete op.exchangeSealed;if(op.actor===s.player)notify(s,'The intelligence mission ended without a report; the reason is unknown.','情报行动结束，未收到报告；原因不明。');continue}
  if(op.type==='counter'&&op.subject==='counter_spies'){const now=s.year*12+s.month;(s.world.securityWatches||={})[op.actor]={start:now+1,end:now+6};op.status='complete';if(op.actor===s.player)notify(s,'A counterintelligence watch will operate for the next six months.','反间谍警戒将在接下来的六个月运行。');continue}
  const watch=op.type==='spy'&&counterWatchActive(s,op.target),captureLimit=watch?.36:.24,discoveryLimit=watch?.52:.33;
- if(op.type==='spy'&&q<discoveryLimit){op.status=q<captureLimit?'captured':'detected';if(op.status==='captured'){op.captiveId='captive'+s.world.nextCaptive++;s.world.captives.push({id:op.captiveId,owner:op.actor,holder:op.target,state:'held',year:s.year,month:s.month})}const k=[op.actor,op.target].sort().join(':');s.relations[k]=(s.relations[k]||0)-10;if(op.actor===s.player||op.target===s.player)notify(s,op.status==='captured'?`A spy from ${FACTIONS[op.actor].short[0]} was captured by ${FACTIONS[op.target].short[0]}.`:`A spy from ${FACTIONS[op.actor].short[0]} was detected by ${FACTIONS[op.target].short[0]}.`,op.status==='captured'?`${FACTIONS[op.actor].short[1]}的间谍被${FACTIONS[op.target].short[1]}抓获，双方关系恶化。`:`${FACTIONS[op.actor].short[1]}的间谍被${FACTIONS[op.target].short[1]}发现，双方关系恶化。`);continue}
+ if(op.type==='spy'&&q<discoveryLimit){op.status=q<captureLimit?'captured':'detected';if(op.status==='captured'){op.captiveId='captive'+s.world.nextCaptive++;s.world.captives.push({id:op.captiveId,owner:op.actor,holder:op.target,personId:op.agentId,state:'held',year:s.year,month:s.month});const agent=s.world.characters[op.agentId];if(agent){agent.detainedBy=op.target;agent.location=s.regions.find(r=>r.owner===op.target)?.id||null}}const k=[op.actor,op.target].sort().join(':');s.relations[k]=(s.relations[k]||0)-10;if(op.actor===s.player||op.target===s.player)notify(s,op.status==='captured'?`A spy from ${FACTIONS[op.actor].short[0]} was captured by ${FACTIONS[op.target].short[0]}; ${CHARACTER_CATALOG[op.agentId]?.name?.[0]||'an unidentified person'} is held.`:`A spy from ${FACTIONS[op.actor].short[0]} was detected by ${FACTIONS[op.target].short[0]}; ${CHARACTER_CATALOG[op.agentId]?.name?.[0]||'an unidentified person'} returned.`,op.status==='captured'?`${FACTIONS[op.actor].short[1]}的间谍被${FACTIONS[op.target].short[1]}抓获：${CHARACTER_CATALOG[op.agentId]?.name?.[1]||'身份不明者'}。双方关系恶化。`:`${FACTIONS[op.actor].short[1]}的间谍被${FACTIONS[op.target].short[1]}发现：${CHARACTER_CATALOG[op.agentId]?.name?.[1]||'身份不明者'}。双方关系恶化。`);continue}
  const relation=s.relations[[op.actor,op.target].sort().join(':')]||0,atWar=s.wars.some(w=>w.includes(op.actor)&&w.includes(op.target));
  const refusal=Math.max(.23,Math.min(.70,.38-relation*.0015+(atWar?.18:0)+(s.factions[op.target]?.stability<35?.08:0)));
  if((op.type==='audience'||op.type==='envoy')&&q<refusal){op.status='declined';if(op.actor===s.player)notify(s,'The court declined the envoy or audience request.','宫廷拒绝了使者或会面请求。');continue}
@@ -293,11 +328,10 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
  if(op.subject.startsWith('office_')){
   // Only successful spies can inspect an assignment. No name is a lack of
   // evidence, not proof of a vacancy. Wartime deception may reuse an old lead.
-  const office=op.subject.slice('office_'.length),theater=office.startsWith('theater:')?office.slice('theater:'.length):null,post=theater?s.world.localGovernors?.[theater]:null,personId=theater?(post?.faction===op.target?localGovernor(s,theater):null):s.world.offices?.[op.target]?.[office],prior=(s.knowledge[op.actor]?.[op.target]?.reports||[]).find(r=>isDeliveredReport(s,r)&&r.kind===op.subject&&CHARACTER_CATALOG[r.value]);
+  const office=op.subject.slice('office_'.length),theater=office.startsWith('theater:')?office.slice('theater:'.length):null,post=theater?s.world.localGovernors?.[theater]:null,personId=theater?(post?.faction===op.target?localGovernor(s,theater):null):s.world.offices?.[op.target]?.[office],prior=(s.knowledge[op.actor]?.[op.target]?.reports||[]).find(r=>isDeliveredReport(s,r)&&r.kind===op.subject&&(s.world.dynasties?.catalog?.[r.value]||CHARACTER_CATALOG[r.value]));
   const value=falsehood?(prior?.value||'unknown'):q>=.55&&CHARACTER_CATALOG[personId]&&canHoldOffice(s,op.target,personId)?personId:'unknown';
-  // Repeating an old lead does not observe that person's current identity.
-  // Retain only the name actually recorded on that lead, including an empty
-  // snapshot for older saves; never fill it from today's hidden catalog.
+  // A misleading report may repeat a delivered lead, including its saved
+  // name, but cannot learn a person's current identity from the hidden court.
   report={kind:op.subject,value,source,confidence:'unverified',reliability:'moderate',...(falsehood&&prior?{peopleNames:structuredClone(prior.peopleNames||{})}:{})};
  }
  else if(op.subject==='clashes'){
@@ -307,8 +341,7 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
   report={kind:'clashes',value:reported?'reported':'unknown',source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};
  }
  else if(op.subject==='secret_treaty'){
-  // This is a dated lead, not proof of a current treaty or its terms. No
-  // finding never establishes that the investigated court has no secrets.
+  // A dated lead does not prove a treaty remains active or reveal its terms.
   const agreement=(s.agreements||[]).find(t=>t.secret&&t.status==='active'&&t.parties?.includes(op.target)&&!t.parties.includes(op.actor)&&t.expiresAt>s.year*12+s.month&&!s.wars.some(w=>t.parties.every(id=>w.includes(id)))&&t.parties.some(id=>id!==op.target&&FACTIONS[id]));
   const partner=q>=.6?agreement?.parties.find(id=>id!==op.target):null;
   report={kind:'secret_treaty',value:partner||'unknown',source,confidence:'unverified',reliability:'moderate'};
@@ -402,15 +435,14 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
   // An audience may be with a representative. Only record a personal observation
   // when someone actually in office and named in the report could attend.
   const met=(report.leaders||[]).find(candidate=>{const p=s.world.characters[candidate];return (s.world.leadership[op.target]||[]).includes(candidate)&&p?.alive&&p.faction===op.target&&!p.travel&&!p.missing&&s.regions.some(r=>r.id===p.location&&r.owner===op.target)&&!s.armies.some(a=>a.characterId===candidate&&a.move)&&!['seriously_ill','dying','deceased'].includes(p.health)});
-  if(met){const p=s.world.characters[met],visible=['wounded','frail'].includes(p.health)?p.health:'unknown',age=apparentAgeRange(met,s.year,s);
-   const peopleNames=snapshotReportedPeople({kind:'leaders',leaders:[met]});
+  if(met){const p=s.world.characters[met],visible=['wounded','frail'].includes(p.health)?p.health:'unknown',age=apparentAgeRange(met,s.year,s),peopleNames=snapshotReportedPeople({kind:'leaders',leaders:[met]},s);
    addReport(s,op.actor,op.target,{kind:'location',character:met,value:p.location,peopleNames,identityObserved:true,source:'audience',confidence:'unverified',reliability:'moderate'});
    addReport(s,op.actor,op.target,{kind:'health',character:met,value:visible,peopleNames,identityObserved:true,source:'audience',confidence:'unverified',reliability:'low'});
    if(age)addReport(s,op.actor,op.target,{kind:'age',character:met,value:age,peopleNames,identityObserved:true,source:'audience',confidence:'unverified',reliability:'low'});
   }
  }
  if(report.character&&report.character===op.subjectCharacter&&Array.isArray(op.subjectName)&&op.subjectName.length===2&&op.subjectName.every(x=>typeof x==='string'&&x.length>0))report.peopleNames={[report.character]:[...op.subjectName]};
- else if(report.character&&op.subjectCharacter===null&&report.character===healthId){report.peopleNames=snapshotReportedPeople({kind:'leaders',leaders:[report.character]});report.identityObserved=true}
+ else if(report.character&&op.subjectCharacter===null&&report.character===healthId){report.peopleNames=snapshotReportedPeople({kind:'leaders',leaders:[report.character]},s);report.identityObserved=true}
  addReport(s,op.actor,op.target,report);if(op.actor===s.player)notify(s,`An intelligence report from ${FACTIONS[op.target].short[0]} has arrived.`,`一份来自${FACTIONS[op.target].short[1]}的情报报告已送达。`);
 }}
 export function contestLeadership(s,faction,claimant){
@@ -476,32 +508,32 @@ export function illnessRisk(s,id){initializeWorld(s);const c=s.world.characters[
 export function considerDefection(s,id){
  initializeWorld(s);const c=s.world.characters[id],from=c?.faction,to=from==='caesar'?'senate':from==='senate'?'caesar':null;
  if(!to||!c.alive||c.missing||c.loyalty>20||['seriously_ill','dying','deceased'].includes(c.health)||(s.world.leadership[from]||[]).includes(id)||s.armies.some(a=>a.characterId===id)||!s.regions.some(r=>r.owner===to)||!s.wars.some(w=>w.includes(from)&&w.includes(to)))return false;
- if((CHARACTER_CATALOG[id]?.fictional?dynastyRoll(s):rand(s))>=.18)return false;c.faction=to;c.loyalty=45;delete c.travel;s.factions[from].stability=Math.max(0,s.factions[from].stability-2);s.factions[to].stability=Math.min(100,s.factions[to].stability+1);
+ if((CHARACTER_CATALOG[id]?.fictional?dynastyRoll(s):id==='varro'?independentHistoricalRoll(s,c):rand(s))>=.18)return false;c.faction=to;c.loyalty=45;delete c.travel;s.factions[from].stability=Math.max(0,s.factions[from].stability-2);s.factions[to].stability=Math.min(100,s.factions[to].stability+1);
  s.world.defections.unshift({id,from,to,year:s.year,month:s.month});s.world.defections=s.world.defections.slice(0,30);if(s.player===from||s.player===to)notify(s,`${CHARACTER_CATALOG[id].name[0]} changed allegiance in the simulation.`,`${CHARACTER_CATALOG[id].name[1]}在游戏中改变了政治立场。`);return true;
 }
 // Convert competing annual probabilities into a monthly chance while preserving their relative likelihood.
 function monthlyOutcome(r,choices){const annual=choices.reduce((sum,choice)=>sum+choice[1],0);if(!annual)return null;const monthly=1-Math.pow(1-annual,1/12);if(r>=monthly)return null;let threshold=0;for(const [outcome,probability] of choices){threshold+=monthly*probability/annual;if(r<threshold)return outcome}return choices.at(-1)[0]}
 // Lost contact hides health, but does not suspend the simulated person's life.
-// Use a per-person stream so unseen events do not perturb unrelated outcomes.
+// A per-person stream keeps unseen events from perturbing unrelated outcomes.
 function missingHealthRoll(s,c){
  const missing=c.missing;if(!Number.isInteger(missing.healthSeed)){let h=(s.seed??1)>>>0;for(const ch of `${c.id}:${missing.year??0}:${missing.month??0}`)h=Math.imul(h^ch.charCodeAt(0),16777619)>>>0;missing.healthSeed=h}
  missing.healthSeed=(Math.imul(missing.healthSeed,1664525)+1013904223)>>>0;return missing.healthSeed/4294967296;
 }
-export function advanceCharacters(s){initializeWorld(s);for(const [id,c] of Object.entries(s.world.characters)){if(!c.alive||!c.faction)continue;const missing=c.missing;if(missing&&missing.lastHealthYear===s.year&&missing.lastHealthMonth===s.month)continue;const previous=c.health,age=characterAgeRange(s,id)?.[0],illChance=illnessRisk(s,id),frailChance=age>=65?.025:0,choices={dying:[['deceased',.45]],seriously_ill:[['dying',.22],['recovering',.35]],healthy:[['frail',frailChance],['ill',illChance]],frail:[['seriously_ill',.08]],ill:[['seriously_ill',.22],['recovering',.55]],wounded:[['recovering',.55]],recovering:[['healthy',.75]]}[previous]||[];c.health=monthlyOutcome(missing?missingHealthRoll(s,c):CHARACTER_CATALOG[id]?.fictional?dynastyRoll(s):rand(s),choices)||previous;
+export function advanceCharacters(s){initializeWorld(s);for(const [id,c] of Object.entries(s.world.characters)){if(!c.alive||!c.faction)continue;const missing=c.missing;if(missing&&missing.lastHealthYear===s.year&&missing.lastHealthMonth===s.month)continue;const previous=c.health,age=characterAgeRange(s,id)?.[0],illChance=illnessRisk(s,id),frailChance=age>=65?.025:0,choices={dying:[['deceased',.45]],seriously_ill:[['dying',.22],['recovering',.35]],healthy:[['frail',frailChance],['ill',illChance]],frail:[['seriously_ill',.08]],ill:[['seriously_ill',.22],['recovering',.55]],wounded:[['recovering',.55]],recovering:[['healthy',.75]]}[previous]||[];c.health=monthlyOutcome(missing?missingHealthRoll(s,c):CHARACTER_CATALOG[id]?.fictional?dynastyRoll(s):id==='varro'?independentHistoricalRoll(s,c):rand(s),choices)||previous;
  if(missing){missing.lastHealthYear=s.year;missing.lastHealthMonth=s.month;if((previous==='healthy'&&c.health==='ill')||(previous==='frail'&&c.health==='seriously_ill'))c.illnessEpisodes++;if(c.health==='deceased'){c.alive=false;c.deathYear=s.year;c.deathMonth=s.month}continue}
  if(s.month===1)c.loyalty=Math.max(0,Math.min(100,c.loyalty+(s.factions[c.faction]?.stability<35?-4:1)));
  if((previous==='healthy'&&c.health==='ill')||(previous==='frail'&&c.health==='seriously_ill'))c.illnessEpisodes++;
- if(c.health==='deceased'){c.alive=false;c.deathYear=s.year;c.deathMonth=s.month;settleInheritance(s,id);if(s.factions[c.faction])s.factions[c.faction].stability=Math.max(0,s.factions[c.faction].stability-3);const lead=s.world.leadership[c.faction]||[];if(lead.includes(id))assignSuccession(s,c.faction);for(const a of s.armies.filter(a=>a.characterId===id)){a.characterId=null;a.commander=['Unnamed officer','未具名军官']}if(c.faction===s.player)notify(s,`${CHARACTER_CATALOG[id].name[0]} died in the simulation; the succession situation was updated.`,`${CHARACTER_CATALOG[id].name[1]}在模拟中去世，继任局势已更新。`)}
+ if(c.health==='deceased'){c.alive=false;c.deathYear=s.year;c.deathMonth=s.month;settleInheritance(s,id);if(s.factions[c.faction])s.factions[c.faction].stability=Math.max(0,s.factions[c.faction].stability-3);const lead=s.world.leadership[c.faction]||[];if(lead.includes(id))assignSuccession(s,c.faction);for(const a of s.armies.filter(a=>a.characterId===id)){a.characterId=null;const replacement=assignFictionalFieldCommander(s,a);if(a.owner===s.player&&replacement)notify(s,`${CHARACTER_CATALOG[replacement].name[0]} assumed command of ${a.name[0]}.`,`${CHARACTER_CATALOG[replacement].name[1]}接掌${a.name[1]}的指挥。`,{characterId:replacement})}if(c.faction===s.player)notify(s,`${CHARACTER_CATALOG[id].name[0]} died in the simulation; the succession situation was updated.`,`${CHARACTER_CATALOG[id].name[1]}在模拟中去世，继任局势已更新。`)}
  else {if(previous!==c.health&&c.faction===s.player){const from=healthNames[previous]||['unknown','未知'],to=healthNames[c.health]||['unknown','未知'];notify(s,`${CHARACTER_CATALOG[id].name[0]}: simulated health changed from ${from[0]} to ${to[0]}.`,`${CHARACTER_CATALOG[id].name[1]}的游戏健康状态发生变化：${from[1]} → ${to[1]}。`,{characterId:id})}if(s.month===1)considerDefection(s,id)}
  }if(s.month===1&&(s.world.leadership.egypt||[]).length>1){const candidate=egyptianClaimantCandidate(s,rand(s));if(candidate&&rand(s)<(s.world.characters[candidate].loyalty<40?.18:.08))contestLeadership(s,'egypt',candidate)}if(s.month===1&&s.factions.egypt?.stability<45&&((s.world.characters.arsinoe?.loyalty??100)<55||(s.world.claimants.egypt||[]).length>0)&&rand(s)<.12)contestLeadership(s,'egypt','arsinoe');if(s.month===1&&s.world.characters.pacorus?.loyalty<40&&(s.factions.parthia?.stability<45||s.world.characters.orodes?.missing||['seriously_ill','dying'].includes(s.world.characters.orodes?.health))&&!(s.world.claimants.parthia||[]).length&&rand(s)<.15)contestLeadership(s,'parthia','pacorus');}
-export function battlefieldWound(s,a){initializeWorld(s);const c=s.world.characters[a.characterId];if(!c?.alive||!['healthy','recovering','frail','wounded'].includes(c.health))return;const risk=Math.min(.14,.07+((s.factions[a.owner]?.food??0)<0?.03:0)+Math.min(.04,c.wounds*.01));if((CHARACTER_CATALOG[c.id]?.fictional?dynastyRoll(s):rand(s))<risk){c.health='wounded';c.wounds++;if(c.faction===s.player)notify(s,`${CHARACTER_CATALOG[c.id].name[0]} was wounded in battle (simulated).`,`${CHARACTER_CATALOG[c.id].name[1]}在游戏战斗中受伤。`,{characterId:c.id})}}
+export function battlefieldWound(s,a){initializeWorld(s);const c=s.world.characters[a.characterId];if(!c?.alive||!['healthy','recovering','frail','wounded'].includes(c.health))return;const risk=Math.min(.14,.07+((s.factions[a.owner]?.food??0)<0?.03:0)+Math.min(.04,c.wounds*.01));if((CHARACTER_CATALOG[c.id]?.fictional?dynastyRoll(s):c.id==='varro'?independentHistoricalRoll(s,c):rand(s))<risk){c.health='wounded';c.wounds++;if(c.faction===s.player)notify(s,`${CHARACTER_CATALOG[c.id].name[0]} was wounded in battle (simulated).`,`${CHARACTER_CATALOG[c.id].name[1]}在游戏战斗中受伤。`,{characterId:c.id})}}
 export function commandFactor(s,a){const c=s.world?.characters?.[a.characterId];if(!c)return 1;const health=({healthy:1,recovering:.96,wounded:.9,ill:.9,frail:.88,seriously_ill:.8,dying:.7,deceased:.7}[c.health]||1),battles=Number.isFinite(c.battlesCommanded)?Math.max(0,c.battlesCommanded):0;return health*(1+Math.min(5,battles)*.02)}
 export function linkCommanders(s){initializeWorld(s);for(const a of s.armies){if(a.characterId===undefined){a.characterId=a.id==='xiii'?'caesar':a.id==='pompey'?'pompey':null}const person=s.world.characters[a.characterId];if(person?.alive&&!person.missing)person.location=a.region}}
 
-// A seriously ill person remains in their last theater, while an unnamed officer
-// takes command. Do not announce an unseen foreign command change to the player.
+// A seriously ill person remains in their last theater; a saved fictional
+// officer takes command. Do not announce an unseen foreign change to the player.
 export function relieveIncapacitatedCommanders(s){
- initializeWorld(s);for(const unit of s.armies){const person=s.world.characters[unit.characterId];if(!person)continue;const personName=CHARACTER_CATALOG[person.id]?.name||['Unidentified person','身份未记录的人物'];const lost=!person.alive||person.health==='deceased'||!!person.missing,ill=['seriously_ill','dying'].includes(person.health);if(!lost&&!ill)continue;if(!lost)person.location=unit.region;unit.characterId=null;unit.commander=['Unnamed officer','未具名军官'];if(!lost&&unit.owner===s.player)notify(s,`${personName[0]} cannot command because of simulated illness; an unnamed officer takes over.`,`${personName[1]}因游戏中的重病无法指挥，暂由未具名军官接替。`)}
+ initializeWorld(s);for(const unit of s.armies){const person=s.world.characters[unit.characterId];if(!person)continue;const personName=CHARACTER_CATALOG[person.id]?.name||['Unidentified person','身份未记录的人物'];const lost=!person.alive||person.health==='deceased'||!!person.missing,ill=['seriously_ill','dying'].includes(person.health);if(!lost&&!ill)continue;if(!lost)person.location=unit.region;unit.characterId=null;const replacement=assignFictionalFieldCommander(s,unit);if(!lost&&unit.owner===s.player&&replacement)notify(s,`${personName[0]} cannot command because of simulated illness; ${CHARACTER_CATALOG[replacement].name[0]} takes over.`,`${personName[1]}因游戏中的重病无法指挥，暂由${CHARACTER_CATALOG[replacement].name[1]}接替。`,{characterId:replacement})}
 }
 
 // Searches have the same chance of failure for living and deceased people.
@@ -534,7 +566,7 @@ export function advanceMissingCommanders(s){
   const searchChance=missing.searchFunded ? .6 : .3;delete missing.searchFunded;
   if(missingSearchRoll(s,person)>=searchChance){missing.remaining=3;if(person.faction===s.player)notify(s,`The search for ${personName[0]} produced no conclusive news; it will continue.`,`对${personName[1]}的搜寻暂无线索；搜寻将继续。`,{characterId:person.id});continue}
   if(!person.alive){
-   // A successful search confirms the death; only then do its public effects occur.
+   // A successful search confirms the death; only then do public effects occur.
    delete person.missing;const unprocessed=!person.inheritanceSettled;settleInheritance(s,person.id);if(unprocessed&&s.factions[person.faction])s.factions[person.faction].stability=Math.max(0,s.factions[person.faction].stability-3);if((s.world.leadership[person.faction]||[]).includes(person.id))assignSuccession(s,person.faction);
    if(person.faction===s.player)notify(s,`${personName[0]} was confirmed dead after a search; succession was updated.`,`${personName[1]}经搜寻确认在游戏中去世；继任局势已更新。`,{characterId:person.id});continue;
   }
@@ -564,4 +596,3 @@ export function observeArmies(s){
  }
 }
 export function reportedArmies(s,viewer){initializeWorld(s);const result=[];for(const [owner,k] of Object.entries(s.knowledge[viewer]||{})){if(owner===viewer)continue;for(const x of Object.values(k.sightings||{}))if(isDeliveredReport(s,x))result.push({...x,reported:true})}return result}
-

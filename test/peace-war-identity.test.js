@@ -45,4 +45,3 @@ test('a fulfilled peace proposal is not mislabeled as a failed stale offer',()=>
 test('a new war does not discard an unrelated unanswered official inquiry',()=>{
  const s=setup();assert.ok(sendInquiry(s,'caesar','senate','leaders').ok);reopen(s);assert.equal(hasPendingInquiry(s,'caesar','senate'),true);assert.equal(sendInquiry(s,'caesar','senate','peace').reason,'pending');
 });
-

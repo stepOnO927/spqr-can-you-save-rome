@@ -1,12 +1,11 @@
-import {sendLetter,initializeMail} from './epistulae.js?v=dossier-archive-1';
+import {sendLetter,initializeMail} from './epistulae.js?v=faces-name-disagreement-1';
 import {peaceTermsText} from './peace-terms.js?v=territorial-peace-1';
-import {reportedArmies} from './character-system.js?v=dossier-archive-1';
-import {CHARACTER_CATALOG} from './characters.js?v=dossier-archive-1';
+import {reportedArmies} from './character-system.js?v=faces-name-disagreement-1';
+import {CHARACTER_CATALOG} from './characters.js?v=faces-name-disagreement-1';
 import {MATERIALS} from './inventions.js?v=mission-discount-1';
-import {ROUTES} from './data.js?v=phase-x-1';
-import {FACTIONS} from './data.js?v=phase-x-1';
+import {ROUTES,FACTIONS} from './data.js?v=phase-x-1';
 import {campaignDate} from './campaign-date.js?v=calendar-1';
-import {storedCorrespondentName} from './person-knowledge.js?v=dossier-archive-1';
+import {storedCorrespondentName} from './person-knowledge.js?v=faces-name-disagreement-1';
 
 const month=s=>s.year*12+s.month;
 const owned=s=>s.regions.filter(r=>r.owner===s.player);
@@ -61,7 +60,10 @@ export function advanceMailReports(s){
   if(op.status==='declined'){
    subject=['Request declined','请求遭拒'];body=[`The request concerning ${target[0]} was declined.`,`有关${target[1]}的请求遭到拒绝。`];
   }else if(op.status==='captured'||op.status==='detected'){
-   subject=['Agent compromised','情报人员暴露'];body=op.status==='captured'?[`An agent operating against ${target[0]} was captured.`,`在${target[1]}活动的一名情报人员被抓获。`]:[`An agent operating against ${target[0]} was detected.`,`在${target[1]}活动的一名情报人员被发现。`];
+   const agent=CHARACTER_CATALOG[op.agentId]?.name;
+   subject=['Agent compromised','情报人员暴露'];body=op.status==='captured'?
+    [agent?`${agent[0]} was captured while operating against ${target[0]}.`:`An agent operating against ${target[0]} was captured.`,agent?`${agent[1]}在${target[1]}活动时被抓获。`:`在${target[1]}活动的一名情报人员被抓获。`]:
+    [agent?`${agent[0]} was detected while operating against ${target[0]}.`:`An agent operating against ${target[0]} was detected.`,agent?`${agent[1]}在${target[1]}活动时被发现。`:`在${target[1]}活动的一名情报人员被发现。`];
   }else if(op.type==='support'){
    subject=['Claimant accepted support','竞争者接受支持'];body=[`The claimant accepted support concerning ${target[0]}; relations with the court worsened.`,`有关${target[1]}的竞争者接受了支持；与宫廷的关系恶化。`];
   }else if(op.type==='counter'&&op.subject==='counter_spies'){
@@ -124,4 +126,3 @@ export function advanceMailReports(s){
  }
  mail.reportSnapshot=after;
 }
-

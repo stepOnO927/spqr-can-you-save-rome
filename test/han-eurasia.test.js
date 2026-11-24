@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newHanGame,tick,moveArmy,serialize,loadHanSave} from '../han/engine.js';
-import {REGIONS,ROUTES,PLAYABLE} from '../han/data.js';
-import {tradePath,TRADE_END} from '../han/silk-road.js';
-import {declareWar} from '../han/frontier.js';
+import {newHanGame,tick,moveArmy,serialize,loadHanSave} from '../han/engine.js?v=faces-name-disagreement-1';
+import {REGIONS,ROUTES,PLAYABLE} from '../han/data.js?v=han-1';
+import {tradePath,TRADE_END} from '../han/silk-road.js?v=legacy-route-1';
+import {declareWar} from '../han/frontier.js?v=han-1';
 import {changeDependency,dependencyOf} from '../han/dependencies.js';
-import {drawMap} from '../han/map.js';
+import {drawMap} from '../han/map.js?v=faces-name-disagreement-1';
 test('49 BCE start and playable polities share a connected Eurasian route',()=>{
  const s=newHanGame('shanshan',{seed:49});
  assert.equal(s.year,-49);assert.equal(s.month,1);assert.equal(s.throne.orthodox,'liu-xun');
@@ -36,6 +36,16 @@ test('120 months remain stable for Han, oasis and western campaigns; saves prese
   assert.equal(s.year,-39);assert.equal(s.month,1);
   assert.ok(s.silk.farWestDeliveries>0);
   assert.equal(s.throne.orthodox==null||s.persons[s.throne.orthodox]?.birthSurname==='Liu',true);
+  if(player==='parthia'){
+   assert.ok(s.tradeMarkets.regions.dayuan.goods.silk.consumed>0,'a populous western court must actually use imported silk');
+   assert.ok(s.tradeMarkets.shipments.some(x=>x.seller==='qiuci'&&x.buyer==='shule'&&x.commodity==='silk'&&x.status==='delivered'),'silk still passes through oasis intermediaries');
+   assert.equal(s.tradeMarkets.shipments.some(x=>x.seller==='dayuan'&&x.buyer==='shule'&&x.commodity==='silk'),false,'terminal demand must not feed a silk shuttle back east');
+   assert.equal(s.regions.find(r=>r.id==='wujie').owner,'zhizhi','the trapped Wujie host cannot withdraw forever and block conquest');
+   for(const id of ['wusun','wusun_lesser','kangju','jiankun','zhizhi','qiang']){
+   assert.ok(s.factions[id].treasury>=0,`${id} cannot fund its home pastoral host`);
+   assert.ok(s.factions[id].grain>=0,`${id} cannot feed its home pastoral host`);
+   }
+  }
   const saved=loadHanSave(serialize(s));
   assert.equal(saved.regions.length,s.regions.length);
   assert.equal(saved.dependencies.length,s.dependencies.length);

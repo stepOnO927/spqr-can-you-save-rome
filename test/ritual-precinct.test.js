@@ -1,0 +1,54 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {newGame,upgradeSave,region} from '../engine.js?v=faces-name-disagreement-1';
+import {MATERIALS,startResearch,startConstruction,advanceInventions,buildingModifiers,aiInnovation} from '../inventions.js?v=mission-discount-1';
+import {advanceReligion,religiousPolicy} from '../religion.js?v=faces-name-disagreement-1';
+
+test('a local ritual precinct takes research, material stock and time, then affects real population',()=>{
+ let state=newGame('senate'),rome=region(state,'roma'),item=MATERIALS.find(x=>x.id==='ritual_precinct');
+ assert.ok(item?.image.startsWith('data:image/svg+xml,'));
+ assert.match(item.name[0],/game reconstruction/);
+ assert.ok(item.source.startsWith('https://'));
+ const researchCash=state.factions.senate.treasury;
+ assert.ok(startResearch(state,'senate',item.id).ok);
+ assert.equal(state.factions.senate.treasury,researchCash-item.cost);
+ while(state.inventions.senate.research)advanceInventions(state);
+ const before={cash:state.factions.senate.treasury,men:state.factions.senate.manpower,stone:state.markets.regions.roma.goods.stone.stock,timber:state.markets.regions.roma.goods.timber.stock};
+ assert.ok(startConstruction(state,'senate','roma',item.id).ok);
+ assert.equal(state.factions.senate.treasury,before.cash-item.buildCost);
+ assert.equal(state.factions.senate.manpower,before.men-400);
+ assert.equal(state.markets.regions.roma.goods.stone.stock,before.stone-1);
+ assert.equal(state.markets.regions.roma.goods.timber.stock,before.timber-1);
+ assert.ok(rome.construction?.remaining>0);
+ assert.ok(!rome.buildings.includes(item.id));
+ while(rome.construction)advanceInventions(state);
+ assert.ok(rome.buildings.includes(item.id));
+ assert.equal(buildingModifiers(rome).upkeep,1);
+ state=upgradeSave(structuredClone(state));rome=region(state,'roma');
+ assert.deepEqual(rome.buildings.filter(id=>id===item.id),[item.id]);
+ const control=structuredClone(state);region(control,'roma').buildings=[];
+ state.month=12;control.month=12;
+ advanceReligion(state);advanceReligion(control);
+ assert.equal(rome.population.satisfaction,region(control,'roma').population.satisfaction+1);
+ const college=state.world.religiousInstitutions.find(x=>x.id==='roman_college'),comparison=control.world.religiousInstitutions.find(x=>x.id==='roman_college');
+ const prior=rome.population.satisfaction;
+ assert.ok(religiousPolicy(state,'senate',college.id,'tolerance').ok);
+ assert.ok(religiousPolicy(control,'senate',comparison.id,'tolerance').ok);
+ assert.equal(rome.population.satisfaction-prior,region(control,'roma').population.satisfaction-(prior-1)+1);
+});
+
+test('an AI court researches a local ritual site for hardship while wartime Han preserves its reserve',()=>{
+ const state=newGame('caesar'),rome=region(state,'roma');
+ state.wars=[];state.factions.senate.treasury=300;rome.population.satisfaction=30;
+ aiInnovation(state,'senate');
+ assert.equal(state.inventions.senate.research?.id,'ritual_precinct');
+ while(state.inventions.senate.research)advanceInventions(state);
+ state.month=4;
+ aiInnovation(state,'senate');
+ assert.equal(rome.construction?.id,'ritual_precinct');
+ const han=newGame('han');
+ han.wars.push(['han','shanshan']);
+ region(han,'hanGuanzhong').population.satisfaction=20;
+ aiInnovation(han,'han');
+ assert.notEqual(han.inventions.han.research?.id,'ritual_precinct');
+});

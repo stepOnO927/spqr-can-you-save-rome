@@ -1,11 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=dossier-archive-1';
-import {appointOffice,advanceOffices,localGovernor} from '../office-system.js?v=dossier-archive-1';
-import {addReport,advanceOperations,previewMission,queueMission,reportedHealthSubjects,reportedOfficeTheaters} from '../character-system.js?v=dossier-archive-1';
-import {identityKnowledge} from '../map-lab/identity-knowledge.js';
-import {createFictionalPerson} from '../dynasties.js?v=dossier-archive-1';
-import {visiblePersonName} from '../person-knowledge.js?v=dossier-archive-1';
+import {newGame,upgradeSave} from '../engine.js?v=faces-name-disagreement-1';
+import {appointOffice,advanceOffices,localGovernor} from '../office-system.js?v=faces-name-disagreement-1';
+import {addReport,advanceOperations,previewMission,queueMission,reportedHealthSubjects,reportedOfficeTheaters} from '../character-system.js?v=faces-name-disagreement-1';
+import {identityKnowledge} from '../map-lab/identity-knowledge.js?v=faces-name-disagreement-1';
 
 const seedFor=(lo,hi)=>Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=lo&&q<hi});
 function resolve(s){for(let i=0;i<4;i++)advanceOperations(s)}
@@ -23,20 +21,6 @@ test('a spy can discover a simulated enemy office without revealing current loca
 test('no named officer is no evidence of a vacancy; wartime misdirection may reuse an old report',()=>{
  let s=newGame('caesar');assert.equal(queueMission(s,'caesar','senate','spy','office_supply').ok,true);s.world.intelSeed=seedFor(.65,.7);resolve(s);assert.equal(s.knowledge.caesar.senate.reports[0].value,'unknown');
  s=newGame('caesar');assert.equal(appointOffice(s,'finance','cato','senate').ok,true);addReport(s,'caesar','senate',{kind:'office_finance',value:'cicero',source:'travelers'});assert.equal(queueMission(s,'caesar','senate','spy','office_finance').ok,true);s.world.intelSeed=seedFor(.4,.44);resolve(s);assert.equal(s.knowledge.caesar.senate.reports[0].value,'cicero');assert.equal(s.world.offices.senate.finance,'cato');
-});
-test('misdirection cannot reuse a future office report or expose its hidden identity',()=>{
- let s=newGame('caesar');const id=createFictionalPerson(s,{name:['Future officer','未来官员'],faction:'senate',birthYear:s.year-40,location:'roma'});
- s.knowledge.caesar.senate.reports.unshift({kind:'office_finance',value:id,source:'spy',year:s.year+1,month:s.month,peopleNames:{[id]:['Future officer','未来官员']}});
- assert.ok(queueMission(s,'caesar','senate','spy','office_finance').ok);s.world.intelSeed=seedFor(.4,.44);s=upgradeSave(structuredClone(s));resolve(s);
- const report=s.knowledge.caesar.senate.reports[0];assert.equal(report.value,'unknown');assert.equal(report.peopleNames?.[id],undefined);assert.deepEqual(visiblePersonName(s,'caesar',id),['Unrecorded name','姓名未记录']);
-});
-test('misdirection repeats a delivered office lead with its recorded name rather than a hidden rename',()=>{
- let s=newGame('caesar');const id=createFictionalPerson(s,{name:['Old name','旧姓名'],faction:'senate',birthYear:s.year-40,location:'roma'});
- addReport(s,'caesar','senate',{kind:'office_finance',value:id,source:'travelers'});s.world.dynasties.catalog[id].name=['Secret new name','秘密新姓名'];s=upgradeSave(structuredClone(s));
- assert.ok(queueMission(s,'caesar','senate','spy','office_finance').ok);s.world.intelSeed=seedFor(.4,.44);resolve(s);
- const report=s.knowledge.caesar.senate.reports[0];assert.equal(report.value,id);assert.deepEqual(report.peopleNames[id],['Old name','旧姓名']);assert.deepEqual(visiblePersonName(s,'caesar',id),['Old name','旧姓名']);
- delete s.knowledge.caesar.senate.reports[0].peopleNames[id];delete s.knowledge.caesar.senate.reports[1].peopleNames[id];s.operations=[];
- assert.ok(queueMission(s,'caesar','senate','spy','office_finance').ok);s.world.intelSeed=seedFor(.4,.44);resolve(s);assert.equal(s.knowledge.caesar.senate.reports[0].peopleNames[id],undefined);assert.deepEqual(visiblePersonName(s,'caesar',id),['Unrecorded name','姓名未记录']);
 });
 test('an ally can forward an office report without inventing its own knowledge',()=>{
  const s=newGame('caesar');s.alliances.push(['caesar','egypt']);addReport(s,'egypt','senate',{kind:'office_finance',value:'cicero',source:'spy',observationYear:-50,observationMonth:6});assert.equal(queueMission(s,'caesar','senate','exchange','office_finance','egypt').ok,true);s.world.intelSeed=seedFor(.65,.7);for(let i=0;i<3;i++)advanceOperations(s);

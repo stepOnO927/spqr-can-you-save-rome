@@ -71,4 +71,3 @@ test('one partner’s cooldown does not permanently prevent notifying a differen
  const sent=s.mail.messages.filter(m=>m.context?.kind==='operation_notice');
  assert.equal(sent.length,2);assert.notEqual(sent[1].recipient,first);
 });
-

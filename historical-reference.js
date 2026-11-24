@@ -12,6 +12,7 @@ export const HISTORICAL_DEATHS={
  orodes:{years:[38,37],disputed:true,sources:[{label:['Encyclopaedia Iranica: Orodes II','伊朗百科：奥罗德二世'],url:'https://www.iranicaonline.org/articles/orodes-ii/'},{label:['Encyclopaedia Iranica: Women in pre-Islamic Persia','伊朗百科：伊斯兰之前波斯的女性'],url:'https://www.iranicaonline.org/articles/women-i/'}]},
  lepidus:{years:[13,12],disputed:true,sources:[{label:['Encyclopedia of Ancient History','古代史百科全书'],url:'https://onlinelibrary.wiley.com/doi/10.1002/9781444338386.wbeah20004'}]},
  scipio:{years:[46],sources:[{label:['Oxford Classical Dictionary: Sittius','牛津古典辞典：西提乌斯'],url:'https://academic.oup.com/edited-volume/61673/chapter-abstract/550500711'}]},
+ varro:{years:[27],sources:[{label:['Oxford: The Roman Agricultural Writers','牛津：《罗马农业著作家》'],url:'https://academic.oup.com/reference/62365/reference-article/554610103'}]},
  ptolemy:{years:[47],sources:[{label:['Trismegistos: Ptolemy XIII','Trismegistos：托勒密十三世'],url:'https://www.trismegistos.org/calendar/bennett/ptolemies/ptolemy_xiii.htm'}]},
  artavasdes:{years:[31],sources:[{label:['Encyclopaedia Iranica: Armenia','伊朗百科：亚美尼亚'],url:'https://www.iranicaonline.org/articles/armenia-ii/'}]},
  juba:{years:[46],sources:[{label:['Oxford Classical Dictionary: Juba I','牛津古典辞典：朱巴一世'],url:'https://academic.oup.com/edited-volume/61673/chapter-abstract/549669445'}]},
@@ -19,7 +20,9 @@ export const HISTORICAL_DEATHS={
  bogud:{years:[31],sources:[{label:['University of Barcelona: Mauretania','巴塞罗那大学：毛里塔尼亚研究'],url:'https://diposit.ub.edu/server/api/core/bitstreams/daccdffc-557e-4df4-8567-0d922c01a16b/content'}]},
  deiotarus:{years:[41,40],disputed:true,sources:[{label:['Encyclopedia of Ancient History: Deiotaros','古代史百科全书：代奥塔鲁斯'],url:'https://onlinelibrary.wiley.com/doi/abs/10.1002/9781444338386.wbeah09083.pub2'}]},
  pharnaces:{years:[47],sources:[{label:['Oxford Classical Dictionary: Pharnaces II','牛津古典辞典：法尔纳刻斯二世'],url:'https://academic.oup.com/edited-volume/61673/chapter-abstract/549705304'},{label:['Treccani: Pharnaces II','特雷卡尼百科：法尔纳刻斯二世'],url:'https://www.treccani.it/enciclopedia/farnace-ii_%28Enciclopedia-dell%27Arte-Antica%29/'}]},
- pacorus:{years:[38],sources:[{label:['Encyclopaedia Iranica: Orodes II','伊朗百科：奥罗德二世'],url:'https://www.iranicaonline.org/articles/orodes-ii/'}]}
+ pacorus:{years:[38],sources:[{label:['Encyclopaedia Iranica: Orodes II','伊朗百科：奥罗德二世'],url:'https://www.iranicaonline.org/articles/orodes-ii/'}]},
+ han_xuan:{years:[49],sources:[{label:['Cambridge University Press: Han chronology','剑桥大学出版社：汉代年表'],url:'https://assets.cambridge.org/97811084/79264/frontmatter/9781108479264_frontmatter.pdf'}]},
+ han_yuan:{years:[33],sources:[{label:['Cambridge University Press: Han chronology','剑桥大学出版社：汉代年表'],url:'https://assets.cambridge.org/97811084/79264/frontmatter/9781108479264_frontmatter.pdf'}]}
 };
 
 // Approximate birth references; uncertain single years are not converted into

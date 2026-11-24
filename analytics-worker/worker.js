@@ -76,4 +76,3 @@ export default {
  async fetch(request,env){const url=new URL(request.url);if(url.pathname==='/api/session'&&request.method==='OPTIONS')return new Response(null,{status:204,headers:{...cors(request),'Access-Control-Allow-Methods':'POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type'}});if(url.pathname==='/api/session'&&request.method==='POST')return collect(request,env);if(url.pathname==='/admin/summary'&&request.method==='GET')return dashboard(request,env);if(url.pathname==='/admin'&&request.method==='GET')return dashboard(request,env,true);return json({error:'not_found'},404)},
  async scheduled(_event,env){const before=Date.now()-90*86400000;await env.DB.prepare('DELETE FROM events WHERE received_at<?').bind(before).run();await env.DB.prepare('DELETE FROM sessions WHERE last_seen<?').bind(before).run()}
 };
-
