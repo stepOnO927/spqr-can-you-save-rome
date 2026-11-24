@@ -36,7 +36,7 @@ export function advanceAgreementProposals(s,{checkAlliance=()=>false,concludeAll
   if(letter.phase==='outbound'){
    if(roll(letter,0x349a61f3)<.1){letter.sealed={outcome:'no_reply',year:s.year,month:s.month};letter.phase='return';letter.remaining=2;continue}
    if(!autoplayPlayer&&letter.target===s.player&&letter.actor!==s.player){letter.phase='awaiting_player';letter.remaining=6;continue}
-   const result=letter.type==='full_alliance'?{ok:checkAlliance(s,letter.actor,letter.target),reason:'declined'}:checkAgreement(s,letter.actor,letter.target,letter.type,{recipientReview:true,credentials:letter.credentials});
+   const result=letter.type==='full_alliance'?{ok:checkAlliance(s,letter.actor,letter.target,{recipientReview:true}),reason:'declined'}:checkAgreement(s,letter.actor,letter.target,letter.type,{recipientReview:true,credentials:letter.credentials});
    const outcome=!result.ok?(result.reason==='declined'?'refused':'unavailable'):roll(letter,0x92f03d41)<.15?'refused':'accepted';
    letter.sealed={outcome,year:s.year,month:s.month};letter.phase='return';letter.remaining=2;continue;
   }
