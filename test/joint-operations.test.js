@@ -78,6 +78,10 @@ test('the player can explicitly withdraw and resume an independent plan without 
  const f=setup();agreed(f);const other=structuredClone(f.q.coordination);f.p.status='paused';assert.ok(releaseJointOperation(f.s,'senate',f.p.id,{...opts,resume:true}).ok);assert.equal(f.p.status,'active');assert.equal(f.p.coordination.state,'independent');assert.deepEqual(f.q.coordination,other);
  frame(f.s,{orders:true});assert.ok(f.a.move);assert.equal(f.b.move,null);
 });
+test('a court refuses a known-impossible return journey before spending the acceptance fee',()=>{
+ const f=setup(),m=deliverOffer(f),before=f.s.factions.numidia.treasury;m.context.launchAt=date(f.s)+1;
+ assert.equal(answerJointOperation(f.s,'numidia',m.id,'accept',f.q.id,opts).ok,false);assert.equal(f.s.factions.numidia.treasury,before);assert.equal(f.q.coordination,undefined);
+});
 test('a reserved assisted plan keeps its armies and still requires the owner’s order after release',()=>{
  const f=setup();f.p.mode='assisted';agreed(f);assert.equal(planControlled(f.s,f.a.id),true);
  while(date(f.s)<f.p.coordination.launchAt)frame(f.s,{orders:true});assert.equal(f.a.move,null);assert.ok(f.p.recommendations.length>0);

@@ -1,5 +1,6 @@
 import {REGIONS} from './data.js?v=phase-x-1';
 import {campaignDate} from './campaign-date.js?v=calendar-1';
+import {courierMonths as mailTravelMonths} from './epistulae.js?v=dossier-archive-1';
 import {isDeliveredReport} from './person-knowledge.js?v=dossier-archive-1';
 import {reportedControl} from './control-intelligence.js?v=dossier-archive-1';
 import {reportedDiplomacy} from './diplomatic-knowledge.js?v=dossier-archive-1';
@@ -71,12 +72,13 @@ export function jointInvitations(s,owner){
 }
 export function jointAcceptancePlans(s,owner,offer){
  if(!offer||!jointInvitations(s,owner).includes(offer)||!operationPartners(s,owner).includes(offer.senderFaction)||!war(s,owner,offer.context.enemy)||plans(s,owner).some(p=>waiting(p.coordination)))return [];
+ const route=operationNoticeRoute(s,owner,offer.senderFaction);if(now(s)+2*mailTravelMonths(s,route.source,offer.source)>=offer.context.launchAt)return [];
  return plans(s,owner).filter(p=>jointPlanEnemy(s,owner,p)===offer.context.enemy);
 }
 export function answerJointOperation(s,owner,offerId,decision,planId,{sendLetter}={}){
  const offer=jointInvitations(s,owner).find(m=>m.id===offerId);if(!offer||!['accept','decline','ignore'].includes(decision))return {ok:false,reason:'unavailable'};
- if(decision==='ignore'){offer.context.jointAnswered='ignored';offer.read=true;return {ok:true}}
- const plan=decision==='accept'&&jointAcceptancePlans(s,owner,offer).find(p=>p.id===planId);
+ if(decision==='ignore'){offer.context.jointAnswered='ignored';offer.context.jointProcessed=true;offer.read=true;return {ok:true}}
+ const plan=decision==='accept'?jointAcceptancePlans(s,owner,offer).find(p=>p.id===planId):null;
  if(decision==='accept'&&(!plan||s.factions[owner].treasury<JOINT_ACCEPT_COST))return {ok:false,reason:'plan_or_funds'};
  const objective=plan?.roles.find(r=>['offensive','siege'].includes(r.role)&&!r.state.done)?.target;
  const result=post(s,owner,offer.senderFaction,decision==='accept'?['Joint operation acceptance','共同作战答复：接受']:['Joint operation declined','共同作战答复：拒绝'],decision==='accept'?[
@@ -85,7 +87,7 @@ export function answerJointOperation(s,owner,offerId,decision,planId,{sendLetter
   {kind:'joint_reply',invitationId:offer.id,enemy:offer.context.enemy,launchAt:offer.context.launchAt,decision,objective},
   {sendLetter,...operationNoticeRoute(s,owner,offer.senderFaction),destination:offer.source,destinationKnown:!!offer.source,threadId:offer.threadId,expires:offer.context.launchAt-1});
  if(!result.ok)return result;
- offer.context.jointAnswered=decision;offer.read=true;
+ offer.context.jointAnswered=decision;offer.context.jointProcessed=true;offer.read=true;
  if(plan){s.factions[owner].treasury-=JOINT_ACCEPT_COST;const c=reserve(s,plan,offer.senderFaction,offer.context.enemy,offer.id,offer.context.launchAt,'waiting_confirmation');c.replyId=result.letter.id}
  return {ok:true,id:result.letter.id};
 }
@@ -143,6 +145,7 @@ export function advanceJointOperations(s,{sendLetter,estimatedStrength,autoplayP
   if(x.kind==='joint_reply'&&c.state==='waiting_reply'){
    if(x.decision!=='accept'){stop(s,plan,'declined');continue}
    if(!validReservation(s,plan)||now(s)>=c.launchAt){stop(s,plan,'missed');continue}
+   const route=operationNoticeRoute(s,owner,c.partner);if(now(s)+mailTravelMonths(s,route.source,m.source)>=c.launchAt){releaseJointOperation(s,owner,plan.id,{sendLetter});stop(s,plan,'missed');continue}
    const result=post(s,owner,c.partner,['Joint operation final confirmation','共同作战最终确认'],['Your acceptance reached us. We confirm our reserved plan for the stated month. This confirmation must reach your court before that month; loss or delay may leave one side acting alone.','贵方接受答复已送达。本方确认在约定月份执行保留计划。此确认须在该月前送达贵方；遗失或延迟可能使一方单独行动。'],{kind:'joint_confirmation',invitationId:c.invitationId,replyId:m.id,enemy:c.enemy,launchAt:c.launchAt},{sendLetter,...operationNoticeRoute(s,owner,c.partner),destination:m.source,destinationKnown:!!m.source,threadId:c.invitationId,expires:c.launchAt-1});
    if(result.ok){c.state='agreed';c.partnerObjective=x.objective;c.confirmationId=result.letter.id;note(s,owner,`“${plan.name}”: acceptance received; final confirmation dispatched. Partner receipt remains unknown.`,`“${plan.name}”：已收到接受答复，最终确认已寄出；对方是否收到仍未知。`)}
   }else if(x.kind==='joint_confirmation'&&c.state==='waiting_confirmation'&&x.replyId===c.replyId){
