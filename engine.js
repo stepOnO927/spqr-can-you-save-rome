@@ -31,7 +31,7 @@ import {makePeaceTerms,peaceOfferRegions,peaceConcessionCredit,canSettlePeaceTer
 const imperiumOn=s=>s.world?.imperium?.enabled!==false;
 // IMPERIUM: completed national focuses add to the same modifier table as policies.
 const activeModifiers=(s,id)=>{const out={...inventionModifiers(s,id)};for(const [k,v] of Object.entries(focusModifiers(s,id)))out[k]=(out[k]||0)+v;return out};
-import {initializeAgreements,activeAgreement,advanceAgreements,proposeAgreement,terminateAgreement,fullAllianceTerms} from './agreements.js?v=dossier-archive-1';
+import {initializeAgreements,neutralityBlocksWar,neutralityBlocksAid,neutralityConflicts,activeAgreement,advanceAgreements,proposeAgreement,terminateAgreement,fullAllianceTerms} from './agreements.js?v=dossier-archive-1';
 import {initializeLocalDiscovery} from './local-discovery.js?v=dossier-archive-1';
 import {subjectRelation} from './suzerainty.js?v=dossier-archive-1';
 import {advanceAgreementProposals,sendAgreementProposal} from './agreement-negotiations.js?v=dossier-archive-1';
@@ -374,7 +374,7 @@ export function canFormAlliance(s,actor,target,{priorConsent=false,recipientRevi
  const viewer=recipientReview?target:actor,other=recipientReview?actor:target;
  const actorSubject=!recipientReview&&subjectRelation(s,actor)?.terms.subject;
  if(actorSubject?.diplomaticAutonomy==='limited'&&actorSubject.suzerain!==target)return false;
- if(actor===target||!s.factions[actor]||!s.factions[target]||actor==='rebels'||target==='rebels'||(!recipientReview&&!s.regions.some(r=>r.owner===actor))||!s.regions.some(r=>r.owner===target)||isWar(s,actor,target)||isAllied(s,actor,target))return false;
+ if(actor===target||!s.factions[actor]||!s.factions[target]||actor==='rebels'||target==='rebels'||(!recipientReview&&!s.regions.some(r=>r.owner===actor))||!s.regions.some(r=>r.owner===target)||isWar(s,actor,target)||isAllied(s,actor,target)||neutralityConflicts(s,target,actor,'full_alliance')||!recipientReview&&neutralityConflicts(s,actor,target,'full_alliance'))return false;
  if(!priorConsent&&relation(s,actor,target)+personalDiplomaticCredit(s,viewer,other)<30)return false;
  if(recipientReview){
   // A recipient knows its own obligations and dated foreign reports, not
@@ -394,12 +394,12 @@ export function diplomacy(s, actor, target, action, options={}){
   if(action==='break' && isAllied(s,actor,target)){const prior=s.alliances.find(p=>p.includes(actor)&&p.includes(target)),terms=prior[2]||fullAllianceTerms(s,{legacy:true});(s.world.allianceHistory||=[]).push({parties:prior.slice(0,2),terms,ended:{year:s.year,month:s.month,actor},outcome:'breached'});s.alliances=s.alliances.filter(p=>!(p.includes(actor)&&p.includes(target)));s.relations[key]=relation(s,actor,target)-20;s.diplomaticCredibility||={};s.diplomaticCredibility[actor]=Math.max(0,(s.diplomaticCredibility[actor]??100)-terms.breachPenalty);rememberPoliticalEvent(s,target,actor,'broken_treaty',-12);if(actor===s.player||target===s.player)log(s,`${FACTIONS[actor].short[0]} broke its alliance with ${FACTIONS[target].short[0]}.`,`${FACTIONS[actor].short[1]}解除了与${FACTIONS[target].short[1]}的同盟。`,{other:actor===s.player?target:actor});return true}
   if(action==='war' && !isWar(s,actor,target)){
     if(subjectRelation(s,actor)?.terms.subject.diplomaticAutonomy==='limited'&&subjectRelation(s,actor).terms.subject.suzerain!==target)return false;
-    if(isAllied(s,actor,target)||activeAgreement(s,actor,target,'non_aggression'))return false;
+    if(isAllied(s,actor,target)||activeAgreement(s,actor,target,'non_aggression')||neutralityBlocksWar(s,actor,target))return false;
     const warsBefore=s.wars.map(w=>w.slice());
     const playerWarsBefore=new Set(s.wars.filter(w=>w.includes(s.player)).map(w=>w.find(id=>id!==s.player)));
     s.wars.push([actor,target]);
-    for(const p of s.alliances.filter(p=>p.includes(target))){const ally=p.find(x=>x!==target);if(ally!==actor&&!isWar(s,ally,actor)&&!isAllied(s,ally,actor)&&!activeAgreement(s,ally,actor,'non_aggression'))s.wars.push([ally,actor])}
-    for(const p of s.alliances.filter(p=>p.includes(actor))){const ally=p.find(x=>x!==actor);if(ally!==target&&!isWar(s,ally,target)&&!isAllied(s,ally,target)&&!activeAgreement(s,ally,target,'non_aggression'))s.wars.push([ally,target])}
+    for(const p of s.alliances.filter(p=>p.includes(target))){const ally=p.find(x=>x!==target);if(ally!==actor&&!isWar(s,ally,actor)&&!isAllied(s,ally,actor)&&!activeAgreement(s,ally,actor,'non_aggression')&&!neutralityBlocksWar(s,ally,actor))s.wars.push([ally,actor])}
+    for(const p of s.alliances.filter(p=>p.includes(actor))){const ally=p.find(x=>x!==actor);if(ally!==target&&!isWar(s,ally,target)&&!isAllied(s,ally,target)&&!activeAgreement(s,ally,target,'non_aggression')&&!neutralityBlocksWar(s,ally,target))s.wars.push([ally,target])}
     for(const treaty of s.agreements||[]){
       if(treaty.status!=='active'||!['defensive','offensive','guarantee','protectorate','client_kingdom'].includes(treaty.type))continue;
       const supported=treaty.type==='offensive'?actor:target,opponent=treaty.type==='offensive'?target:actor;
@@ -407,7 +407,7 @@ export function diplomacy(s, actor, target, action, options={}){
       if(treaty.type==='guarantee'&&supported!==(treaty.terms?.recipient||treaty.parties[1]))continue;
       if(['protectorate','client_kingdom'].includes(treaty.type)&&supported!==treaty.terms?.subject?.subject)continue;
       const ally=treaty.parties.find(x=>x!==supported);
-      if(ally!==opponent&&!isWar(s,ally,opponent)&&!isAllied(s,ally,opponent)&&!activeAgreement(s,ally,opponent,'non_aggression'))s.wars.push([ally,opponent]);
+      if(ally!==opponent&&!isWar(s,ally,opponent)&&!isAllied(s,ally,opponent)&&!activeAgreement(s,ally,opponent,'non_aggression')&&!neutralityBlocksWar(s,ally,opponent))s.wars.push([ally,opponent]);
     }
     queueCoalitionDefenseCalls(s,target,actor);
     s.relations[key]=-60;
@@ -477,7 +477,7 @@ export function advanceStrategicOffers(s,{autoplayPlayer=false}={}){
    if(!autoplayPlayer&&offer.recipient===s.player){offer.status='awaiting_decision';offer.phase='at_court';offer.remaining=6;syncStrategicOfferLetters(s);continue}
    const recipient=s.factions[offer.recipient],view=assessOpportunities(s,offer.recipient,estimatedStrength).find(x=>x.target===offer.target),trust=relation(s,offer.recipient,offer.actor),ownWars=s.wars.filter(w=>w.includes(offer.recipient)).length;
    if(offer.kind==='request_aid'){
-    const commonEnemy=isWar(s,offer.recipient,offer.target),memory=politicalMemoryAdjustment(s,offer.recipient,offer.actor),eligible=!isWar(s,offer.recipient,offer.actor)&&recipient.treasury>=24&&recipient.food>=20&&(trust+memory>=0||commonEnemy);
+    const commonEnemy=isWar(s,offer.recipient,offer.target),memory=politicalMemoryAdjustment(s,offer.recipient,offer.actor),eligible=!isWar(s,offer.recipient,offer.actor)&&!neutralityBlocksAid(s,offer.recipient,offer.actor)&&recipient.treasury>=24&&recipient.food>=20&&(trust+memory>=0||commonEnemy);
     const probability=Math.max(.1,Math.min(.8,.22+(commonEnemy ? .28 : 0)+trust*.003+memory*.005));
     const accepted=eligible&&strategicRoll(s,offer.recipient,offer.id+60)<probability;
     if(accepted){recipient.treasury-=12;recipient.food-=8}
@@ -507,7 +507,9 @@ export function advanceStrategicOffers(s,{autoplayPlayer=false}={}){
 export function answerStrategicOffer(s,id,decision){
  const offer=(s.world.strategicOffers||[]).find(o=>o.id===id&&o.recipient===s.player&&o.status==='awaiting_decision'&&o.phase==='at_court');
  if(!offer||!(offer.kind==='request_aid'?['send_war_aid','refuse','ignore']:['join_war','refuse','ignore']).includes(decision))return {ok:false,reason:'unavailable'};
+ if(decision==='join_war'&&!isWar(s,s.player,offer.target)&&neutralityBlocksWar(s,s.player,offer.target))return {ok:false,reason:'neutrality'};
  if(decision==='join_war'&&!isWar(s,s.player,offer.target)&&!diplomacy(s,s.player,offer.target,'war'))return {ok:false,reason:'conditions'};
+ if(decision==='send_war_aid'&&neutralityBlocksAid(s,s.player,offer.actor))return {ok:false,reason:'neutrality'};
  if(decision==='send_war_aid'&&(isWar(s,s.player,offer.actor)||s.factions[s.player].treasury<12||s.factions[s.player].food<8))return {ok:false,reason:'conditions'};
  if(decision==='ignore'){offer.status='pending';offer.phase='return';offer.remaining=2;offer.sealed={decision:'no_reply',year:s.year,month:s.month};return {ok:true}}
  if(decision==='send_war_aid'){s.factions[s.player].treasury-=12;s.factions[s.player].food-=8}
@@ -1100,8 +1102,14 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
   // temporary neutral frontier. The prospective partner can decline, and a
   // player is never bound without their decision.
   if(owner!=='rebels'&&['hard','expert'].includes(s.difficulty)&&s.month===10&&f.treasury>45&&s.wars.some(w=>w.includes(owner))){
-    const neutral=[...new Set(reportedNeighbors().map(r=>r.owner))].filter(id=>id!==owner&&(autoplayPlayer||id!==s.player)&&id!=='rebels'&&s.factions[id]&&!isWar(s,owner,id)&&!isAllied(s,owner,id)&&!activeAgreement(s,owner,id,'non_aggression')&&relation(s,owner,id)>=0&&!(s.world.agreementLetters||[]).some(x=>x.actor===owner&&x.target===id&&x.status==='pending')).sort((a,b)=>relation(s,owner,b)-relation(s,owner,a)||a.localeCompare(b))[0];
-    if(neutral)sendAgreementProposal(s,owner,neutral,'non_aggression');
+    const neutral=[...new Set(reportedNeighbors().map(r=>r.owner))].filter(id=>id!==owner&&(autoplayPlayer||id!==s.player)&&id!=='rebels'&&s.factions[id]&&!isWar(s,owner,id)&&!isAllied(s,owner,id)&&!activeAgreement(s,owner,id,'non_aggression')&&!activeAgreement(s,owner,id,'neutrality')&&relation(s,owner,id)>=0&&!(s.world.agreementLetters||[]).some(x=>x.actor===owner&&x.target===id&&x.status==='pending')).sort((a,b)=>relation(s,owner,b)-relation(s,owner,a)||a.localeCompare(b))[0];
+    if(neutral){
+      const enemy=s.wars.find(w=>w.includes(owner))?.find(id=>id!==owner);
+      const reportedWar=reportedDiplomacy(s,owner).some(d=>d.kind==='war'&&d.status==='active'&&isDeliveredReport(s,d)&&d.parties.includes(neutral)&&d.parties.includes(enemy));
+      const knownDuty=['defensive','offensive','military_access'].some(type=>activeAgreement(s,owner,neutral,type))||['guarantee','military_support'].some(type=>{const t=activeAgreement(s,owner,neutral,type);return t&&(t.terms?.provider||t.parties[0])===neutral});
+      const type=enemy&&relation(s,owner,neutral)>=10&&!reportedWar&&!knownDuty&&strategicRoll(s,owner,327)<.35?'neutrality':'non_aggression';
+      sendAgreementProposal(s,owner,neutral,type,{enemy});
+    }
   }
   if(owner!=='rebels'&&['standard','hard','expert'].includes(level)&&s.month===5&&f.treasury>45&&(level!=='standard'||s.year%2===0&&s.wars.some(w=>w.includes(owner)))){
     const threats=[...new Set(reportedNeighbors().map(r=>r.owner))].filter(id=>id!==owner&&id!=='rebels'&&s.factions[id]&&coalitionInterest(s,owner,id,estimatedStrength).interested);

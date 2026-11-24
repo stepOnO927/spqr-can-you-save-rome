@@ -1,7 +1,7 @@
 import {isDeliveredReport} from './person-knowledge.js?v=dossier-archive-1';
 import {ROUTES} from './data.js?v=dossier-archive-1';
 import {reportedControl} from './control-intelligence.js?v=dossier-archive-1';
-import {activeAgreement} from './agreements.js?v=dossier-archive-1';
+import {activeAgreement,neutralityBlocksWar} from './agreements.js?v=dossier-archive-1';
 import {rememberPoliticalEvent} from './political-memory.js?v=dossier-archive-1';
 import {reportedDiplomacy} from './diplomatic-knowledge.js?v=dossier-archive-1';
 
@@ -150,7 +150,7 @@ function decideDefenseCall(s,call,accept){
  const c=(s.coalitions||[]).find(item=>item.id===call.coalitionId);
  if(!validDefenseCall(s,call)){call.status='lapsed';return {ok:false,reason:'lapsed'}}
  if(war(s,call.member,call.aggressor)){call.status='already_fighting';return {ok:true,status:call.status}}
- if(accept&&(s.alliances.some(a=>a.includes(call.member)&&a.includes(call.aggressor))||activeAgreement(s,call.member,call.aggressor,'non_aggression')))return {ok:false,reason:'treaty'};
+ if(accept&&(s.alliances.some(a=>a.includes(call.member)&&a.includes(call.aggressor))||activeAgreement(s,call.member,call.aggressor,'non_aggression')||neutralityBlocksWar(s,call.member,call.aggressor)))return {ok:false,reason:'treaty'};
  call.status=accept?'accepted':'refused';call.decided={year:s.year,month:s.month};
  if(accept){s.wars.push([call.member,call.aggressor]);c.cohesion=Math.min(100,c.cohesion+3)}
  else {c.cohesion=Math.max(0,c.cohesion-6);const key=pair(call.member,call.defender);s.relations[key]=Math.max(-100,rel(s,call.member,call.defender)-4)}
@@ -170,7 +170,7 @@ export function advanceCoalitionDefenseCalls(s){
    if(call.member===s.player){call.status='awaiting_player';continue}
    const f=s.factions[call.member],relationToDefender=rel(s,call.member,call.defender),policy=(s.coalitions||[]).find(c=>c.id===call.coalitionId)?.contributions?.[call.member]?.policy;
    const willing=relationToDefender>=0&&f.stability>=35&&f.treasury>=8&&f.food>=4&&s.wars.filter(w=>w.includes(call.member)).length<2&&(policy==='military'||relationToDefender>=20);
-   decideDefenseCall(s,call,willing&&!s.alliances.some(a=>a.includes(call.member)&&a.includes(call.aggressor))&&!activeAgreement(s,call.member,call.aggressor,'non_aggression'));continue;
+   decideDefenseCall(s,call,willing&&!s.alliances.some(a=>a.includes(call.member)&&a.includes(call.aggressor))&&!activeAgreement(s,call.member,call.aggressor,'non_aggression')&&!neutralityBlocksWar(s,call.member,call.aggressor));continue;
   }
   if(call.status==='awaiting_player'&&now(s)>=call.expiresAt)decideDefenseCall(s,call,false);
  }

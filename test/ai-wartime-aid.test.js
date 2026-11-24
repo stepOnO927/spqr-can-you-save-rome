@@ -48,6 +48,8 @@ test('accepted aid consumes real donor resources and arrives only with the retur
 });
 test('a Roman-Egyptian war prompts some autonomous Egyptian aid requests without forcing a response',()=>{
  for(const autoplayPlayer of [true,false]){const statuses=new Set();for(let seed=1;seed<=10;seed++){const s=newGame('caesar');s.difficulty='expert';s.seed=seed;s.wars.push(['caesar','egypt']);for(let month=0;month<24;month++)tick(s,{autoplayPlayer});for(const offer of s.world.strategicOffers||[])if(offer.actor==='egypt'&&offer.kind==='request_aid'){statuses.add(offer.status);if(!autoplayPlayer)assert.notEqual(offer.recipient,s.player)}}
-  assert.ok(statuses.has('accepted'));assert.ok(statuses.has('refused'));assert.ok(statuses.size>1);
+  // A donor may now decline a direct request under a separate neutrality pledge.
+  // Successful paid transfers are covered by the dedicated aid-delivery test.
+  assert.ok(statuses.has('refused'));assert.ok(statuses.size>1);
  }
 });
