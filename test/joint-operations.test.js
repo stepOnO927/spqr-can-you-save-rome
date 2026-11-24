@@ -98,13 +98,14 @@ test('pending, confirmed and expired correspondence survive save/load, while ord
 });
 test('at least four autonomous courts can send and independently answer cooperation proposals across seeds',()=>{
  const reports=[],departures=[],transitions=[];
- for(let n=1;n<=24;n++){
+ for(const fourFronts of [true,false])for(let n=1;n<=24;n++){
+  const scenario=fourFronts?'four_fronts':'neutral_egypt';
   const s=newGame('caesar');s.difficulty='expert';s.seed=(Math.imul(n,2654435761)^10949)>>>0;
   s.alliances.push(['caesar','egypt'],['parthia','armenia']);s.relations['caesar:egypt']=60;s.relations['armenia:parthia']=60;
-  for(const actor of ['caesar','egypt','parthia','armenia']){Object.assign(s.factions[actor],{treasury:220,food:220,stability:80});if(actor!=='caesar')s.wars.push([actor,'senate'])}
+  for(const actor of ['caesar','egypt','parthia','armenia']){Object.assign(s.factions[actor],{treasury:220,food:220,stability:80});if(actor!=='caesar'&&(actor!=='egypt'||fourFronts))s.wars.push([actor,'senate'])}
   observeControl(s);observeDiplomacy(s);
   const previous=new Map();
-  for(let i=0;i<24;i++){tick(s,{autoplayPlayer:true});for(const p of s.world.battlePlans||[]){const c=p.coordination;if(!c)continue;const key=p.id+':'+c.invitationId,signature=c.state+':'+c.stopReason;if(previous.get(key)!==signature){transitions.push({seed:n,id:c.invitationId,owner:p.owner,date:date(s),state:c.state,reason:c.stopReason,food:Math.round(s.factions[p.owner]?.food||0),men:p.roles.reduce((n,r)=>n+(s.armies.find(a=>a.id===r.armyId)?.men||0),0)});previous.set(key,signature)}if(c.state==='launched'&&c.releasedYear===s.year&&c.releasedMonth===s.month&&p.roles.some(r=>s.armies.some(a=>a.id===r.armyId&&a.owner===p.owner&&a.move)))departures.push({seed:n,id:c.invitationId,owner:p.owner,date:date(s)})}}
+  for(let i=0;i<24;i++){tick(s,{autoplayPlayer:true});for(const p of s.world.battlePlans||[]){const c=p.coordination;if(!c)continue;const key=p.id+':'+c.invitationId,signature=c.state+':'+c.stopReason;if(previous.get(key)!==signature){transitions.push({scenario,seed:n,id:c.invitationId,owner:p.owner,date:date(s),state:c.state,reason:c.stopReason,food:Math.round(s.factions[p.owner]?.food||0),men:p.roles.reduce((n,r)=>n+(s.armies.find(a=>a.id===r.armyId)?.men||0),0)});previous.set(key,signature)}if(c.state==='launched'&&c.releasedYear===s.year&&c.releasedMonth===s.month&&p.roles.some(r=>s.armies.some(a=>a.id===r.armyId&&a.owner===p.owner&&a.move)))departures.push({scenario,seed:n,id:c.invitationId,owner:p.owner,date:date(s)})}}
   const letters=s.mail.messages.filter(m=>m.context?.kind?.startsWith('joint_'));reports.push(letters.map(m=>`${m.senderFaction}>${m.recipient}:${m.context.kind}:${m.context.decision||'-'}:${m.delivery}`));
   assert.ok(['caesar','egypt','parthia','armenia'].every(id=>s.world.multipolarPlans[id]),'four courts reviewed the world independently');
  }
@@ -112,7 +113,9 @@ test('at least four autonomous courts can send and independently answer cooperat
  assert.ok(reports.flat().some(x=>x.includes('joint_reply:accept')),'AI sometimes accepts independently');
  assert.ok(reports.flat().some(x=>x.includes('joint_reply:decline')),'AI cooperation is not guaranteed');
  assert.ok(new Set(reports.map(x=>JSON.stringify(x))).size>1,'seeds produce different correspondence');
- const coordinated=departures.filter(a=>departures.some(b=>b.seed===a.seed&&b.id===a.id&&b.date===a.date&&b.owner!==a.owner));
+ const coordinated=departures.filter(a=>departures.some(b=>b.scenario===a.scenario&&b.seed===a.seed&&b.id===a.id&&b.date===a.date&&b.owner!==a.owner));
  console.log('JOINT_AI_EVIDENCE '+JSON.stringify({scenarios:reports.length,invitations:reports.flat().filter(x=>x.includes('joint_invite')).length,accepted:reports.flat().filter(x=>x.includes('joint_reply:accept')).length,declined:reports.flat().filter(x=>x.includes('joint_reply:decline')).length,coordinatedDepartures:coordinated,transitions}));
  assert.ok(coordinated.length>0,'AI courts must sometimes issue real coordinated orders, not only exchange proposals');
+ assert.ok(transitions.some(x=>x.scenario==='four_fronts'&&x.reason==='control'),'the original contested scenario still tests reconsideration when a third party changes the objective');
 });
+
