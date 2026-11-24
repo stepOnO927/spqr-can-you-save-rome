@@ -11,7 +11,7 @@ import {voteCommercialLeagueMotion,answerCommercialLeagueAdmission} from './comm
 import {storedCorrespondentName} from './person-knowledge.js?v=dossier-archive-1';
 import {earnedEpithets,legendName} from './legend.js?v=dossier-archive-1';
 import {answerCoalitionAidRequest,COALITION_AID} from './coalition-assistance.js?v=dossier-archive-1';
-import {peaceTermsText,peaceTitleTermsText} from './peace-terms.js?v=territorial-peace-1';
+import {peaceTermsText,peaceTitleTermsText,peaceWarIsCurrent} from './peace-terms.js?v=territorial-peace-1';
 
 const monthIndex = (year, month) => year * 12 + month;
 const pair = (a, b) => [a, b].sort().join(':');
@@ -207,6 +207,8 @@ export function replyToLetter(s, id, choice, actions, details={}) {
   } else if (m.context?.kind === 'coalition_aid_request') {
     ok = answerCoalitionAidRequest(s,m.context.requestId,choice).ok === true;
   } else if (m.context?.kind === 'peace') {
+    const request=(s.inquiries||[]).find(x=>x.mailId===m.id&&x.actor===m.senderFaction&&x.target===s.player&&x.subject==='peace'&&x.status==='awaiting_decision'&&peaceWarIsCurrent(s,x));
+    if(!request)return {ok:false,reason:'unavailable'};
     ok = actions.answerPeaceOffer?.(s,m.senderFaction,choice).ok === true;
   } else if (m.context?.kind === 'war' && choice === 'negotiate') {
     ok = actions.sendInquiry(s, s.player, m.senderFaction, 'peace').ok;

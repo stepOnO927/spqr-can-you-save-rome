@@ -32,7 +32,7 @@ import {AGREEMENT_TYPES,activeAgreement,proposeAgreement,terminateAgreement} fro
 import {leaveCoalition,answerCoalitionDefenseCall} from './coalitions.js?v=dossier-archive-1';
 import {renderAidRequest} from './strategic-aid-ui.js?v=dossier-archive-1';
 import {renderPeaceProposal} from './peace-proposal-ui.js?v=territorial-peace-1';
-import {peaceTermsText,peaceTitleTermsText} from './peace-terms.js?v=territorial-peace-1';
+import {peaceTermsText,peaceTitleTermsText,peaceWarIsCurrent} from './peace-terms.js?v=territorial-peace-1';
 import {sendCoalitionInvitation,answerCoalitionInvitation} from './coalition-negotiations.js?v=dossier-archive-1';
 import {commercialContact,proposeCommercialLeague,answerCommercialLeagueOffer,leaveCommercialLeague} from './commercial-leagues.js?v=dossier-archive-1';
 import {proposeCommercialLeagueMotion} from './commercial-league-politics.js?v=dossier-archive-1';
@@ -121,7 +121,7 @@ function mapSvg(){const a=army(state,selectedArmy);return drawMap(state,{selecte
 
 function stat(k,value){return `<div class="stat" data-stat="${k}">${statIcon(k)}<small>${t(k)}</small><strong>${value}</strong></div>`}
 function incomingPeacePanel(){
- const incoming=(state.inquiries||[]).filter(x=>x.target===state.player&&x.subject==='peace'&&(x.status==='awaiting_decision'||x.phase==='return'));
+ const incoming=(state.inquiries||[]).filter(x=>x.target===state.player&&x.subject==='peace'&&(x.status==='awaiting_decision'||x.phase==='return')&&peaceWarIsCurrent(state,x));
  if(!incoming.length)return '';
  return `<div class="rule-block"><h3>${lang==='zh'?'收到的议和书信':'Incoming peace offers'}</h3><p>${lang==='zh'?'回信需要时间，可能遗失；有效接受送达前战争继续。':'Replies take time and may be lost; war continues until a valid acceptance is delivered.'}</p>${incoming.map(x=>`<p>${esc(labelFaction(x.actor))} · ${x.status==='awaiting_decision'?(lang==='zh'?`等待决定，剩余${x.remaining}个月`:`Awaiting decision, ${x.remaining} months left`):(lang==='zh'?'答复已寄出；是否送达未知':'Reply sent; delivery unknown')}<br>${esc(x.titleAsset?peaceTitleTermsText(state,x,lang):peaceTermsText(x,lang))} ${x.status==='awaiting_decision'?`<button class="action" data-answer-peace="${esc(x.actor)}" data-decision="accept">${lang==='zh'?'接受议和':'Accept peace'}</button> <button class="action" data-answer-peace="${esc(x.actor)}" data-decision="refuse">${lang==='zh'?'拒绝':'Refuse'}</button>`:''}</p>`).join('')}</div>`;
 }
