@@ -185,7 +185,7 @@ export function replyToLetter(s, id, choice, actions, details={}) {
   } else if (m.context?.kind === 'agreement_offer') {
     const answer=actions.answerAgreementProposal?.(s,m.context.proposalId,choice);if(['neutrality','neutrality_offer'].includes(answer?.reason))return answer;ok=answer?.ok===true;
   } else if (m.context?.kind === 'coalition_offer') {
-    ok = actions.answerCoalitionInvitation?.(s,m.context.invitationId,choice).ok === true;
+    const answer=actions.answerCoalitionInvitation?.(s,m.context.invitationId,choice);if(answer?.reason==='coalition_conflict')return answer;ok=answer?.ok===true;
   } else if (m.context?.kind === 'official_inquiry') {
     const request=(s.inquiries||[]).find(r=>r.mailId===m.id&&r.target===s.player&&r.status==='awaiting_decision'&&r.subject===m.context.subject);
     if(!request)return {ok:false,reason:'unavailable'};
