@@ -66,3 +66,7 @@ An AI recipient judges the letter from its own nearby forces, its relation with 
 
 In the ordinary openings no court meets the friendship threshold, so no warnings are sent. `node scripts/multipolar-sim.mjs` adds a fictional allied-frontier opening (Armenia and the Senate friendly, the Senate already at war with a prepared Parthia) in which warnings, delivery and decisions are unforced. Existing saves initialize the queue lazily.
 
+
+## Warning Chronicle privacy
+
+Scout warnings have no return courier. Their sender therefore receives no Chronicle receipt when the message arrives and no notification of the recipient's decision, loss, delay or expiry. The existing outbound ledger remains dispatch-only. A human recipient still learns the dated warning on actual arrival and decides independently; no troops are ordered automatically. `test/warning-chronicle-privacy.test.js` checks real seeded delivery/loss/delay, bilingual received notices and save migration in addition to the ledger projection tests.

@@ -44,6 +44,10 @@ try {
   await check('setup');await page.locator(start).click();
   if(name==='atlas'){await page.locator('[data-city="ROMA"]').waitFor();await page.waitForTimeout(8000)}
   await check('campaign');
+  if(name==='atlas'){
+   await page.locator('[data-army="xiii"]').click({force:true});await page.locator('#open-march-planner').click();await page.locator('#march-planner:not([hidden])').waitFor();
+   await check('march planner');await page.screenshot({path:'typography-atlas-planner-1920x1080.png'});await page.locator('#march-planner [data-plan="cancel"]').click();
+  }
   if(name==='atlas')assert.ok((await page.locator('.strength-line b').evaluateAll(els=>els.map(el=>{const range=document.createRange();range.selectNodeContents(el);return range.getClientRects().length}))).every(n=>n===1),'strength values and unknown labels remain on one line');
   assert.ok(fontResponses.some(r=>r.status()===200),`${name}: local font response succeeds`);
   assert.equal((await fontResponses[0].body()).length,1142552,`${name}: complete font file`);
