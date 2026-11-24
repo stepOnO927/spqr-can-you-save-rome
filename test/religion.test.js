@@ -95,3 +95,26 @@ test('different institutions spend their own money on real local education or in
  assert.equal(upper.supply,capacity+1);assert.equal(temple.works,1);assert.ok(temple.history.some(h=>h.action==='infrastructure'));assert.ok(temple.wealth<30);
  const restored=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(restored.world.religiousInstitutions.find(o=>o.id===temple.id).works,1);assert.equal(restored.regions.find(r=>r.id==='egyptUpper').supply,capacity+1);
 });
+test('a religious official earns a bounded negotiation benefit through completed local works',()=>{
+ let s=newGame('senate');const college=s.world.religiousInstitutions.find(o=>o.id==='roman_college'),r=s.regions.find(x=>x.id==='roma'),leader=college.leader;
+ college.wealth=30;college.relations.senate=0;r.population.satisfaction=20;
+ s.month=6;advanceReligion(s);s.month=12;advanceReligion(s);
+ assert.equal(s.world.characters[leader].religiousWorks,2);
+ assert.equal(college.history.filter(h=>h.action==='relief'&&h.authority===leader).length,2);
+ const beforeRelation=college.relations.senate,beforeSatisfaction=r.population.satisfaction;
+ assert.equal(religiousPolicy(s,'senate',college.id,'negotiate').ok,true);
+ assert.equal(college.relations.senate,beforeRelation+10);
+ assert.equal(r.population.satisfaction,beforeSatisfaction+3);
+ assert.equal(college.history.at(-1).authority,leader);
+ assert.match(s.log[0].en,/Aulus Fabius helped negotiate/);
+ assert.match(s.log[0].zh,/奥卢斯·法比乌斯协助商谈/);
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));
+ const saved=s.world.religiousInstitutions.find(o=>o.id==='roman_college'),person=s.world.characters[leader];
+ assert.equal(person.religiousWorks,2);assert.equal(saved.history.at(-1).authority,leader);
+ person.alive=false;s.year++;s.month=1;advanceReligion(s);assert.equal(saved.leader,saved.council[1]);
+ const relation=saved.relations.senate,satisfaction=s.regions.find(x=>x.id==='roma').population.satisfaction;
+ assert.equal(religiousPolicy(s,'senate',saved.id,'negotiate').ok,true);
+ assert.equal(saved.relations.senate,relation+8);
+ assert.equal(s.regions.find(x=>x.id==='roma').population.satisfaction,satisfaction+2);
+ assert.equal(saved.history.at(-1).authority,undefined);
+});

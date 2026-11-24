@@ -45,6 +45,16 @@ export function initializeReligion(s){
 export function localInstitutions(s,region){return (s.world?.religiousInstitutions||[]).filter(o=>o.region===region)}
 export function populationFactor(r){return r.population?clamp(r.population.total/Math.max(1,r.population.baseline),.7,1.2):1}
 export function religiousTaxCost(s,faction){return (s.world?.religiousInstitutions||[]).filter(o=>o.privilegedBy.includes(faction)&&s.regions.some(r=>r.id===o.region&&r.owner===faction)).length}
+function workingAuthority(s,o,actor){
+ const person=s.world.characters[o.leader];
+ return person?.alive&&person.faction===actor&&person.location===o.region&&!person.travel&&(person.religiousWorks||0)>=2?person:null;
+}
+function recordInstitutionWork(s,o,action,extra={}){
+ const person=s.world.characters[o.leader];
+ if(person?.alive&&person.location===o.region){person.religiousWorks=(person.religiousWorks||0)+1;person.influence=clamp((person.influence||0)+2,0,100)}
+ o.history.push({action,...extra,...(person?.alive?{authority:person.id}:{}),year:s.year,month:s.month});
+ o.history=o.history.slice(-30);
+}
 function migratePopulation(s){
  const regions=new Map(s.regions.map(r=>[r.id,r])),plans=[];
  for(const from of s.regions){
@@ -74,10 +84,10 @@ export function religiousPolicy(s,actor,id,action){
  if(action==='revoke'&&!o.privilegedBy.includes(actor))return {ok:false,reason:'unavailable'};
  if(action==='investigate'&&s.world.religionInvestigations.some(x=>x.actor===actor&&x.id===id&&x.status==='pending'))return {ok:false,reason:'pending'};
  if(f.treasury<cost)return {ok:false,reason:'treasury'};
- f.treasury-=cost;const relation=o.relations[actor]??0,share=o.followers/Math.max(1,r.population.total);
+ f.treasury-=cost;const relation=o.relations[actor]??0,share=o.followers/Math.max(1,r.population.total),authority=workingAuthority(s,o,actor);
  if(action==='recognize'){o.recognizedBy.push(actor);o.relations[actor]=clamp(relation+12,-100,100);f.legitimacy=clamp(f.legitimacy+2,0,100)}
  if(action==='sponsor'){o.wealth+=10;o.relations[actor]=clamp(relation+12,-100,100);o.legitimacy=clamp(o.legitimacy+2,0,100)}
- if(action==='negotiate'){o.relations[actor]=clamp(relation+8,-100,100);if(relation>-40){r.population.satisfaction=clamp(r.population.satisfaction+2,0,100);r.loyalty=clamp(r.loyalty+1,0,100)}}
+ if(action==='negotiate'){o.relations[actor]=clamp(relation+8+(authority?2:0),-100,100);if(relation>-40){r.population.satisfaction=clamp(r.population.satisfaction+2+(authority?1:0),0,100);r.loyalty=clamp(r.loyalty+1,0,100)}}
  if(action==='privilege'){o.privilegedBy.push(actor);o.relations[actor]=clamp(relation+15,-100,100)}
  if(action==='revoke'){o.privilegedBy=o.privilegedBy.filter(id=>id!==actor);o.relations[actor]=clamp(relation-8,-100,100)}
  if(action==='restrict'){o.relations[actor]=clamp(relation-20,-100,100);r.population.satisfaction=clamp(r.population.satisfaction-Math.ceil(share*20)*(o.legitimacy>50?2:1),0,100);f.stability=clamp(f.stability+1,0,100)}
@@ -85,8 +95,8 @@ export function religiousPolicy(s,actor,id,action){
  if(['negotiate','tolerance'].includes(action)&&hasNationalIdea(s,actor,'tolerance'))o.relations[actor]=clamp(o.relations[actor]+2,-100,100);
  if(action==='investigate')s.world.religionInvestigations.push({actor,id,status:'pending',remaining:3,year:s.year,month:s.month});
  const loyaltyChange={recognize:4,sponsor:3,negotiate:2,privilege:4,revoke:-3,restrict:-10,tolerance:3,investigate:0}[action];o.institutionalLoyalty=clamp(o.institutionalLoyalty+loyaltyChange,0,100);
- o.history.push({action,actor,year:s.year,month:s.month});o.history=o.history.slice(-30);
- if(actor===s.player)log(s,'A policy toward a local religious institution was enacted.','已对当地宗教机构实施一项政策。');
+ o.history.push({action,actor,...(action==='negotiate'&&authority?{authority:authority.id}:{}),year:s.year,month:s.month});o.history=o.history.slice(-30);
+ if(actor===s.player)log(s,action==='negotiate'&&authority?`${s.world.dynasties.catalog[authority.id]?.name?.[0]||'An experienced religious official'} helped negotiate a local religious policy.`:'A policy toward a local religious institution was enacted.',action==='negotiate'&&authority?`${s.world.dynasties.catalog[authority.id]?.name?.[1]||'一位资深宗教人士'}协助商谈当地宗教政策。`:'已对当地宗教机构实施一项政策。');
  return {ok:true,cost};
 }
 export function advanceReligion(s){
@@ -107,11 +117,11 @@ export function advanceReligion(s){
   const change=Math.round(o.followers*(o.legitimacy>=50&&relation>=-20?.02:-.02));o.followers=clamp(o.followers+change,0,capacity);
   o.wealth+=Math.min(3,Math.floor(o.followers/10000));o.influence=clamp(Math.round(o.followers/Math.max(1,r.population.total)*100+o.legitimacy*.25),0,100);
   if(government.tax==='high'&&o.followers>r.population.total*.04){o.relations[r.owner]=clamp(relation-2,-100,100);r.population.satisfaction=clamp(r.population.satisfaction-1,0,100)}
-  if(o.wealth>=8&&r.population.satisfaction<55&&relation>=-20){o.wealth-=5;r.population.satisfaction=clamp(r.population.satisfaction+3,0,100);r.loyalty=clamp(r.loyalty+1,0,100);o.history.push({action:'relief',year:s.year,month:s.month})}
+  if(o.wealth>=8&&r.population.satisfaction<55&&relation>=-20){o.wealth-=5;r.population.satisfaction=clamp(r.population.satisfaction+3,0,100);r.loyalty=clamp(r.loyalty+1,0,100);recordInstitutionWork(s,o,'relief')}
   // Annual projects spend the institution's own money and affect existing
   // theater capacity or a real local person's education, never a free army.
-  if(s.month===12&&relation>=10&&o.priorities.includes('infrastructure')&&o.wealth>=20&&o.works<2){o.wealth-=12;o.works++;r.supply++;o.history.push({action:'infrastructure',year:s.year,month:s.month})}
-  else if(s.month===12&&relation>=0&&o.priorities.includes('education')&&o.wealth>=14){const pupil=Object.values(s.world.characters).find(c=>c.alive&&c.faction===r.owner&&c.location===r.id&&!c.institutionalOnly&&c.birthYear!=null&&s.year-c.birthYear>=0&&s.year-c.birthYear<25&&(c.education||0)<75);if(pupil){o.wealth-=6;pupil.education=Math.min(100,(pupil.education||0)+6);o.history.push({action:'education',person:pupil.id,year:s.year,month:s.month})}}
+  if(s.month===12&&relation>=10&&o.priorities.includes('infrastructure')&&o.wealth>=20&&o.works<2){o.wealth-=12;o.works++;r.supply++;recordInstitutionWork(s,o,'infrastructure')}
+  else if(s.month===12&&relation>=0&&o.priorities.includes('education')&&o.wealth>=14){const pupil=Object.values(s.world.characters).find(c=>c.alive&&c.faction===r.owner&&c.location===r.id&&!c.institutionalOnly&&c.birthYear!=null&&s.year-c.birthYear>=0&&s.year-c.birthYear<25&&(c.education||0)<75);if(pupil){o.wealth-=6;pupil.education=Math.min(100,(pupil.education||0)+6);recordInstitutionWork(s,o,'education',{person:pupil.id})}}
   // Competing civic and traditional priorities can displace the current
   // leader, but neither faction is inherently violent or conspiratorial.
   const direction=relation<0?2:-1;o.factions.civic=clamp(o.factions.civic+direction,0,100);o.factions.traditional=100-o.factions.civic;o.dispute=Math.abs(o.factions.civic-50)*2;
