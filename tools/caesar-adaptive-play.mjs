@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {writeFileSync} from 'node:fs';
-import {newGrandGame,upgradeSave,tick,army,region,adjacent,moveArmy,previewMarch,recruit,holdPosition,reserveFleet,nationalBudget,setTax,collectWarContributions,collectEmergencyProvisions,seizeAerarium,diplomacy,respondCivilSettlement,researchInnovation,constructionCheck,startConstruction} from '../engine.js';
+import {newGrandGame,upgradeSave,tick,army,region,adjacent,moveArmy,previewMarch,recruit,holdPosition,strategicRetreat,armySupply,reserveFleet,nationalBudget,setTax,collectWarContributions,collectEmergencyProvisions,seizeAerarium,diplomacy,respondCivilSettlement,researchInnovation,constructionCheck,startConstruction} from '../engine.js';
 import {assessment,sendScouts,probePositions,requestReinforcements} from '../reconnaissance.js';
 import {afterActionHtml} from '../recon-ui.js';
 import {campaignEndingHtml} from '../achievement-ui.js';
@@ -15,6 +15,8 @@ import {publicSettlementTerms} from '../campaign-outcome.js';
 // default food-first route while preserving the same military orders and seed.
 // SPQR_ADAPTIVE_FISCAL=1 tries two months of high tax only during a cash
 // deficit with adequate public support, then waits at least a year.
+// SPQR_ADAPTIVE_RETREAT=1 lets weak armies fall back using only their own
+// strength, morale, supply, and publicly visible political control.
 let s=newGrandGame('caesar');
 const selectedSeed=Number(process.env.SPQR_ADAPTIVE_SEED||s.seed);
 assert.ok(Number.isSafeInteger(selectedSeed)&&selectedSeed>0);
@@ -24,9 +26,10 @@ const front=process.env.SPQR_ADAPTIVE_FRONT||'west';
 assert.ok(['west','italy'].includes(front));
 const invest=process.env.SPQR_ADAPTIVE_INVEST==='1';
 const fiscal=process.env.SPQR_ADAPTIVE_FISCAL==='1';
+const retreat=process.env.SPQR_ADAPTIVE_RETREAT==='1';
 const priority=process.env.SPQR_ADAPTIVE_PRIORITY||'food';
 assert.ok(['food','cash'].includes(priority));
-const log=[],snapshots=[],seenBattles=new Set(),orders=new Map(),goals=new Map();
+const log=[],snapshots=[],seenBattles=new Set(),orders=new Map(),goals=new Map(),retreatOrigins=new Map();
 let lastRecruitTurn=-Infinity,lastTaxBurstTurn=-Infinity,highTaxUntil=-Infinity,groupedAssaultBattles=0;
 const act=(label,result)=>{if(result?.ok){log.push(`${s.year}/${s.month} ${label}`);return true}return false};
 const owner=id=>region(s,id)?.owner;
@@ -61,6 +64,17 @@ function nextStep(unit,goal){
 }
 function command(unit){
  if(!ready(unit))return;
+ if(retreat){
+  const pressure=id=>adjacent(id,s).filter(edge=>!edge.sea&&owner(edge.to)==='senate').length;
+  const currentPressure=pressure(unit.region),currentSupply=armySupply(s,unit),turn=s.year*12+s.month;
+  const last=unit.lastStrategicRetreat?unit.lastStrategicRetreat.year*12+unit.lastStrategicRetreat.month:-Infinity;
+  const repeated=retreatOrigins.get(`${unit.id}:${unit.region}`);
+  if(currentPressure>0&&unit.morale>=30&&(currentSupply<.55||currentPressure>=2&&(unit.men<3000||unit.morale<45))&&turn-last>=3&&(repeated==null||turn-repeated>=12)){
+   const destination=adjacent(unit.region,s).filter(edge=>!edge.sea&&owner(edge.to)==='caesar').map(edge=>({id:edge.to,supply:armySupply(s,{...unit,region:edge.to}),pressure:pressure(edge.to)})).filter(site=>site.supply>=currentSupply-.05&&(site.pressure<currentPressure||site.supply>currentSupply+.2)).sort((a,b)=>a.pressure-b.pressure||b.supply-a.supply)[0];
+   const origin=unit.region;
+   if(destination&&act(`${unit.id} retreats to ${destination.id} (morale ${unit.morale}, supply ${currentSupply.toFixed(2)})`,strategicRetreat(s,unit.id,destination.id))){retreatOrigins.set(`${unit.id}:${origin}`,turn);return}
+  }
+ }
  const goal=objectiveFor(unit),target=nextStep(unit,goal);
  if(!target){if(unit.stance!=='hold')act(`${unit.id} holds ${unit.region}`,holdPosition(s,unit.id));return}
  if(target.owner==='caesar'){act(`${unit.id} repositions ${target.id}`,moveArmy(s,unit.id,target.id));return}
@@ -159,7 +173,7 @@ for(let elapsed=0;elapsed<limit&&!s.achievementState.finalized;elapsed++){
  }
  if(!s.achievementState.finalized)assert.deepEqual(revealedAchievements(s),[]);
 }
-const result={seed:selectedSeed,front,invest,priority,fiscal,date:`${s.year}/${s.month}`,finalized:s.achievementState.finalized,outcome:s.campaignOutcome?.winner||s.achievementState.result||'ongoing',civilWarKind:s.campaignOutcome?.kind||s.civilWarOutcome?.kind||null,territories:s.regions.filter(site=>site.owner==='caesar').length,rome:owner('roma'),treasury:s.factions.caesar.treasury,food:s.factions.caesar.food,field:fieldMen(),battles:seenBattles.size,groupedAssaultBattles,snapshots,log};
+const result={seed:selectedSeed,front,invest,priority,fiscal,retreat,date:`${s.year}/${s.month}`,finalized:s.achievementState.finalized,outcome:s.campaignOutcome?.winner||s.achievementState.result||'ongoing',civilWarKind:s.campaignOutcome?.kind||s.civilWarOutcome?.kind||null,territories:s.regions.filter(site=>site.owner==='caesar').length,rome:owner('roma'),treasury:s.factions.caesar.treasury,food:s.factions.caesar.food,field:fieldMen(),battles:seenBattles.size,groupedAssaultBattles,snapshots,log};
 if(process.env.SPQR_ADAPTIVE_FINALIZE==='1'&&s.victory&&!s.achievementState.finalized){
  assert.deepEqual(revealedAchievements(s),[],'continuing after victory must keep achievements private');
  const finished=endCampaign(s,'retired');assert.equal(finished.ok,true);
