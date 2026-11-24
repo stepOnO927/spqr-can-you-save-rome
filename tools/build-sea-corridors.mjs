@@ -2,6 +2,7 @@
 // Port anchors can lie a few kilometres inland. These are gameplay paths,
 // not a reconstruction of 49 BCE sailing instructions or coastlines.
 import land from '../mediterranean-land.js';
+import existing from '../sea-corridors.js';
 import {GRAND_ROUTES,GRAND_SITES} from '../grand-map-data.js';
 import {writeFile} from 'node:fs/promises';
 
@@ -81,10 +82,11 @@ function simplify(path){
  const result=[path[0]];for(let i=0;i<path.length-1;){let next=i+1;for(let j=path.length-1;j>i+1;j--)if(segmentAtSea(path[i],path[j])){next=j;break}result.push(path[next]);i=next}return result;
 }
 const sites=Object.fromEntries(GRAND_SITES.map(site=>[site.id,site]));
-const fixes={},failures=[];
-const only=process.argv[2];
+const rebuild=process.argv.includes('--rebuild'),only=process.argv.slice(2).find(arg=>arg!=='--rebuild');
+const fixes=rebuild?{}:{...existing},failures=[];
 for(const [a,b] of GRAND_ROUTES.filter(route=>route[2]==='sea')){
  if(only&&a!==only)continue;
+ if(fixes[[a,b].sort().join(':')])continue;
  const first=[sites[a].lon,sites[a].lat],last=[sites[b].lon,sites[b].lat],directInland=segmentInlandKm(first,last);
  if(directInland<=5)continue;
  // Ancient Utica's harbor is buried under the modern Mejerda delta; the

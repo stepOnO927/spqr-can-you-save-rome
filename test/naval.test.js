@@ -9,6 +9,7 @@ import {armySupply,supplyNetwork} from '../grand-operations.js';
 import {nationalBudget} from '../national-budget.js';
 import {budgetHtml} from '../budget-ui.js';
 import {advanceMissingCommanders} from '../character-system.js';
+import {GRAND_ROUTES} from '../grand-map-data.js';
 
 function tradeArrival(s,id,maxMonths=8){
  const route=s.naval.routes.find(r=>r.id===id);
@@ -1351,6 +1352,28 @@ test('AI takes an available land route instead of stalling at a sea link without
  aiTurn(s,'senate');
  assert.equal(unit.move?.to,'t022');assert.equal(unit.move?.sea,false);
 });
+
+test('new Adriatic harbor crossing requires transports and carries an army through a saved campaign',()=>{
+ let s=newGrandGame('senate'),unit=s.armies.find(a=>a.id==='italy'),fleet=s.naval.fleets.find(f=>f.id==='senate-adriatic');
+ assert.equal(GRAND_ROUTES.filter(route=>route[2]==='sea').length,20);
+ const crossing=GRAND_ROUTES.find(route=>route.slice(0,2).includes('t013')&&route.slice(0,2).includes('t072'));
+ assert.equal(crossing?.[2],'sea');assert.ok(crossing[3].distance>=150);
+ assert.equal(crossing[3].mountain,false,'hilly ports do not make the water corridor a mountain pass');
+ assert.equal(crossing[3].river,false,'coastal river tags do not make the water corridor a river crossing');
+ s.regions.find(r=>r.id==='t013').owner='senate';s.regions.find(r=>r.id==='t072').owner='caesar';
+ unit.region='t013';unit.men=5200;
+ fleet.port='t013';fleet.zone=portZone('t013');
+ fleet.ships.transport=0;
+ assert.deepEqual(previewMarch(s,unit.id,'t072'),{ok:false,reason:'route'});
+ fleet.ships.transport=2;
+ assert.equal(previewMarch(s,unit.id,'t072').sea,true);
+ assert.equal(moveArmy(s,unit.id,'t072').ok,true);
+ assert.equal(fleet.order?.kind,'transport');
+ for(let month=0;month<4&&s.armies.find(a=>a.id==='italy').move;month++){s=upgradeSave(structuredClone(s));tick(s)}
+ unit=s.armies.find(a=>a.id==='italy');fleet=s.naval.fleets.find(f=>f.id==='senate-adriatic');
+ assert.equal(unit.region,'t072');assert.equal(unit.move,null);
+ assert.equal(fleet.port,'t072');assert.equal(fleet.order,null);
+});
 test('a hostile naval blockade cuts port army supply until the blockade ends',()=>{
  const s=newGrandGame('senate'),unit=s.armies.find(a=>a.id==='italy'),enemy=s.naval.fleets.find(f=>f.owner==='caesar');unit.region='italiaS';enemy.zone=portZone('italiaS');enemy.port=null;
  const normal=armySupply(s,unit);assert.equal(orderFleet(s,'caesar',enemy.id,'blockade','italiaS').ok,true);assert.ok(armySupply(s,unit)<normal);
@@ -1780,10 +1803,10 @@ test('an uncrewed raiding fleet cannot seize merchant cargo',()=>{
  for(const pirate of s.naval.pirates){pirate.ships=0;pirate.pressure=0}
  raider.port=null;raider.zone='alexandrian';raider.sailors=0;raider.order={kind:'raid',target:'egypt-italy',path:[]};
  assert.deepEqual(orderFleet(s,'caesar',raider.id,'raid','egypt-italy'),{ok:false,reason:'operational-warships'});
- advanceNaval(s);
- const route=s.naval.routes.find(r=>r.id==='egypt-italy');
+ const loaded=upgradeSave(structuredClone(s));advanceNaval(loaded);
+ const route=loaded.naval.routes.find(r=>r.id==='egypt-italy');
  assert.notEqual(route.last.reason,'raid');
- assert.equal(s.naval.reports.some(r=>r.kind==='trade-raid'&&r.raider==='caesar'),false);
+ assert.equal(loaded.naval.reports.some(r=>r.kind==='trade-raid'&&r.raider==='caesar'),false);
 });
 
 test('an enemy patrol does not protect its opponent’s grain trade',()=>{
