@@ -67,6 +67,12 @@ try{
  panel=page.locator('#command-detail');
  assert.match(await panel.innerText(),/ROMAN TOWN · Iguvium/);
  assert.match(await panel.innerText(),/Thermus/);
+ for(const [id,name] of [['ariminum','Ariminum'],['capua','Capua'],['brundisium','Brundisium']]){
+  const target=page.locator(`[data-town-objective="${id}"]`);
+  assert.match(await target.innerText(),new RegExp(`Secure ${name}`));
+  await target.evaluate(node=>node.click());
+  assert.match(await panel.innerText(),new RegExp(`ROMAN TOWN · ${name}`));
+ }
  assert.deepEqual(errors,[]);
- console.log('Corfinium and Iguvium appear as sourced towns; a saved local siege leaves theater control and legal title distinct.');
+ console.log('Five Italian town objectives open sourced local panels; a saved Corfinium siege leaves theater control and legal title distinct.');
 }finally{await browser.close()}
