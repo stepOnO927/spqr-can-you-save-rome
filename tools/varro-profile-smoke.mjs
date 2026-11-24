@@ -26,6 +26,17 @@ try{
  await page.locator('[data-faction="senate"]').click();
  await page.locator('[data-character="varro"]').click();
  assert.match(await page.locator('#command-detail').innerText(),/Marcus Terentius Varro/);
+ await page.evaluate(async()=>{
+  const {newGame}=await import('/engine.js?v=faces-name-disagreement-1');
+  sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:newGame('han')}));
+ });
+ await page.reload({waitUntil:'domcontentloaded'});
+ await page.locator('#factions').click();
+ await page.locator('[data-faction="han"]').click();
+ await page.locator('[data-character="han_xuan"]').first().click();
+ const hanPortrait=page.locator('#command-detail img[src$="han-liu-xun-128.jpg"]').first();
+ assert.equal(await hanPortrait.evaluate(img=>img.complete&&img.naturalWidth===128),true);
+ assert.match(await page.locator('#command-detail').innerText(),/Liu Xun/);
  assert.deepEqual(errors,[]);
- console.log('Varro portrait and bilingual historical profile browser checks passed.');
+ console.log('Varro bilingual profile and integrated Han ruler portrait browser checks passed.');
 }finally{await browser.close()}

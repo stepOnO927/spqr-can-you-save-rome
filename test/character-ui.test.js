@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave} from '../engine.js?v=faces-name-disagreement-1';
-import {createCharacterUI} from '../map-lab/character-ui.js?v=faces-name-disagreement-1';
+import {createCharacterUI,historicalPortraitKey} from '../map-lab/character-ui.js?v=faces-name-disagreement-1';
 import {addReport,queueMission} from '../character-system.js?v=faces-name-disagreement-1';
 import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=faces-name-disagreement-1';
 import {createFictionalPerson} from '../dynasties.js?v=faces-name-disagreement-1';
@@ -18,6 +18,20 @@ class Element {
  prepend(...elements){this.children.unshift(...elements)}
  replaceChildren(...elements){this.children=elements}
 }
+test('the integrated Han ruler and heir reuse their existing individual portraits',()=>{
+ assert.equal(historicalPortraitKey('han_xuan'),'han-liu-xun');
+ assert.equal(historicalPortraitKey('han_yuan'),'han-liu-shi');
+ assert.equal(historicalPortraitKey('varro'),'varro');
+ const prior=globalThis.document,s=newGame('han'),panel=new Element();
+ globalThis.document={createElement:tag=>new Element(tag),querySelector:()=>panel};
+ try{
+  const ui=createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}});
+  ui.show('han_xuan');assert.match(panel.innerHTML,/han-liu-xun-128\.jpg/);assert.match(panel.innerHTML,/肖像为艺术复原/);
+  panel.children=[];ui.show('han_yuan');assert.match(panel.innerHTML,/han-liu-shi-128\.jpg/);
+  s.player='caesar';s.knowledge.caesar.han.reportedLeaders=[];
+  panel.children=[];ui.show('han_yuan');assert.doesNotMatch(panel.innerHTML,/han-liu-shi-128\.jpg/);
+ }finally{globalThis.document=prior}
+});
 test('own fictional people receive saved procedural portraits while unobserved foreign people remain silhouettes',()=>{
  const prior=globalThis.document,s=newGame('caesar'),panel=new Element();globalThis.document={createElement:tag=>new Element(tag),querySelector:()=>panel};
  try{
