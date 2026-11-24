@@ -19,14 +19,17 @@ const independentVillages=s=>s.regions.flatMap(region=>region.localEntities||[])
 test('regional weights vary seeded polity, village, and wilderness density without fixing any one opening',()=>{
  const polities=new Set(LOCAL_GENERATION_SITES.map(site=>site.theater)),villages=new Set(INDEPENDENT_VILLAGE_SITES.map(site=>site.theater)),wilderness=new Set(WILDERNESS_SITES.map(site=>site.theater)),nomads=new Set(NOMADIC_RANGES.flatMap(range=>range.camps.map(camp=>camp.theater)));
  const hits={political:{},village:{},wilderness:{}},counts={political:new Set(),village:new Set(),nomad:new Set(),wilderness:new Set()};
+ const polityTypes=Object.fromEntries(['city_state','microstate','tribe','strongman'].map(type=>[type,new Set()]));
  for(let seed=1;seed<=512;seed++){
   const powers=generatedLocalPolities(seed,'standard',polities),hamlets=generatedIndependentVillages(seed,'standard',villages),camps=generatedNomadicCommunities(seed,'hard',nomads),wilds=generatedWildernessSites(seed,wilderness);
   counts.political.add(powers.length);counts.village.add(hamlets.length);counts.nomad.add(camps.length);counts.wilderness.add(wilds.length);
+  for(const [type,totals] of Object.entries(polityTypes))totals.add(powers.filter(power=>power.type===type).length);
   for(const entity of powers)hits.political[entity.theater]=(hits.political[entity.theater]||0)+1;
   for(const entity of hamlets)hits.village[entity.theater]=(hits.village[entity.theater]||0)+1;
   for(const entity of wilds)hits.wilderness[entity.theater]=(hits.wilderness[entity.theater]||0)+1;
  }
  for(const values of Object.values(counts))assert.equal(values.size,2,'neighboring seeds must sample both values in each count band');
+ for(const [type,values] of Object.entries(polityTypes))assert.ok(values.size>=2,`${type} count must vary between standard campaigns`);
  assert.ok(hits.political.sicilia>hits.political.africa*1.4);
  assert.ok(hits.village.achaia>hits.village.media*1.5);
  assert.ok(hits.wilderness.egyptUpper>hits.wilderness.hispaniaN);

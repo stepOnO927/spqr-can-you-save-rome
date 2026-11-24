@@ -2,10 +2,10 @@
 // not assert that an autonomous polity existed there in 49 BCE.
 export const LOCAL_GENERATION_BANDS=Object.freeze({
  travel:{count:[1,2],population:.72,militia:[.06,.09],wealth:.7,skill:[1,1]},
- beginner:{count:[2,3],population:.86,militia:[.07,.11],wealth:.85,skill:[1,2]},
- standard:{count:[4,5],population:1,militia:[.09,.14],wealth:1,skill:[2,3]},
- hard:{count:[6,7],population:1.25,militia:[.11,.17],wealth:1.25,skill:[3,4]},
- expert:{count:[8,9],population:1.5,militia:[.14,.2],wealth:1.5,skill:[4,5]}
+ beginner:{count:[3,4],population:.86,militia:[.07,.11],wealth:.85,skill:[1,2]},
+ standard:{count:[5,6],population:1,militia:[.09,.14],wealth:1,skill:[2,3]},
+ hard:{count:[7,8],population:1.25,militia:[.11,.17],wealth:1.25,skill:[3,4]},
+ expert:{count:[9,10],population:1.5,militia:[.14,.2],wealth:1.5,skill:[4,5]}
 });
 
 export const NOMADIC_GENERATION_BANDS=Object.freeze({travel:[0,0],beginner:[0,1],standard:[1,1],hard:[1,2],expert:[2,2]});
