@@ -1,7 +1,7 @@
 import {startingTreaties} from './helpers/starting-treaties.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,estimatedStrength} from '../engine.js?v=dossier-archive-1';
+import {newGame,upgradeSave,estimatedStrength,diplomacy} from '../engine.js?v=dossier-archive-1';
 import {createPlan,assignRole,approvePlan,aiBattlePlans,planById} from '../battle-plans.js?v=dossier-archive-1';
 import {shareOperation,shareAiOperation,reportedOperationObjectives,operationNoticeRoute} from '../operation-intelligence.js?v=operation-notices-1';
 import {sendLetter,advanceMail,receivedMail} from '../epistulae.js?v=dossier-archive-1';
@@ -53,7 +53,7 @@ test('a delivered statement remains dated after hidden cancellation, but expires
  assert.deepEqual(reportedOperationObjectives(s,'caesar'),[]);
  const old=structuredClone(s);old.month+=7;assert.deepEqual(reportedOperationObjectives(old,'numidia'),[]);
  const future=structuredClone(s);future.mail.messages.find(x=>x.id===m.id).context.observedYear++;assert.deepEqual(reportedOperationObjectives(future,'numidia'),[]);
- const broken=structuredClone(s);broken.alliances=[];assert.deepEqual(reportedOperationObjectives(broken,'numidia'),[]);
+ const broken=structuredClone(s);broken.alliances=[];assert.deepEqual(reportedOperationObjectives(broken,'numidia'),known,'a hidden cancellation does not invalidate our received intention');assert.ok(diplomacy(broken,'numidia','senate','break'));assert.deepEqual(reportedOperationObjectives(broken,'numidia'),[],'our own renunciation does invalidate the partnership');
  const peace=structuredClone(s);peace.wars=peace.wars.filter(w=>!w.includes('numidia'));assert.deepEqual(reportedOperationObjectives(peace,'numidia'),[]);
 });
 test('AI dispatch is bounded, can act without a player, and never writes for a human court',()=>{
@@ -64,7 +64,7 @@ test('AI dispatch is bounded, can act without a player, and never writes for a h
  const {s:ai}=setup();ai.player='caesar';assert.ok(shareAiOperation(ai,'senate',{sendLetter}).ok);
 });
 test('one partner’s cooldown does not permanently prevent notifying a different ally',()=>{
- const {s}=setup();s.player='caesar';s.alliances.push(['senate','egypt']);
+ const {s}=setup();s.player='caesar';s.alliances.push(['senate','egypt']);startingTreaties(s);
  assert.ok(shareAiOperation(s,'senate',{sendLetter}).ok);
  const first=s.mail.messages.find(m=>m.context?.kind==='operation_notice').recipient;
  assert.equal(shareAiOperation(s,'senate',{sendLetter}).ok,false);
