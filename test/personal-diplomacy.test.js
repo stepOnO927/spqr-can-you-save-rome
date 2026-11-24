@@ -1,3 +1,4 @@
+import {startingTreaties} from './helpers/starting-treaties.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave,tick,diplomacy} from '../engine.js?v=dossier-archive-1';
@@ -98,7 +99,7 @@ test('a recent personal meeting can help meet the alliance threshold without gua
  let s=newGame('senate');s.relations['egypt:senate']=26;s.world.characters.cicero.location='egypt';s.world.intelSeed=1000;
  assert.equal(requestPersonalMeeting(s,'cicero','cleopatra','egypt').ok,true);advancePersonalDiplomacy(s);advancePersonalDiplomacy(s);
  assert.equal(s.meetings[0].status,'met');assert.equal(s.relations['egypt:senate'],29);assert.equal(personalDiplomaticCredit(s,'senate','egypt'),1);assert.equal(personalDiplomaticCredit(s,'caesar','egypt'),0);
- s=upgradeSave(JSON.parse(JSON.stringify(s)));const conflict=upgradeSave(JSON.parse(JSON.stringify(s)));conflict.alliances.push(['caesar','egypt']);assert.equal(diplomacy(conflict,'senate','egypt','alliance'),false);
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));const conflict=upgradeSave(JSON.parse(JSON.stringify(s)));conflict.alliances.push(['caesar','egypt']);startingTreaties(conflict);assert.equal(diplomacy(conflict,'senate','egypt','alliance'),false);
  assert.equal(diplomacy(s,'senate','egypt','alliance'),true);
 });
 test('contact credit uses only recorded meetings and expires without revealing hidden foreign state',()=>{

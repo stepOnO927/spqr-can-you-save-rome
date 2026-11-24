@@ -117,6 +117,7 @@ function migrateBattleIds(s){
 // IMPERIUM save migration: adds empty focus/plan records and preset templates only.
 function migrateImperium(s){s.world.nationalFocus||={};s.world.battlePlans||=[];s.world.nextBattlePlan||=1;for(const id of Object.keys(s.factions))if(id!=='rebels')seedTemplates(s,id);s.world.imperiumVersion=1}
 export function upgradeSave(s){
+ if(s.version===2&&s.world)delete s.world.treatyObservationVersion;
  const priorCatalog=snapshotFictionalCatalog();
  try{
  if(s.version===2){const old=s.relations||{},oldAllies=s.alliances||[];s.relations=Object.fromEntries(Object.entries(old).map(([id,value])=>[pair('caesar',id),value]));s.alliances=oldAllies.map(id=>['caesar',id]);s.version=3}
@@ -275,7 +276,7 @@ export function canFormAlliance(s,actor,target,{priorConsent=false,recipientRevi
 export function diplomacy(s, actor, target, action, options={}){
   if(action==='break'){
    const known=knownTreatyDocuments(s,actor,'alliance').find(t=>t.parties.includes(target));if(!known)return false;
-   const prior=s.alliances.find(p=>p.includes(actor)&&p.includes(target)),terms=known.terms||fullAllianceTerms(s,{legacy:true}),ended={year:s.year,month:s.month,actor};
+   const prior=s.alliances.find(p=>p.includes(actor)&&p.includes(target)&&(!known.reference||p[2]?.reference===known.reference)),terms=known.terms||fullAllianceTerms(s,{legacy:true}),ended={year:s.year,month:s.month,actor};
    if(prior){(s.world.allianceHistory||=[]).push({parties:prior.slice(0,2),terms:structuredClone(terms),ended,outcome:'breached'});s.alliances=s.alliances.filter(p=>p!==prior)}
    s.diplomaticCredibility||={};s.diplomaticCredibility[actor]=Math.max(0,(s.diplomaticCredibility[actor]??100)-(terms.breachPenalty??20));
    announceTreatyChange(s,{...known,status:'ended',ended},actor,{relationPenalty:20});
@@ -290,19 +291,11 @@ export function diplomacy(s, actor, target, action, options={}){
     const warsBefore=s.wars.map(w=>w.slice());
     const playerWarsBefore=new Set(s.wars.filter(w=>w.includes(s.player)).map(w=>w.find(id=>id!==s.player)));
     s.wars.push([actor,target]);observeOwnBilateralWar(s,actor,target);
-    for(const p of knownTreatyDocuments(s,target,'alliance').map(d=>d.parties)){const ally=p.find(x=>x!==target);if(ally!==actor&&!isWar(s,ally,actor)&&!isAllied(s,ally,actor)&&!activeAgreement(s,ally,actor,'non_aggression')&&!neutralityBlocksWar(s,ally,actor))s.wars.push([ally,actor])}
-    for(const p of knownTreatyDocuments(s,actor,'alliance').map(d=>d.parties)){const ally=p.find(x=>x!==actor);if(ally!==target&&!isWar(s,ally,target)&&!isAllied(s,ally,target)&&!activeAgreement(s,ally,target,'non_aggression')&&!neutralityBlocksWar(s,ally,target))s.wars.push([ally,target])}
-    for(const treaty of s.agreements||[]){
-      if(treaty.status!=='active'||!['defensive','offensive','guarantee'].includes(treaty.type))continue;
-      const supported=treaty.type==='offensive'?actor:target,opponent=treaty.type==='offensive'?target:actor;
-      if(!treaty.parties.includes(supported)||!activeAgreement(s,treaty.parties[0],treaty.parties[1],treaty.type))continue;
-      if(treaty.type==='guarantee'&&supported!==(treaty.terms?.recipient||treaty.parties[1]))continue;
-      const ally=treaty.parties.find(x=>x!==supported);
-      if(ally!==opponent&&!isWar(s,ally,opponent)&&!isAllied(s,ally,opponent)&&!activeAgreement(s,ally,opponent,'non_aggression')&&!neutralityBlocksWar(s,ally,opponent))s.wars.push([ally,opponent]);
-    }
-    for(const coalition of s.coalitions||[]){
-      if(coalition.status!=='active'||coalition.target!==actor||!coalition.parties.includes(target))continue;
-      for(const member of coalition.parties)if(s.factions[member]&&member!==target&&!isWar(s,member,actor)&&!isAllied(s,member,actor)&&!activeAgreement(s,member,actor,'non_aggression')&&!neutralityBlocksWar(s,member,actor))s.wars.push([member,actor]);
+    // Every controller honors its own recorded commitment. A different court's
+    // stale copy must never issue orders for a party that already withdrew.
+    for(const ally of Object.keys(s.factions).filter(id=>!['rebels',actor,target].includes(id))){
+      const own=knownTreatyDocuments(s,ally),defense=own.some(t=>t.kind==='alliance'&&t.parties.includes(target)||t.kind==='agreement'&&t.parties.includes(target)&&(t.type==='defensive'||t.type==='guarantee'&&(t.terms?.recipient||t.parties[1])===target)||t.kind==='coalition'&&t.target===actor&&t.parties.includes(target)),offense=own.some(t=>t.parties.includes(actor)&&(t.kind==='alliance'||t.kind==='agreement'&&t.type==='offensive')),opponent=defense?actor:offense?target:null;
+      if(opponent&&!isWar(s,ally,opponent)&&!isAllied(s,ally,opponent)&&!activeAgreement(s,ally,opponent,'non_aggression')&&!neutralityBlocksWar(s,ally,opponent)){s.wars.push([ally,opponent]);observeOwnBilateralWar(s,ally,opponent)}
     }
     s.relations[key]=-60;
     s.world.warGenerations||={};
@@ -737,7 +730,7 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
     if(!previous||previous.signature!==signature||now-previous.date>=(strongPlanning?3:6)){
       s.world.strategicPersonalities||={};const leader=deriveGovernment(s,owner).acting[0]||null,profile=s.world.strategicPersonalities[owner];
       if(!profile||profile.leader!==leader){s.world.personalities||={};if(leader)s.world.personalities[leader]||=strategicPersonality(s.world.characters[leader]);s.world.strategicPersonalities[owner]={leader,personality:leader?s.world.personalities[leader]:strategicPersonality(null)}}
-      const commitments=s.alliances.filter(a=>a.includes(owner)).length+(s.coalitions||[]).filter(c=>c.status==='active'&&c.parties.includes(owner)).length+(s.agreements||[]).filter(t=>t.status==='active'&&t.parties.includes(owner)).length;
+      const commitments=knownTreatyDocuments(s,owner).length;
       strategy={...evaluateStrategicPlan({treasury:f.treasury,food:f.food,stability:f.stability,ownStrength:strength(s,owner),enemies:enemies.map(id=>({id,estimatedStrength:estimatedStrength(s,owner,id)})),personality:s.world.strategicPersonalities[owner].personality,commitments}),signature,date:now};
       s.world.strategicPlans[owner]=strategy;
     }else strategy=previous;

@@ -1,3 +1,4 @@
+import {startingTreaties} from './helpers/starting-treaties.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave,tick,diplomacy,isWar,moveArmy,sendStrategicOffer,advanceStrategicOffers,answerStrategicOffer} from '../engine.js?v=dossier-archive-1';
@@ -60,7 +61,7 @@ test('a human neutral can refuse a received aid request, or explicitly end the p
 
 test('military obligations and current belligerency can prevent accepting neutrality, but a sender does not inspect hidden receiver commitments',()=>{
  for(const change of [s=>s.alliances.push(['egypt','senate']),s=>s.wars.push(['egypt','senate']),s=>{s.relations['egypt:senate']=60;assert.ok(proposeAgreement(s,'egypt','senate','guarantee').ok)}]){
-  const s=fixture();change(s);assert.ok(sendAgreementProposal(s,'caesar','egypt','neutrality',{enemy:'senate'}).ok);step(s);step(s);assert.notEqual(s.world.agreementLetters[0].sealed.outcome,'accepted');assert.equal(s.agreements.filter(t=>t.type==='neutrality').length,0);
+  const s=fixture();change(s);startingTreaties(s);assert.ok(sendAgreementProposal(s,'caesar','egypt','neutrality',{enemy:'senate'}).ok);step(s);step(s);assert.notEqual(s.world.agreementLetters[0].sealed.outcome,'accepted');assert.equal(s.agreements.filter(t=>t.type==='neutrality').length,0);
  }
  const invalid=fixture();assert.equal(sendAgreementProposal(invalid,'caesar','egypt','neutrality').ok,false);assert.equal(invalid.factions.caesar.treasury,300);
 });

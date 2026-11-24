@@ -87,6 +87,6 @@ export function advanceCoalitions(s){
 // information. The shared threat only affects which known enemy they weigh
 // first; it does not give the coalition control over their orders.
 export function coalitionMilitaryObjective(s,actor){
- const c=knownTreatyDocuments(s,actor,'coalition').find(c=>c.contributions?.[actor]?.policy==='military'&&war(s,actor,c.target));
+ const c=knownTreatyDocuments(s,actor,'coalition').find(c=>((s.coalitions||[]).find(t=>t.id===c.id)?.contributions?.[actor]?.policy||c.contributions?.[actor]?.policy)==='military'&&war(s,actor,c.target));
  return c?.target||null;
 }

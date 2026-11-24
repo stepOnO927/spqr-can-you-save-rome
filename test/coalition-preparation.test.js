@@ -1,3 +1,4 @@
+import {startingTreaties} from './helpers/starting-treaties.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,estimatedStrength,upgradeSave} from '../engine.js?v=dossier-archive-1';
@@ -58,7 +59,7 @@ test('player can decline a conflicting coalition but cannot accept against own b
  assert.ok(replyToLetter(s,m.id,'refuse',{answerCoalitionInvitation}).ok);
 });
 test('new non-aggression and neutrality promises are respected before accepting and on conclusion',()=>{
- const s=incoming();s.wars=[];s.agreements.push({id:'neutral',type:'neutrality',status:'active',parties:['parthia','caesar'],expiresAt:s.year*12+s.month+12,terms:neutralityTerms('parthia','caesar','senate')});
+ const s=incoming();s.wars=[];s.agreements.push({id:'neutral',type:'neutrality',status:'active',parties:['parthia','caesar'],expiresAt:s.year*12+s.month+12,terms:neutralityTerms('parthia','caesar','senate')});startingTreaties(s);
  assert.equal(answerCoalitionInvitation(s,s.world.coalitionInvitations[0].id,'accept_coalition').reason,'coalition_conflict');
 });
 

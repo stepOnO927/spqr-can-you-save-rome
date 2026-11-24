@@ -10,11 +10,13 @@ const kinds=new Set(['agreement','alliance','coalition']);
 const treatyNames={non_aggression:['non-aggression agreement','互不侵犯条约'],neutrality:['named-war neutrality','特定战争中立承诺'],military_access:['military access','军事通行协议'],trade:['trade agreement','贸易条约'],intelligence:['intelligence agreement','情报共享协议'],defensive:['defensive agreement','防御条约'],offensive:['offensive agreement','进攻合作条约'],military_support:['military support','军事援助协议'],political:['political cooperation','政治合作协议'],guarantee:['guarantee','保障协议']};
 function records(s,viewer){s.world.diplomaticKnowledge||={};return s.world.diplomaticKnowledge[viewer]||={}}
 export function treatyDocument(t,kind='agreement'){
- if(kind==='alliance')return {id:'alliance:'+t.slice(0,2).sort().join('|'),kind,type:'full',parties:t.slice(0,2),terms:copy(t[2]||{}),status:'active'};
+ if(kind==='alliance')return {id:'alliance:'+t.slice(0,2).sort().join('|'),kind,type:'full',parties:t.slice(0,2),terms:copy(t[2]||{}),reference:t[2]?.reference||null,status:'active'};
  return {...copy(t),kind,type:kind==='coalition'?'defensive':t.type};
 }
 export function rememberTreatyCopy(s,document,viewers=document.parties,{source='signed_copy'}={}){
- const d=copy(document);for(const viewer of viewers||[]){
+ const d=copy(document);
+ if(d.kind==='alliance'&&!d.reference){const pact=(s.alliances||[]).find(p=>p.slice(0,2).every(id=>d.parties.includes(id)));d.reference=pact?.[2]?.reference||'alliance-record:'+(s.world.nextAllianceRecord||1);s.world.nextAllianceRecord=(s.world.nextAllianceRecord||1)+1;d.terms||={};d.terms.reference=d.reference;if(pact?.[2])pact[2].reference=d.reference}
+ for(const viewer of viewers||[]){
   if(!viewer||!d.id)continue;
   records(s,viewer)[d.id]={...copy(d),year:s.year,month:s.month,source,participantCopy:true,receivedYear:s.year,receivedMonth:s.month};
  }
@@ -65,7 +67,7 @@ export function receiveTreatyNotice(s,m){
  // A late notice cannot revive an observer's own withdrawal or overwrite a
  // newer received document. Its original date and receipt date stay separate.
  const stamp=d.ended?.year*12+d.ended?.month,previous=old.ended?.year*12+old.ended?.month;
- if(old.source!=='own_decision'&&old.source!=='own_hostilities'&&(!Number.isFinite(previous)||!Number.isFinite(stamp)||stamp>=previous)){
+ if((!old.reference||!d.reference||old.reference===d.reference)&&old.source!=='own_decision'&&old.source!=='own_hostilities'&&(!Number.isFinite(previous)||!Number.isFinite(stamp)||stamp>=previous)){
   const next=copy(d);if(d.kind==='coalition'&&x.memoryKind==='coalition_departure'){next.parties=old.parties.filter(p=>p!==m.senderFaction);next.status=next.parties.length<3?'dissolved':'active';next.leader=old.leader===m.senderFaction?next.parties[0]:old.leader}
   rememberTreatyCopy(s,next,[m.recipient],{source:'received_notice'});
  }

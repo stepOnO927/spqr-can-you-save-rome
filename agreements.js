@@ -20,7 +20,7 @@ const date=s=>s.year*12+s.month;
 const key=(a,b)=>[a,b].sort().join(':');
 const atWar=(s,a,b)=>s.wars.some(w=>w.includes(a)&&w.includes(b));
 export function fullAllianceTerms(s,{legacy=false}={}){return {type:'full',start:legacy?null:{year:s.year,month:s.month},duration:null,obligations:['mutual_defense','mutual_offense','intelligence_exchange'],benefits:['military_support','reports'],termination:'until broken or a party ceases to exist',diplomaticCost:0,breachPenalty:20}}
-export function initializeAgreements(s){s.agreements||=[];s.diplomaticCredibility||={};for(const pair of s.alliances||[])if(pair.length===2)pair.push(fullAllianceTerms(s,{legacy:true}));for(const t of s.agreements){const def=AGREEMENT_TYPES[t.type];if(!t.terms&&def)t.terms=['military_support','guarantee'].includes(t.type)?{provider:t.parties[0],recipient:t.parties[1]}:{kind:t.type,obligations:[...def.obligations],benefits:[...def.benefits]}}return s}
+export function initializeAgreements(s){s.agreements||=[];s.diplomaticCredibility||={};for(const pair of s.alliances||[])if(pair.length===2){pair.push(fullAllianceTerms(s,{legacy:true}));rememberTreatyCopy(s,treatyDocument(pair,'alliance'),pair.slice(0,2),{source:'legacy_copy'})}for(const t of s.agreements){const def=AGREEMENT_TYPES[t.type];if(!t.terms&&def)t.terms=['military_support','guarantee'].includes(t.type)?{provider:t.parties[0],recipient:t.parties[1]}:{kind:t.type,obligations:[...def.obligations],benefits:[...def.benefits]}}return s}
 export function activeAgreement(s,a,b,type){
  return (s.agreements||[]).find(t=>t.status==='active'&&t.type===type&&t.parties.includes(a)&&t.parties.includes(b)&&date(s)<t.expiresAt&&!atWar(s,a,b));
 }

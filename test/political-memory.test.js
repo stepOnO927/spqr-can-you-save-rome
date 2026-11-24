@@ -1,3 +1,5 @@
+import {advanceMail} from '../epistulae.js?v=dossier-archive-1';
+import {receiveTreatyNotice} from '../treaty-observation.js?v=treaty-observation-1';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave,diplomacy} from '../engine.js?v=dossier-archive-1';
@@ -7,7 +9,14 @@ import {appointOffice,dismissOffice} from '../office-system.js?v=dossier-archive
 import {plotFormationChance} from '../conspiracies.js?v=dossier-archive-1';
 
 test('a leader remembers a broken treaty, affecting negotiations but fading over time',()=>{
- let s=newGame('egypt');s.relations['armenia:egypt']=60;const t=proposeAgreement(s,'egypt','armenia','trade').agreement;terminateAgreement(s,t.id,'egypt');
+ let s;
+ for(let seed=1;seed<=40;seed++){
+  const candidate=newGame('egypt');candidate.seed=seed*1000003;candidate.relations['armenia:egypt']=60;
+  const t=proposeAgreement(candidate,'egypt','armenia','trade').agreement;terminateAgreement(candidate,t.id,'egypt');
+  assert.ok(politicalMemoryAdjustment(candidate,'armenia','egypt')>=0,'unreceived withdrawal does not create a private memory');
+  for(let month=0;month<18;month++){if(++candidate.month>12){candidate.month=1;candidate.year++}advanceMail(candidate,{receiveTreatyNotice});if(candidate.mail.messages.some(m=>m.context?.kind==='treaty_notice'&&m.delivery==='received'))break}
+  if(candidate.mail.messages.some(m=>m.context?.kind==='treaty_notice'&&m.delivery==='received')){s=candidate;break}
+ }assert.ok(s,'a genuine courier must deliver before the recipient remembers');
  s.relations['armenia:egypt']=25;s.diplomaticCredibility.egypt=100;
  assert.ok(politicalMemoryAdjustment(s,'armenia','egypt')<0);assert.equal(proposeAgreement(s,'egypt','armenia','intelligence').reason,'declined');
  s=upgradeSave(JSON.parse(JSON.stringify(s)));assert.ok(politicalMemoryAdjustment(s,'armenia','egypt')<0);

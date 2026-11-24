@@ -10,7 +10,7 @@ import {assessOpportunities,opportunityEvidenceSignature} from '../multipolar.js
 import {buildChessboard} from '../chessboard.js?v=dossier-archive-1';
 
 function setup(type='non_aggression',seed=1000003){
- const s=newGame('caesar');s.seed=seed;s.relations['caesar:egypt']=60;const result=proposeAgreement(s,'egypt','caesar',type);assert.ok(result.ok);return {s,id:result.agreement.id};
+ const s=newGame('caesar');s.seed=seed;s.relations['caesar:egypt']=60;const result=proposeAgreement(s,'egypt','caesar',type);assert.ok(result.ok);observeDiplomacy(s);return {s,id:result.agreement.id};
 }
 function advance(s){if(++s.month>12){s.month=1;s.year++}advanceMail(s,{receiveTreatyNotice});observeDiplomacy(s)}
 function notice(s,actor){return s.mail.messages.find(m=>m.context?.kind==='treaty_notice'&&m.senderFaction===actor)}
@@ -42,7 +42,7 @@ test('an explicit local renunciation works against a stale copy without exposing
  assert.deepEqual(terminateAgreement(a.s,a.id,'caesar'),terminateAgreement(b.s,b.id,'caesar'));assert.equal(a.s.diplomaticCredibility.caesar,beforeA-20);assert.equal(b.s.diplomaticCredibility.caesar,beforeB-20);assert.equal(knownAgreement(a.s,'caesar','egypt','non_aggression'),undefined);assert.equal(knownAgreement(b.s,'caesar','egypt','non_aggression'),undefined);
 });
 test('full alliance break preserves the uninformed court copy and own planning until correspondence',()=>{
- const s=newGame('caesar');s.relations['caesar:egypt']=60;assert.ok(diplomacy(s,'egypt','caesar','alliance'));const before=opportunityEvidenceSignature(s,'caesar'),standing=knownRelation(s,'caesar','egypt');
+ const s=newGame('caesar');s.relations['caesar:egypt']=60;assert.ok(diplomacy(s,'egypt','caesar','alliance'));observeDiplomacy(s);const before=opportunityEvidenceSignature(s,'caesar'),standing=knownRelation(s,'caesar','egypt');
  assert.ok(diplomacy(s,'egypt','caesar','break'));assert.equal(s.alliances.length,0);assert.equal(knownAlliance(s,'egypt','caesar'),false);assert.equal(knownAlliance(s,'caesar','egypt'),true);assert.equal(knownRelation(s,'caesar','egypt'),standing);observeDiplomacy(s);assert.equal(opportunityEvidenceSignature(s,'caesar'),before);
 });
 test('known expiry and direct own hostilities end copies without remote status inspection',()=>{
@@ -57,4 +57,12 @@ test('coalition departure is announced to each member without disclosing the oth
  const s=newGame('caesar');for(const id of ['egypt','numidia','galatia']){s.relations[['caesar',id].sort().join(':')]=60;s.relations[[id,'senate'].sort().join(':')]=-30}
  const formed=formCoalition(s,'caesar',['egypt','numidia','galatia'],'senate',estimatedStrength);assert.ok(formed.ok);const id=formed.coalition.id,standing=knownRelation(s,'caesar','egypt');
  assert.ok(leaveCoalition(s,id,'egypt').ok);assert.equal(formed.coalition.parties.includes('egypt'),false);assert.ok(knownTreatyDocuments(s,'caesar','coalition').find(c=>c.id===id).parties.includes('egypt'));assert.equal(knownRelation(s,'caesar','egypt'),standing);assert.equal(knownTreatyDocuments(s,'egypt','coalition').length,0);
+});
+
+test('an old notice cannot end a renewed full alliance with the same parties and calendar date',()=>{
+ let checked=false;
+ for(let seed=1;seed<=40;seed++){const s=newGame('caesar');s.seed=seed*1000003;s.relations['caesar:egypt']=60;assert.ok(diplomacy(s,'egypt','caesar','alliance'));assert.ok(diplomacy(s,'egypt','caesar','break'));s.relations['caesar:egypt']=60;assert.ok(diplomacy(s,'egypt','caesar','alliance'));const reference=knownTreatyDocuments(s,'caesar','alliance')[0].reference;
+  for(let i=0;i<18&&!notice(s,'egypt')?.delivery?.match(/received|lost/);i++)advance(s);
+  if(notice(s,'egypt')?.delivery!=='received')continue;assert.ok(knownAlliance(s,'caesar','egypt'));assert.equal(knownTreatyDocuments(s,'caesar','alliance')[0].reference,reference);checked=true;break;
+ }assert.ok(checked);
 });

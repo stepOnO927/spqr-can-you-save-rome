@@ -1,3 +1,4 @@
+import {startingTreaties} from './helpers/starting-treaties.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave,estimatedStrength} from '../engine.js?v=dossier-archive-1';
@@ -8,7 +9,7 @@ import {observeControl} from '../control-intelligence.js?v=dossier-archive-1';
 
 function setup(seed=49049){
  const s=newGame('senate');s.seed=seed;s.difficulty='expert';
- s.regions.find(r=>r.id==='africa').owner='caesar';s.wars.push(['caesar','numidia']);s.alliances.push(['numidia','senate']);observeControl(s);
+ s.regions.find(r=>r.id==='africa').owner='caesar';s.wars.push(['caesar','numidia']);s.alliances.push(['numidia','senate']);startingTreaties(s);observeControl(s);
  for(const a of s.armies.filter(a=>a.owner==='numidia'))a.men=15000;
  const p=createPlan(s,'senate',{mode:'automatic',objective:'africa',ai:true}).plan;
  assert.ok(assignRole(s,'senate',p.id,{armyId:'pompey',role:'offensive',path:['italiaS','sicilia','africa']}).ok);approvePlan(s,'senate',p.id);

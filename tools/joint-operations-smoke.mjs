@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 
 async function installFixture({view,incoming}){
  const {newGame}=await import('/engine.js?v=dossier-archive-1'),{createPlan,assignRole,approvePlan}=await import('/battle-plans.js?v=dossier-archive-1'),{observeControl}=await import('/control-intelligence.js?v=dossier-archive-1'),{observeDiplomacy}=await import('/diplomatic-knowledge.js?v=dossier-archive-1'),{sendLetter,courierMonths,advanceMail}=await import('/epistulae.js?v=dossier-archive-1'),{proposeJointOperation,advanceJointOperations}=await import('/joint-operations.js?v=joint-operations-1');
- const s=newGame('senate');s.difficulty='beginner';s.seed=100003;s.regions.find(r=>r.id==='africa').owner='caesar';s.regions.find(r=>r.id==='mauretania').owner='caesar';s.wars.push(['numidia','caesar']);s.alliances.push(['numidia','senate']);s.relations['numidia:senate']=60;
+ const {initializeAgreements}=await import('/agreements.js?v=dossier-archive-1');
+ const s=newGame('senate');s.difficulty='beginner';s.seed=100003;s.regions.find(r=>r.id==='africa').owner='caesar';s.regions.find(r=>r.id==='mauretania').owner='caesar';s.wars.push(['numidia','caesar']);s.alliances.push(['numidia','senate']);initializeAgreements(s);s.relations['numidia:senate']=60;
  for(const id of ['senate','numidia'])Object.assign(s.factions[id],{treasury:300,food:300,stability:80});
  for(const a of s.armies){a.move=null;a.siege=null;if(a.owner==='caesar')a.men=500}
  const a=s.armies.find(a=>a.id==='pompey'),b=s.armies.find(a=>a.owner==='numidia');for(const u of [a,b])Object.assign(u,{men:12000,morale:80});observeControl(s);observeDiplomacy(s);

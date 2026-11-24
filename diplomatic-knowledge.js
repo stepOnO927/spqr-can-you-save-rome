@@ -25,6 +25,7 @@ function reportAgreementChange(s,doc,ended=false){
 }
 export function observeDiplomacy(s){
  initializeDiplomaticKnowledge(s);
+ for(const war of s.wars||[])observeOwnBilateralWar(s,war[0],war[1]);
  for(const viewer of Object.keys(s.factions)){
   const records=s.world.diplomaticKnowledge[viewer]||={},seen=new Set();
   for(const doc of currentDocuments(s,viewer)){
