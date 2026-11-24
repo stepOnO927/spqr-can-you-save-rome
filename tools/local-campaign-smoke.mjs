@@ -104,6 +104,22 @@ try{
  await page.locator('#new').click();await page.locator('[data-slot="save"]').click();
  const peerResult=await page.evaluate(()=>{const state=JSON.parse(localStorage.getItem('spqr-save-1'));return {rights:state.regions.flatMap(region=>region.localEntities||[]).find(entity=>entity.id==='generated:narbo').peerTradeRights?.massilia,trades:state.localCampaign.tradeCompleted,contact:state.localCampaign.peerContacts?.massilia,ruler:state.regions.flatMap(region=>region.localEntities||[]).find(entity=>entity.id==='massilia').ruler}});
  assert.ok(peerResult.rights);assert.ok(peerResult.trades>0);assert.equal(peerResult.contact?.rulerId,peerResult.ruler.id);
+ const aidState=configureStartingDifficulty(newGame('caesar'),'hard',false,{localSeed:273});
+ startLocalCampaign(aidState,'generated:narbo');
+ const aidCity=aidState.regions.flatMap(region=>region.localEntities||[]).find(entity=>entity.id==='generated:narbo'),aidPeer=aidState.regions.flatMap(region=>region.localEntities||[]).find(entity=>entity.id==='massilia');
+ aidCity.food=0;aidState.factions[aidCity.id].food=0;aidPeer.food=100;
+ aidState.relations[[aidCity.id,aidPeer.id].sort().join(':')]=30;
+ await page.evaluate(value=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state:value})),aidState);
+ await page.goto(`${base}/`,{waitUntil:'domcontentloaded'});
+ await page.locator('[data-local-aid-partner]').selectOption('massilia');
+ await page.locator('[data-local-peer-aid]').click();
+ assert.match(await page.locator('.local-council').innerText(),/Emergency grain envoy returns in 2/);
+ await page.locator('#step').click();await page.locator('#step').click();
+ await page.locator('#mail-open').click();assert.match(await page.locator('.mailbox').innerText(),/Emergency grain envoy returned/);await page.locator('#mail-close').click();
+ assert.match(await page.locator('.local-council').innerText(),/Sent grain aid/);
+ await page.locator('#new').click();await page.locator('[data-slot="save"]').click();
+ const aidResult=await page.evaluate(()=>{const state=JSON.parse(localStorage.getItem('spqr-save-1'));return {contact:state.localCampaign.peerContacts.massilia,cooldown:state.localCampaign.peerAidCooldown.massilia,mail:state.mail.messages.find(letter=>letter.context?.kind==='local_peer_aid_result')}});
+ assert.equal(aidResult.contact.purpose,'aid');assert.equal(aidResult.mail.context.accepted,true);assert.ok(aidResult.cooldown);
  const petitioner=configureStartingDifficulty(newGame('caesar'),'expert',false,{localSeed:8});
  const polity=petitioner.regions.flatMap(region=>region.localEntities||[]).find(entity=>entity.procedural&&['city_state','microstate','tribe'].includes(entity.type));
  assert.ok(polity);petitioner.regions.find(region=>region.id===polity.theater).owner='caesar';
@@ -146,5 +162,5 @@ try{
  await page.locator('.local-council').waitFor();
  assert.match(await page.locator('.local-council').innerText(),/Massilia/);
  assert.equal(errors.length,0,errors.join('\n'));
- console.log('Local campaign, protection, independence, neighboring and peer-city trade, incoming polity petition and historical Massilia passed');
+ console.log('Local campaign, protection, independence, neighboring trade, peer-city trade and emergency grain, incoming polity petition and historical Massilia passed');
 }finally{await browser.close()}

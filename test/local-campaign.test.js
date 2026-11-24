@@ -2,13 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,tick,upgradeSave} from '../engine.js';
 import {configureStartingDifficulty} from '../difficulty.js';
-import {playableLocalCities,startLocalCampaign,localCampaignCity,localRecruit,localTradeOffer,localTradePartners,localPeerCities,localPeerTradeOffer,peerTradeTrustNeeded,localProtectionOffer,localIndependenceOffer,advanceLocalCampaign} from '../local-campaign.js';
+import {playableLocalCities,startLocalCampaign,localCampaignCity,localRecruit,localTradeOffer,localTradePartners,localPeerCities,localPeerTradeOffer,localPeerAidOffer,peerTradeTrustNeeded,localProtectionOffer,localIndependenceOffer,advanceLocalCampaign} from '../local-campaign.js';
 import {receivedMail} from '../epistulae.js';
 import {armyExpeditionSupply} from '../expedition-supply.js';
 import {validPlayableCampaign} from '../local-campaign-save.js';
 import {importSaves} from '../save-transfer.js';
 import {localCouncilHtml} from '../local-campaign-ui.js';
-import {advanceLocalEntities,advanceLocalTrade} from '../local-polities.js';
+import {localEntity,advanceLocalEntities,advanceLocalTrade} from '../local-polities.js';
 
 const opening=(difficulty='standard')=>{const state=configureStartingDifficulty(newGame('caesar'),difficulty,false,{localSeed:2});const city=playableLocalCities(state).find(entity=>entity.procedural);assert.ok(city);const host=state.regions.find(region=>region.id===city.theater);const owner=host.owner;startLocalCampaign(state,city.id);return {state,city,host,owner}};
 
@@ -130,6 +130,48 @@ test('generated city can make a real finite-resource compact with another autono
  assert.ok(peer.food<before.peerFood+8,'peer food is a finite source');
  assert.ok(peer.treasury>=before.peerCash+3);
  assert.ok(state.factions[city.id].food>=before.cityFood);
+});
+
+test('a hungry city may ask a known neighbor for finite emergency grain with a dated reply',()=>{
+ const state=configureStartingDifficulty(newGame('caesar'),'hard',false,{localSeed:273});
+ startLocalCampaign(state,'generated:narbo');
+ const city=localCampaignCity(state),peer=localPeerCities(state).find(item=>item.id==='massilia');
+ assert.ok(peer);
+ city.food=0;state.factions[state.player].food=0;peer.food=100;
+ state.relations[[city.id,peer.id].sort().join(':')]=30;
+ assert.match(localCouncilHtml(state),/REQUEST EMERGENCY GRAIN/);
+ assert.equal(localPeerAidOffer(state,peer.id),true);
+ assert.equal(localPeerTradeOffer(state,peer.id),false,'one envoy at a time');
+ assert.equal(validPlayableCampaign(upgradeSave(structuredClone(state))),true);
+ const withoutAid=structuredClone(state);withoutAid.localCampaign.peerAidOffer=null;
+ tick(state);tick(withoutAid);
+ assert.equal(city.peerTradeRights?.[peer.id],undefined,'aid grants no trade rights');
+ tick(state);tick(withoutAid);
+ const other=localEntity(withoutAid,peer.id),otherCity=localEntity(withoutAid,city.id);
+ assert.equal(city.food-otherCity.food,3);
+ assert.equal(other.food-peer.food,3);
+ assert.equal(state.localCampaign.peerAidOffer,null);
+ assert.equal(state.localCampaign.peerContacts[peer.id].purpose,'aid');
+ assert.ok(receivedMail(state).some(letter=>letter.context?.kind==='local_peer_aid_result'&&letter.context.host===peer.id&&letter.context.accepted));
+ assert.match(localCouncilHtml(state),/Sent grain aid/);
+ assert.equal(localPeerAidOffer(state,peer.id),false,'a city cannot be asked again during cooldown');
+ assert.equal(validPlayableCampaign(upgradeSave(structuredClone(state))),true);
+});
+
+test('emergency grain envoy cannot reveal or spend an occupied neighbor reserve',()=>{
+ const state=configureStartingDifficulty(newGame('caesar'),'hard',false,{localSeed:273});
+ startLocalCampaign(state,'generated:narbo');
+ const city=localCampaignCity(state),peer=localPeerCities(state).find(item=>item.id==='massilia');
+ city.food=5;state.factions[state.player].food=5;peer.food=100;
+ state.relations[[city.id,peer.id].sort().join(':')]=30;
+ assert.equal(localPeerAidOffer(state,peer.id),true);
+ peer.controller=state.regions.find(region=>region.id===peer.theater).owner;
+ const withoutAid=structuredClone(state);withoutAid.localCampaign.peerAidOffer=null;
+ tick(state);tick(state);
+ tick(withoutAid);tick(withoutAid);
+ assert.equal(peer.food,localEntity(withoutAid,peer.id).food,'occupied city must send no grain');
+ assert.equal(receivedMail(state).find(letter=>letter.context?.kind==='local_peer_aid_result')?.context.accepted,false);
+ assert.equal(state.localCampaign.peerContacts[peer.id],undefined,'occupied speaker identity is not reported');
 });
 
 test('a generated peer ruler personality changes a real trade decision at the same trust',()=>{

@@ -43,7 +43,7 @@ export function startLocalCampaign(state,id){
  city.militia-=field;
  state.player=id;
  state.scenario='local_city';
- state.localCampaign={id,startedAt:date(state),survived:0,tradeOffer:null,peerTradeOffer:null,peerContacts:{},protectionOffer:null,independenceOffer:null,tradeCompleted:0};
+ state.localCampaign={id,startedAt:date(state),survived:0,tradeOffer:null,peerTradeOffer:null,peerAidOffer:null,peerAidCooldown:{},peerContacts:{},protectionOffer:null,independenceOffer:null,tradeCompleted:0};
  state.factions[id]={treasury:city.treasury,food:city.food,manpower:Math.floor(city.population*.05),stability:65,legitimacy:60,tax:'normal',research:0};
  state.armies.push({id:`local-field:${id}`,name:['City militia','城邦民兵'],owner:id,region:city.theater,men:field,morale:62,skill:Math.max(1,Math.floor(city.strategy/2)),experience:0,commander:[...city.civicOfficers?.captain?.name||city.ruler.name],move:null,siege:null});
  state.world.leadership[id]=[];
@@ -68,7 +68,7 @@ export function localRecruit(state){
 
 export function localTradeOffer(state,partnerId=null){
  const city=localCampaignCity(state),f=state.factions[state.player],host=partnerId||(city&&hostOf(state,city));
- if(!city||city.controller!==city.id||!f||!host||!localTradePartners(state,city).includes(host)||f.treasury<3||state.localCampaign.tradeOffer||state.localCampaign.peerTradeOffer||state.localCampaign.protectionOffer||state.localCampaign.independenceOffer||city.tradeRights?.[host]>date(state))return false;
+ if(!city||city.controller!==city.id||!f||!host||!localTradePartners(state,city).includes(host)||f.treasury<3||state.localCampaign.tradeOffer||state.localCampaign.peerTradeOffer||state.localCampaign.peerAidOffer||state.localCampaign.protectionOffer||state.localCampaign.independenceOffer||city.tradeRights?.[host]>date(state))return false;
  f.treasury-=3;city.treasury=f.treasury;
  state.localCampaign.tradeOffer={host,remaining:2};
  return true;
@@ -76,9 +76,18 @@ export function localTradeOffer(state,partnerId=null){
 
 export function localPeerTradeOffer(state,peerId){
  const city=localCampaignCity(state),f=state.factions[state.player],peer=localPeerCities(state,city).find(item=>item.id===peerId);
- if(!city||city.controller!==city.id||!f||!peer||f.treasury<3||state.localCampaign.tradeOffer||state.localCampaign.peerTradeOffer||state.localCampaign.protectionOffer||state.localCampaign.independenceOffer||city.peerTradeRights?.[peerId]>date(state)||state.wars.some(war=>war.includes(city.id)&&war.includes(peerId)))return false;
+ if(!city||city.controller!==city.id||!f||!peer||f.treasury<3||state.localCampaign.tradeOffer||state.localCampaign.peerTradeOffer||state.localCampaign.peerAidOffer||state.localCampaign.protectionOffer||state.localCampaign.independenceOffer||city.peerTradeRights?.[peerId]>date(state)||state.wars.some(war=>war.includes(city.id)&&war.includes(peerId)))return false;
  f.treasury-=3;city.treasury=f.treasury;
  state.localCampaign.peerTradeOffer={host:peerId,remaining:2};
+ return true;
+}
+
+export function localPeerAidOffer(state,peerId){
+ const city=localCampaignCity(state),f=state.factions[state.player],campaign=state.localCampaign,peer=localPeerCities(state,city).find(item=>item.id===peerId);
+ if(!city||city.controller!==city.id||!f||!peer||city.food>8||f.treasury<2||campaign.tradeOffer||campaign.peerTradeOffer||campaign.peerAidOffer||campaign.protectionOffer||campaign.independenceOffer||campaign.peerAidCooldown?.[peerId]>date(state)||state.wars.some(war=>war.includes(city.id)&&war.includes(peerId)))return false;
+ f.treasury-=2;city.treasury=f.treasury;
+ campaign.peerAidOffer={host:peerId,remaining:2};
+ campaign.peerAidCooldown||={};campaign.peerAidCooldown[peerId]=date(state)+12;
  return true;
 }
 
@@ -92,7 +101,7 @@ export function peerTradeTrustNeeded(peer){
 
 export function localProtectionOffer(state){
  const city=localCampaignCity(state),f=state.factions[state.player],host=city&&hostOf(state,city);
- if(!city||city.controller!==city.id||!f||!host||!state.factions[host]||city.overlord||f.treasury<6||state.localCampaign.tradeOffer||state.localCampaign.peerTradeOffer||state.localCampaign.protectionOffer||state.localCampaign.independenceOffer||state.wars.some(war=>war.includes(city.id)&&war.includes(host)))return false;
+ if(!city||city.controller!==city.id||!f||!host||!state.factions[host]||city.overlord||f.treasury<6||state.localCampaign.tradeOffer||state.localCampaign.peerTradeOffer||state.localCampaign.peerAidOffer||state.localCampaign.protectionOffer||state.localCampaign.independenceOffer||state.wars.some(war=>war.includes(city.id)&&war.includes(host)))return false;
  f.treasury-=6;city.treasury=f.treasury;
  state.localCampaign.protectionOffer={host,remaining:3};
  return true;
@@ -100,7 +109,7 @@ export function localProtectionOffer(state){
 
 export function localIndependenceOffer(state){
  const city=localCampaignCity(state),f=state.factions[state.player],host=city?.overlord;
- if(!city||city.controller!==city.id||!f||!host||!state.factions[host]||f.treasury<4||state.localCampaign.tradeOffer||state.localCampaign.peerTradeOffer||state.localCampaign.protectionOffer||state.localCampaign.independenceOffer||state.wars.some(war=>war.includes(city.id)&&war.includes(host)))return false;
+ if(!city||city.controller!==city.id||!f||!host||!state.factions[host]||f.treasury<4||state.localCampaign.tradeOffer||state.localCampaign.peerTradeOffer||state.localCampaign.peerAidOffer||state.localCampaign.protectionOffer||state.localCampaign.independenceOffer||state.wars.some(war=>war.includes(city.id)&&war.includes(host)))return false;
  f.treasury-=4;city.treasury=f.treasury;
  state.localCampaign.independenceOffer={host,remaining:2};
  return true;
@@ -145,6 +154,19 @@ export function advanceLocalCampaign(state){
   const sent=sendLetter(state,{senderInstitution:city.id,senderFaction:city.id,recipient:city.id,category:'government',priority:'important',source:peer?.theater||city.theater,destination:city.theater,subject:['City envoy returned','城邦使者回报'],body:[`${speakerEn} ${accepted?'accepted a two-year food compact; actual quarterly shipments still require food, treasury and an open route.':'declined the proposal; no goods or rights were transferred.'}`,`${speakerZh}${accepted?'接受为期两年的粮食协定；每季度实际交易仍须有粮食、国库与通商路线。':'拒绝提议；未转移物资或授予贸易权。'}`],options:['acknowledge'],context:{kind:'local_peer_trade_result',polityId:city.id,host:peer?.id||campaign.peerTradeOffer.host,accepted,...(speaker?{rulerId:speaker.id,rulerName:[...speaker.name]}:{})}});
   if(sent.ok){sent.letter.arrival=date(state);sent.letter.delivery='received';sent.letter.senderName=speaker?[...speaker.name]:['City envoys','城邦使者']}
   campaign.peerTradeOffer=null;
+ }
+ if(campaign.peerAidOffer&&--campaign.peerAidOffer.remaining<=0){
+  const peer=localEntity(state,campaign.peerAidOffer.host),reserve=peer&&Math.max(4,Math.ceil((peer.population||3000)/3000));
+  const routeOpen=!!peer&&peerRouteOpen(state,city,peer);
+  const accepted=!!(peer&&peer.type==='city_state'&&peer.controller===peer.id&&!peer.siege&&city.food<=8&&peer.food-3>=reserve&&routeOpen&&relation(state,city.id,peer.id)>=peerTradeTrustNeeded(peer)+10&&!state.wars.some(war=>war.includes(city.id)&&war.includes(peer.id)));
+  if(accepted){peer.food-=3;city.food+=3}
+  const name=peer?.name||[campaign.peerAidOffer.host,campaign.peerAidOffer.host];
+  const speaker=peer?.type==='city_state'&&peer.controller===peer.id&&!peer.siege&&routeOpen&&peer.ruler?.name?peer.ruler:null;
+  if(speaker){campaign.peerContacts||={};campaign.peerContacts[peer.id]={rulerId:speaker.id,name:[...speaker.name],year:state.year,month:state.month,accepted,purpose:'aid'}}
+  state.log.unshift({year:state.year,month:state.month,en:accepted?`${name[0]} sent 3 emergency food to ${city.name[0]}.`:`${name[0]} did not send emergency food to ${city.name[0]}.`,zh:accepted?`${name[1]}向${city.name[1]}送来3粮食紧急援助。`:`${name[1]}未向${city.name[1]}提供紧急粮援。`});
+  const sent=sendLetter(state,{senderInstitution:city.id,senderFaction:city.id,recipient:city.id,category:'government',priority:'important',source:peer?.theater||city.theater,destination:city.theater,subject:['Emergency grain envoy returned','紧急粮援使者回报'],body:[accepted?`${speaker?.name?.[0]||name[0]} sent 3 food from the city reserve. The grant creates no trade right or military access.`:`${speaker?.name?.[0]||name[0]} did not send grain. Local control, reserve, route and diplomatic trust were checked on arrival.`,accepted?`${speaker?.name?.[1]||name[1]}从城邦储粮中送来3粮食。援助不产生贸易权或军事通行权。`:`${speaker?.name?.[1]||name[1]}未送来粮食。抵达时已核实当地控制、储粮、路线与外交信任。`],options:['acknowledge'],context:{kind:'local_peer_aid_result',polityId:city.id,host:peer?.id||campaign.peerAidOffer.host,accepted,...(speaker?{rulerId:speaker.id,rulerName:[...speaker.name]}:{})}});
+  if(sent.ok){sent.letter.arrival=date(state);sent.letter.delivery='received';sent.letter.senderName=speaker?[...speaker.name]:['City envoys','城邦使者']}
+  campaign.peerAidOffer=null;
  }
  if(campaign.protectionOffer&&--campaign.protectionOffer.remaining<=0){
   const host=campaign.protectionOffer.host,capacity=state.armies.filter(army=>army.owner===host&&army.men>0).reduce((sum,army)=>sum+army.men,0);
