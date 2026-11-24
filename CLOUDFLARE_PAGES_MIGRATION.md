@@ -2,6 +2,8 @@
 
 状态：**仅准备；尚未部署、切换域名或更改 GitHub 仓库可见性。** 在 Cloudflare 公网站点完整测试并获得明确切换批准前，仓库必须保持公开，现有 GitHub Pages 保持运行。
 
+最新代码检查点 `0ec367e36` 已纳入公开 `main` 至 `76a8d50ad`，含授权中文字体、实际地形行军和暂停时停止行军损耗。[质量检查](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45310649101)通过 **1,437/1,437**；[Cloudflare Pages 候选包与三入口浏览器](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45310648837)通过，**348 个公开文件、6.32 MiB、最大单文件 1.09 MiB**，并核对字体及完整许可文件、跨域存档导入和本地资源。 [Poki](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45309501932)与[36 个月战役](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45309501839)在上一代码检查点通过；[当前三组深入浏览器](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45310649115)全部通过，含真实抵达后的军队通行测试、城邦及意大利城镇、远征集结、地图路线规划。公开目录的独立逐文件审计将在下一次托管打包执行。Cloudflare 真实地址尚未部署或验收。
+
 2026 年 11 月 24 日检查点：审查代码 `61f71945c` 已整合公开 `main` 至 `0f0f02d1`。[托管质量检查](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45306409393)通过 **1,437/1,437** 项；[Pages 候选包与浏览器](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45306409361)通过，含 **345 个公开文件、5.21 MiB、最大单文件 1.06 MiB**。浏览器检查 `/`、`/map-lab/`、`/han/`，三种战役推进、跨域存档导入、未知存档键拒绝和本地资源加载；[Poki 包](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45306409350)及[36 个月流程](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45306409283)也通过。[三组深入浏览器](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45306409430)尚在运行。此处验证的是候选发布目录，**并非 Cloudflare 实际域名验收**。旧站 23 日的只读请求曾返回 HTTP 200；24 日未获得新的直接访问结果，仓库 API 仍显示公开且启用 Pages。
 
 最新审查提交 `cae7191e` 已纳入公开 `main` 至 `a465f99b`，保留主战役新视觉界面，并把玩家选择的集结点接入远征、存档和支援地图。[托管规则检查](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45276175469)通过 **1,401/1,401** 项，[Pages 包与三个入口浏览器](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45276175769)、[Poki](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45276175855)、[36 个月浏览器](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45276175521)和[三组深入浏览器](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45276175498)全部通过。第一组实测军事通行、条约战争与存读档；第二组实测玩家选择集结点、抵达待命和手动继续。公开包 **339 个文件、5.16 MiB、最大单文件 1.06 MiB**。Cloudflare 实际域名尚未部署或验收。
@@ -42,6 +44,8 @@
 
 `dist/` 不含测试、开发脚本、内部说明、原始肖像母版、64px 未使用缩略图、GitHub 工作流、配置文件或 `node_modules`。构建会拒绝内部路径、超过 20,000 个文件或单个超过 25 MiB 的静态文件。浏览器执行的 JavaScript 仍可从公开站点查看，私有 GitHub 源码不意味着前端代码不可获取。
 
+GitHub Actions 的 Cloudflare Pages 打包作业在构建后另行扫描**实际** `dist/`，拒绝内部文档、开发目录、测试、敏感扩展名、超限文件或缺失入口，并把完整文件清单作为 Actions 工件保存于公开目录之外，供发布前复核。
+
 ## 浏览器存档转移
 
 三个页面都有“迁移存档”入口。导出文件保留以下 `localStorage` 值的原始文本：`spqr-save-1`、`spqr-save-2`、`spqr-save-3`、`spqr-han-save-browser`、`spqr-legacy-archive`。导入只处理这些已知键，拒绝未知格式或超过 50 MiB 的文件；主战役存档只写入空槽，已有槽位绝不覆盖，历史档案按 ID 合并，无法导入的项目会列在结果中。写入失败会尝试恢复原值。导入后刷新页面并在游戏中点击“读取”即可载入；当前正在玩的战役不会被静默替换。导出文件包含完整游戏状态，应由玩家自行保管。
@@ -50,9 +54,9 @@
 
 ## Cloudflare Pages 建站配置
 
-1. 保持 GitHub 仓库公开。将这个准备分支合并到 `main` 后，先确认 GitHub Pages 仍正常；不要改动它的发布源或删除部署。
+1. 保持 GitHub 仓库公开，准备分支维持草稿且不合并。先用 Cloudflare 的分支预览完整测试新站；准备期间不触发 `main` 的 GitHub Pages 更新，也不改动旧站的发布源或删除部署。
 2. 在 Cloudflare Pages 新建 **Git 集成**项目，授权该仓库。配置：生产分支 `main`、根目录仓库根目录、框架 `None`、构建命令 `npm run build:pages`、输出目录 `dist`、Node.js 22。Cloudflare 账号中的项目名及将来的正式域名尚待确定，不写入源码。
-3. 开启预览分支部署；先在 Cloudflare 提供的 `*.pages.dev` 地址测试 `/`、`/map-lab/`、`/han/`。检查 Network 面板无本地 404、地图 worker 正常加载、肖像显示、主战役与地图之间切换、行军/回合/外交/情报/Han/存读档及跨域导入。
+3. 开启预览分支部署；先用此审查分支的 Cloudflare 预览地址测试 `/`、`/map-lab/`、`/han/`。检查 Network 面板无本地 404、地图 worker 正常加载、肖像显示、主战役与地图之间切换、行军/回合/外交/情报/Han/存读档及跨域导入。`main` 尚未包含准备分支时，初始生产构建可能失败；预览通过不等于生产通过。取得明确的上线批准后才合并到 `main`，让 Cloudflare 生产分支构建，并再次测试生产 `*.pages.dev` 地址；合并也会更新旧 GitHub Pages 内容，须在批准时执行。
 4. 在 Cloudflare Pages 项目设置中启用 **Web Analytics 一次**。Pages 会自动注入 beacon；`dist/` 已移除源 HTML 里用于旧站点的手动 beacon。检查新域名页面中恰好一个 beacon，并在 Analytics 面板确认新主机名收到流量。将来自新域名的数据与旧域名分开核对。
    游戏内的公开分析渠道已识别 `<project>.pages.dev` 为 production、`<preview>.<project>.pages.dev` 为 staging。确定正式自定义域名后，把它准确填入 `analytics-settings.js` 的 `hostnames.production`，再通过测试与构建；未知域名默认仍属于 development preview。已在主分支配置的生产 GA4 ID `G-3VDCWZRJCL` 保留，仍受玩家同意开关控制；staging ID 与自建会话端点为空。上线后应确认 GA4 的新主机名数据及同意状态符合预期。
 5. 在正式域名上再次测试、确认原 GitHub Pages 可访问，并获得**明确切换批准**后，才切换 DNS/入口。确认公开 Cloudflare 站点稳定，再单独申请更改仓库为 private 的批准。不要重命名仓库或删除旧部署。
@@ -103,7 +107,7 @@ Cloudflare Pages 文档：[Git 集成](https://developers.cloudflare.com/pages/c
 
 ## 切换验收清单
 
-- [ ] 准备分支审查、CI 通过；仅在准备工作获准后合并到 `main`。
+- [ ] 准备分支审查、CI 及 Cloudflare 分支预览通过；获得明确上线批准后才合并到 `main`，并核对旧 GitHub Pages 更新后的状态。
 - [ ] GitHub 仓库仍为 public，原 GitHub Pages 网站可访问。
 - [ ] Cloudflare Pages `main` / `dist` 部署成功；`/`、`/map-lab/`、`/han/` 均通过真实地址浏览器测试。
 - [ ] `dist/` 文件清单、单文件大小、分析 beacon 数量、资源请求和浏览器控制台复核通过。

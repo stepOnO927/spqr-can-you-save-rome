@@ -20,6 +20,7 @@ jobs:
       - run: node --test test/analytics-core.test.js test/analytics-worker.test.js
       - run: node --check analytics-worker/worker.js
       - run: npm run build:pages
+      - run: node scripts/audit-pages-output.mjs
       - run: npm install --no-save playwright@1.64.1
       - run: npx playwright install chromium
       - run: |
@@ -32,3 +33,4 @@ jobs:
           name: cloudflare-pages-package-evidence
           path: |
             pages-server.log
+            pages-output-manifest.txt
