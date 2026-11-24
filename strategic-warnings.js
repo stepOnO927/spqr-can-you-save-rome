@@ -103,7 +103,8 @@ function deliver(s,letter,{autoplayPlayer,issueOrder,log}){
  if(decision.kind==='heeded'){
   let ordered=0;for(const a of s.armies.filter(x=>x.owner===letter.to&&x.region===letter.near&&!x.move&&!x.siege&&!x.order&&x.men>0))if(issueOrder?.(s,a.id,'defend',null,letter.to)?.ok)ordered++;
   decision.ordered=ordered;rememberPoliticalEvent(s,letter.to,letter.from,'shared_warning',2);
-  const k=pair(letter.to,letter.from);s.relations[k]=Math.min(100,(s.relations[k]??0)+2);
+  // Gratitude stays in the recipient's private political memory. A shared
+  // relation change would give the sender an unacknowledged delivery signal.
   record(letter,'responded',s,{decision:'heeded'});
  }else record(letter,'unresponded',s,{decision:decision.kind,reason:decision.reason});
  // No return courier exists: the sender receives no delivery or decision notice.
