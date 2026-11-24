@@ -11,7 +11,7 @@ import {voteCommercialLeagueMotion,answerCommercialLeagueAdmission} from './comm
 import {storedCorrespondentName} from './person-knowledge.js?v=dossier-archive-1';
 import {earnedEpithets,legendName} from './legend.js?v=dossier-archive-1';
 import {answerCoalitionAidRequest,COALITION_AID} from './coalition-assistance.js?v=dossier-archive-1';
-import {peaceTermsText} from './peace-terms.js?v=territorial-peace-1';
+import {peaceTermsText,peaceTitleTermsText} from './peace-terms.js?v=territorial-peace-1';
 
 const monthIndex = (year, month) => year * 12 + month;
 const pair = (a, b) => [a, b].sort().join(':');
@@ -636,7 +636,7 @@ export function syncPeaceLetters(s) {
     const result=sendLetter(s,{senderInstitution:inquiry.actor,senderFaction:inquiry.actor,
       recipient:s.player,category:'diplomatic',priority:'important',
       subject:['Peace proposal','议和提议'],
-      body:[`${sender[0]} requests an end to the present war. The war continues until an acceptance reaches the sender.${inquiry.peaceTerms||!inquiry.titleAsset?' '+peaceTermsText(inquiry,'en'):''}`,`${sender[1]}请求结束当前战争。接受书送达发信方之前，战争仍将继续。${inquiry.peaceTerms||!inquiry.titleAsset?peaceTermsText(inquiry,'zh'):''}`],
+      body:[`${sender[0]} requests an end to the present war. The war continues until an acceptance reaches the sender. ${inquiry.titleAsset?peaceTitleTermsText(s,inquiry,'en'):peaceTermsText(inquiry,'en')}`,`${sender[1]}请求结束当前战争。接受书送达发信方之前，战争仍将继续。${inquiry.titleAsset?peaceTitleTermsText(s,inquiry,'zh'):peaceTermsText(inquiry,'zh')}`],
       options:['accept','refuse','war_council'],expires:monthIndex(s.year,s.month)+Math.max(0,(inquiry.remaining||1)-1),context:{kind:'peace'}});
     if (result.ok) {
       result.letter.senderName=[...sender];

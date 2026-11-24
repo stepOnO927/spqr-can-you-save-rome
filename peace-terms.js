@@ -1,4 +1,4 @@
-import {REGIONS,ROUTES} from './data.js?v=phase-x-1';
+import {REGIONS,ROUTES} from './data.js?v=dossier-archive-1';
 import {reportedControl} from './control-intelligence.js?v=dossier-archive-1';
 import {initializeTerritories,transferTerritory} from './territory.js';
 
@@ -33,6 +33,13 @@ export function peaceTermsText(letter,language='en'){
  if(!letter.peaceTerms)return language==='zh'?'维持当前控制，不附带领土移交。':'Current control is retained; no territorial transfer is offered.';
  const name=REGIONS.find(r=>r.id===letter.peaceTerms.region)?.name?.[language==='zh'?1:0]||(language==='zh'?'未知战区':'an unrecorded theater');
  return language==='zh'?`提议由发信方移交${name}的控制权，以换取和平；有效回信送达前不移交。`:`The sender offers control of ${name} in return for peace; no transfer occurs before a valid acceptance is delivered.`;
+}
+export function peaceTitleTermsText(s,letter,language='en'){
+ const asset=letter.titleAsset;
+ if(!asset)return '';
+ const place=asset.kind==='theater'?s.regions.find(r=>r.id===asset.id):s.regions.flatMap(r=>r.localEntities||[]).find(entity=>entity.id===asset.id);
+ const name=place?.name?.[language==='zh'?1:0]||asset.id;
+ return language==='zh'?`条款：接受后须承认发信方对${name}的法理归属；有效回信送达前不生效。`:`Term: acceptance recognizes the sender's legal title to ${name}; it takes effect only when a valid reply arrives.`;
 }
 // Enforce the actual contract only at settlement. No decision or UI uses these
 // private revalidation details to infer a foreign change before delivery.

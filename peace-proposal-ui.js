@@ -1,7 +1,7 @@
 import {sendInquiry,inquiryCost,inquiryDuration,supportsCourtInquiry} from './engine.js?v=dossier-archive-1';
 import {peaceOfferRegions,peaceTermsText} from './peace-terms.js?v=territorial-peace-1';
-import {FACTIONS} from './data.js?v=phase-x-1';
-import {campaignDate} from './campaign-date.js?v=calendar-1';
+import {FACTIONS} from './data.js?v=dossier-archive-1';
+import {campaignDate} from './campaign-date.js?v=dossier-archive-1';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function renderPeaceProposal({panel,state,language,target=null,refresh}){
  const actor=state.player,zh=language==='zh',enemies=[...new Set(state.wars.filter(w=>w.includes(actor)).flatMap(w=>w.filter(id=>id!==actor&&supportsCourtInquiry(id)&&(!target||id===target))))];

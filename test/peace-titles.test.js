@@ -4,6 +4,7 @@ import {newGame, tick, sendInquiry, answerPeaceOffer, diplomacy} from '../engine
 import {transferTerritory} from '../territory.js';
 import {localEntity} from '../local-polities.js';
 import {eligibleTitleAssets, titleAssetQuote} from '../peace-titles.js';
+import {syncPeaceLetters,receivedMail} from '../epistulae.js';
 
 test('a peace letter can request only title to a place already controlled by its sender', () => {
   const state = newGame('caesar');
@@ -52,6 +53,8 @@ test('a player-accepted title term takes effect only after the courier returns',
   tick(state);
   const letter = state.inquiries.find(item => item.actor === 'caesar' && item.subject === 'peace');
   assert.equal(letter.status, 'awaiting_decision');
+  syncPeaceLetters(state);
+  assert.match(receivedMail(state).find(mail=>mail.id===letter.mailId).body[1],/意大利北部.*法理归属.*回信送达前/);
   assert.equal(state.regions.find(place => place.id === asset.id).legalSovereign, 'senate');
   assert.equal(answerPeaceOffer(state, 'caesar', 'accept').ok, true);
   assert.equal(state.regions.find(place => place.id === asset.id).legalSovereign, 'senate');

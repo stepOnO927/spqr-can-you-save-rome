@@ -28,5 +28,15 @@ try{
  await incoming.locator('#new').click();await incoming.locator('[data-slot="save"]').click();let pending=await incoming.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')));assert.equal(pending.regions.find(r=>r.id==='hispaniaN').owner,'senate');assert.ok(pending.wars.some(w=>w.includes('caesar')&&w.includes('senate')));
  await incoming.evaluate(async()=>{const {upgradeSave,tick}=await import('/engine.js?v=dossier-archive-1'),base=JSON.parse(localStorage.getItem('spqr-save-1'));for(let i=1;i<=80;i++){const s=upgradeSave(structuredClone(base));s.seed=i*100003;tick(s);if(s.inquiries.find(l=>l.actor==='senate').peaceSettlement==='concluded'){base.seed=i*100003;sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state:base}));return}}throw Error('No delivered acceptance')});
  await incoming.reload();await incoming.locator('#step').click();await incoming.locator('#new').click();await incoming.locator('[data-slot="save"]').click();pending=await incoming.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')));assert.equal(pending.regions.find(r=>r.id==='hispaniaN').owner,'caesar');assert.equal(pending.inquiries.find(l=>l.actor==='senate').peaceSettlement,'concluded');await incoming.close();
+ const titlePage=await browser.newPage({viewport:{width:1600,height:1000}});titlePage.on('pageerror',e=>errors.push(e.message));await titlePage.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));await titlePage.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
+ const titleMailId=await titlePage.evaluate(async()=>{
+  const {newGame,sendInquiry}=await import('/engine.js?v=dossier-archive-1'),{syncPeaceLetters}=await import('/epistulae.js?v=dossier-archive-1'),s=newGame('caesar');
+  s.factions.senate.treasury=30;s.regions.find(r=>r.id==='italiaN').legalSovereign='caesar';
+  if(!sendInquiry(s,'senate','caesar','peace',{titleAsset:{kind:'theater',id:'italiaN'}}).ok)throw Error('Title offer unavailable');
+  const letter=s.inquiries[0];letter.status='awaiting_decision';letter.remaining=6;syncPeaceLetters(s);
+  sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state:s}));return letter.mailId;
+ });
+ await titlePage.reload();await titlePage.locator('[data-tab="government"]').click();assert.match(await titlePage.locator('[data-answer-peace="senate"][data-decision="accept"]').locator('..').innerText(),/意大利北部.*法理归属/);
+ await titlePage.locator('#mail-open').click();await titlePage.locator(`[data-mail-select="${titleMailId}"]`).click();assert.match(await titlePage.locator('.mail-letter').innerText(),/意大利北部.*法理归属/);await titlePage.close();
  assert.deepEqual(errors,[]);
 }finally{await browser.close()}

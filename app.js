@@ -32,7 +32,7 @@ import {AGREEMENT_TYPES,activeAgreement,proposeAgreement,terminateAgreement} fro
 import {leaveCoalition,answerCoalitionDefenseCall} from './coalitions.js?v=dossier-archive-1';
 import {renderAidRequest} from './strategic-aid-ui.js?v=dossier-archive-1';
 import {renderPeaceProposal} from './peace-proposal-ui.js?v=territorial-peace-1';
-import {peaceTermsText} from './peace-terms.js?v=territorial-peace-1';
+import {peaceTermsText,peaceTitleTermsText} from './peace-terms.js?v=territorial-peace-1';
 import {sendCoalitionInvitation,answerCoalitionInvitation} from './coalition-negotiations.js?v=dossier-archive-1';
 import {commercialContact,proposeCommercialLeague,answerCommercialLeagueOffer,leaveCommercialLeague} from './commercial-leagues.js?v=dossier-archive-1';
 import {proposeCommercialLeagueMotion} from './commercial-league-politics.js?v=dossier-archive-1';
@@ -123,7 +123,7 @@ function stat(k,value){return `<div class="stat" data-stat="${k}">${statIcon(k)}
 function incomingPeacePanel(){
  const incoming=(state.inquiries||[]).filter(x=>x.target===state.player&&x.subject==='peace'&&(x.status==='awaiting_decision'||x.phase==='return'));
  if(!incoming.length)return '';
- return `<div class="rule-block"><h3>${lang==='zh'?'收到的议和书信':'Incoming peace offers'}</h3><p>${lang==='zh'?'回信需要时间，可能遗失；有效接受送达前战争继续。':'Replies take time and may be lost; war continues until a valid acceptance is delivered.'}</p>${incoming.map(x=>`<p>${esc(labelFaction(x.actor))} · ${x.status==='awaiting_decision'?(lang==='zh'?`等待决定，剩余${x.remaining}个月`:`Awaiting decision, ${x.remaining} months left`):(lang==='zh'?'答复已寄出；是否送达未知':'Reply sent; delivery unknown')}<br>${esc(peaceTermsText(x,lang))} ${x.status==='awaiting_decision'?`<button class="action" data-answer-peace="${esc(x.actor)}" data-decision="accept">${lang==='zh'?'接受议和':'Accept peace'}</button> <button class="action" data-answer-peace="${esc(x.actor)}" data-decision="refuse">${lang==='zh'?'拒绝':'Refuse'}</button>`:''}</p>`).join('')}</div>`;
+ return `<div class="rule-block"><h3>${lang==='zh'?'收到的议和书信':'Incoming peace offers'}</h3><p>${lang==='zh'?'回信需要时间，可能遗失；有效接受送达前战争继续。':'Replies take time and may be lost; war continues until a valid acceptance is delivered.'}</p>${incoming.map(x=>`<p>${esc(labelFaction(x.actor))} · ${x.status==='awaiting_decision'?(lang==='zh'?`等待决定，剩余${x.remaining}个月`:`Awaiting decision, ${x.remaining} months left`):(lang==='zh'?'答复已寄出；是否送达未知':'Reply sent; delivery unknown')}<br>${esc(x.titleAsset?peaceTitleTermsText(state,x,lang):peaceTermsText(x,lang))} ${x.status==='awaiting_decision'?`<button class="action" data-answer-peace="${esc(x.actor)}" data-decision="accept">${lang==='zh'?'接受议和':'Accept peace'}</button> <button class="action" data-answer-peace="${esc(x.actor)}" data-decision="refuse">${lang==='zh'?'拒绝':'Refuse'}</button>`:''}</p>`).join('')}</div>`;
 }
 const agreementNames={full_alliance:['Full alliance','全面同盟'],non_aggression:['Non-aggression pact','互不侵犯条约'],military_access:['Mutual military access','相互军事通行权'],trade:['Trade agreement','贸易协定'],intelligence:['Intelligence sharing','情报共享'],defensive:['Defensive alliance','防御同盟'],offensive:['Offensive alliance','进攻同盟'],military_support:['Wartime aid to partner','向对方提供战时援助'],political:['Political cooperation','政治合作'],guarantee:['Guarantee partner independence','保障对方独立'],protectorate:['Protectorate · broad autonomy','保护关系 · 广泛自治'],client_kingdom:['Client kingdom · defined tribute','附属王国 · 明确贡赋']};
 function nationalIdeasPanel(){
