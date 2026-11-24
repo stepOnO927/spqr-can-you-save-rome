@@ -41,7 +41,11 @@ try {
    assert.deepEqual(result.uncovered,[],`${name} ${stage}: every visible Chinese label has the local fallback`);
    console.log(`TYPOGRAPHY ${name} ${stage}: ${result.glyphs} distinct glyphs; ${result.count} visible labels covered`);
   }
-  await check('setup');await page.locator(start).click();
+  await check('setup');
+  // The guided Roman start opens the atlas. Exercise the campaign screen here;
+  // the atlas is checked separately below.
+  if(name==='campaign')await page.locator('#campaign-guide').evaluate(el=>{el.checked=false;el.dispatchEvent(new Event('change',{bubbles:true}))});
+  await page.locator(start).click();
   if(name==='atlas'){await page.locator('[data-city="ROMA"]').waitFor();await page.waitForTimeout(8000)}
   await check('campaign');
   if(name==='atlas'){
