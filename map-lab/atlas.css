@@ -179,6 +179,9 @@ body.atlas .selection .dossier-vitals{margin-top:16px}
 body.atlas .selection .dossier-vitals>span,body.atlas .selection .dossier-vitals>b{grid-column:1/-1;border:0;padding:0}
 body.atlas .selection .dossier-vitals>span{padding-top:10px;font:700 11px/1.3 var(--iv-ui);letter-spacing:.14em;text-transform:uppercase;color:var(--iv-gold-dim)}
 body.atlas .selection .dossier-vitals>b{padding:2px 0 10px;border-bottom:1px solid var(--iv-line-soft);text-align:left;font:600 15px/1.4 var(--iv-ui)}
+.dossier-portrait{position:relative}
+.dossier-portrait-large{position:absolute;left:0;top:0;width:100%;aspect-ratio:4/5;object-fit:cover;object-position:50% 14%;border:1px solid var(--iv-basalt-950);pointer-events:none;opacity:0;transition:opacity var(--iv-med) ease}
+.dossier-portrait.has-large .dossier-portrait-large{opacity:1}
 .dossier-side .battle-note{margin-top:14px!important;font:12px/1.5 var(--iv-ui)!important;color:var(--iv-text-faint)!important}
 .dossier-main{min-width:0;min-height:0;display:flex;flex-direction:column}
 .dossier-head{flex:none;display:flex;align-items:flex-end;justify-content:space-between;gap:20px;padding:26px 76px 18px 32px;background:var(--iv-basalt-900)}

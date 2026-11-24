@@ -133,15 +133,18 @@ export function layoutDossier(panel,meta={}){
 
  // Portrait: the card stays the card (same node, same click behaviour); only its image is
  // upgraded to the full-size file when one exists.
+ const frame=el('div','dossier-portrait');
+ // The card's own image is left exactly as rendered (tests and other code read its src). A
+ // second, full-size image is laid over it when that file exists.
  const img=card.querySelector('img');
- if(img&&/-128\.jpg$/.test(img.getAttribute('src')||'')){const small=img.getAttribute('src'),base=small.replace(/-128\.jpg$/,'');const tries=[base+'.jpg',base+'-master.jpg',small];let i=0;img.onerror=()=>{i+=1;if(i<tries.length)img.src=tries[i];else img.onerror=null};img.src=tries[0]}
+ if(img&&/-128\.jpg$/.test(img.getAttribute('src')||'')&&typeof Image!=='undefined'){const small=img.getAttribute('src'),base=small.replace(/-128\.jpg$/,''),tries=[base+'.jpg',base+'-master.jpg'];const large=new Image();large.className='dossier-portrait-large';large.alt='';let i=0;large.onload=()=>{frame.classList.add('has-large')};large.onerror=()=>{i+=1;if(i<tries.length)large.src=tries[i];else large.remove()};large.src=tries[0];card.dossierLarge=large}
 
  const name=card.querySelector('strong')?.textContent||'',role=card.querySelector('small')?.textContent||'';
  const court=meta.friendly?meta.player:courtOf(meta.id),faction=court&&FACTIONS[court];
  const article=el('article','dossier');article.dataset.own=meta.friendly?'1':'0';
 
  const side=el('aside','dossier-side');
- const frame=el('div','dossier-portrait');frame.append(card);side.append(frame);
+ frame.append(card);if(card.dossierLarge)frame.append(card.dossierLarge);side.append(frame);
  if(grid){grid.classList.add('dossier-vitals');side.append(grid)}
  if(note)side.append(note);
 
