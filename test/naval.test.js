@@ -584,7 +584,7 @@ test('light-only fleets use ship speed and merchant hulls set cargo capacity',()
 test('shipbuilding spends treasury, materials, crew and time at a real shipyard',()=>{
  const s=newGrandGame('senate'),f=s.naval.fleets.find(x=>x.owner==='senate'),before={treasury:s.factions.senate.treasury,timber:s.development.senate.materials.timber,crew:s.factions.senate.manpower};const result=queueShip(s,'senate','italiaS','merchant');assert.equal(result.ok,true);assert.equal(s.factions.senate.treasury,before.treasury-17);assert.equal(s.development.senate.materials.timber,before.timber-2);assert.equal(s.factions.senate.manpower,before.crew-45);assert.equal(queueShip(s,'senate','italiaS','trireme').ok,false);for(let i=0;i<result.months-1;i++)advanceNaval(s);assert.equal(f.ships.merchant||0,0);advanceNaval(s);assert.equal(f.ships.merchant,1)
 });
-test('a separately launched transport can join a returning fleet and embark an army after reload',()=>{
+test('a separately launched transport can join a returning fleet; a defeated convoy can later cross',()=>{
  let s=newGrandGame('senate');s.seed=811;
  assert.equal(queueShip(s,'senate','italiaS','transport').ok,true);
  assert.equal(moveArmy(s,'pompey','italiaS').ok,true);
@@ -610,6 +610,15 @@ test('a separately launched transport can join a returning fleet and embark an a
  assert.equal(s.armies.find(a=>a.id==='pompey').region,'italiaS','a real hostile fleet can defeat the convoy and return the army');
  assert.ok(s.naval.reports.some(report=>report.kind==='battle'&&report.transportDisruptions?.['senate-adriatic']));
  assert.equal(s.armies.find(a=>a.id==='pompey').move,null);
+ let secondCrossing=false;
+ for(let month=0;month<18&&s.armies.find(a=>a.id==='pompey')?.region!=='epirus';month++){
+  const unit=s.armies.find(a=>a.id==='pompey'),fleet=s.naval.fleets.find(f=>f.id==='senate-adriatic');
+  const recentThreat=reportedHostileFleets(s,'senate').some(report=>report.zone==='adriatic');
+  if(unit?.region==='italiaS'&&!unit.move&&fleet?.port==='italiaS'&&fleet.hull>=70&&fleet.supply>=70&&!recentThreat&&previewMarch(s,'pompey','epirus').ok){assert.equal(moveArmy(s,'pompey','epirus').ok,true);secondCrossing=true}
+  tick(s);
+ }
+ assert.equal(secondCrossing,true,'the player can wait for dated hostile sightings to expire and repair before retrying');
+ assert.equal(s.armies.find(a=>a.id==='pompey')?.region,'epirus');
 });
 test('shipyard labor pauses a paid hull and resumes after save reload; cancellation returns only reserved crew',()=>{
  const s=newGrandGame('senate'),port=s.regions.find(r=>r.id==='italiaS'),fleet=s.naval.fleets.find(f=>f.id==='senate-adriatic'),messages=[];
