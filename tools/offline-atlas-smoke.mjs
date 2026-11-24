@@ -196,6 +196,7 @@ try{
  if(page.viewportSize().width<=600)await page.locator('#brief-toggle').click();
  await page.locator('[data-objective="italiaN"]').click();await page.waitForTimeout(1200);
  for(let i=0;i<3;i++){await page.locator('#zoom-in').click();await page.waitForTimeout(500)}
+ await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return !map.isMoving()},null,{timeout:10000});
  const site=await page.locator('[data-site="italiaN"]').boundingBox();
  const ariminum=GRAND_SITES.find(point=>point.id==='italiaN');
  const focus=await page.evaluate(async coordinates=>{const {map}=await import(document.querySelector('script[type="module"]').src),point=map.project(coordinates);return {center:map.getCenter().toArray(),point:[point.x,point.y],moving:map.isMoving()}},[ariminum.lon,ariminum.lat]);
