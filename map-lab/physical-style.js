@@ -203,4 +203,8 @@ for(const [region,bounds] of regionalDetail)for(const [level,zoom] of [['ultra',
 physicalStyle.layers.splice(physicalStyle.layers.findIndex(layer=>layer.id==='land-elevation-ultra'),0,...localLayers);
 // At zoom 9 the native higher-detail DEM completely replaces zoom-8 relief.
 // Keeping both active makes MapLibre fetch and shade redundant tiles during a jump.
-for(const layer of physicalStyle.layers)if((layer.id.startsWith('land-elevation-')||layer.id.startsWith('relief-'))&&layer.id.endsWith('-ultra'))layer.maxzoom=9;
+for(const layer of physicalStyle.layers){
+ if(!(layer.id.startsWith('land-elevation-')||layer.id.startsWith('relief-'))||!layer.id.endsWith('-ultra'))continue;
+ layer.maxzoom=9;
+ if(layer.type==='color-relief')layer.paint['color-relief-opacity']=['interpolate',['linear'],['zoom'],8,0,8.6,layer.source==='elevation-egypt-ultra'?.94:1];
+}
