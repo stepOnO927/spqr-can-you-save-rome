@@ -13,6 +13,7 @@ import {REGION_GEO,OUTSIDE,TERRAIN,LAKES,RIVERS,FRONTIER} from './geography.js?v
 import {COMMODITIES} from '../market-goods.js?v=faces-wheels-1';
 import {ownMarketIntelligence} from '../trade-intelligence.js?v=faces-wheels-1';
 import {campaignDate} from '../campaign-date.js?v=calendar-1';
+import {factionMark,identity} from '../identity.js?v=identity-encyclopedia-1';
 
 export const VIEW={lon0:27,lon1:127,lat0:55,lat1:23,W:1400,H:760};
 export const project=([lon,lat])=>[Math.round((lon-VIEW.lon0)/(VIEW.lon1-VIEW.lon0)*VIEW.W*10)/10,Math.round((VIEW.lat0-lat)/(VIEW.lat0-VIEW.lat1)*VIEW.H*10)/10];
@@ -149,10 +150,10 @@ export function drawMap(s,{lang=0,selected=null,selectedArmy=null,visibleArmy=()
   const label=L(r.name).split(/[（(]/)[0];
   return `<g class="seat-g" data-region="${r.id}">${mark}${targets.has(r.id)?`<circle class="target-ring" cx="${x}" cy="${y}" r="${f(11)}"/>`:''}<text class="region-label ${r.kind}" x="${cx.toFixed(1)}" y="${(cy+(Math.abs(cy-y)<8*k?14*k:0)).toFixed(1)}">${label}</text></g>`}).join('');
  const stacks={};for(const a of s.armies.filter(a=>a.men>0&&visibleArmy(a)))(stacks[a.region]||=[]).push(a);
- const glyph=o=>['han','han_loyalist','rival_court'].includes(o)?'汉':['zhizhi','huhanye'].includes(o)?'匈':o.startsWith('wusun')?'孙':o==='rebels'?'民':o==='qiang'?'羌':o==='kangju'?'康':o==='dayuan'?'宛':'国';
  const armies=Object.entries(stacks).map(([rid,list])=>{const [x,y]=regionPoint(rid);return list.map((a,i)=>{const ax=x+(10+i*26)*k,ay=y-22*k,sel=selectedArmy===a.id,n=a.men>=10000?(a.men/10000).toFixed(1).replace('.0','')+(lang?'万':'0k'):Math.round(a.men/1000)+'k';
   const label=lang&&a.men>=10000?(a.men/10000).toFixed(1).replace('.0','')+'万':Math.round(a.men/1000)+'k';
-  return `<g class="army ${sel?'selected':''} ${a.move?'moving':''}" data-army="${a.id}" role="button" tabindex="0"><title>${a.men}</title>${a.move?(()=>{const [tx,ty]=regionPoint(a.move.to);return `<path class="march" d="M${ax},${ay+8*k}L${tx},${ty}" marker-end="url(#arrow)"/>`})():''}<g transform="translate(${ax} ${ay}) scale(${k})"><rect x="-11" y="-9" width="24" height="18" rx="2" fill="${colors[a.owner]||'#555'}"/><rect x="-11" y="-9" width="9" height="18" rx="2" fill="#0003"/><text class="glyph" x="-6.5" y="4">${glyph(a.owner)}</text><text class="count" x="6" y="4">${label}</text></g></g>`}).join('')}).join('');
+  const mark=factionMark(a.owner,'standard',s).replace('<svg ','<svg x="-10" y="-8" width="15" height="16" ');
+  return `<g class="army ${sel?'selected':''} ${a.move?'moving':''}" data-army="${a.id}" role="button" tabindex="0"><title>${a.men}</title>${a.move?(()=>{const [tx,ty]=regionPoint(a.move.to);return `<path class="march" d="M${ax},${ay+8*k}L${tx},${ty}" marker-end="url(#arrow)"/>`})():''}<g transform="translate(${ax} ${ay}) scale(${k})"><rect x="-11" y="-9" width="24" height="18" rx="2" fill="${identity(a.owner,s).primary}"/>${mark}<text class="count" x="6" y="4">${label}</text></g></g>`}).join('')}).join('');
  const box=cameraBox(camera);
  return `<svg class="han-map mode-${mode} camera-${camera}" viewBox="${box}" preserveAspectRatio="xMidYMid meet" style="font-size:${f(21)}px" role="img" aria-label="${mode==='trade'?(lang?'汉代商路与市场地图':'Han trade routes and markets map'):(lang?'汉代战略地图':'Han strategic map')}">${defsFor(k).replace(`<path d="${''}"/>`,`<path d="${g.land}"/>`)}<marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#fff8e6"/></marker>
 <rect class="sea" x="-100" y="-100" width="${VIEW.W+200}" height="${VIEW.H+200}"/>

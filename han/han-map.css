@@ -61,10 +61,11 @@
 .han-map .region-label.steppe{font-style:italic}
 .han-map .target-ring{fill:none;stroke:var(--cinnabar);stroke-width:2.5;animation:han-pulse 1.2s infinite}
 .han-map .army{cursor:pointer}
-.han-map .army rect{stroke:#1c1411;stroke-width:1}
+.han-map .army > g > rect{stroke:#1c1411;stroke-width:1}
 .han-map .army .glyph{font-size:10px;fill:#fff8e6;text-anchor:middle;font-family:var(--serif),'SPQR CJK';pointer-events:none}
 .han-map .army .count{font-size:9.5px;fill:#fff8e6;text-anchor:middle;pointer-events:none;font-weight:600}
-.han-map .army.selected rect:first-of-type{stroke:#fff8e6;stroke-width:2.2}
+#map .han-map .army .faction-standard{width:15px;height:16px;pointer-events:none}
+.han-map .army.selected > g > rect:first-of-type{stroke:#fff8e6;stroke-width:2.2}
 .han-map .march{stroke:#fff8e6;stroke-width:1.6;stroke-dasharray:5 3;fill:none}
 .east-wrap{display:flex;flex-direction:column}.east-wrap .han-map{flex:1;min-height:0}
 .east-tools{position:absolute;z-index:3;top:62px;left:50%;transform:translateX(-50%);display:flex;flex-wrap:wrap;gap:4px;padding:5px 8px;background:#1b211fd9;border-radius:3px}.east-tools .map-mode{font-size:11px;padding:3px 8px;cursor:pointer}.east-tools .map-mode.active{outline:2px solid #a2311f}.east-sep{width:12px}
