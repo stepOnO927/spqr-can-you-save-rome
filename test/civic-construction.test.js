@@ -4,6 +4,7 @@ import {newGame,resolveBattle,upgradeSave} from '../engine.js?v=faces-name-disag
 import {MATERIALS,advanceInventions,buildingModifiers,canConstruct,startConstruction,startResearch} from '../inventions.js?v=mission-discount-1';
 import {advanceMarkets} from '../trade-markets.js?v=faces-import-legs-1';
 import {advanceReligion} from '../religion.js?v=faces-name-disagreement-1';
+import {recruitmentQuote,recruitFormation,templatesFor} from '../legion-designer.js?v=faces-name-disagreement-1';
 
 const complete=(s,region)=>{while(region.construction)advanceInventions(s)};
 
@@ -99,4 +100,26 @@ test('fortification works consume local supplies and increase actual battle defe
  assert.ok(fight(s)>fight(plain));
  const saved=upgradeSave(structuredClone(s));
  assert.equal(saved.regions.find(r=>r.id==='roma').fort,2);
+});
+
+test('a local training field shortens actual new formation training and persists in saves',()=>{
+ const s=newGame('caesar'),narbo=s.regions.find(r=>r.id==='narbo');
+ const template=templatesFor(s,'caesar').find(t=>t.name==='Standard Field Legion');
+ const baseline=recruitmentQuote(s,'caesar',template.id,'narbo');
+ s.inventions.caesar.knownMaterial.push('barracks','training_fields');
+ const timber=s.markets.regions.narbo.goods.timber.stock;
+ assert.equal(startConstruction(s,'caesar','narbo','training_fields').ok,true);
+ assert.equal(s.markets.regions.narbo.goods.timber.stock,timber-1);
+ complete(s,narbo);
+ assert.equal(buildingModifiers(narbo).training,1);
+ const faster=recruitmentQuote(s,'caesar',template.id,'narbo');
+ assert.equal(faster.training,baseline.training-1);
+ assert.equal(recruitmentQuote(s,'caesar',template.id,'gaul').training,baseline.training);
+ s.factions.caesar.treasury=500;s.factions.caesar.manpower=50000;s.factions.caesar.food=200;
+ s.markets.regions.narbo.goods.weapons.stock=4;
+ const raised=recruitFormation(s,'caesar','narbo',template.id);
+ assert.equal(raised.ok,true,raised.reason);
+ assert.equal(s.armies.find(a=>a.id===raised.armyId).training,faster.training);
+ const saved=upgradeSave(structuredClone(s));
+ assert.equal(recruitmentQuote(saved,'caesar',template.id,'narbo').training,faster.training);
 });

@@ -19,8 +19,9 @@ drawings.archives='M8 46h48M12 45V14h40v31M18 21h8v18h-8zm13 0h8v18h-8zm13 0h4v1
 drawings.baths='M7 44h50M12 39q20 10 40 0M14 30h36M18 28V17h28v11M24 18V9m8 8V8m8 9V9';
 drawings.civic_offices='M7 46h50M12 44V20h40v24M9 20l23-12 23 12M20 27h8v17m8-17h8v17M17 22h30';
 drawings.fortifications='M6 46h52M11 45V18h8v-7h8v7h10v-7h8v7h8v27M18 45V29h28v16M27 45V34h10v11';
+drawings.training_fields='M7 46h50M12 38h40M15 37V16h34v21M23 37V22m18 15V22M30 24l4 6m-4 0 4-6';
 const STONE_REQUIREMENTS={dams:2,water:1,sewers:1,inscriptions:1,roads:1,bridges:2,granaries:1,ports:2,warehouses:1,ritual_precinct:1,market_halls:1,archives:1,baths:2,civic_offices:1,fortifications:2};
-const TIMBER_REQUIREMENTS={dams:2,barracks:2,mines:1,bridges:2,granaries:1,ports:2,shipyards:2,siege:2,warehouses:1,ritual_precinct:1,quarries:1,market_halls:1,archives:1,baths:1,civic_offices:1,fortifications:2};
+const TIMBER_REQUIREMENTS={dams:2,barracks:2,mines:1,bridges:2,granaries:1,ports:2,shipyards:2,siege:2,warehouses:1,ritual_precinct:1,quarries:1,market_halls:1,archives:1,baths:1,civic_offices:1,fortifications:2,training_fields:1};
 const IRON_REQUIREMENTS={metalworking:1,shipyards:1,siege:1};
 const localMaterial=(s,regionId,good)=>s.markets?.regions?.[regionId]?.goods?.[good]??initializeMarkets(s).regions[regionId].goods[good];
 const material=(id,en,zh,descEn,descZh,cost,duration,prereq,effect,source,site='any')=>({id,branch:'material',name:[en,zh],description:[descEn,descZh],cost,duration,prereq,effect,source,image:`data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 56"><rect width="64" height="56" fill="#25352f"/><path d="${drawings[id]}" fill="none" stroke="#d7bb7d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`)}`,site,buildCost:Math.max(12,Math.round(cost*.7)),buildTime:Math.max(2,Math.round(duration*.7)),stoneCost:STONE_REQUIREMENTS[id]||0,timberCost:TIMBER_REQUIREMENTS[id]||0,ironCost:IRON_REQUIREMENTS[id]||0});
@@ -32,6 +33,7 @@ export const MATERIALS=[
  material('inscriptions','Public stone inscriptions','公共石刻','Commission durable public records and decrees.','刻写并公开法令与纪事。',15,3,[],{loyalty:1,upkeep:1},url.engineering),
  material('ritual_precinct','Local ritual precinct (game reconstruction)','地方祭仪场所（游戏复原）','Maintain a shared local ceremonial space; its form follows the community rather than a universal temple design.','维护当地共用的祭仪场所；形制依社群而异，并非统一神庙样式。',20,4,[],{satisfaction:1,upkeep:1},'https://www.metmuseum.org/essays/eastern-religions-in-the-roman-world'),
  material('barracks','Barracks improvement','兵营改良','Expand existing garrison quarters and training grounds.','扩建现有驻军营舍与操练场。',21,4,[],{recruit:1,upkeep:1},url.army),
+ material('training_fields','Local training field','地方训练场','Provide an established assembly and drill ground; newly formed troops complete training one month sooner.','整备既有集结与操练场地；新编军队的训练期缩短一个月。',22,4,['barracks'],{recruit:1,training:1,upkeep:1},url.army),
  material('fortifications','Theater fortification works','战区防御工事','Strengthen existing local walls and earthworks; a completed project raises the recorded defense level by one.','加固当地城墙及土垒；工程完工后战区防御等级提高一级。',25,5,['barracks'],{fort:1,upkeep:2},url.army),
  material('mines','Mine organization','矿场整顿','Organize extraction in suitable hill country.','在适宜丘陵整顿采矿生产。',24,5,['metalworking'],{tax:3,upkeep:1},url.engineering,'hills'),
  material('quarries','Stone quarry works','石料采场','Improve extraction only where local stone is already attested by the campaign market.','仅在战役市场已有石材产出的地区整顿采石。',20,4,[],{stoneProduction:1,tax:1,upkeep:1},url.quarry,'stone'),
@@ -109,9 +111,10 @@ export function aiInnovation(s,owner){
  // The distant Han court needs a war chest to defend its frontier and capital.
  const reserve=owner==='han'?125:0;
  const affordable=cost=>f.treasury-cost>=reserve;
- // Keep existing research choices stable when new optional projects are
- // introduced. A ritual site answers actual hardship, not a calendar roll.
- const candidates=ALL.filter(i=>i.id!=='ritual_precinct'&&!canResearch(s,owner,i.id)&&affordable(i.cost));
+ // Keep established research choices stable when special-purpose projects
+ // are introduced. These two works should not alter the calendar lottery
+ // that also drives a seeded court's later finances and family decisions.
+ const candidates=ALL.filter(i=>!['ritual_precinct','training_fields'].includes(i.id)&&!canResearch(s,owner,i.id)&&affordable(i.cost));
  const ritualNeed=s.regions.some(r=>r.owner===owner&&r.population?.satisfaction<45&&!r.buildings?.includes('ritual_precinct'));
  const ritualReady=ritualNeed&&!s.wars.some(w=>w.includes(owner))&&f.treasury>=reserve+80&&!canResearch(s,owner,'ritual_precinct')&&affordable(20);
  if(!x.research){if(ritualReady)startResearch(s,owner,'ritual_precinct');else if(candidates.length){const pick=candidates[Math.abs(s.year*12+s.month+owner.length*7)%candidates.length];startResearch(s,owner,pick.id)}}

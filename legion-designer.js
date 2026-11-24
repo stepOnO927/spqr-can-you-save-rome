@@ -4,6 +4,7 @@ import {politicalAmbition} from './conspiracies.js?v=faces-name-disagreement-1';
 import {reportedControl} from './control-intelligence.js?v=control-delivery-1';
 import {assignFictionalFieldCommander} from './dynasties.js?v=faces-name-disagreement-1';
 import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=faces-name-disagreement-1';
+import {buildingModifiers} from './inventions.js?v=mission-discount-1';
 
 // LEGION DESIGNER. Templates are data; an army carries a snapshot of the
 // composition it was actually organized into, so editing a template never
@@ -240,12 +241,12 @@ export function advanceReorganizations(s,{log=()=>{}}={}){
   if(a.owner===s.player)log(s,`${a.name[0]} completed its reorganization as “${a.formation.name}”.`,`${a.name[1]}完成改编：“${a.formation.name}”。`,{kind:'formation'});
  }
 }
-export function recruitmentQuote(s,owner,templateId){const t=formationState(s).templates[templateId];if(!t||t.owner!==owner)return null;const st=templateStats(t);return {treasury:st.recruitCost+st.equipment,manpower:st.personnel,food:Math.ceil(st.personnel/500),weapons:Math.max(1,Math.ceil(st.personnel/6000)),training:st.training,personnel:st.personnel}}
+export function recruitmentQuote(s,owner,templateId,regionId=null){const t=formationState(s).templates[templateId];if(!t||t.owner!==owner)return null;const st=templateStats(t),region=s.regions.find(r=>r.id===regionId&&r.owner===owner);return {treasury:st.recruitCost+st.equipment,manpower:st.personnel,food:Math.ceil(st.personnel/500),weapons:Math.max(1,Math.ceil(st.personnel/6000)),training:Math.max(1,st.training-(region?buildingModifiers(region).training||0:0)),personnel:st.personnel}}
 export function recruitFormation(s,owner,regionId,templateId,{log=()=>{}}={}){
  const r=s.regions.find(x=>x.id===regionId),f=s.factions[owner],t=formationState(s).templates[templateId];
  if(!r||r.owner!==owner||!t||t.owner!==owner)return {ok:false,reason:'unavailable'};
  if(validateTemplate(s,owner,t).length)return {ok:false,reason:'template'};
- const q=recruitmentQuote(s,owner,templateId);
+ const q=recruitmentQuote(s,owner,templateId,regionId);
  if(f.treasury<q.treasury||f.manpower<q.manpower||f.food<q.food)return {ok:false,reason:'resources',quote:q};
  const weapons=s.markets?.regions?.[regionId]?.goods?.weapons;
  if((weapons?.stock??0)<q.weapons)return {ok:false,reason:'weapons',quote:q};

@@ -134,7 +134,7 @@ export function designerScreen(state,lang){
  const commanders=Object.values(state.world.characters).filter(c=>c.alive&&c.faction===owner);
  const spec=d.commander?commanderSpecialty(state,d.commander):null,conc=d.commander?commandConcentration(state,owner,d.commander):null;
  const own=templatesFor(state,owner),armies=state.armies.filter(a=>a.owner===owner&&a.men>0),regions=state.regions.filter(r=>r.owner===owner);
- const q=d.id&&d.army?reorganizationQuote(state,owner,d.army,d.id):null,rq=d.id?recruitmentQuote(state,owner,d.id):null,weaponStock=state.markets?.regions?.[d.region]?.goods?.weapons?.stock??0;
+ const q=d.id&&d.army?reorganizationQuote(state,owner,d.army,d.id):null,rq=d.id?recruitmentQuote(state,owner,d.id,d.region):null,weaponStock=state.markets?.regions?.[d.region]?.goods?.weapons?.stock??0;
  const outdated=d.id?outdatedArmies(state,owner).filter(id=>state.armies.find(a=>a.id===id)?.formation?.templateId===d.id):[];
  const cmp=ui.compare.map(id=>formationState(state).templates[id]).filter(t=>t&&t.owner===owner);
  const reasonText=r=>({location:lang==='zh'?'军队须位于己方战区':'Army must be in friendly territory',busy:lang==='zh'?'军队正在行军、围攻或改编':'Army is marching, besieging or reorganizing',enemy:lang==='zh'?'敌军在场':'Enemy present',supply:lang==='zh'?'没有通往己方补给中心的路线':'No route to a friendly supply center',template:lang==='zh'?'模板无效':'Template invalid',resources:lang==='zh'?'资源不足':'Not enough resources',weapons:lang==='zh'?'当地兵器不足':'Insufficient local weapons',unknown:'—'})[r]||r;

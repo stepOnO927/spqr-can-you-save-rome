@@ -1,5 +1,6 @@
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
+import {FACTIONS} from '../han/data.js?v=han-1';
 
 const base=process.env.SPQR_URL||'http://127.0.0.1:5173';
 const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
@@ -22,7 +23,7 @@ try{
   if(faction==='wusun')assert.match(bannerColor,/#3f6f6a/);
   else assert.match(bannerColor,/#77613d/);
   await page.locator('#lang').click();
-  assert.match(await page.locator('#overview .realm-banner').innerText(),faction==='wusun'?/乌孙/:/匈奴/);
+  assert.ok((await page.locator('#overview .realm-banner').innerText()).includes(FACTIONS[faction].name[1]));
   assert.equal(await standard.count()>0,true);
   await page.locator('#save').click();
   await page.reload({waitUntil:'domcontentloaded'});
