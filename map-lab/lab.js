@@ -147,7 +147,7 @@ function syncProceduralMarkers(){
  for(const entity of state.regions.flatMap(r=>r.localEntities||[]).filter(e=>e.procedural)){
   const name=entity.name[0].toUpperCase(),city={name,p:entity.coordinates,kind:entity.type==='village'?'minor village':entity.type==='nomadic'?'minor nomad':entity.type==='wilderness'?'minor wilderness':entity.fort?'minor fort':'minor',desc:entity.description[0],procedural:true};
   cities.push(city);cityZh[name]=entity.name[1];cityTheater[name]=entity.theater;localCityId[name]=entity.id;
-  const el=document.createElement('button');el.className=`city-marker ${city.kind}`;el.dataset.city=name;el.setAttribute('aria-label',`${t('inspect')} ${name}`);
+  const el=document.createElement('button');el.className=`city-marker procedural ${city.kind}`;el.dataset.city=name;el.setAttribute('aria-label',`${t('inspect')} ${name}`);
   el.innerHTML=`<span class="city-icon"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 12h12M4 11V7l4-3 4 3v4M7 11V8h2v3"/></svg></span><span class="name">${esc(lang==='zh'?entity.name[1]:name)}</span>`;
   el.addEventListener('click',e=>{e.stopPropagation();activeFaction=null;activeArmy=null;activeBattle=null;previewDestination='';clearReach();renderArmies();showCity(city);emit('city',name)});
   const item=marker(el,city.p,'left',entity.type==='village'?[0,28]:entity.type==='wilderness'?[0,-25]:[0,0]);cityMarkers.push(item);proceduralMarkers.push(item);

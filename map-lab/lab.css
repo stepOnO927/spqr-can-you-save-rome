@@ -152,6 +152,8 @@
 .city-marker.wilderness .name{display:none}
 .city-marker.wilderness:hover .name,.city-marker.wilderness:focus-visible .name{display:inline;position:absolute;left:22px;top:0;z-index:3}
 .army.maplibregl-marker{z-index:4}
+.city-marker.procedural .name{display:none}
+.city-marker.procedural:hover .name,.city-marker.procedural:focus-visible .name{display:inline;position:absolute;left:22px;top:0;pointer-events:none}
 
 #guide{max-height:min(62dvh,390px);overflow:auto;pointer-events:auto}
 #guide.guide-at-top{top:68px;bottom:auto}
