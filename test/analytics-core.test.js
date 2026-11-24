@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {SessionMeter,releaseChannel,classifySession} from '../analytics-core.js';
+import {analyticsSettings} from '../analytics-settings.js';
 
 test('page, foreground and active time remain separate across idle and hidden periods',()=>{
  let clock=0;const meter=new SessionMeter({now:()=>clock,idleMs:60000});
@@ -20,6 +21,8 @@ test('channel detection isolates production, staging, local and Poki',()=>{
  assert.equal(releaseChannel('stepono927.github.io','/spqr-can-you-save-rome/'),'production');
  assert.equal(releaseChannel('spqr-rome.pages.dev','/'),'production');
  assert.equal(releaseChannel('preview.spqr-rome.pages.dev','/map-lab/'),'staging');
+ assert.equal(releaseChannel('spqr-can-you-save-rome.pages.dev','/',false,analyticsSettings.hostnames),'production');
+ assert.equal(releaseChannel('codex-world-kings-clean-revi.spqr-can-you-save-rome.pages.dev','/map-lab/',false,analyticsSettings.hostnames),'staging');
  assert.equal(releaseChannel('spqr.example.com','/',false,{production:['spqr.example.com']}),'production');
  assert.equal(releaseChannel('preview.example.com','/',false,{staging:['preview.example.com']}),'staging');
  assert.equal(releaseChannel('unlisted.example.com','/'),'development_preview');
