@@ -26,7 +26,8 @@ test('quarry works need a real stone source and increase measured stone output o
 test('a completed urban market hall increases the actual local stock ceiling',()=>{
  const s=newGame('senate'),rome=s.regions.find(r=>r.id==='roma');
  s.inventions.senate.knownMaterial.push('market_halls');
- assert.equal(canConstruct(s,'senate','italiaS','market_halls'),'site');
+ const forest=newGame('caesar');forest.inventions.caesar.knownMaterial.push('market_halls');
+ assert.equal(canConstruct(forest,'caesar','gaul','market_halls'),'site');
  assert.equal(startConstruction(s,'senate','roma','market_halls').ok,true);complete(s,rome);
  assert.equal(buildingModifiers(rome).storage,20);
  const control=structuredClone(s);
@@ -34,6 +35,22 @@ test('a completed urban market hall increases the actual local stock ceiling',()
  for(const state of [s,control]){const good=state.markets.regions.roma.goods.grain;Object.assign(good,{stock:100,production:0,consumption:0});state.month++;advanceMarkets(state)}
  assert.equal(s.markets.regions.roma.goods.grain.stock-control.markets.regions.roma.goods.grain.stock,20);
  assert.ok(s.markets.regions.roma.goods.grain.stock<=100);
+});
+
+test('a marked major city can host civic buildings even when the surrounding theater is desert or plain',()=>{
+ for(const [faction,regionId] of [['egypt','egypt'],['han','hanGuanzhong']]){
+  const s=newGame(faction),r=s.regions.find(x=>x.id===regionId);
+  s.inventions[faction].knownMaterial.push('archives','market_halls');
+  s.factions[faction].treasury=500;s.factions[faction].manpower=5000;
+  s.markets.regions[regionId].goods.stone.stock=4;
+  s.markets.regions[regionId].goods.timber.stock=4;
+  assert.notEqual(r.terrain,'urban');
+  assert.equal(canConstruct(s,faction,regionId,'archives'),null,regionId);
+  assert.equal(canConstruct(s,faction,regionId,'market_halls'),null,regionId);
+  assert.equal(startConstruction(s,faction,regionId,'archives').ok,true,regionId);
+  complete(s,r);
+  assert.ok(r.buildings.includes('archives'),regionId);
+ }
 });
 
 test('an urban scholarly collection speeds later research and public baths improve annual satisfaction',()=>{
