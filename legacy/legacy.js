@@ -1,6 +1,6 @@
-import {BUILDINGS,GOODS,loadProfile,saveProfile,exportProfile,importProfile,purchase,applyCosmetic,createScenario,claimReward} from './legacy-core.js?v=19';
+import {BUILDINGS,GOODS,loadProfile,saveProfile,exportProfile,importProfile,purchase,applyCosmetic,createScenario,claimReward} from './legacy-core.js?v=20';
 import {PETITIONS,decidePetition,availablePetitions} from './civic.js?v=10';
-import {ARTIFACTS} from './museum.js?v=13';
+import {ARTIFACTS} from './museum.js?v=14';
 import {selectableDrivers,raceRivals,startRace,settleRace} from './race.js?v=12';
 import {availableActivities,resolveActivity} from './activities.js?v=9';
 import {harborDossier,beginHarborDossier,corroborateHarborDossier,closeHarborDossier,HARBOR_COSTS} from './intelligence-case.js?v=4';
@@ -12,8 +12,8 @@ import {achievementDefinition} from '../achievement-system.js?v=5';
 import {archivePanelHtml} from './archive-ui.js?v=2';
 import {triumphalArchHtml} from './arch-ui.js?v=1';
 import {libraryCodexHtml,bindLibraryCodex} from './library-codex.js?v=12';
-import {harborOfficeHtml} from './harbor-ui.js?v=1';
-import {commissionMerchantReport,acquireTyrianCloth,settleHarborExchange} from './harbor-trade.js?v=1';
+import {harborOfficeHtml} from './harbor-ui.js?v=2';
+import {commissionMerchantReport,acquireTyrianCloth,settleHarborExchange,settleGrainContractReview} from './harbor-trade.js?v=2';
 import {CAMP_DRILL_STAGES,CAMP_DRILL_GRADES,beginCampDrill,answerCampDrill} from './camp-drill.js?v=2';
 import {FESTIVAL_PLANS,FESTIVAL_COUNSELS,FESTIVAL_PRIORITIES,beginTempleFestival,counselTempleFestival,settleTempleFestival} from './temple-festival.js?v=1';
 import {MUSEUM_HALLS,museumHallFor,museumPrestige,curateArtifact,removeFeaturedArtifact} from './museum-curation.js?v=2';
@@ -128,6 +128,7 @@ function render(){if(race){race.stop();race=null}document.documentElement.lang=l
  document.querySelectorAll('[data-merchant-report]').forEach(el=>el.onclick=()=>{const result=commissionMerchantReport(profile,el.dataset.merchantReport);if(result.ok){persist();notify(t('Dated merchant report filed.','商人快报已归档并标注日期。'))}});
  document.querySelector('[data-trade]')?.addEventListener('click',()=>{if(acquireTyrianCloth(profile).ok){persist();notify(t('Tyrian cloth acquired.','已购入推罗紫布。'))}});
  document.querySelectorAll('[data-harbor-event]').forEach(el=>el.onclick=()=>{if(settleHarborExchange(profile,el.dataset.harborEvent).ok){persist();notify(t('International exchange recorded.','国际往来已记录。'))}});
+ document.querySelectorAll('[data-grain-contract]').forEach(el=>el.onclick=()=>{const result=settleGrainContractReview(profile,el.dataset.grainContract);if(result.ok){persist();notify(t(`Contract review recorded · +${result.coins} Laurels`,`承包商复核已归档 · +${result.coins}桂冠金币`))}else notify(t('That review is unavailable.','该复核暂不可用。'))});
  document.querySelector('[data-open-shop]')?.addEventListener('click',()=>{panel='shop';render()});
  document.querySelector('[data-review]')?.addEventListener('click',()=>{if(profile.decisions.length&&claimReward(profile,'court:review',40)){profile.politics.corruption=Math.max(0,profile.politics.corruption-4);persist();notify(t('Public record published · +40 Laurels','公开记录已发布 · +40桂冠金币'))}else notify(t('A new Curia ruling is required.','需要先由元老院作出裁决。'))});
  document.querySelectorAll('[data-boundary]').forEach(el=>el.onclick=()=>{const action=el.dataset.boundary,result=action==='begin'?beginBoundaryCase(profile,el.dataset.source):action==='corroborate'?corroborateBoundaryCase(profile):action==='close'?closeBoundaryCase(profile,el.dataset.verdict):{ok:false};if(result.ok){persist();notify(action==='close'?t(`Court ruling recorded · +${result.coins} Laurels`,`法庭裁决已归档 · +${result.coins}桂冠金币`):t('Evidence added to the court file.','证据已加入法庭案卷。'));const card=document.querySelector('.boundary-case'),header=document.querySelector('.hub-header');if(card&&header)window.scrollTo(0,Math.max(0,window.scrollY+card.getBoundingClientRect().top-header.getBoundingClientRect().height-12))}else notify(t('That court step is unavailable.','该法庭步骤暂不可用。'))});

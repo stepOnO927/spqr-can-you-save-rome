@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {loadProfile,exportProfile,importProfile,purchase,applyCosmetic} from './legacy-core.js';
-import {HARBOR_ROUTES,commissionMerchantReport,acquireTyrianCloth,settleHarborExchange} from './harbor-trade.js';
+import {HARBOR_ROUTES,GRAIN_CONTRACT_COSTS,commissionMerchantReport,acquireTyrianCloth,settleHarborExchange,grainContractReviewAvailable,settleGrainContractReview} from './harbor-trade.js';
 import {ARTIFACTS} from './museum.js';
+import {decidePetition} from './civic.js';
 
 const profile=()=>{const storage={getItem:()=>null,setItem:()=>{}};const p=loadProfile(storage);p.coins=2000;return p};
 
@@ -40,4 +41,40 @@ test('owned foreign awnings can be reapplied after a different purchased theme',
  assert.equal(applyCosmetic(p,'theme-harbor'),true);assert.equal(p.theme,'harbor');assert.equal(p.coins,coins);
  assert.equal(applyCosmetic(p,'unowned-cosmetic'),false);
  const saved=importProfile(exportProfile(p));assert.equal(saved.theme,'harbor');assert.ok(saved.purchases.includes('theme-harbor'));
+});
+
+test('a delayed Curia grain choice opens one paid Harbor Office consequence across saves',()=>{
+ const p=profile();assert.equal(purchase(p,'harbor').ok,true);
+ assert.equal(settleGrainContractReview(p,'audit').ok,false);
+ assert.equal(decidePetition(p,'grain',1).ok,true);
+ for(const id of ['doorway','villa'])assert.equal(decidePetition(p,id,0).ok,true);
+ assert.equal(grainContractReviewAvailable(p),false,'two later Curia rulings are too early');
+ assert.equal(decidePetition(p,'inheritance',0).ok,true);
+ assert.equal(grainContractReviewAvailable(p),true);
+ const restored=importProfile(exportProfile(p)),before={coins:restored.coins,politics:{...restored.politics}};
+ const result=settleGrainContractReview(restored,'audit',new Date('2026-11-23T12:00:00Z'));
+ assert.equal(result.ok,true);assert.equal(restored.coins,before.coins-GRAIN_CONTRACT_COSTS.audit+25);
+ assert.equal(restored.politics.corruption,before.politics.corruption-4);
+ assert.equal(restored.harborEvents.at(-1).at,'2026-11-23T12:00:00.000Z');
+ assert.ok(restored.collectibles.includes('grain-contract-review'));
+ assert.ok(ARTIFACTS.some(item=>item.id==='grain-contract-review'&&item.kind==='campaign'));
+ const saved=importProfile(exportProfile(restored)),coins=saved.coins;
+ assert.deepEqual(saved.harborEvents,restored.harborEvents);
+ assert.equal(settleGrainContractReview(saved,'ratify').ok,false);
+ assert.equal(saved.coins,coins);
+});
+
+test('grain contractor alternatives have distinct costs and cannot reclaim an old reward',()=>{
+ const ready=()=>{const p=profile();purchase(p,'harbor');decidePetition(p,'grain',1);for(const id of ['doorway','villa','inheritance'])decidePetition(p,id,0);return p};
+ const ratify=ready(),ratifyBefore={...ratify.politics};
+ assert.equal(settleGrainContractReview(ratify,'ratify').ok,true);
+ assert.equal(ratify.politics.corruption,ratifyBefore.corruption+5);
+ assert.equal(ratify.harborEvents.at(-1).cost,GRAIN_CONTRACT_COSTS.ratify);
+ const defer=ready(),deferBefore={...defer.politics};defer.rewards.push('harbor:grain-contractor-review');
+ const coins=defer.coins,result=settleGrainContractReview(defer,'defer');
+ assert.equal(result.ok,true);assert.equal(result.coins,0);assert.equal(defer.coins,coins);
+ assert.equal(defer.politics.senate,deferBefore.senate+2);
+ assert.equal(settleGrainContractReview(ready(),'unsupported').ok,false);
+ const poor=ready();poor.coins=19;assert.equal(settleGrainContractReview(poor,'audit').reason,'coins');
+ assert.equal(grainContractReviewAvailable(poor),true);
 });
