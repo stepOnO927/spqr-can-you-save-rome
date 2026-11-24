@@ -61,3 +61,10 @@ test('new non-aggression and neutrality promises are respected before accepting 
  const s=incoming();s.wars=[];s.agreements.push({id:'neutral',type:'neutrality',status:'active',parties:['parthia','caesar'],expiresAt:s.year*12+s.month+12,terms:neutralityTerms('parthia','caesar','senate')});
  assert.equal(answerCoalitionInvitation(s,s.world.coalitionInvitations[0].id,'accept_coalition').reason,'coalition_conflict');
 });
+
+test('an autonomous initiator still reassesses its own threat rather than inheriting human intent',()=>{
+ const s=setup();s.relations['egypt:numidia']=40;s.world.diplomaticKnowledge.egypt={caesar:{id:'caesar',status:'active',parties:['egypt','caesar']},numidia:{id:'numidia',status:'active',parties:['egypt','numidia']}};
+ assert.ok(sendCoalitionInvitation(s,'egypt',['caesar','numidia'],'senate',{autoplayPlayer:true}).ok);
+ const advance=()=>{s.month++;advanceCoalitionInvitations(s,estimatedStrength,()=>.5,{autoplayPlayer:true})};advance();advance();assert.deepEqual(s.world.coalitionInvitations[0].sealed.replies,['accepted','accepted']);
+ s.relations['egypt:senate']=100;for(const unit of s.armies.filter(a=>a.owner==='egypt'))unit.men=900000;advance();advance();assert.equal(s.world.coalitionInvitations[0].status,'lapsed');assert.equal((s.coalitions||[]).length,0);
+});

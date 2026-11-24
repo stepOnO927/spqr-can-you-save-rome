@@ -83,7 +83,7 @@ export function advanceCoalitionInvitations(s,estimateStrength,roll,{autoplayPla
   if(x.humanRecipient&&x.playerDecision==='accepted'){x.provisional=outcome;x.phase='confirmation';x.remaining=2;delete x.sealed;continue}
   x.status=outcome;
   if(x.status==='accepted'){
-   const result=formCoalition(s,x.leader,x.members,x.target,estimateStrength,{allowPlayer:autoplayPlayer||x.leader===s.player,priorConsent:true});
+   const result=formCoalition(s,x.leader,x.members,x.target,estimateStrength,{allowPlayer:autoplayPlayer||x.leader===s.player,consentingLeader:x.leader===s.player&&!autoplayPlayer,priorConsent:true});
    if(result.ok){x.coalition=result.coalition.id;for(const member of x.members){rememberPoliticalEvent(s,x.leader,member,'cooperation_accepted',2);rememberPoliticalEvent(s,member,x.leader,'cooperation_accepted',2)}}else x.status='lapsed';
   }
   x.delivered={year:s.year,month:s.month};delete x.sealed;x.phase='delivered';
