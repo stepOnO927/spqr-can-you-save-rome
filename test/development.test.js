@@ -1288,6 +1288,11 @@ test('Republican-era source corrections retain save IDs and avoid later public-l
   assert.match(item.source.title,new RegExp(title));
   assert.ok(item.source.url.endsWith(url),id);
  }
+ for(const id of ['rhetorical-education','civic-education']){
+  const item=IDEAS.find(x=>x.id===id);
+  assert.match(item.context[0],/Crassus, speaking in Cicero’s dialogue/);
+  assert.match(item.context[1],/西塞罗的对话作品中，克拉苏/);
+ }
 });
 
 test('both research branches render every node, including naval capabilities without buildings',()=>{
