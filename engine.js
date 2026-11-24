@@ -741,7 +741,8 @@ function advanceMarchConditions(s,a){
  if(shortage&&a.owner===s.player)log(s,`${a.name[0]} lacks ${shortage} provisions on the march.`,`${a.name[1]}行军补给短缺${shortage}份。`,{armyId:a.id,kind:'supply_shortage'});
  if(move.paused)return;
  const edge=estimateMarchEdge(s,a,a.region,move.to,{pace:move.pace});if(edge?.blocked){if(move.blocked!==edge.blocked&&a.owner===s.player)log(s,`${a.name[0]} halted: the pass is closed by snow.`,`${a.name[1]}暂停行军：山口因积雪封闭。`,{armyId:a.id,kind:'march_blocked'});move.blocked=edge.blocked;return}
-  const target=region(s,move.to);if(target&&!militaryAccessStatus(s,a.owner,target.id,target.owner).allowed&&move.intent!=='unauthorized_entry'){a.move=null;a.order=null;if(a.owner===s.player)log(s,`${a.name[0]} stopped: entry into ${target.name[0]} is no longer permitted.`,`${a.name[1]}停止行军：当前不能进入${target.name[1]}。`,{armyId:a.id,kind:'march_blocked'});return}
+  // The destination's real controller is checked only on arrival. Checking it
+  // en route would disclose a hidden border change before the army gets there.
  delete move.blocked;
  move.elapsed=(move.elapsed||0)+1;move.remaining--;move.progress=Math.min(1,move.elapsed/(move.totalMonths||move.elapsed));
 }

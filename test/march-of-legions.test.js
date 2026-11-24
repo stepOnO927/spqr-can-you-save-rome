@@ -46,6 +46,17 @@ test('marching consumes provisions and advances by months rather than teleportin
  tick(s);assert.equal(a.region,'cisalpine');assert.ok(a.move.elapsed>=1);assert.ok(a.provisions<before);assert.ok(a.move.progress>0&&a.move.progress<1);
 });
 
+test('a hidden border change is checked at arrival, not leaked during a long march',()=>{
+ const s=newGame('caesar'),a=s.armies.find(x=>x.id==='xiii');
+ const months=previewMarch(s,a.id,'narbo').months;assert.ok(months>1);
+ assert.equal(issueMilitaryOrder(s,a.id,'move','narbo').ok,true);
+ region(s,'narbo').owner='parthia';const departureLogCount=s.log.length;
+ tick(s);assert.equal(a.region,'cisalpine');assert.equal(a.move?.to,'narbo');assert.equal(a.move.remaining,months-1);
+ assert.equal(s.log.slice(departureLogCount).some(entry=>entry.kind==='march_blocked'),false);
+ for(let month=1;month<months;month++)tick(s);
+ assert.equal(a.region,'cisalpine');assert.equal(a.move,null);
+});
+
 test('food shortage is visible and can cause contextual nonbattle losses',()=>{
  const s=newGame('caesar'),a=s.armies.find(x=>x.id==='xiii');a.provisions=0;s.factions.caesar.food=-100;
  assert.equal(issueRouteOrder(s,a.id,['narbo']).ok,true);tick(s);

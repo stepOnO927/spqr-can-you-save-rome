@@ -86,7 +86,12 @@ test('changed border control pauses the route without an illegal crossing and ca
   const state = newGame('caesar'), legion = state.armies.find(unit => unit.id === 'xiii');
   assert.equal(startExpedition(state, legion.id, routeTo(state, 'gaul')).ok, true);
   state.regions.find(region => region.id === 'narbo').owner = 'parthia';
-  tick(state); tick(state);
+  const monthsToBorder = legion.move.remaining;
+  for (let month = 0; month < monthsToBorder - 1; month++) {
+    tick(state);
+    assert.equal(legion.move?.to, 'narbo');
+  }
+  tick(state);
   assert.equal(legion.region, 'cisalpine');
   assert.equal(legion.move, null);
   assert.equal(legion.expedition.status, 'paused');
