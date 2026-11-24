@@ -1342,6 +1342,17 @@ test('a solvent AI replaces missing transport capacity for an actual coastal arm
  poorFleet.ships.transport=1;cashPoor.factions.senate.treasury=35;advanceNaval(cashPoor);
  assert.ok(!cashPoor.naval.queues.some(q=>q.owner==='senate'&&q.type==='transport'),'a cash-poor command does not spend its last money on new lift');
 });
+test('a reinforced army sees its real single-fleet lift limit and uncrewed ships cannot ferry it',()=>{
+ const s=newGrandGame('senate'),unit=s.armies.find(a=>a.id==='italy'),fleet=s.naval.fleets.find(f=>f.id==='senate-adriatic');
+ unit.region='italiaS';unit.men=11800;fleet.ships.transport=3;
+ assert.deepEqual(previewMarch(s,unit.id,'epirus'),{ok:false,reason:'transport-capacity',required:11800,available:9000});
+ assert.deepEqual(moveArmy(s,unit.id,'epirus'),{ok:false,reason:'transport-capacity',required:11800,available:9000});
+ assert.equal(unit.move,null,'a rejected voyage leaves the army ashore');
+ unit.men=8800;fleet.sailors=0;
+ assert.deepEqual(previewMarch(s,unit.id,'epirus'),{ok:false,reason:'transport-fleet',required:8800,available:0});
+ fleet.sailors=570;
+ assert.equal(previewMarch(s,unit.id,'epirus').ok,true);
+});
 test('AI takes an available land route instead of stalling at a sea link without transports',()=>{
  const s=newGrandGame('caesar');
  for(const r of s.regions)if(r.id!=='t036'&&r.owner==='caesar')r.owner='senate';
@@ -1364,7 +1375,7 @@ test('new Adriatic harbor crossing requires transports and carries an army throu
  unit.region='t013';unit.men=5200;
  fleet.port='t013';fleet.zone=portZone('t013');
  fleet.ships.transport=0;
- assert.deepEqual(previewMarch(s,unit.id,'t072'),{ok:false,reason:'route'});
+ assert.deepEqual(previewMarch(s,unit.id,'t072'),{ok:false,reason:'transport-capacity',required:5200,available:0});
  fleet.ships.transport=2;
  assert.equal(previewMarch(s,unit.id,'t072').sea,true);
  assert.equal(moveArmy(s,unit.id,'t072').ok,true);
@@ -1381,7 +1392,7 @@ test('Ostia to Utica has a transport-gated sea crossing that survives a voyage s
  unit.region='t016';unit.men=5200;
  s.regions.find(r=>r.id==='t016').owner='senate';
  fleet.port='t016';fleet.zone=portZone('t016');fleet.ships.transport=0;
- assert.deepEqual(previewMarch(s,unit.id,'africa'),{ok:false,reason:'route'});
+ assert.deepEqual(previewMarch(s,unit.id,'africa'),{ok:false,reason:'transport-capacity',required:5200,available:0});
  fleet.ships.transport=2;
  assert.equal(previewMarch(s,unit.id,'africa').sea,true);
  assert.equal(moveArmy(s,unit.id,'africa').ok,true);

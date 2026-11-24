@@ -18,9 +18,9 @@ try{
  });
  await page.goto('http://spqr.test/test-shell');
  const views=await page.evaluate(async()=>{
-  const {newGrandGame}=await import('/engine.js?v=257');
-  const {supportPirates,advanceNaval}=await import('/naval.js?v=77');
-  const {renderNavalPanel}=await import('/map-lab/naval-ui.js?v=101');
+  const {newGrandGame}=await import('/engine.js?v=258');
+  const {supportPirates,advanceNaval}=await import('/naval.js?v=78');
+  const {renderNavalPanel}=await import('/map-lab/naval-ui.js?v=102');
   const s=newGrandGame('senate');s.seed=Math.imul(35,2654435761)>>>0;
   s.regions.find(r=>r.id==='illyricum').owner='caesar';
   s.naval.routes.find(r=>r.id==='adriatic-commerce').lastDispatch={year:s.year,month:s.month};

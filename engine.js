@@ -7,20 +7,20 @@ import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-syste
 import {advanceConspiracies} from './conspiracies.js?v=7';
 import {IDEAS,MATERIALS,BUILDINGS,initializeDevelopment,advanceDevelopment,activeEffects,localBuildingEffects,settleGranaryReserves,migrateGranaryReserves,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,scholarVisitCheck,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,researchInnovation,researchTerms,adoptIdea,ideaAdoptionPlan,ideaCompatibility,ideaSlotExpansionCheck,removeIdea,cancelIdeaAdoption,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials} from './development.js?v=68';
 import {initializeReports,recordEvent,recordControl,recordBattle,recordSiege,recordMovement,recordDiplomacy,recordRebellion,updateObjectives,beginBriefing,finishBriefing} from './campaign-reports.js?v=16';
-import {advanceRecon,assessment,sendScouts,probePositions,latestRecon,requestReinforcements} from './reconnaissance.js?v=25';
+import {advanceRecon,assessment,sendScouts,probePositions,latestRecon,requestReinforcements} from './reconnaissance.js?v=26';
 import {grandRegionsFrom,GRAND_ROUTES} from './grand-map-data.js?v=2';
-import {grandAdjacent,grandRoute,edgeMonths,armySupply,advanceOperationalState,encircled,flankFactor,canEmbark,supplyBottlenecks,strategicRetreat} from './grand-operations.js?v=52';
+import {grandAdjacent,grandRoute,embarkationBlock,edgeMonths,armySupply,advanceOperationalState,encircled,flankFactor,canEmbark,supplyBottlenecks,strategicRetreat} from './grand-operations.js?v=53';
 import {initializeLocalSociety,faithSatisfaction,advanceDemography,advanceReligion,setReligiousPolicy,productiveEstateRegion,provincialRitesCredit,foodShortageTier} from './local-society.js?v=9';
 import {initializeFigures,advanceFigures} from './great-figures.js';
-import {initializeNaval,advanceNaval,commitArmyTransport,cancelArmyTransport,finishArmyTransport,reconcileActiveTransports,reportedTransportDanger} from './naval.js?v=77';
+import {initializeNaval,advanceNaval,commitArmyTransport,cancelArmyTransport,finishArmyTransport,reconcileActiveTransports,reportedTransportDanger} from './naval.js?v=78';
 import {initializeAchievements,evaluateAchievements,endCampaign} from './achievement-system.js?v=5';
 import {militaryResult,settlementEligible,publicSettlementTerms,setCampaignOutcome} from './campaign-outcome.js?v=7';
-import {nationalBudget} from './national-budget.js?v=39';
-export {nationalBudget} from './national-budget.js?v=39';
+import {nationalBudget} from './national-budget.js?v=40';
+export {nationalBudget} from './national-budget.js?v=40';
 export {endCampaign,revealedAchievements} from './achievement-system.js?v=5';
-export {SEA_ZONES,SHIPS,NAVAL_JOBS,NAVAL_TACTICS,portZone,seaRoute,fleet,queueShip,cancelShipConstruction,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,reportedHostileFleets,reportedNonHostileFleets,supportPirates,dispatchWagonSupply,settleMerchantDispute} from './naval.js?v=77';
+export {SEA_ZONES,SHIPS,NAVAL_JOBS,NAVAL_TACTICS,portZone,seaRoute,fleet,queueShip,cancelShipConstruction,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,reportedHostileFleets,reportedNonHostileFleets,supportPirates,dispatchWagonSupply,settleMerchantDispute} from './naval.js?v=78';
 export {recruitFigure,figureStatus,figureActive} from './great-figures.js';
-export {holdPosition,strategicRetreat,armySupply,encircled,supplyNetwork,navalCapacity,availableNavalLift,supplyBottlenecks} from './grand-operations.js?v=52';
+export {holdPosition,strategicRetreat,armySupply,encircled,supplyNetwork,navalCapacity,availableNavalLift,supplyBottlenecks} from './grand-operations.js?v=53';
 export {knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,researchInnovation,adoptIdea,removeIdea,cancelIdeaAdoption,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials};
 export {setReligiousPolicy,provincialRitesCredit};
 export {queueMission};
@@ -117,7 +117,7 @@ export function upgradeSave(s){
 export function previewMarch(s,armyId,destination){
   const a=army(s,armyId); const target=region(s,destination);
   if(!a||!target||a.men<=0||a.move||a.siege||a.reconPending||a.trainingRemaining)return {ok:false,reason:'unavailable'};
-  if(s.grandMap){const plan=grandRoute(s,a,destination,isWar);if(!plan)return {ok:false,reason:'route'};return {ok:true,...plan,terrain:target.terrain,hostile:plan.hostile,food:s.factions[a.owner].food,supply:target.supply}}
+  if(s.grandMap){const plan=grandRoute(s,a,destination,isWar);if(!plan)return embarkationBlock(s,a,destination,isWar)||{ok:false,reason:'route'};return {ok:true,...plan,terrain:target.terrain,hostile:plan.hostile,food:s.factions[a.owner].food,supply:target.supply}}
   const link=adjacent(a.region).find(e=>e.to===destination);
   if(!link)return {ok:false,reason:'adjacent'};
   if(target.owner!==a.owner&&!isWar(s,a.owner,target.owner))return {ok:false,reason:'peace'};

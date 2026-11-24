@@ -1,5 +1,5 @@
 import {GRAND_ROUTES} from './grand-map-data.js?v=2';
-import {accessibleFleet,isPortBlockaded} from './naval.js?v=77';
+import {accessibleFleet,fleetCapacity,transportCrewReady,isPortBlockaded} from './naval.js?v=78';
 import {activeEffects,localBuildingEffects} from './development.js?v=68';
 
 const byId=s=>Object.fromEntries(s.regions.map(r=>[r.id,r]));
@@ -8,6 +8,18 @@ export function navalCapacity(s,owner){const faction=s.factions[owner];if(!facti
 export function availableNavalLift(s,owner,unitId){return navalCapacity(s,owner)-s.armies.filter(a=>a.owner===owner&&a.id!==unitId&&a.move?.sea).length}
 export function canEmbark(s,unit,from,to){return !!(from?.port&&to?.port&&s.factions[unit.owner]?.treasury>=8&&(s.naval?accessibleFleet(s,unit.owner,from.id,unit.men):availableNavalLift(s,unit.owner,unit.id)>0))}
 export function grandAdjacent(id){return GRAND_ROUTES.filter(r=>r[0]===id||r[1]===id).map(r=>({to:r[0]===id?r[1]:r[0],sea:r[2]==='sea',...r[3]}))}
+export function embarkationBlock(s,unit,destination,isWar){
+ const from=s.regions.find(r=>r.id===unit.region),to=s.regions.find(r=>r.id===destination);
+ if(!from?.port||!to?.port||!grandAdjacent(from.id).some(edge=>edge.to===destination&&edge.sea)||to.owner!==unit.owner&&!isWar(s,unit.owner,to.owner))return null;
+ if(s.factions[unit.owner]?.treasury<8)return {ok:false,reason:'transport',cost:8};
+ if(!s.naval)return null;
+ const docked=s.naval.fleets.filter(f=>f.owner===unit.owner&&f.port===from.id&&fleetCapacity(f,s)>0);
+ const ready=docked.filter(f=>!f.reserve&&!f.mobilizing&&!f.order?.armyId&&transportCrewReady(f)&&f.hull>=40&&f.supply>=20);
+ const available=Math.max(0,...ready.map(f=>fleetCapacity(f,s)));
+ if(available>=unit.men)return null;
+ if(!ready.length&&docked.length)return {ok:false,reason:'transport-fleet',required:unit.men,available:0};
+ return {ok:false,reason:'transport-capacity',required:unit.men,available};
+}
 export function edgeMonths(edge,destination,origin=null,fieldMarch=0){const base=edge.sea?2:1,travel=Math.max(0,Math.floor((edge.distance||0)/(edge.sea?270:180))),terrain=destination.terrain==='hills'||destination.terrain==='forest'?1:0,road=!edge.sea&&(edge.road||origin?.buildings?.includes('road')||destination.buildings?.includes('road'))?1:0,bridge=!edge.sea&&edge.river&&(origin?.buildings?.includes('bridge')||destination.buildings?.includes('bridge')),river=!edge.sea&&edge.river&&!bridge?1:0,shipyard=edge.sea&&origin?Math.min(1,localBuildingEffects(origin).seaSpeed||0):0;return Math.max(1,base+travel+terrain+river-road-shipyard-(edge.sea?0:Math.min(1,fieldMarch)))}
 export function grandRoute(s,unit,destination,isWar){
  const regions=byId(s),start=unit.region;if(!regions[start]||!regions[destination])return null;

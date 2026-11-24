@@ -8,8 +8,8 @@ import {battleSideForPlayer,visibleLogText} from '../visibility.js?v=32';
 import historical from '../historical-territories.js';
 import grandTerritories from '../grand-territory-polygons.js';
 import {GRAND_SITES,grandRouteCoordinates} from '../grand-map-data.js?v=2';
-import {holdPosition,strategicRetreat,armySupply,encircled,supplyBottlenecks,supplySources} from '../grand-operations.js?v=52';
-import {importCampaign,downloadCampaign} from '../save-files.js?v=44';
+import {holdPosition,strategicRetreat,armySupply,encircled,supplyBottlenecks,supplySources} from '../grand-operations.js?v=53';
+import {importCampaign,downloadCampaign} from '../save-files.js?v=45';
 import {loadProfile,saveProfile,recordCampaign} from '../legacy/legacy-core.js?v=23';
 import {eagleMark} from '../legacy/banner-art.js';
 import {endCampaign} from '../achievement-system.js?v=5';
@@ -17,32 +17,32 @@ import {campaignEndingHtml,campaignVictoryHtml,campaignSettlementHtml} from '../
 import {settlementAdvice} from '../settlement-ui.js?v=1';
 import {courtMediationHtml} from '../court-mediation-ui.js?v=4';
 import {mediateCourtDispute} from '../character-system.js?v=69';
-import {nationalBudget} from '../national-budget.js?v=39';
-import {budgetHtml} from '../budget-ui.js?v=43';
+import {nationalBudget} from '../national-budget.js?v=40';
+import {budgetHtml} from '../budget-ui.js?v=44';
 import republicanRoads from '../republican-roads.js?v=1';
 import {physicalStyle} from './physical-style.js?v=52';
 import {physicalLabels} from './physical-labels.js?v=7';
 import {ancientPlaceLabels} from './ancient-place-labels.js';
-import {newGame,newGrandGame, moveArmy, cancelMarch, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, respondCivilSettlement, sendInquiry, queueMission, setTax, warContributionPlan, collectWarContributions, emergencyProvisionsPlan, collectEmergencyProvisions, aerariumPlan, seizeAerarium, personalDiplomaticCredit,royalCourtCredit,provincialRitesCredit,researchInnovation,adoptIdea,removeIdea,cancelIdeaAdoption,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,setReligiousPolicy,purchaseMaterials,recruitFigure} from '../engine.js?v=257';
-import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation,bindIdeaSelection,openInscriptionEditor} from '../development-ui.js?v=79';
+import {newGame,newGrandGame, moveArmy, cancelMarch, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, respondCivilSettlement, sendInquiry, queueMission, setTax, warContributionPlan, collectWarContributions, emergencyProvisionsPlan, collectEmergencyProvisions, aerariumPlan, seizeAerarium, personalDiplomaticCredit,royalCourtCredit,provincialRitesCredit,researchInnovation,adoptIdea,removeIdea,cancelIdeaAdoption,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,setReligiousPolicy,purchaseMaterials,recruitFigure} from '../engine.js?v=258';
+import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation,bindIdeaSelection,openInscriptionEditor} from '../development-ui.js?v=80';
 import {FACTIONS} from '../data.js?v=9';
 import {cultureLabel} from '../culture-labels.js?v=1';
 import {identity,factionMark} from '../identity.js?v=2';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=15';
-import {createCharacterUI} from './character-ui.js?v=139';
+import {createCharacterUI} from './character-ui.js?v=140';
 import {reportedArmies} from '../character-system.js?v=69';
 import {createTutorial} from './tutorial.js?v=11';
 import {friendlyPersonnelInTheater} from './personnel.js?v=1';
-import {chronicleHtml,notificationsHtml,briefingHtml,battleReportHtml,reportLabel,eventDate} from '../reports-ui.js?v=21';
+import {chronicleHtml,notificationsHtml,briefingHtml,battleReportHtml,reportLabel,eventDate} from '../reports-ui.js?v=22';
 import {objectiveDefinitions,eventText,unreadCount,markRead,latestCritical,campaignTurn} from '../campaign-reports.js?v=16';
 import {leadershipIntelligence} from './intelligence-summary.js?v=2';
 import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=9';
-import {assessment,firstHostileOnRoute,sendScouts,probePositions,delayAttack,markReconRegion,requestReinforcements,latestRecon} from '../reconnaissance.js?v=25';
-import {intelligenceHtml,afterActionHtml,fortificationText,reconSummaryHtml,reconLabel,reconDate} from '../recon-ui.js?v=22';
-import {renderNavalPanel} from './naval-ui.js?v=101';
-import {SEA_ZONES,reportedHostileFleets,toggleTradeRoute} from '../naval.js?v=77';
+import {assessment,firstHostileOnRoute,sendScouts,probePositions,delayAttack,markReconRegion,requestReinforcements,latestRecon} from '../reconnaissance.js?v=26';
+import {intelligenceHtml,afterActionHtml,fortificationText,reconSummaryHtml,reconLabel,reconDate} from '../recon-ui.js?v=23';
+import {renderNavalPanel} from './naval-ui.js?v=102';
+import {SEA_ZONES,reportedHostileFleets,toggleTradeRoute} from '../naval.js?v=78';
 import {maritimeMapIntel} from './maritime-map-intel.js?v=1';
-import {queueShip,cancelShipConstruction,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,supportPirates,dispatchWagonSupply,settleMerchantDispute} from '../engine.js?v=257';
+import {queueShip,cancelShipConstruction,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,supportPirates,dispatchWagonSupply,settleMerchantDispute} from '../engine.js?v=258';
 
 const received=receiveHandoff(sessionStorage,'atlas',upgradeSave);
 let state = received || newGrandGame();
@@ -326,7 +326,7 @@ function restoreReliefAfterMoving(){
  },350);
 }
 const terrainName=id=>lang==='zh'?({plain:'平原',hills:'丘陵',forest:'森林',urban:'城市',desert:'沙漠'}[id]||id):id;
-const marchReason=reason=>({adjacent:lang==='zh'?'目的地不相邻':'Destination is not adjacent',peace:lang==='zh'?'尚未与该势力交战':'Not at war with this faction',transport:lang==='zh'?'海运需要8国库':'Sea transport requires 8 treasury',unavailable:lang==='zh'?'军队正行军或围攻':'Army is marching or besieging'})[reason]||'';
+const marchReason=plan=>plan.reason==='transport-capacity'?(lang==='zh'?`运力不足：需${plan.required}人，现有${plan.available}人`:`Transport capacity: need ${plan.required}, ready ${plan.available}`):({adjacent:lang==='zh'?'目的地不相邻':'Destination is not adjacent',peace:lang==='zh'?'尚未与该势力交战':'Not at war with this faction',transport:lang==='zh'?'海运需要8国库':'Sea transport requires 8 treasury','transport-fleet':lang==='zh'?'运输舰队尚未就绪':'Transport fleet not ready',unavailable:lang==='zh'?'军队正行军或围攻':'Army is marching or besieging'})[plan.reason]|| (lang==='zh'?'没有合法路线':'No legal route');
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function inspect(title,description){document.querySelector('.selection').classList.toggle('idle',title==='Select a command'||title==='选择军队');document.querySelector('#selection-title').textContent=title;document.querySelector('#selection-detail').textContent=description;document.querySelector('#lab-orders').replaceChildren();document.querySelector('#command-detail').replaceChildren()}
 document.querySelector('.selection').classList.add('idle');
@@ -549,7 +549,7 @@ function showArmy(unit){
  if(unit.reconPending){controls.textContent=lang==='zh'?'侦察行动进行中；推进一月。':'Reconnaissance underway; advance one month.';return}
  if(unit.trainingRemaining){controls.textContent=lang==='zh'?'野战训练进行中；推进一月。':'Field training underway; advance one month.';return}
  if(unit.siege){controls.textContent=lang==='zh'?'军队正在围攻，暂时无法行军。':'This army cannot march while conducting a siege.';return}
- const select=document.createElement('select');select.setAttribute('aria-label',t('destination'));const prompt=document.createElement('option');prompt.value='';prompt.textContent=t('destination');select.append(prompt);for(const link of adjacent(unit.region,state)){const dest=region(state,link.to),plan=previewMarch(state,unit.id,link.to);const option=document.createElement('option');option.value=dest.id;option.disabled=!plan.ok;option.textContent=n(dest.name)+(plan.ok?(plan.hostile?' · '+t('hostile'):(lang==='zh'?' · 己方':' · friendly')):' · '+marchReason(plan.reason));select.append(option)}select.value=previewDestination;controls.append(select);
+ const select=document.createElement('select');select.setAttribute('aria-label',t('destination'));const prompt=document.createElement('option');prompt.value='';prompt.textContent=t('destination');select.append(prompt);for(const link of adjacent(unit.region,state)){const dest=region(state,link.to),plan=previewMarch(state,unit.id,link.to);const option=document.createElement('option');option.value=dest.id;option.disabled=!plan.ok;option.textContent=n(dest.name)+(plan.ok?(plan.hostile?' · '+t('hostile'):(lang==='zh'?' · 己方':' · friendly')):' · '+marchReason(plan));select.append(option)}select.value=previewDestination;controls.append(select);
  if(state.grandMap){const listed=new Set([...select.options].map(o=>o.value));for(const dest of state.regions){if(listed.has(dest.id)||dest.id===unit.region)continue;const plan=previewMarch(state,unit.id,dest.id);if(!plan.ok)continue;const option=document.createElement('option');option.value=dest.id;option.textContent=`${n(dest.name)} · ${plan.months}${lang==='zh'?'月':'m'}`;select.append(option)}select.value=previewDestination}
  const button=document.createElement('button');button.textContent=lang==='zh'?'确认命令':'CONFIRM ORDER';button.disabled=!previewDestination;controls.append(button);
  const preview=document.createElement('p');preview.className='preview-detail';document.querySelector('#command-detail').prepend(preview);

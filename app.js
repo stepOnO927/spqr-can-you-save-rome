@@ -3,20 +3,20 @@ import {visibleLogText,visibleArmyForPlayer} from './visibility.js?v=32';
 import {identity,factionMark} from './identity.js?v=2';
 import {CHARACTER_CATALOG} from './characters.js?v=15';
 import {REGIONS,ROUTES,FACTIONS,SOURCES} from './data.js?v=9';
-import {newGame,newGrandGame,convertToGrandMap,upgradeSave,tick,moveArmy,previewMarch,recruit,trainArmy,setTax,warContributionPlan,collectWarContributions,emergencyProvisionsPlan,collectEmergencyProvisions,aerariumPlan,seizeAerarium,diplomacy,respondCivilSettlement,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,researchInnovation,adoptIdea,removeIdea,cancelIdeaAdoption,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,setReligiousPolicy,purchaseMaterials,recruitFigure} from './engine.js?v=257';
-import {importCampaign,downloadCampaign} from './save-files.js?v=44';
+import {newGame,newGrandGame,convertToGrandMap,upgradeSave,tick,moveArmy,previewMarch,recruit,trainArmy,setTax,warContributionPlan,collectWarContributions,emergencyProvisionsPlan,collectEmergencyProvisions,aerariumPlan,seizeAerarium,diplomacy,respondCivilSettlement,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,researchInnovation,adoptIdea,removeIdea,cancelIdeaAdoption,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,setReligiousPolicy,purchaseMaterials,recruitFigure} from './engine.js?v=258';
+import {importCampaign,downloadCampaign} from './save-files.js?v=45';
 import {loadProfile,saveProfile,recordCampaign} from './legacy/legacy-core.js?v=23';
 import {endCampaign} from './achievement-system.js?v=5';
 import {campaignEndingHtml,campaignVictoryHtml,campaignSettlementHtml} from './achievement-ui.js?v=17';
-import {budgetHtml} from './budget-ui.js?v=43';
-import {holdPosition,strategicRetreat,armySupply,encircled} from './grand-operations.js?v=52';
-import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation,bindIdeaSelection,openInscriptionEditor} from './development-ui.js?v=79';
+import {budgetHtml} from './budget-ui.js?v=44';
+import {holdPosition,strategicRetreat,armySupply,encircled} from './grand-operations.js?v=53';
+import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation,bindIdeaSelection,openInscriptionEditor} from './development-ui.js?v=80';
 import {drawMap,mapPoint} from './map.js?v=74';
 import {avoidGrandLabelCollisions} from './map-label-layout.js?v=3';
-import {chronicleHtml,notificationsHtml,briefingHtml,battleReportHtml,reportLabel,eventDate} from './reports-ui.js?v=21';
+import {chronicleHtml,notificationsHtml,briefingHtml,battleReportHtml,reportLabel,eventDate} from './reports-ui.js?v=22';
 import {unreadCount,markRead,latestCritical,eventText} from './campaign-reports.js?v=16';
-import {assessment,firstHostileOnRoute,sendScouts,probePositions,delayAttack,requestReinforcements} from './reconnaissance.js?v=25';
-import {intelligenceHtml,fortificationText} from './recon-ui.js?v=22';
+import {assessment,firstHostileOnRoute,sendScouts,probePositions,delayAttack,requestReinforcements} from './reconnaissance.js?v=26';
+import {intelligenceHtml,fortificationText} from './recon-ui.js?v=23';
 import {cultureLabel} from './culture-labels.js?v=1';
 import {settlementAdvice} from './settlement-ui.js?v=1';
 import {courtMediationHtml} from './court-mediation-ui.js?v=4';
@@ -87,9 +87,15 @@ function panel(){
   return `<div class="panel-heading"><span class="eyebrow">PROVINCIA</span><h2>${r?t('selected'):t('select')}</h2></div>${r?`<div class="region-title"><div class="campaign-identity">${factionMark(r.owner,'banner')}</div><div><h3>${esc(n(r.name))}</h3><small>${esc(r.city)}</small></div></div><dl class="detail-list"><div><dt>${t('owner')}</dt><dd>${esc(labelFaction(r.owner))}</dd></div><div><dt>${t('terrain')}</dt><dd>${t('terrainNames')[r.terrain]}</dd></div><div><dt>${t('supply')}</dt><dd>${r.supply},000</dd></div><div><dt>${t('loyalty')}</dt><dd>${r.owner===state.player?r.loyalty+'%':(lang==='zh'?'未知':'Unknown')}</dd></div><div><dt>${t('fort')}</dt><dd>${fortificationText(state,state.player,r.id,lang)}</dd></div>${socialDetails(r)}</dl><button class="action" id="recruit">${t('recruit')}</button>`:''}<div class="separator"></div><span class="eyebrow">EXERCITVS</span><h3 class="section-title">${t('army')}</h3>${a?`<div class="selected-army"><span class="identity-inline">${factionMark(a.owner,'insignia')}<b>${esc(n(a.name))}</b></span>${a.owner===state.player?`<small>${esc(n(a.commander))}</small><small>${fmt(a.men)} ${t('men')} · ${a.morale} ${t('morale')}</small><small>${esc(status(a))}</small>`:`<small>${lang==='zh'?`上次报告：公元前${Math.abs(a.year)}年${a.month}月；当前位置、兵力和状态未知。`:`Last reported ${a.month}/${Math.abs(a.year)} BCE; current location, strength and status unknown.`}</small>${CHARACTER_CATALOG[a.commanderId]?`<small>${lang==='zh'?'上次报告的指挥官':'Reported commander'}: ${esc(n(CHARACTER_CATALOG[a.commanderId].name))} · ${lang==='zh'?'可能过时':'may be outdated'}</small>`:''}`}</div><button class="action primary" id="order" ${a.owner!==state.player||!!a.move||!!a.siege||!!a.trainingRemaining?'disabled':''}>${ordering?t('cancel'):t('order')}</button>${a.owner===state.player&&!a.move&&!a.siege&&!a.trainingRemaining&&region(state,a.region).owner===state.player&&a.experience<5?`<button class="action" id="train-army">${lang==='zh'?'野战训练 · 8国库/2粮/1月':'Field training · 8¤ / 2 food / 1 month'}</button>`:''}${ordering?`<p class="order-note">${t('target')}</p>`:''}`:`<p class="hint">${t('noArmy')}</p>`}`;
 }
 
+function marchFailure(plan){
+ if(plan.reason==='transport-capacity')return lang==='zh'?`这支军队有${fmt(plan.required)}人；本港最大可用运输舰队只能搭载${fmt(plan.available)}人。需在同一舰队增加运输船后才能启航。`:`This army has ${fmt(plan.required)} soldiers; the largest ready fleet here carries ${fmt(plan.available)}. Add transports to that fleet before embarking.`;
+ if(plan.reason==='transport-fleet')return lang==='zh'?'本港运输舰队尚未就绪；检查水手、补给、船况、封存状态和当前命令。':'No transport fleet is ready here; check crew, supplies, hull, reserve status and current orders.';
+ if(plan.reason==='transport')return lang==='zh'?'渡海还需要8国库。':'A crossing needs 8 treasury.';
+ return t('invalid');
+}
 function requestMarch(destination){
- const plan=previewMarch(state,selectedArmy,destination);if(!plan.ok){flash(t('invalid'));return}
- const commit=()=>{const result=moveArmy(state,selectedArmy,destination);if(!result.ok){flash(t('invalid'));return}ordering=false;selectedRegion=destination;tab='map';panelOpen=true;render()};
+ const plan=previewMarch(state,selectedArmy,destination);if(!plan.ok){flash(marchFailure(plan));return}
+ const commit=()=>{const result=moveArmy(state,selectedArmy,destination);if(!result.ok){flash(marchFailure(result));return}ordering=false;selectedRegion=destination;tab='map';panelOpen=true;render()};
  const threat=firstHostileOnRoute(state,selectedArmy,destination,plan);
  if(!threat){commit();return}
  const unit=army(state,selectedArmy),target=region(state,threat.regionId),enRoute=threat.regionId!==destination,overlay=document.createElement('div');overlay.className='march-review-overlay';overlay.innerHTML=`<div class="march-review" role="dialog" aria-modal="true" aria-label="${lang==='zh'?'战前情报':'Pre-battle intelligence'}">${enRoute?`<p class="hint">${lang==='zh'?`前往${esc(n(region(state,destination).name))}的路线先穿过敌方控制的${esc(n(target.name))}。以下情报针对途中首个敌区。`:`The route to ${esc(n(region(state,destination).name))} first crosses enemy-held ${esc(n(target.name))}. This assessment covers that first hostile theater.`}</p>`:''}${intelligenceHtml(assessment(state,unit.id,threat.regionId,{...plan,months:threat.travelMonths,path:plan.path?.slice(0,plan.path.findIndex(x=>x.id===threat.regionId)+1)}),target,lang)}${!threat.adjacent?`<p class="hint">${lang==='zh'?'军队须先接近该敌区，才能派斥候或试探敌阵。':'Move adjacent to this hostile theater before sending scouts or probing.'}</p>`:''}<div class="march-review-actions"><button data-review="attack">${enRoute?(lang==='zh'?'仍要行军':'MARCH ANYWAY'):(lang==='zh'?'仍要进攻':'ATTACK ANYWAY')}</button>${threat.adjacent?`<button data-review="scouts">${lang==='zh'?'派斥候 · 4国库/2粮/1月':'SEND SCOUTS · 4¤ / 2 food / 1 month'}</button><button data-review="probe">${lang==='zh'?'试探敌阵 · 3粮/可能伤亡':'PROBE POSITIONS · 3 food / possible losses'}</button>`:''}<button data-review="reinforce">${lang==='zh'?'请求增援 · 24国库/6粮/3000兵源/1月':'REQUEST REINFORCEMENTS · 24¤ / 6 food / 3,000 manpower / 1 month'}</button><button data-review="delay">${lang==='zh'?'延迟行军 · 推进1月':'WAIT · 1 month'}</button><button data-review="cancel">${lang==='zh'?'取消命令':'CANCEL ORDER'}</button></div><p class="review-feedback" role="status"></p></div>`;document.body.append(overlay);
