@@ -1,21 +1,22 @@
-import {BUILDINGS,GOODS,loadProfile,saveProfile,exportProfile,importProfile,purchase,applyCosmetic,createScenario,claimReward} from './legacy-core.js?v=24';
+import {BUILDINGS,GOODS,loadProfile,saveProfile,exportProfile,importProfile,purchase,applyCosmetic,createScenario,claimReward} from './legacy-core.js?v=25';
 import {eagleMark} from './banner-art.js';
-import {PETITIONS,decidePetition,availablePetitions} from './civic.js?v=13';
+import {PETITIONS,decidePetition,availablePetitions} from './civic.js?v=14';
 import {ARTIFACTS} from './museum.js?v=14';
-import {selectableDrivers,raceRivals,startRace,settleRace} from './race.js?v=15';
-import {availableActivities,resolveActivity} from './activities.js?v=12';
-import {harborDossier,beginHarborDossier,corroborateHarborDossier,closeHarborDossier,HARBOR_COSTS} from './intelligence-case.js?v=7';
-import {boundaryCase,beginBoundaryCase,corroborateBoundaryCase,closeBoundaryCase,BOUNDARY_COSTS} from './legal-case.js?v=4';
-import {palaceCouncil,conveneCouncil,draftCharter,settleCouncil,COUNCIL_COST,COUNCIL_AUDIENCES,COUNCIL_CHARTERS,COUNCIL_RESPONSES} from './palace-council.js?v=7';
+import {selectableDrivers,raceRivals,startRace,settleRace} from './race.js?v=16';
+import {availableActivities,resolveActivity} from './activities.js?v=13';
+import {harborDossier,beginHarborDossier,corroborateHarborDossier,closeHarborDossier,HARBOR_COSTS} from './intelligence-case.js?v=8';
+import {boundaryCase,beginBoundaryCase,corroborateBoundaryCase,closeBoundaryCase,BOUNDARY_COSTS} from './legal-case.js?v=5';
+import {palaceCouncil,conveneCouncil,draftCharter,settleCouncil,COUNCIL_COST,COUNCIL_AUDIENCES,COUNCIL_CHARTERS,COUNCIL_RESPONSES} from './palace-council.js?v=8';
 import {newGrandGame} from '../engine.js?v=260';
 import {stageHandoff} from '../view-handoff.js';
 import {achievementDefinition} from '../achievement-system.js?v=5';
 import {archivePanelHtml} from './archive-ui.js?v=4';
 import {triumphalArchHtml} from './arch-ui.js?v=1';
+import {veteranHallHtml} from './veteran-hall.js?v=2';
 import {libraryCodexHtml,bindLibraryCodex} from './library-codex.js?v=14';
-import {harborOfficeHtml} from './harbor-ui.js?v=5';
-import {commissionMerchantReport,acquireTyrianCloth,settleHarborExchange,settleGrainContractReview} from './harbor-trade.js?v=5';
-import {CAMP_DRILL_STAGES,CAMP_DRILL_GRADES,beginCampDrill,answerCampDrill} from './camp-drill.js?v=5';
+import {harborOfficeHtml} from './harbor-ui.js?v=6';
+import {commissionMerchantReport,acquireTyrianCloth,settleHarborExchange,settleGrainContractReview} from './harbor-trade.js?v=6';
+import {CAMP_DRILL_STAGES,CAMP_DRILL_GRADES,beginCampDrill,answerCampDrill} from './camp-drill.js?v=6';
 import {FESTIVAL_PLANS,FESTIVAL_COUNSELS,FESTIVAL_PRIORITIES,beginTempleFestival,counselTempleFestival,settleTempleFestival} from './temple-festival.js?v=1';
 import {MUSEUM_HALLS,museumHallFor,museumPrestige,curateArtifact,removeFeaturedArtifact} from './museum-curation.js?v=2';
 
@@ -55,7 +56,7 @@ function campDrillHtml(){
  `<p>${t('Three decisions test how the camp handles dated reports, provisions and fatigue. The exercise is fictional and gives no campaign combat bonus.','三项决策考验军营如何处理有日期的报告、粮秣与疲劳。演练为虚构内容，不提供战役战斗加成。')}</p><button data-drill-start="1">${t('Begin logistics exercise','开始后勤演练')}</button>${profile.rewards.includes('camp:drill')?`<small>${t('An earlier drill reward is already recorded.','此前的演练奖励已记录。')}</small>`:''}`;
  return `<div class="feature-card camp-drill"><h3>${t('Camp readiness exercise','军营准备演练')}</h3>${body}${record}<small>${t('One Laurel reward per Legacy profile; replays keep the best score.','每份遗产档案仅可领取一次桂冠奖励；重玩会保留最高得分。')}</small></div>`;
 }
-function campHtml(){return `<div class="panel-head"><span>CASTRA</span><h2>${t('Military Camp','军营')}</h2><p>${t('Inspect veterans, standards and camp exercises.','检阅老兵、军旗与军营演练。')}</p></div><div class="feature-card"><h3>${t('Veteran hall','老兵厅')}</h3><p>${t('Campaign battles recorded','已记录战斗')} ${profile.archive.reduce((v,a)=>v+a.battles,0)}</p><div class="camp-standard-preview"><span class="camp-standard-pole">${profile.banner==='eagle'?eagleMark({size:36}):'✦'}</span><div><strong>${profile.banner==='eagle'?t('Eagle standard equipped','已装备鹰旗'):t('Classic standard equipped','已装备经典军旗')}</strong><small>${t('Roman army flags keep their faction insignia. Change the decoration in the shop wardrobe.','罗马军旗保留阵营徽记。可在商店衣橱切换装饰。')}</small></div></div></div>${campDrillHtml()}`}
+function campHtml(){return `<div class="panel-head"><span>CASTRA</span><h2>${t('Military Camp','军营')}</h2><p>${t('Inspect veterans, standards and camp exercises.','检阅老兵、军旗与军营演练。')}</p></div>${veteranHallHtml(profile,lang)}<div class="feature-card"><h3>${t('Legion standard','军团旗帜')}</h3><div class="camp-standard-preview"><span class="camp-standard-pole">${profile.banner==='eagle'?eagleMark({size:36}):'✦'}</span><div><strong>${profile.banner==='eagle'?t('Eagle standard equipped','已装备鹰旗'):t('Classic standard equipped','已装备经典军旗')}</strong><small>${t('Roman army flags keep their faction insignia. Change the decoration in the shop wardrobe.','罗马军旗保留阵营徽记。可在商店衣橱切换装饰。')}</small></div></div></div>${campDrillHtml()}`}
 function templeHtml(){
  const record=profile.templeFestival,date=value=>typeof value==='string'?esc(value.slice(0,10)):'—';
  const content=!record?`<p>${t('Plan a fictional civic festival. The treasury choice, local consultation and final priority will shape the permanent city record.','筹办一场虚构的城邦节庆。经费选择、地方协商与最终优先事项会改变永久城邦记录。')}</p><div class="petition-choices">${Object.entries(FESTIVAL_PLANS).map(([id,item])=>`<button data-festival-step="begin" data-festival-plan="${id}" ${profile.coins<item.cost?'disabled':''}>${esc(n(item.name))} · ${item.cost} ◉</button>`).join('')}</div>`:

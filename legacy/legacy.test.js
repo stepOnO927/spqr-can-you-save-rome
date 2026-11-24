@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {loadProfile,saveProfile,exportProfile,importProfile,normalizeProfile,purchase,applyCosmetic,recordCampaign,createScenario} from './legacy-core.js';
 import {archivePanelHtml} from './archive-ui.js';
 import {triumphalArchHtml} from './arch-ui.js';
+import {veteranService,veteranHallHtml} from './veteran-hall.js';
 import {decidePetition,availablePetitions} from './civic.js';
 import {DRIVERS,selectableDrivers,raceRivals,isOnRaceTrack,advanceTrackProgress,settleRace} from './race.js';
 import {ACTIVITIES,availableActivities,resolveActivity} from './activities.js';
@@ -333,6 +334,24 @@ test('archive preserves a dated battle chronicle and faction victory record afte
  const coins=profile.coins;saveProfile(profile,storage);const restored=loadProfile(storage);
  assert.deepEqual(restored.archive[0].battleHistory,record.battleHistory);
  assert.deepEqual(recordCampaign(restored,upgradeSave(structuredClone(campaign))),[]);assert.equal(restored.coins,coins);
+});
+test('long campaign keeps the latest 80 battles and the camp reads only finalized service',()=>{
+ const storage=memory(),profile=loadProfile(storage),campaign=newGrandGame('caesar');
+ campaign.battles=Array.from({length:81},(_,index)=>({year:-49,month:1,region:'roma',attacker:{owner:'caesar',commander:index%2?['Labienus','拉比埃努斯']:['Caesar','凯撒']},defender:{owner:'senate'},attackerWins:index%2===0,lossA:index+1,lossD:8}));
+ assert.equal(veteranService(profile).length,0);
+ assert.deepEqual(recordCampaign(profile,campaign),[]);
+ endCampaign(campaign,'retired');recordCampaign(profile,campaign);
+ const history=profile.archive[0].battleHistory;
+ assert.equal(history.length,80);assert.equal(history[0].casualties,2);assert.equal(history.at(-1).casualties,81);
+ const veterans=veteranService(profile);assert.equal(veterans.length,2);
+ assert.deepEqual(veterans.map(v=>[v.battles,v.wins,v.losses]),[[40,40,0],[40,0,40]]);
+ assert.match(veteranHallHtml(profile,'en'),/Labienus/);assert.match(veteranHallHtml(profile,'zh'),/拉比埃努斯/);
+ const coins=profile.coins;profile.archive[0].battleHistory=campaign.battles.slice(0,80).map(b=>({...history[0],casualties:b.lossA}));
+ recordCampaign(profile,campaign);assert.equal(profile.archive[0].battleHistory[0].casualties,2);assert.equal(profile.coins,coins);
+ saveProfile(profile,storage);const restored=loadProfile(storage);
+ assert.deepEqual(veteranService(restored),veteranService(profile));
+ restored.archive[0].battleHistory[0].commander=['<script>','伪装'];
+ assert.doesNotMatch(veteranHallHtml(restored,'en'),/<script>/);
 });
 test('reimport fills capture and heaviest-loss records from an older finalized save',()=>{
  const profile=loadProfile(memory()),campaign=newGrandGame('caesar');

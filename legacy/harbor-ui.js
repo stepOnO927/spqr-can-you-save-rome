@@ -1,4 +1,4 @@
-import {HARBOR_ROUTES,HARBOR_EVENT_COSTS,GRAIN_CONTRACT_COSTS,grainContractReviewAvailable} from './harbor-trade.js?v=5';
+import {HARBOR_ROUTES,HARBOR_EVENT_COSTS,GRAIN_CONTRACT_COSTS,grainContractReviewAvailable} from './harbor-trade.js?v=6';
 
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const label=(zh,en,cn)=>zh?cn:en;
