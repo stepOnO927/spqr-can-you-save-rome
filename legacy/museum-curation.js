@@ -1,4 +1,4 @@
-import {ARTIFACTS} from './museum.js?v=13';
+import {ARTIFACTS} from './museum.js?v=14';
 
 export const MUSEUM_HALLS=[
  {id:'figures',name:['Hall of Great Figures','伟人展厅'],categories:['figures']},

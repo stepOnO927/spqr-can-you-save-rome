@@ -1,12 +1,12 @@
-import {BUILDINGS,GOODS,loadProfile,saveProfile,exportProfile,importProfile,purchase,applyCosmetic,createScenario,claimReward} from './legacy-core.js?v=29';
+import {BUILDINGS,GOODS,loadProfile,saveProfile,exportProfile,importProfile,purchase,applyCosmetic,createScenario,claimReward} from './legacy-core.js?v=30';
 import {eagleMark} from './banner-art.js';
-import {PETITIONS,decidePetition,availablePetitions} from './civic.js?v=18';
-import {ARTIFACTS} from './museum.js?v=14';
-import {selectableDrivers,raceRivals,startRace,settleRace} from './race.js?v=20';
-import {availableActivities,resolveActivity} from './activities.js?v=17';
-import {harborDossier,beginHarborDossier,corroborateHarborDossier,closeHarborDossier,HARBOR_COSTS} from './intelligence-case.js?v=12';
-import {boundaryCase,beginBoundaryCase,corroborateBoundaryCase,closeBoundaryCase,BOUNDARY_COSTS} from './legal-case.js?v=9';
-import {palaceCouncil,conveneCouncil,draftCharter,settleCouncil,COUNCIL_COST,COUNCIL_AUDIENCES,COUNCIL_CHARTERS,COUNCIL_RESPONSES} from './palace-council.js?v=12';
+import {PETITIONS,decidePetition,availablePetitions} from './civic.js?v=19';
+import {ARTIFACTS} from './museum.js?v=15';
+import {selectableDrivers,raceRivals,startRace,settleRace} from './race.js?v=21';
+import {availableActivities,resolveActivity} from './activities.js?v=18';
+import {harborDossier,beginHarborDossier,corroborateHarborDossier,closeHarborDossier,HARBOR_COSTS} from './intelligence-case.js?v=13';
+import {boundaryCase,beginBoundaryCase,corroborateBoundaryCase,closeBoundaryCase,BOUNDARY_COSTS} from './legal-case.js?v=10';
+import {palaceCouncil,conveneCouncil,draftCharter,settleCouncil,COUNCIL_COST,COUNCIL_AUDIENCES,COUNCIL_CHARTERS,COUNCIL_RESPONSES} from './palace-council.js?v=13';
 import {newGrandGame} from '../engine.js?v=264';
 import {stageHandoff} from '../view-handoff.js';
 import {achievementDefinition} from '../achievement-system.js?v=5';
@@ -14,11 +14,12 @@ import {archivePanelHtml} from './archive-ui.js?v=5';
 import {triumphalArchHtml} from './arch-ui.js?v=1';
 import {veteranHallHtml} from './veteran-hall.js?v=2';
 import {libraryCodexHtml,bindLibraryCodex} from './library-codex.js?v=18';
-import {harborOfficeHtml} from './harbor-ui.js?v=10';
-import {commissionMerchantReport,acquireTyrianCloth,settleHarborExchange,settleGrainContractReview} from './harbor-trade.js?v=10';
-import {CAMP_DRILL_STAGES,CAMP_DRILL_GRADES,beginCampDrill,answerCampDrill} from './camp-drill.js?v=10';
+import {harborOfficeHtml} from './harbor-ui.js?v=11';
+import {commissionMerchantReport,acquireTyrianCloth,settleHarborExchange,settleGrainContractReview} from './harbor-trade.js?v=11';
+import {CAMP_DRILL_STAGES,CAMP_DRILL_GRADES,beginCampDrill,answerCampDrill} from './camp-drill.js?v=11';
+import {INQUIRY_STAGES,INQUIRY_SOURCE,beginLibraryInquiry,answerLibraryInquiry} from './library-inquiry.js?v=2';
 import {FESTIVAL_PLANS,FESTIVAL_COUNSELS,FESTIVAL_PRIORITIES,beginTempleFestival,counselTempleFestival,settleTempleFestival} from './temple-festival.js?v=1';
-import {MUSEUM_HALLS,museumHallFor,museumPrestige,curateArtifact,removeFeaturedArtifact} from './museum-curation.js?v=2';
+import {MUSEUM_HALLS,museumHallFor,museumPrestige,curateArtifact,removeFeaturedArtifact} from './museum-curation.js?v=3';
 
 let profile=loadProfile(),lang=localStorage.getItem('spqr-lang')==='zh'?'zh':'en',panel='city',selected='curia',filter='all',race=null,notice='';
 let libraryBranch='material',librarySelection='roadmaking';
@@ -66,7 +67,15 @@ function templeHtml(){
  return `<div class="panel-head"><span>TEMPLA ROMAE</span><h2>${t('Temple District','神庙区')}</h2><p>${t('Civic rites sponsor the public games.','公共祭仪为赛会提供赞助。')}</p></div><div class="feature-card temple-festival"><h3>${t('Festival of Mars · civic scenario','马尔斯节庆 · 城邦情景')}</h3>${content}<small>${t('This city exercise is fictional. Cicero’s De Legibus 2.19 proposes rules for public and private rites; it does not document this festival or its effects.','这项城邦活动为虚构情景。西塞罗《论法律》2.19提出公私祭仪的规则，并不记载本节庆或其效果。')} <a href="https://ancientlibrary.net/cicero-de-legibus/2/" target="_blank" rel="noopener noreferrer">${t('Primary text','原始文本')}</a></small></div><div class="feature-card"><h3>${t('Circus of Mars','马尔斯赛马场')}</h3><p>${owned('circus')?t('The Circus is open for races.','赛马场已开放。'):t('Build the Circus to hold chariot races.','建造赛马场即可举办战车比赛。')}</p></div>`;
 }
 function activityHtml(building){const cases=availableActivities(profile,building),next=cases.find(x=>!profile.activities?.some(a=>a.id===x.id));if(!cases.length)return '';return `<div class="feature-card civic-activity"><h3>${next?.requiresDecision?t('Appeal docket','上诉案卷'):t('Civic exercises','城邦活动')} · ${cases.length-(cases.filter(x=>profile.activities?.some(a=>a.id===x.id)).length)} ${t('remaining','待处理')}</h3>${next?`<h4>${esc(n(next.title))}</h4><p>${esc(n(next.text))}</p><div class="petition-choices">${next.choices.map((choice,index)=>`<button data-activity="${next.id}" data-activity-choice="${index}">${esc(n(choice))}</button>`).join('')}</div>`:`<p>${t('All exercises are recorded in this city.','此城区的活动均已记录。')}</p>`}<small>${t('Choices change the permanent civic record; rewards can be claimed once.','选择会改变永久城邦记录；奖励只能领取一次。')}</small></div>`}
-function libraryHtml(){return libraryCodexHtml(lang,libraryBranch,librarySelection)}
+function libraryInquiryHtml(){
+ const record=profile.libraryInquiry,stage=record?.status==='active'?INQUIRY_STAGES[record.stage]:null;
+ const history=record?.answers?.length?`<ol class="camp-drill-record">${record.answers.map((answer,index)=>{const part=INQUIRY_STAGES[index],choice=part.choices[answer];return `<li><strong>${esc(n(part.title))}</strong><span>${esc(n(choice.label))}</span><small>${esc(n(choice.result))}</small></li>`}).join('')}</ol>`:'';
+ const body=stage?`<div class="camp-drill-progress">${t('Source question','史料问题')} ${record.stage+1} / ${INQUIRY_STAGES.length}</div><h4>${esc(n(stage.title))}</h4><p>${esc(n(stage.text))}</p><div class="petition-choices">${stage.choices.map((choice,index)=>`<button data-library-answer="${index}">${esc(n(choice.label))}</button>`).join('')}</div>`:
+ record?.status==='complete'?`<p>${record.score>=4?t('The source dossier is ready for the Museum.','史料审读卷已可收入博物馆。'):t('The dossier needs a clearer distinction between evidence and interpretation.','卷宗仍需更清楚地区分证据与解释。')}</p><p>${t('Score','得分')} ${record.score} / 6 · ${t('Best','最佳')} ${profile.libraryInquiryBest} / 6 · ${t('Attempts','尝试次数')} ${profile.libraryInquiryRuns} · ${t('Laurels claimed','已领取桂冠')} ${record.coinsClaimed||0}</p><button data-library-start="1">${t('Review another copy','重新审读')}</button>`:
+ `<p>${t('Read a real campaign passage, assess its author, then label a modern Museum model. A careful dossier can earn a collectible.','阅读真实战役史料，判断作者立场，再为博物馆的现代模型撰写说明。审读严谨即可获得一件藏品。')}</p><button data-library-start="1">${t('Begin source inquiry','开始史料审读')}</button>`;
+ return `<section class="feature-card library-inquiry"><h3>${t('Massilia · source inquiry','马赛 · 史料审读')}</h3>${body}${history}<small>${t('The source is Caesar’s participant account. This challenge does not change campaign research or reveal hidden campaign information. One Laurel reward per Legacy profile.','史料来自凯撒这位参战者的记述。此挑战不改变战役研究，也不透露战役隐藏信息。每份遗产档案仅可领取一次桂冠奖励。')} <a href="${esc(INQUIRY_SOURCE.url)}" target="_blank" rel="noopener noreferrer">${esc(n(INQUIRY_SOURCE.name))}</a></small></section>`;
+}
+function libraryHtml(){return libraryCodexHtml(lang,libraryBranch,librarySelection)+libraryInquiryHtml()}
 function harborHtml(){return harborOfficeHtml(profile,lang)}
 function courtHtml(){
  const record=boundaryCase(profile),sources={registry:['Archive boundary register','档案馆界址簿'],survey:['Surveyor’s sketch','测量员草图']},verdicts={provisional:['Shared access pending further hearing','待进一步听证前暂准共同通行'],public:['Award the disputed strip to the public granary','将争议地带判给公共粮仓'],private:['Award the disputed strip to the private claimant','将争议地带判给私人申诉人']};
@@ -122,6 +131,8 @@ function render(){if(race){race.stop();race=null}document.documentElement.lang=l
  document.querySelectorAll('[data-feature]').forEach(el=>el.onclick=()=>{if(curateArtifact(profile,el.dataset.feature).ok){persist();notify(t('Object placed on display.','藏品已陈列。'))}});
  document.querySelectorAll('[data-unfeature]').forEach(el=>el.onclick=()=>{if(removeFeaturedArtifact(profile,el.dataset.unfeature).ok){persist();notify(t('Object returned to the collection.','藏品已归入馆藏。'))}});
  if(panel==='building'&&selected==='library')bindLibraryCodex(app,{onBranch:branch=>{libraryBranch=branch;librarySelection=branch==='material'?'roadmaking':'legion-training';render()},onSelect:id=>{librarySelection=id;render()}});
+ document.querySelector('[data-library-start]')?.addEventListener('click',()=>{if(beginLibraryInquiry(profile).ok){persist();notify(t('Source inquiry opened.','史料审读已开始。'))}});
+ document.querySelectorAll('[data-library-answer]').forEach(el=>el.onclick=()=>{const result=answerLibraryInquiry(profile,Number(el.dataset.libraryAnswer));if(!result.ok)return;persist();notify(result.complete?t(`Dossier recorded · ${result.score}/6 · +${result.coins} Laurels`,`卷宗已记录 · ${result.score}/6 · +${result.coins}桂冠金币`):t('Source note recorded.','史料判断已记录。'))});
  document.querySelectorAll('[data-activity]').forEach(el=>el.onclick=()=>{const result=resolveActivity(profile,el.dataset.activity,Number(el.dataset.activityChoice));if(result.ok){persist();notify(result.correct===false?t('Recorded · the poor judgment cost reputation.','已记录 · 判断失当损害了声望。'):t(`Recorded · +${result.coins} Laurels`,`已记录 · +${result.coins}桂冠金币`))}});
  document.querySelectorAll('[data-scenario]').forEach(el=>el.onclick=()=>beginScenario(el.dataset.scenario));
  document.querySelector('[data-drill-start]')?.addEventListener('click',()=>{if(beginCampDrill(profile).ok){persist();notify(t('Exercise opened.','演练已开始。'))}});

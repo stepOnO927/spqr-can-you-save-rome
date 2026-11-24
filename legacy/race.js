@@ -1,4 +1,4 @@
-import {claimReward} from './legacy-core.js?v=26';
+import {claimReward} from './legacy-core.js?v=27';
 
 export const DRIVERS=['Aurelia','Titus','Livia','Marcellus'];
 const RIVALS=['Lucius','Nero','Flavia','Sabina','Claudia','Gaius','Felix','Domitia','Quintus','Valeria','Sextus','Aemilia'];
