@@ -195,3 +195,4 @@ body.grand-campaign.atlas-focus .grand-site:is(:hover,:focus-visible):before{con
  .selection.idle{width:auto;padding:9px 12px}
  .selection.idle h2{font-size:18px}
 }
+.army.legacy-eagle .standard-field{position:relative}.army.legacy-eagle .legacy-eagle-mark{position:absolute;right:-6px;top:-9px;filter:drop-shadow(0 1px 2px #1b1813)}

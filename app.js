@@ -5,13 +5,13 @@ import {CHARACTER_CATALOG} from './characters.js?v=15';
 import {REGIONS,ROUTES,FACTIONS,SOURCES} from './data.js?v=9';
 import {newGame,newGrandGame,convertToGrandMap,upgradeSave,tick,moveArmy,previewMarch,recruit,trainArmy,setTax,warContributionPlan,collectWarContributions,emergencyProvisionsPlan,collectEmergencyProvisions,aerariumPlan,seizeAerarium,diplomacy,respondCivilSettlement,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,researchInnovation,adoptIdea,removeIdea,cancelIdeaAdoption,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,setReligiousPolicy,purchaseMaterials,recruitFigure} from './engine.js?v=253';
 import {importCampaign,downloadCampaign} from './save-files.js?v=40';
-import {loadProfile,saveProfile,recordCampaign} from './legacy/legacy-core.js?v=18';
+import {loadProfile,saveProfile,recordCampaign} from './legacy/legacy-core.js?v=21';
 import {endCampaign} from './achievement-system.js?v=5';
 import {campaignEndingHtml,campaignVictoryHtml,campaignSettlementHtml} from './achievement-ui.js?v=15';
 import {budgetHtml} from './budget-ui.js?v=41';
 import {holdPosition,strategicRetreat,armySupply,encircled} from './grand-operations.js?v=48';
 import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation,bindIdeaSelection,openInscriptionEditor} from './development-ui.js?v=77';
-import {drawMap,mapPoint} from './map.js?v=70';
+import {drawMap,mapPoint} from './map.js?v=71';
 import {avoidGrandLabelCollisions} from './map-label-layout.js?v=3';
 import {chronicleHtml,notificationsHtml,briefingHtml,battleReportHtml,reportLabel,eventDate} from './reports-ui.js?v=19';
 import {unreadCount,markRead,latestCritical,eventText} from './campaign-reports.js?v=14';
@@ -63,7 +63,7 @@ function date(){return lang==='zh'?`公元${state.year<0?'前':'后'}${Math.abs(
 function ownArmies(){return state.armies.filter(a=>a.owner===state.player)}
 function status(a){return a.trainingRemaining?(lang==='zh'?'训练中':'Training'):a.move?.returning?(lang==='zh'?'运兵舰队返航中':'Returning by sea'):a.move?`${t('marching')} → ${n(region(state,a.move.to).name)} (${a.move.remaining})`:a.siege?`${t('siege')} (${a.siege.remaining})`:t('available')}
 
-function mapSvg(){const a=army(state,selectedArmy);return drawMap(state,{selectedRegion,selectedArmy,mode:mapMode,lang,view,reachable:ordering&&a?adjacent(a.region,state).map(x=>x.to):[],recentChanges:(state.campaignEvents||[]).filter(e=>e.type==='control'&&e.year===state.year&&e.month===state.month).map(e=>e.regionId)})}
+function mapSvg(){const a=army(state,selectedArmy);return drawMap(state,{selectedRegion,selectedArmy,mode:mapMode,lang,view,reachable:ordering&&a?adjacent(a.region,state).map(x=>x.to):[],recentChanges:(state.campaignEvents||[]).filter(e=>e.type==='control'&&e.year===state.year&&e.month===state.month).map(e=>e.regionId),banner:loadProfile().banner})}
 
 function stat(k,value){return `<div class="stat"><small>${t(k)}</small><strong>${value}</strong></div>`}
 function socialDetails(r){if(!state.grandMap)return '';const own=r.owner===state.player,faith=({['roman-cults']:['Roman civic cults','罗马城邦祭仪'],['hellenic-cults']:['Hellenic cults','希腊祭仪'],['egyptian-cults']:['Egyptian cults','埃及祭仪'],['local-cults']:['Local traditions','地方信仰']})[r.faiths?.[0]?.id]||['Local traditions','地方信仰'];return `<div><dt>${lang==='zh'?'人口':'Population'}</dt><dd>${own?fmt(r.population):lang==='zh'?'未调查':'Unsurveyed'}</dd></div><div><dt>${lang==='zh'?'主要信仰':'Main tradition'}</dt><dd>${faith[lang==='zh'?1:0]} · ${r.faiths?.[0]?.share||70}%</dd></div><div><dt>${lang==='zh'?'民众满意度':'Civic satisfaction'}</dt><dd>${own?`${r.civicSatisfaction}%`:lang==='zh'?'未知':'Unknown'}</dd></div><div><dt>${lang==='zh'?'融合度':'Integration'}</dt><dd>${own?`${r.integration}%`:lang==='zh'?'未知':'Unknown'}</dd></div>`}

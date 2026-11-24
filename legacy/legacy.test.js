@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {loadProfile,saveProfile,exportProfile,importProfile,purchase,recordCampaign,createScenario} from './legacy-core.js';
+import {loadProfile,saveProfile,exportProfile,importProfile,normalizeProfile,purchase,applyCosmetic,recordCampaign,createScenario} from './legacy-core.js';
 import {archivePanelHtml} from './archive-ui.js';
 import {triumphalArchHtml} from './arch-ui.js';
 import {decidePetition,availablePetitions} from './civic.js';
@@ -19,6 +19,26 @@ import {objectiveDefinitions} from '../campaign-reports.js';
 import {evaluateAchievements,endCampaign} from '../achievement-system.js';
 
 const memory=()=>{let value=null;return {getItem:()=>value,setItem:(key,v)=>{value=v}}};
+test('owned army and chariot appearances can be changed freely and survive export',()=>{
+ const profile=loadProfile(memory());profile.coins=1000;
+ assert.equal(applyCosmetic(profile,'banner-eagle'),false);
+ assert.equal(applyCosmetic(profile,'race-blue'),false);
+ assert.equal(purchase(profile,'banner-eagle').ok,true);
+ assert.equal(purchase(profile,'race-blue').ok,true);
+ assert.equal(profile.banner,'eagle');assert.equal(profile.raceColor,'blue');
+ const balance=profile.coins;
+ assert.equal(applyCosmetic(profile,'banner-classic'),true);
+ assert.equal(applyCosmetic(profile,'race-gold'),true);
+ assert.equal(profile.banner,'classic');assert.equal(profile.raceColor,'gold');
+ assert.equal(applyCosmetic(profile,'banner-eagle'),true);
+ assert.equal(applyCosmetic(profile,'race-blue'),true);
+ assert.equal(profile.coins,balance);
+ const restored=importProfile(exportProfile(profile));
+ assert.equal(restored.banner,'eagle');assert.equal(restored.raceColor,'blue');
+ assert.equal(restored.purchases.filter(id=>id==='banner-eagle').length,1);
+ assert.equal(normalizeProfile({...restored,purchases:[]}).banner,'classic');
+ assert.equal(normalizeProfile({...restored,purchases:[]}).raceColor,'gold');
+});
 test('Temple festival records branching civic effects, save stages and one reward',()=>{
  const profile=loadProfile(memory());
  assert.equal(profile.templeFestival,null);
