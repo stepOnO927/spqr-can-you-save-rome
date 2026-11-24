@@ -17,7 +17,7 @@ try{
  });
  await page.goto('http://spqr.test/',{waitUntil:'domcontentloaded'});
  await page.evaluate(async()=>{
-  const {newGrandGame}=await import('/engine.js?v=258');
+  const {newGrandGame}=await import('/engine.js?v=259');
   const {stageHandoff}=await import('/view-handoff.js');
   const state=newGrandGame('senate'),pompey=state.armies.find(a=>a.id==='pompey'),fleet=state.naval.fleets.find(f=>f.id==='senate-adriatic');
   pompey.region='epirus';pompey.men=11800;
@@ -34,8 +34,8 @@ try{
   assert.match(feedback.toast,expected,JSON.stringify(feedback));
  }
  const panels=await page.evaluate(async()=>{
-  const {newGrandGame}=await import('/engine.js?v=258');
-  const {renderNavalPanel}=await import('/map-lab/naval-ui.js?v=102');
+  const {newGrandGame}=await import('/engine.js?v=259');
+  const {renderNavalPanel}=await import('/map-lab/naval-ui.js?v=103');
   const state=newGrandGame('senate'),pompey=state.armies.find(a=>a.id==='pompey'),fleet=state.naval.fleets.find(f=>f.id==='senate-adriatic');
   pompey.region='epirus';pompey.men=11800;fleet.port='epirus';fleet.ships.transport=3;fleet.sailors=570;
   const root=document.createElement('div');document.body.append(root);

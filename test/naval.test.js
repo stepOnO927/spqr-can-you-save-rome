@@ -1823,6 +1823,30 @@ test('AI divides escorts between two raided trade routes and uses current route 
  restored.month++;advanceNaval(restored);
  for(const id of previousSecurity.keys()){const now=restored.naval.routes.find(r=>r.id===id).last;assert.ok(now.security>previousSecurity.get(id),`${id}: ${previousSecurity.get(id)} → ${now.security} (${now.reason})`)}
 });
+test('AI escorts a known insecure shipment before a loss and follows its real sea legs through reload',()=>{
+ let s=newGrandGame('caesar');s.wars=[];s.factions.senate.treasury=500;s.factions.senate.food=100;
+ const fleet=s.naval.fleets.find(f=>f.id==='senate-adriatic');
+ fleet.port=null;fleet.zone='african';fleet.ships={trireme:2};fleet.sailors=340;
+ Object.assign(s.naval.pirates[0],{zone:'african',pressure:35});
+ Object.assign(s.naval.pirates[1],{zone:'sicilian',pressure:60});
+ advanceNaval(s);
+ const route=s.naval.routes.find(r=>r.id==='african-oil'),voyage=s.naval.voyages.find(v=>v.routeId===route.id);
+ assert.equal(route.last.reason,'enroute');assert.ok(route.last.security<75);
+ assert.ok(voyage?.cargo>0);assert.deepEqual(voyage.path,['sicilian','tyrrhenian']);
+ assert.equal(fleet.order?.kind,'escort');assert.equal(fleet.order?.target,route.id,'the AI acts on its own dated trade security while cargo is at sea');
+ const unescorted=upgradeSave(structuredClone(s));
+ const idle=unescorted.naval.fleets.find(f=>f.id===fleet.id);idle.order=null;idle.sailors=0;
+ s=upgradeSave(structuredClone(s));s.month++;unescorted.month++;
+ advanceNaval(s);advanceNaval(unescorted);
+ const following=s.naval.fleets.find(f=>f.id===fleet.id),merchant=s.naval.voyages.find(v=>v.routeId===route.id);
+ assert.equal(following.zone,'sicilian');assert.equal(merchant.zone,'sicilian');
+ assert.equal(following.order?.kind,'escort');
+ assert.ok(s.naval.routes.find(r=>r.id===route.id).last.security>unescorted.naval.routes.find(r=>r.id===route.id).last.security,'the real voyage gains protection in the next sea zone');
+ s.month++;advanceNaval(s);
+ assert.equal(s.naval.fleets.find(f=>f.id===fleet.id).zone,'tyrrhenian');
+ assert.equal(s.naval.routes.find(r=>r.id===route.id).last.reason,'delivered');
+ assert.ok(!s.naval.reports.some(r=>r.kind==='trade-raid'&&r.owner==='senate'));
+});
 test('AI releases a quiet trade escort after three dated reviews and preserves its streak on reload',()=>{
  const s=newGrandGame('caesar'),escort=s.naval.fleets.find(f=>f.owner==='senate');
  s.factions.senate.treasury=500;

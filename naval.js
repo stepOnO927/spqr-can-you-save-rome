@@ -1,7 +1,7 @@
 import {GRAND_SITES,GRAND_ROUTES} from './grand-map-data.js?v=2';
 import {activeEffects,localBuildingEffects,recordMerchantContact} from './development.js?v=68';
 import {officeOf} from './office-system.js';
-import {nationalBudget} from './national-budget.js?v=40';
+import {nationalBudget} from './national-budget.js?v=41';
 
 // Sea areas and costs are game-scale approximations of the 49 BCE Mediterranean.
 export const SEA_ZONES=[
@@ -885,10 +885,14 @@ function aiEscortTarget(s,owner,f){
  const assigned=new Set(s.naval.fleets.filter(other=>other.owner===owner&&other.id!==f.id&&other.order?.kind==='escort'&&!other.reserve).map(other=>other.order.target));
  return s.naval.routes.map(route=>{
   const last=route.last;
-  if(![route.from,route.to].some(id=>s.regions.find(r=>r.id===id)?.owner===owner)||!['piracy','raid'].includes(last?.reason)||last.year*12+last.month!==month||assigned.has(route.id))return null;
+  const from=s.regions.find(r=>r.id===route.from),to=s.regions.find(r=>r.id===route.to);
+  if(![from?.owner,to?.owner].includes(owner)||route.pausedBy?.includes(owner)||!last||last.year*12+last.month!==month||assigned.has(route.id))return null;
+  const underway=s.naval.voyages.some(v=>v.routeId===route.id&&v.phase==='outbound'&&[v.buyer,v.seller].includes(owner));
+  const recentLoss=['piracy','raid'].includes(last.reason),atRisk=underway&&['enroute','navigation'].includes(last.reason)&&Number.isFinite(last.security)&&last.security<75;
+  if(!recentLoss&&!atRisk)return null;
   const path=seaRoute(f.zone,portZone(route.from));
   if(!path)return null;
-  return {route,score:(last.reason==='raid'?18:0)+route.volume*3+(100-(Number.isFinite(last.security)?last.security:50))/10-path.length*6};
+  return {route,score:(last.reason==='raid'?18:0)+(atRisk?8:0)+route.volume*3+(100-(Number.isFinite(last.security)?last.security:50))/10-path.length*6};
  }).filter(Boolean).sort((a,b)=>b.score-a.score||a.route.id.localeCompare(b.route.id))[0]?.route||null;
 }
 function aiPursuitTarget(s,owner,f){
@@ -1027,6 +1031,20 @@ function updatePursuitOrders(s,log){
   if(f.owner===s.player)log(s,'Fleet pursuit changed course after a new dated sighting. The target may have moved again.','舰队根据新的注明日期的目击报告改航；目标仍可能再次移动。');
  }
 }
+function updateEscortOrders(s){
+ for(const f of s.naval.fleets){
+  const order=f.order;if(order?.kind!=='escort')continue;
+  const route=s.naval.routes.find(r=>r.id===order.target);
+  if(!route)continue;
+  // Only a contracting command can track the position of its own shipment.
+  // Recompute a connected sea path to its next reported leg; the normal fleet
+  // movement loop still limits the escort to its ship speed each month.
+  const voyage=s.naval.voyages.filter(v=>v.routeId===route.id&&v.phase==='outbound'&&[v.buyer,v.seller].includes(f.owner))
+   .map(v=>({v,path:seaRoute(f.zone,v.path[0]||v.zone)})).filter(x=>x.path)
+   .sort((a,b)=>a.path.length-b.path.length||b.v.cargo-a.v.cargo||a.v.id.localeCompare(b.v.id))[0]?.v;
+  if(voyage)order.path=seaRoute(f.zone,voyage.path[0]||voyage.zone)||order.path;
+ }
+}
 function settleAIMerchantDisputes(s){
  const reviewed=new Set();
  for(const dispute of s.naval.disputes){
@@ -1094,7 +1112,7 @@ for(const q of [...n.queues]){
  f.sailors+=SHIPS[q.type].crew;
  if(q.owner===s.player)log(s,`A ${SHIPS[q.type].name[0]} was launched at ${site(q.port)?.site[0]}.`,`${SHIPS[q.type].name[1]}在${site(q.port)?.site[1]}下水。`);
 }
- updatePursuitOrders(s,log);
+ updatePursuitOrders(s,log);updateEscortOrders(s);
  for(const f of n.fleets){
   const lostHarbor=f.port&&s.regions.find(r=>r.id===f.port)?.owner!==f.owner;
   if(!lostHarbor&&(!f.reserve||f.port))continue;

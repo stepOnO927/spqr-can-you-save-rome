@@ -18,7 +18,7 @@ try{
  });
  await page.goto('http://spqr.test/',{waitUntil:'domcontentloaded'});
  await page.evaluate(async()=>{
-  const {newGrandGame,portZone}=await import('/engine.js?v=258');
+  const {newGrandGame,portZone}=await import('/engine.js?v=259');
   const {stageHandoff}=await import('/view-handoff.js');
   const state=newGrandGame('senate'),unit=state.armies.find(a=>a.id==='italy'),fleet=state.naval.fleets.find(f=>f.id==='senate-adriatic');
   unit.region='t016';unit.men=5200;
