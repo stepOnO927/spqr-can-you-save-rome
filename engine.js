@@ -1,7 +1,7 @@
 import {isDeliveredReport} from './person-knowledge.js?v=dossier-archive-1';
 import {advanceLegend} from './legend.js?v=dossier-archive-1';
 import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=dossier-archive-1';
-import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,syncOfficialInquiryLetters,syncStrategicOfferLetters,syncCoalitionLetters,syncCommercialLeagueLetters,syncCoalitionDefenseLetters,syncCoalitionAdmissionLetters,syncCoalitionMotionLetters,syncCoalitionAidLetters,syncAgreementLetters,syncFamilyReplies,syncAgentReleaseLetters,strategicLetterSenderSnapshot,chronicleLetters} from './epistulae.js?v=dossier-archive-1';
+import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,courierMonths,syncPeaceLetters,syncOfficialInquiryLetters,syncStrategicOfferLetters,syncCoalitionLetters,syncCommercialLeagueLetters,syncCoalitionDefenseLetters,syncCoalitionAdmissionLetters,syncCoalitionMotionLetters,syncCoalitionAidLetters,syncAgreementLetters,syncFamilyReplies,syncAgentReleaseLetters,strategicLetterSenderSnapshot,chronicleLetters} from './epistulae.js?v=dossier-archive-1';
 import {advancePersonnel,reconcilePeacePersonnel} from './epistulae-personnel.js?v=dossier-archive-1';
 import {initializeMailReports,advanceMailReports} from './mail-reports.js?v=dossier-archive-1';
 import {initializeGovernments,advanceGovernments,deriveGovernment,validSuccessionPlan} from './governance.js?v=dossier-archive-1';
@@ -24,6 +24,7 @@ import {advanceFocuses,focusModifiers} from './national-focus.js?v=dossier-archi
 import {seedTemplates,formationCombatFactor,formationMarchDelta,formationSiegeReduction,formationUpkeepDelta,observeFormationRecon,advanceReorganizations,aiDesignFormations,aiRecruitFormation,aiReorganize,advanceCommandInfluence} from './legion-designer.js?v=dossier-archive-1';
 import {advanceBattlePlans,aiBattlePlans,planControlled} from './battle-plans.js?v=dossier-archive-1';
 import {shareAiOperation} from './operation-intelligence.js?v=operation-notices-1';
+import {advanceJointOperations,proposeAiJointOperation,hasJointCommitment,jointReservedArmies,jointReservedObjectives} from './joint-operations.js?v=joint-operations-1';
 import {makePeaceTerms,peaceOfferRegions,peaceConcessionCredit,canSettlePeaceTerms,applyPeaceTransfer,peaceWarIsCurrent} from './peace-terms.js?v=territorial-peace-1';
 // IMPERIUM systems are on by default. A scenario or an isolated legacy test may set
 // world.imperium.enabled=false to run the pre-expansion AI unchanged.
@@ -917,10 +918,11 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
   if(owner!=='rebels'&&imperiumOn(s)){
     if((s.month+owner.length)%6===0||!s.world.aiFormationPlans?.[owner])aiDesignFormations(s,owner);
     if(strongPlanning||s.month%3===0)aiBattlePlans(s,owner,{estimatedStrength,log});
-    shareAiOperation(s,owner,{sendLetter,autoplayPlayer});
+    proposeAiJointOperation(s,owner,{sendLetter,courierMonths,autoplayPlayer});
+    if(!hasJointCommitment(s,owner))shareAiOperation(s,owner,{sendLetter,autoplayPlayer});
     // Reorganize quarterly, or soon after a lost battle when a battered army is safe at home.
     const beaten=(s.battles||[]).some(b=>(b.attackerWins?b.defender.owner:b.attacker.owner)===owner&&(s.year*12+s.month)-(b.year*12+b.month)<=2);
-    if((s.month%4===2&&f.treasury>70||beaten&&f.treasury>35)&&(!strategy||!['recover','stabilize'].includes(strategy.goal)||beaten))aiReorganize(s,owner,{log});
+    if((s.month%4===2&&f.treasury>70||beaten&&f.treasury>35)&&(!strategy||!['recover','stabilize'].includes(strategy.goal)||beaten))aiReorganize(s,owner,{exclude:jointReservedArmies(s,owner),log});
   }
   const reportedNeighbors=()=>owned.flatMap(r=>adjacent(r.id).map(e=>({id:e.to,owner:reportedControl(s,owner,e.to)?.owner}))).filter(r=>r.owner);
   // Review bounded, private opportunity estimates when observed wars change or
@@ -941,7 +943,8 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
       }
     }
   }
-  const enemies=s.regions.filter(r=>isWar(s,owner,reportedControl(s,owner,r.id)?.owner));
+  const reservedObjectives=jointReservedObjectives(s,owner),reservedArmies=jointReservedArmies(s,owner);
+  const enemies=s.regions.filter(r=>!reservedObjectives.has(r.id)&&isWar(s,owner,reportedControl(s,owner,r.id)?.owner));
   if(owner!=='rebels'&&!['caesar','senate'].includes(owner))respondToFrontierReports(s,owner,{issueOrder:issueMilitaryOrder,canCommand:a=>!planControlled(s,a.id)});
   // IMPERIUM: armies under an automatic operational plan or reorganizing follow that plan.
   const available=s.armies.filter(a=>a.owner===owner&&!a.move&&!a.siege&&!a.reorg&&a.men>1200&&!planControlled(s,a.id));
@@ -984,7 +987,7 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
     const sharedTarget=coalitionMilitaryObjective(s,owner);
     const targets=enemies.map(r=>({r,d:Math.hypot(r.x-region(s,a.region).x,r.y-region(s,a.region).y),shared:sharedTarget&&reportedControl(s,owner,r.id)?.owner===sharedTarget})).sort((x,y)=>Number(!!y.shared)-Number(!!x.shared)||x.d-y.d);
     let heldForPreparation=false;
-    for(const {r} of targets){let step=shortestStep(s,a.region,r.id,owner,a);if(!step&&strongPlanning&&strategy?.goal==='campaign'&&here.owner===owner&&f.food>=30&&f.treasury>=45&&a.morale>=70&&a.men>=5000&&(s.world.lastUnauthorizedAttempt?.[owner]??-Infinity)+12<=now){const proposed=oneBreachStep(s,a.region,r.id,owner),reported=proposed&&reportedControl(s,owner,proposed.step)?.owner,access=proposed&&militaryAccessStatus(s,owner,proposed.step,reported);if(proposed&&reported&&access.allowed&&['own','treaty','limited_treaty'].includes(access.basis)){if(issueMilitaryOrder(s,a.id,'move',proposed.step,owner).ok)break}else if(proposed&&reported&&!access.allowed&&!(s.borderIncidents||[]).some(incident=>incident.attacker===owner&&incident.defender===reported&&['open','protested'].includes(incident.status))){if(issueMilitaryOrder(s,a.id,'unauthorized_entry',proposed.step,owner).ok){s.world.lastUnauthorizedAttempt||={};s.world.lastUnauthorizedAttempt[owner]=now;break}}}if(step&&step!==a.region){const defenderOwner=reportedControl(s,owner,step)?.owner;const hostile=isWar(s,owner,defenderOwner),theaters=s.regions.filter(x=>reportedControl(s,owner,x.id)?.owner===defenderOwner).length,estimate=hostile?estimatedStrength(s,owner,defenderOwner):0;const defenders=hostile?estimate/Math.max(1,theaters):0;
+    for(const {r} of targets){let step=shortestStep(s,a.region,r.id,owner,a);if(!step&&strongPlanning&&strategy?.goal==='campaign'&&here.owner===owner&&f.food>=30&&f.treasury>=45&&a.morale>=70&&a.men>=5000&&(s.world.lastUnauthorizedAttempt?.[owner]??-Infinity)+12<=now){const proposed=oneBreachStep(s,a.region,r.id,owner),reported=proposed&&reportedControl(s,owner,proposed.step)?.owner,access=proposed&&militaryAccessStatus(s,owner,proposed.step,reported);if(proposed&&!reservedObjectives.has(proposed.step)&&reported&&access.allowed&&['own','treaty','limited_treaty'].includes(access.basis)){if(issueMilitaryOrder(s,a.id,'move',proposed.step,owner).ok)break}else if(proposed&&!reservedObjectives.has(proposed.step)&&reported&&!access.allowed&&!(s.borderIncidents||[]).some(incident=>incident.attacker===owner&&incident.defender===reported&&['open','protested'].includes(incident.status))){if(issueMilitaryOrder(s,a.id,'unauthorized_entry',proposed.step,owner).ok){s.world.lastUnauthorizedAttempt||={};s.world.lastUnauthorizedAttempt[owner]=now;break}}}if(step&&step!==a.region&&!reservedObjectives.has(step)){const defenderOwner=reportedControl(s,owner,step)?.owner;const hostile=isWar(s,owner,defenderOwner),theaters=s.regions.filter(x=>reportedControl(s,owner,x.id)?.owner===defenderOwner).length,estimate=hostile?estimatedStrength(s,owner,defenderOwner):0;const defenders=hostile?estimate/Math.max(1,theaters):0;
       const next=region(s,step),nextThreatened=adjacent(step).some(e=>isWar(s,owner,reportedControl(s,owner,e.to)?.owner));
       if(strongPlanning&&strategy&&!hostile&&next.owner===owner&&nextThreatened&&next.supply*1000<a.men*.75&&here.supply>next.supply)continue;
       if(defenders>a.men*(internalOpponent(defenderOwner)?2:({hard:1.15,expert:1.05}[s.difficulty]||1.35))||f.food<0){if(hostile&&(strongPlanning||level==='standard'&&(owner==='caesar'||owner==='senate'&&imperiumOn(s)))){heldForPreparation=true;if(here.owner===owner)break}continue}
@@ -993,7 +996,7 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
        const fortReport=reportedFortification(s,owner,step),estimatedFort=fortReport&&!fortReport.stale?fortReport.band[0]:1;
        const assessment=(unit)=>assessAttack({ownMen:unit.men,morale:unit.morale,skill:unit.skill,experience:unit.experience,food:f.food,estimatedTotal:estimate,reportedTheaters:theaters,sightings,terrain:dest.terrain,fort:estimatedFort,difficulty:s.difficulty});
        if(!assessment(a).favorable&&here.owner===owner){
-        const support=s.armies.filter(b=>b!==a&&b.owner===owner&&b.region===a.region&&!b.move&&!b.siege&&b.men>0&&a.men+b.men<=15000&&a.men+b.men<=here.supply*1000).sort((x,y)=>y.men-x.men).find(b=>{const total=a.men+b.men;return assessment({men:total,morale:(a.morale*a.men+b.morale*b.men)/total,skill:(a.skill*a.men+b.skill*b.men)/total,experience:(a.experience*a.men+b.experience*b.men)/total}).favorable});
+        const support=s.armies.filter(b=>b!==a&&b.owner===owner&&!reservedArmies.has(b.id)&&b.region===a.region&&!b.move&&!b.siege&&b.men>0&&a.men+b.men<=15000&&a.men+b.men<=here.supply*1000).sort((x,y)=>y.men-x.men).find(b=>{const total=a.men+b.men;return assessment({men:total,morale:(a.morale*a.men+b.morale*b.men)/total,skill:(a.skill*a.men+b.skill*b.men)/total,experience:(a.experience*a.men+b.experience*b.men)/total}).favorable});
         if(support){const total=a.men+support.men;for(const property of ['morale','skill','experience'])a[property]=Math.round((a[property]*a.men+support[property]*support.men)/total*10)/10;a.men=total;(a.mergedFrom||=[]).push(support.id,...(support.mergedFrom||[]));s.armies=s.armies.filter(b=>b!==support)}
        }
        if(!assessment(a).favorable){heldForPreparation=true;if(here.owner===owner)break;continue}
@@ -1193,6 +1196,8 @@ export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
   advanceAgreementProposals(s,{autoplayPlayer,checkAlliance:canFormAlliance,concludeAlliance:(state,actor,target)=>diplomacy(state,actor,target,'alliance',{priorConsent:true})});syncAgreementLetters(s);
   if(!autoplayPlayer){syncCoalitionLetters(s);syncCommercialLeagueLetters(s);syncCommercialLeagueAdmissionLetters(s);syncCommercialLeagueMotionLetters(s);syncCoalitionDefenseLetters(s);syncCoalitionAdmissionLetters(s);syncCoalitionMotionLetters(s);syncCoalitionAidLetters(s)}
   advanceMail(s,{proposeAgreement,diplomacy});
+  // Only mail received before the agreed launch month can release a reserved plan.
+  advanceJointOperations(s,{sendLetter,estimatedStrength,autoplayPlayer});
   for(const owner of Object.keys(s.factions).filter(id=>autoplayPlayer||id!==s.player)){
     const override=autoplayPlayer&&owner===s.player&&playerDifficulty;if(!override){aiTurn(s,owner,{autoplayPlayer});if(owner!=='rebels')aiInnovation(s,owner);continue}
     const originalDifficulty=s.difficulty,hadDifficulty=Object.prototype.hasOwnProperty.call(s,'difficulty');s.difficulty=playerDifficulty;
