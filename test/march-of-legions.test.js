@@ -67,7 +67,11 @@ test('food shortage is visible and can cause contextual nonbattle losses',()=>{
 test('halt, resume, cancellation and a midjourney change preserve physical position',()=>{
  const s=newGame('caesar'),a=s.armies.find(x=>x.id==='xiii');
  assert.equal(issueRouteOrder(s,a.id,['gaul']).ok,true);tick(s);const firstTarget=a.move.to,elapsed=a.move.elapsed;
- assert.equal(issueMilitaryOrder(s,a.id,'halt').ok,true);tick(s);assert.equal(a.move.elapsed,elapsed);
+ assert.equal(issueMilitaryOrder(s,a.id,'halt').ok,true);
+ const paused={provisions:a.provisions,fatigue:a.fatigue,men:a.men,history:a.journeyHistory.length};
+ tick(s);assert.equal(a.move.elapsed,elapsed);
+ assert.equal(a.provisions,paused.provisions);assert.equal(a.fatigue,paused.fatigue);
+ assert.equal(a.men,paused.men);assert.equal(a.journeyHistory.length,paused.history);
  assert.equal(issueMilitaryOrder(s,a.id,'resume').ok,true);
  const revised=issueRouteOrder(s,a.id,['italiaN']);assert.equal(revised.ok,true);assert.equal(revised.pending,true);assert.equal(a.move.to,firstTarget);assert.equal(a.region,'cisalpine');
  assert.equal(issueMilitaryOrder(s,a.id,'cancel').ok,true);assert.equal(a.move.cancelAfterLeg,true);assert.equal(a.region,'cisalpine');

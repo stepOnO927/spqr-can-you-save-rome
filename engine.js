@@ -730,6 +730,7 @@ function arrive(s,a){
 function advanceMarchConditions(s,a){
  const move=a.move;if(!move)return;const cfg=MARCH_CONFIG,place=region(s,a.region),f=s.factions[a.owner],cap=Math.ceil(a.men/1000*cfg.provisionCapacityPerThousand);
  a.provisions??=cap;a.fatigue??=0;a.journeyHistory||=[];
+ if(move.paused)return;
  if(move.elapsed===0&&place?.owner===a.owner&&f?.food>0&&a.provisions<cap){const gathered=Math.min(cap-a.provisions,Math.max(0,Math.floor(f.food)),Math.max(1,place.supply||1));a.provisions+=gathered;f.food-=gathered}
  const needed=Math.max(1,Math.ceil((move.provisionCost||a.men/1000*cfg.provisionPerThousand)/(move.totalMonths||move.remaining||1)));
  const consumed=Math.min(a.provisions,needed);a.provisions-=consumed;const shortage=needed-consumed;
@@ -739,7 +740,6 @@ function advanceMarchConditions(s,a){
  if(a.fatigue>70&&strategicRoll(s,a.id,1103)<.08)losses.push({kind:'disease',men:Math.min(a.men-1,Math.max(1,Math.round(a.men*.0015)))});
  for(const loss of losses){const count=Math.max(0,Math.min(loss.men,a.men-1));if(!count)continue;a.men-=count;a.morale=Math.max(15,a.morale-(loss.kind==='desertion'?3:1));const event={year:s.year,month:s.month,from:a.region,to:move.to,kind:loss.kind,men:count};a.journeyHistory.push(event);a.journeyHistory=a.journeyHistory.slice(-80);if(a.owner===s.player)log(s,`${a.name[0]} lost ${count} during the march (${loss.kind}).`,`${a.name[1]}行军途中因${{desertion:'逃亡',environment:'环境暴露',disease:'疾病'}[loss.kind]}减员${count}人。`,{armyId:a.id,kind:'march_attrition',cause:loss.kind,casualties:count,chronicleRecorded:true})}
  if(shortage&&a.owner===s.player)log(s,`${a.name[0]} lacks ${shortage} provisions on the march.`,`${a.name[1]}行军补给短缺${shortage}份。`,{armyId:a.id,kind:'supply_shortage'});
- if(move.paused)return;
  const edge=estimateMarchEdge(s,a,a.region,move.to,{pace:move.pace});if(edge?.blocked){if(move.blocked!==edge.blocked&&a.owner===s.player)log(s,`${a.name[0]} halted: the pass is closed by snow.`,`${a.name[1]}暂停行军：山口因积雪封闭。`,{armyId:a.id,kind:'march_blocked'});move.blocked=edge.blocked;return}
   // The destination's real controller is checked only on arrival. Checking it
   // en route would disclose a hidden border change before the army gets there.
