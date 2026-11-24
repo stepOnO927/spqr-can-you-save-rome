@@ -38,7 +38,7 @@ export const LOCAL_ENTITY_TEMPLATES = Object.freeze([
     id: 'auximum', type: 'roman_town', name: ['Auximum', '奥克西穆姆'], theater: 'italiaN',
     coordinates: [13.47691, 43.48646], source: 'https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/1A%2A.html',
     coordinateSource: 'https://pleiades.stoa.org/places/413045', historical: true, spatialAccuracy: 'approximate_site_point',
-    description: ['Picene town held by Attius Varus until its decurions objected to keeping Caesar outside in 49 BCE. Its point is not a theater border; local forces and stores are gameplay estimates.', '皮凯努姆城镇；公元前49年阿提乌斯·瓦鲁斯驻守此地，随后当地议员反对将凯撒拒于城外。地点标记并非战区边界；兵力与存粮为游戏估算。'],
+    description: ['Picene town held by Attius Varus until its decurions objected to keeping Caesar outside in 49 BCE. Its point is not a theater border; local forces and stores are gameplay estimates', '皮凯努姆城镇；公元前49年阿提乌斯·瓦鲁斯驻守此地，随后当地议员反对将凯撒拒于城外。地点标记并非战区边界；兵力与存粮为游戏估算'],
     initialController: 'senate', maxFootholdLevel: 3, militia: 500, fort: 0, treasury: 7, food: 9,
     fiscalWeight: 0,
     submissionAffinity: {caesar: 0.2}

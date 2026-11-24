@@ -72,7 +72,7 @@ try{
  await page.locator('[data-town-objective="auximum"]').evaluate(node=>node.click());
  assert.match(await panel.innerText(),/ROMAN TOWN · Auximum/);
  assert.match(await panel.innerText(),/Attius Varus/);
- assert.match(await panel.innerText(),/Local control: Senate/);
+ assert.match(await panel.innerText(),/Local control and militia are not yet verified/);
  for(const [id,name] of [['ariminum','Ariminum'],['capua','Capua'],['brundisium','Brundisium']]){
   const target=page.locator(`[data-town-objective="${id}"]`);
   assert.match(await target.innerText(),new RegExp(`Secure ${name}`));
