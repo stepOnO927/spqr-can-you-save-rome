@@ -13,12 +13,12 @@ const appianSource='https://www.parcoarcheologicoappiaantica.it/il-parco/storia/
 const gracchusMilestonesSource='https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Plutarch/Lives/Caius_Gracchus%2A.html';
 const miningSource='https://oxrep.web.ox.ac.uk/mines-database';
 const quarrySource='https://oxrep.web.ox.ac.uk/stone-quarries-database';
-const alesiaSource='https://alesia.com/en/archaeology/';
+const alesiaSource='https://alesia.com/archeologie/';
 const numantiaSource='https://numanciasoria.es/en/divulgacion/the-archaeological-hall-of-garray';
 const siegeSource='https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/2A%2A.html';
 const massiliaSource='https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/1B%2A.html';
 const militaryTransportSource='https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/1A%2A.html';
-const librarySource='https://www.persee.fr/doc/mefr_0223-5102_2006_num_118_2_10261';
+const librarySource='https://en.wikisource.org/wiki/Letters_to_Atticus/4.4b';
 const cloacaSource='https://www.sovraintendenzaroma.it/i_luoghi/roma_antica/monumenti/cloaca_massima';
 const marciaSource='https://www.sovraintendenzaroma.it/i_luoghi/roma_antica/monumenti/acquedotto_marcio';
 const pompeiiBathSource='https://pompeiisites.org/en/excavations-plan-en/stabian-baths-and-republican-baths/';
@@ -94,7 +94,7 @@ IDEAS.push({id:'bosporan-grain-stewardship',category:'economy',origin:'bosporus'
 export const MATERIALS = [
   {id:'roadmaking',name:['Road Building','道路修筑'],cost:22,months:3,building:'road',context:['Roman roads predate 49 BCE; this node spreads and improves local technique.','罗马道路早于前49年；此项代表技术传播与改进。'],source:source(appianSource,'Parco Archeologico dell’Appia Antica, Regina Viarum')},
   {id:'water-control',name:['Water Management','水利管理'],cost:24,months:4,building:'irrigation',context:['Cato advises gentle irrigation of beds and maintenance of drainage ditches; local channels adapt these older practices.','加图建议温和引水灌溉苗床并维护排水沟；地方水渠改造这些已有做法。'],source:source(catoWaterSource,'Cato, On Agriculture 151, 155')},
-  {id:'barracks-design',name:['Barracks Planning','兵营规划'],cost:21,months:3,building:'barracks',context:['Republican Roman siege camps show planned military quarters.','共和国时期的罗马围城军营显示出经过规划的营舍。'],source:source(numantiaSource)},
+  {id:'barracks-design',name:['Barracks Planning','兵营规划'],cost:21,months:3,building:'barracks',context:['The Numantia archaeological hall reconstructs a barrack hut and one of Scipio’s siege camps. This model illustrates Republican camp planning; it is not an excavated barrack preserved in place.','努曼提亚考古展厅复原了一座兵营棚屋和西庇阿围城军营之一。该模型展示共和国时期的营地规划，并非原址保存的兵营实物。'],source:source(numantiaSource,'Numantia Archaeological Hall, Roman camp reconstruction')},
   {id:'stone-fortification',name:['Fortification Planning','防御工事规划'],cost:25,months:4,building:'fort',context:['Caesar’s works at Alesia show extensive field fortifications; materials and layouts varied by site.','凯撒在阿莱西亚修筑了大规模野战工事；材料和布局因地而异。'],source:source(alesiaSource,'MuséoParc Alésia, Archaeology of the Siege')},
   {id:'quarrying',name:['Quarrying','采石'],cost:20,months:3,building:'quarry',context:['Roman-period quarry sites are documented, though dating individual sites to 49 BCE is often uncertain.','罗马时期采石场有考古记录，但单个遗址是否活跃于前49年往往难以确定。'],source:source(quarrySource)},
   {id:'metal-extraction',name:['Metal Extraction','金属采掘'],cost:23,months:4,building:'mine',context:['Roman mining sites are documented, but this card does not date a particular deposit to 49 BCE.','罗马时期矿场有考古记录，但此卡不把某处矿藏断定为前49年已开采。'],source:source(miningSource)},
@@ -119,16 +119,16 @@ const additionalMaterials=[
  ['aqueduct-refinement',['Aqueduct Refinement','渡槽改进'],'aqueduct',marciaSource,['Rome’s Aqua Marcia was built in 144 BCE; this node refines water distribution rather than inventing aqueducts.','罗马的马尔基亚水道建于前144年；此项改进配水，而非发明渡槽。'],27,4,['water-control']],
  ['sewer-improvement',['Sewer Improvement','下水道改进'],'sewer',cloacaSource,['The Cloaca Maxima combined drainage with later sewer functions; this is an improvement of existing works, not a claim of modern hygiene.','罗马大下水道兼有排涝和后来的排污功能；此项改进旧有工程，不宣称现代卫生效果。'],29,5,['urban-drainage']],
  ['training-ground',['Training Ground','训练场'],'training-camp',ciceroTrainingSource,['Cicero recalls exercises on the Campus Martius and in camp before 49 BCE; the building represents a designated practice area.','西塞罗回忆前49年已在战神广场和军营操练；建筑代表划定的训练场地。'],20,3,['barracks-design']],
- ['supply-organization',['Supply Organization','军需组织'],'supply-depot',militaryGranarySource,['Republican military granaries in Hispania show that armies stored grain near campaigns.','西班牙的共和国时期军用粮仓表明军队曾在战役地点附近储粮。'],22,3,['barracks-design']],
+ ['supply-organization',['Supply Organization','军需组织'],'supply-depot',militaryGranarySource,['Excavated granaries in second-century BCE Numantian siege camps show military storage, but evidence for first-century BCE depots is scarcer. Caesar also describes grain held in Spanish towns for armies. This local depot is a game adaptation, not a claim that every 49 BCE camp had a permanent stone granary.','前2世纪努曼提亚围城军营出土的粮仓显示军队曾储粮，但前1世纪军需仓的证据更少。凯撒还记述西班牙城镇为军队储粮。游戏中的地方军需仓是改编，并不表示前49年每座军营都有永久石砌粮仓。'],22,3,['barracks-design']],
  ['armory-craft',['Armory Craft','军械制造'],'armory',massiliaSource,['Caesar reports that Massilia set up arms workshops in 49 BCE; a local armory adapts that wartime practice.','凯撒记载马赛在前49年设立兵器作坊；地方军械库代表这种战时做法的改造。'],24,4,['metal-extraction']],
  ['siege-machinery',['Siege Machinery','攻城器械'],'siege-workshop',siegeSource,['Caesar describes earthworks, covered galleries and towers at the siege of Massilia in 49 BCE.','凯撒记载了前49年马赛围城中的土垒、带顶通道与攻城塔。'],25,4,['armory-craft']],
  ['metalworking',['Metalworking','金属加工'],'metalworks',catoCraftSource,['Cato lists Italian markets for iron tools, nails, bars, and copper vessels; local production capacity is a game abstraction.','加图列出意大利各地铁器、铁钉、铁条与铜器的市场；地方产能属于游戏抽象。'],22,3,['metal-extraction']],
  ['craft-workshops',['Craft Workshops','手工业作坊'],'workshop',catoCraftSource,['Cato names markets for tools, pottery, rope, and mills; this card models local craft organization rather than a single ancient factory.','加图记载工具、陶器、绳索和磨坊器具的产地；此卡模拟地方手工业组织，并非某座古代工厂。'],18,3,[]],
  ['grain-processing',['Grain Processing','谷物加工'],'grain-mill',catoEstateSource,['Cato lists donkey-driven and hand mills among estate equipment; milling was not new in 49 BCE.','加图把驴力磨和手磨列为庄园设备；碾磨并非前49年的新发明。'],19,3,['grain-storage']],
- ['stone-inscription',['Stone Inscription','石刻铭文'],'monument',scipioInscriptionSource,['The Scipio Barbatus sarcophagus bears Republican inscriptions; the monument’s legitimacy effect is a game interpretation.','西庇阿·巴尔巴图斯石棺留有共和国时期铭文；纪念碑的合法性效果是游戏诠释。'],18,2,['quarrying']],
+ ['stone-inscription',['Stone Inscription','石刻铭文'],'monument',scipioInscriptionSource,['The Scipio Barbatus sarcophagus dates to about 280–270 BCE, while its surviving eulogy was added around the early second century BCE. This card adapts Republican commemorative inscriptions; its political effect is a game interpretation.','西庇阿·巴尔巴图斯石棺约制于前280—270年，但现存颂词约在前2世纪初才补刻。本卡改编共和国时期的纪念铭文；政治效果是游戏诠释。'],18,2,['quarrying']],
  ['road-milestones',['Road Milestones','道路里程碑'],'milestone',gracchusMilestonesSource,['Plutarch, writing later, credits Gaius Gracchus with measuring roads by miles and setting stone markers. This card organizes an existing practice, not a new invention in 49 BCE.','后世普鲁塔克记述盖乌斯·格拉古按里程丈量道路并立石柱。本卡组织已有做法，并非前49年的新发明。'],16,2,['roadmaking']],
  ['public-square-planning',['Public Square Planning','公共广场规划'],'square',pompeiiForumSource,['Pompeii’s second-century BCE Comitium adjoined its Forum; public-space planning varied across cities.','庞贝前2世纪的民会场毗邻广场；各城公共空间规划并不相同。'],21,3,['roadmaking']],
- ['library-organization',['Private Collection Organization','私人藏书整理'],'library',librarySource,['Private book collections existed in Republican Rome; the first Roman public libraries came later.','共和国时期罗马已有私人藏书；罗马公共图书馆出现得更晚。'],24,4,['craft-workshops']],
+ ['library-organization',['Private Collection Organization','私人藏书整理'],'library',librarySource,['In 56 BCE Cicero asked Atticus for assistants to help Tyrannio arrange his private books and make title slips. This card models a local private collection; the letter does not describe a public library or a research bonus.','前56年，西塞罗请阿提库斯派助手协助提拉尼翁整理自己的书卷，并制作书卷标签。此卡模拟地方私人藏书；信中没有描述公共图书馆，也没有记载研究加成。'],24,4,['craft-workshops']],
  ['bath-construction',['Bath Construction','浴场建造'],'bath',pompeiiBathSource,['Pompeii’s Stabian and Republican baths were built in the second century BCE; their water and heating systems changed over time.','庞贝的斯塔比亚浴场与共和国浴场建于前2世纪；供水和加热设施后来多次改造。'],24,4,['aqueduct-refinement']],
  ['administrative-building',['Administrative Building','行政建筑'],'administration',pompeiiForumSource,['Pompeii’s Forum complex included a council chamber, record store, and magistrates’ building; their surviving phases need not all date to 49 BCE.','庞贝广场建筑群包括议事厅、档案库和地方官建筑；留存形态不一定全都属于前49年。'],23,4,['public-square-planning']],
  ['bridge-engineering',['Bridge Engineering','桥梁工程'],'bridge',massiliaSource,['At Ilerda in 49 BCE, bridges carried army supplies across the Sicoris; floods broke them and delayed repairs. The local march and revenue effects are game abstractions.','前49年伊莱尔达战役中，桥梁承载军需跨越西科里斯河；洪水冲毁桥梁并延误修复。地方行军与收入效果属于游戏抽象。'],24,4,['roadmaking']],
@@ -142,10 +142,19 @@ const checkedMaterialSourceTitles={
  'supply-organization':'Javier Salido Dominguez, Architecture in the Service of the Roman Army (2015)',
  'armory-craft':'Caesar, Civil Wars 1.34',
  'siege-machinery':'Caesar, Civil Wars 2.1–2',
+ 'aqueduct-refinement':'Rome Archaeology Office, Aqua Marcia',
+ 'sewer-improvement':'Rome Archaeology Office, Cloaca Maxima',
+ 'training-ground':'Cicero, Pro Caelio 11',
+ 'metalworking':'Cato, On Agriculture 135',
+ 'craft-workshops':'Cato, On Agriculture 135',
+ 'stone-inscription':'Vatican Museums, Scipio Barbatus Sarcophagus',
+ 'public-square-planning':'Pompeii Archaeological Park, Excavations Guide pp. 84, 106',
+ 'administrative-building':'Pompeii Archaeological Park, Excavations Guide p. 106',
  'bridge-engineering':'Caesar, Civil Wars 1.40–41, 1.48–54',
  'port-facilities':'Caesar, Civil Wars 1.34–36',
  'warehouse-management':'Caesar, Civil Wars 1.34, 1.36',
- 'shipyard-craft':'Caesar, Civil Wars 1.36'
+ 'shipyard-craft':'Caesar, Civil Wars 1.36',
+ 'library-organization':'Cicero, Letters to Atticus 4.4b (56 BCE)'
 };
 for(const [id,name,building,url,context,cost,months,prerequisites] of additionalMaterials)MATERIALS.push({id,name,building,cost,months,prerequisites,context,source:source(url,checkedMaterialSourceTitles[id])});
 MATERIALS.find(item=>item.id==='grain-processing').source=source(catoEstateSource,'Cato, On Agriculture 10–11');

@@ -70,7 +70,9 @@ test('period engineering references name the checked source instead of only its 
  for(const [id,title] of [
   ['roadmaking','Parco Archeologico dell’Appia Antica, Regina Viarum'],
   ['bridge-engineering','Caesar, Civil Wars 1.40–41, 1.48–54'],
+  ['barracks-design','Numantia Archaeological Hall, Roman camp reconstruction'],
   ['stone-fortification','MuséoParc Alésia, Archaeology of the Siege'],
+  ['library-organization','Cicero, Letters to Atticus 4.4b (56 BCE)'],
   ['supply-organization','Javier Salido Dominguez, Architecture in the Service of the Roman Army (2015)'],
   ['dam-engineering','Alyzia Dam archaeological and engineering study (ISSMGE, 2026)']
  ]){
@@ -83,7 +85,9 @@ test('period engineering references name the checked source instead of only its 
  const road=MATERIALS.find(x=>x.id==='roadmaking');
  const bridge=BUILDINGS.find(x=>x.id==='bridge');
  assert.equal(road.source.url,'https://www.parcoarcheologicoappiaantica.it/il-parco/storia/lappia-ieri/regina-viarum/');
- assert.equal(MATERIALS.find(x=>x.id==='stone-fortification').source.url,'https://alesia.com/en/archaeology/');
+ assert.equal(MATERIALS.find(x=>x.id==='stone-fortification').source.url,'https://alesia.com/archeologie/');
+ assert.match(MATERIALS.find(x=>x.id==='barracks-design').context[0],/not an excavated barrack/);
+ assert.match(MATERIALS.find(x=>x.id==='barracks-design').context[1],/并非原址保存/);
  assert.match(bridge.context[0],/Sicoris.*simulation values/);
  assert.match(bridge.context[1],/西科里斯河.*模拟数值/);
  assert.match(developmentPanel(newGrandGame('senate'),'en','material'),/Caesar records bridges over the Sicoris/);
@@ -1271,11 +1275,18 @@ test('each constructed building has its own bilingual encyclopedia entry and his
 test('Republican-era source corrections retain save IDs and avoid later public-library claims',()=>{
  const fort=MATERIALS.find(x=>x.id==='stone-fortification'),library=MATERIALS.find(x=>x.id==='library-organization');
  assert.match(fort.name[0],/Fortification Planning/);
- assert.match(fort.source.url,/alesia\.com\/en\/archaeology/);
+ assert.match(fort.source.url,/alesia\.com\/archeologie/);
  assert.match(library.name[0],/Private Collection/);
  assert.deepEqual(library.prerequisites,['craft-workshops']);
  assert.match(BUILDINGS.find(x=>x.id==='library').name[0],/Private Book Collection/);
- assert.match(library.source.url,/persee\.fr/);
+ assert.match(library.source.url,/wikisource\.org\/wiki\/Letters_to_Atticus\/4\.4b/);
+ assert.match(library.context[0],/56 BCE Cicero.*title slips/);
+ assert.match(library.context[1],/前56年.*书卷标签/);
+ const inscription=MATERIALS.find(x=>x.id==='stone-inscription'),depot=MATERIALS.find(x=>x.id==='supply-organization');
+ assert.match(inscription.context[0],/280–270 BCE.*early second century BCE/);
+ assert.match(inscription.context[1],/前280—270年.*前2世纪初/);
+ assert.match(depot.context[0],/second-century BCE Numantian.*first-century BCE depots is scarcer/);
+ assert.match(depot.context[1],/前2世纪努曼提亚.*前1世纪军需仓/);
  for(const id of ['roadmaking','road-milestones','bridge-engineering','barracks-design','stone-fortification','quarrying','metal-extraction','siege-machinery','library-organization','grain-storage','supply-organization','grain-processing']){
   const item=MATERIALS.find(x=>x.id===id);assert.ok(item?.source.url.startsWith('https://'),id);assert.notEqual(item.source.title,'World History Encyclopedia',id);
  }

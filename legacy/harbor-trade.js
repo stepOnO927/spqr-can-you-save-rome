@@ -1,4 +1,4 @@
-import {claimReward} from './legacy-core.js?v=31';
+import {claimReward} from './legacy-core.js?v=33';
 
 export const HARBOR_ROUTES={
  tyre:{name:['Tyre','推罗'],cost:25,cargo:['Dyed textile sample','染色织物样本'],report:['A merchant claims a dyed textile lot is available. The Harbor Office has not checked a manifest or its origin.','商人声称可供一批染色织物；港务局尚未核实货单及产地。']},
