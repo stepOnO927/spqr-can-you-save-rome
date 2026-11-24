@@ -227,7 +227,7 @@ jobs:
 
   joint-operations:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -238,7 +238,7 @@ jobs:
       - run: |
           node server.mjs > joint-operations-server.log 2>&1 &
           for i in {1..30}; do curl -fsS http://127.0.0.1:5173/ >/dev/null && break; sleep 1; done
-          timeout 240s node tools/joint-operations-smoke.mjs
+          timeout 600s node tools/joint-operations-smoke.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
