@@ -2,7 +2,9 @@
 
 状态：**Cloudflare Pages 独立域名和功能分支预览已建立，尚未切换旧站域名或更改 GitHub 仓库可见性。** 在新站完整测试并获得明确切换批准前，仓库必须保持公开，现有 GitHub Pages 保持运行。Pages 项目由 GitHub 的 `main` 自动构建，命令为 `npm run build:pages`，输出目录为 `dist`。Cloudflare 首次部署从 `main` 的 `7e8c3087b2` 成功发布 310 个文件，地址为 https://spqr-can-you-save-rome.pages.dev/。真实浏览器已打开生产和预览的 `/`、`/map-lab/`、`/han/`；生产站的汉朝编年史曾显示 `%NAME%`，审查分支预览中英姓名均已修复。11 月 24 日只读打开原 GitHub Pages 主入口成功；GitHub API 仍显示仓库公开、默认 `main` 且启用 Pages。
 
-当前玩法审查代码 `573b7552a` 已纳入公开 `main` 至 `7e8c3087b2`，保留共同作战与收信方独立情报，完成地方势力的按难度随机数量、姓名及有界实力生成，修复三个入口的自托管中文字体和汉朝编年史姓名，并明确配置新 Pages 主机名。[质量检查](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45409506061)通过 1,463/1,463；[Pages 候选包与三入口浏览器](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45409505968)、[Poki](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45409506256)与[36 个月战役](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45409506013)通过；[深入浏览器](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45409506428)仍在运行。Cloudflare 预览 https://9856174d.spqr-can-you-save-rome.pages.dev/ 已成功发布，**351 个公开文件、6.35 MiB、最大单文件 1.09 MiB**。前一等效玩法预览已实测随机城邦开局、地图载入其存档、汉朝英中姓名与存档导出；新版真实浏览器再次打开三个入口，逐页确认恰好一个 Cloudflare beacon，控制台无错误。Cloudflare 上传清单有 351 项；直接访问内部迁移文档路径时只返回游戏入口，未暴露文档内容。[Cloudflare 域名间迁移](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45411080607)与[旧 GitHub Pages 到新 Cloudflare 的迁移](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45411656511)都通过真实托管浏览器，涵盖罗马与汉朝存档、重复导入不覆盖、未知键拒绝。Web Analytics 访客数据仍待核对。
+已验证预览基线 `573b7552a` 已纳入公开 `main` 至 `7e8c3087b2`，保留共同作战与收信方独立情报，完成地方势力的按难度随机数量、姓名及有界实力生成，修复三个入口的自托管中文字体和汉朝编年史姓名，并明确配置新 Pages 主机名。[质量检查](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45409506061)通过 1,463/1,463；[Pages 候选包与三入口浏览器](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45409505968)、[Poki](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45409506256)与[36 个月战役](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45409506013)通过；[深入浏览器](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45409506428)的第一分组后来被取消；较新的超时调整回归仍在运行。Cloudflare 预览 https://9856174d.spqr-can-you-save-rome.pages.dev/ 已成功发布，**351 个公开文件、6.35 MiB、最大单文件 1.09 MiB**。前一等效玩法预览已实测随机城邦开局、地图载入其存档、汉朝英中姓名与存档导出；新版真实浏览器再次打开三个入口，逐页确认恰好一个 Cloudflare beacon，控制台无错误。Cloudflare 上传清单有 351 项；直接访问内部迁移文档路径时只返回游戏入口，未暴露文档内容。[Cloudflare 域名间迁移](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45411080607)与[旧 GitHub Pages 到新 Cloudflare 的迁移](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45411656511)都通过真实托管浏览器，涵盖罗马与汉朝存档、重复导入不覆盖、未知键拒绝。Web Analytics 访客数据仍待核对。
+
+最新审查分支新增按缺粮、请愿与安全状况安排村落工程的 AI。`d3988eb58` 的[规则检查](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45413594657)通过 **1,465/1,465**；[Pages 包与三入口浏览器](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45413594683)、[Poki](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45413594533)、[36 个月战役](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45413594554)均通过。候选 `dist/` 仍是 **351 个公开文件、6.35 MiB、最大单文件 1.09 MiB**，独立审计未发现内部路径。跨域线上验收现指向随分支更新的 `codex-world-kings-clean-revi.spqr-can-you-save-rome.pages.dev`；[托管浏览器](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45415931889)从原 GitHub Pages 向此地址迁移两种临时存档、检查三个入口与单份 beacon，全部通过。深入浏览器回归仍在进行；新站分析面板的访客数据仍待核对。
 
 ## 较早检查点（记录当时状态）
 
@@ -60,7 +62,7 @@ GitHub Actions 的 Cloudflare Pages 打包作业在构建后另行扫描**实际
 
 1. 保持 GitHub 仓库公开，准备分支维持草稿且不合并。先用 Cloudflare 的分支预览完整测试新站；准备期间不触发 `main` 的 GitHub Pages 更新，也不改动旧站的发布源或删除部署。
 2. 已在 Cloudflare 账号建立 **Git 集成**项目 `spqr-can-you-save-rome`，关联该仓库。设置为生产分支 `main`、根目录仓库根目录、框架 `None`、构建命令 `npm run build:pages`、输出目录 `dist`、Node.js 22。独立域名 `spqr-can-you-save-rome.pages.dev` 已从公开 `main` 构建成功；将来的正式自定义域名尚未选择。
-3. 预览分支部署已开启；审查提交 `573b7552a` 成功发布到 https://9856174d.spqr-can-you-save-rome.pages.dev/ ，Cloudflare 日志显示 351 个公开文件、6.35 MiB、最大 1.09 MiB。真实浏览器已验证预览 `/`、`/map-lab/`、`/han/`、随机城邦开局、同源地图载入该城邦存档、汉朝人物姓名的英中显示，以及三个入口的单份 beacon 与零脚本错误。仍需完成更广的线上操作、跨域导入和分析数据验收。取得明确上线批准后才合并到 `main`，让 Cloudflare 生产分支构建并再次测试生产地址；合并也会更新旧 GitHub Pages 内容，须在批准时执行。
+3. 预览分支部署已开启；审查提交 `573b7552a` 成功发布到 https://9856174d.spqr-can-you-save-rome.pages.dev/ ，Cloudflare 日志显示 351 个公开文件、6.35 MiB、最大 1.09 MiB。真实浏览器已验证预览 `/`、`/map-lab/`、`/han/`、随机城邦开局、同源地图载入该城邦存档、汉朝人物姓名的英中显示，以及三个入口的单份 beacon 与零脚本错误。旧 GitHub Pages 到此预览的罗马及汉朝存档导出、导入、载入也已通过。仍需完成更广的线上操作和分析数据验收。取得明确上线批准后才合并到 `main`，让 Cloudflare 生产分支构建并再次测试生产地址；合并也会更新旧 GitHub Pages 内容，须在批准时执行。
 4. Cloudflare Pages 项目已**启用一次 Web Analytics**。启用后的新预览部署在三个入口各自动注入了一个 beacon；`dist/` 已移除源 HTML 中的手动 beacon。接下来在 Analytics 面板确认新主机名收到流量，并把来自新域名的数据与旧域名分开核对。
    游戏内的公开分析渠道已明确配置 `spqr-can-you-save-rome.pages.dev` 为 production、审查分支别名为 staging；其他 Pages 预览亦由域名规则识别为 staging。确定正式自定义域名后，把它准确填入 `analytics-settings.js` 的 `hostnames.production`，再通过测试与构建；未知域名默认仍属于 development preview。已在主分支配置的生产 GA4 ID `G-3VDCWZRJCL` 保留，仍受玩家同意开关控制；staging ID 与自建会话端点为空。上线后应确认 GA4 的新主机名数据及同意状态符合预期。
 5. 在正式域名上再次测试、确认原 GitHub Pages 可访问，并获得**明确切换批准**后，才切换 DNS/入口。确认公开 Cloudflare 站点稳定，再单独申请更改仓库为 private 的批准。不要重命名仓库或删除旧部署。
@@ -117,7 +119,7 @@ Cloudflare Pages 文档：[Git 集成](https://developers.cloudflare.com/pages/c
 - [x] 审查分支 `dist/` 的公开文件清单、单文件大小、站内资源、三个入口的控制台及每页恰好一个 Web Analytics beacon 已复核；正式域名切换后须重做线上核对。
 - [x] 旧 GitHub Pages 到 Cloudflare 预览的临时罗马与汉朝存档成功导入和载入；重复导入保留已有栏位，未知键被拒绝。[线上证据](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45411656511)。切换正式域名后再做一次玩家迁移复核。
 - [ ] 正式域名与分析数据核对通过，且得到明确切换批准。
-- [ ] 切换后再次确认全部入口和旧站点状态；只有再次明确批准才把 GitHub 仓库改为 private。
+- [ ] 切换后再次确认全部入口和旧站点状态；只有再次明确批准才把 GitHub 仓库改为 private。改为 private 后核对 Cloudflare GitHub App 仍有该仓库访问权，并用新的无害提交验证自动构建；浏览器端脚本仍为公开可读。
 
 ## 回滚
 
