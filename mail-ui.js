@@ -24,7 +24,7 @@ export function mailboxHtml(s,{lang='en',filter='inbox',query='',sort='newest',s
  const thread=current?all.filter(m=>m.threadId===current.threadId&&m.id!==current.id&&(m.recipient===s.player&&m.delivery==='received'||m.senderFaction===s.player&&m.recipient!==s.player)).sort((a,b)=>a.created.year-b.created.year||a.created.month-b.created.month):[];
  const response=current?(current.recipient===s.player?current.responses.find(r=>!r.ai):current.responses.find(r=>r.ai&&r.resolved&&r.outcome!=='lost'&&Number.isFinite(r.arrival)&&r.arrival<=now)):null;
  const peaceInquiry=current?.context?.kind==='peace'?(s.inquiries||[]).find(x=>x.mailId===current.id):null;
- const stalePeace=!!peaceInquiry&&!peaceWarIsCurrent(s,peaceInquiry);
+ const stalePeace=!!peaceInquiry&&peaceInquiry.peaceSettlement!=='concluded'&&!peaceWarIsCurrent(s,peaceInquiry);
  const peaceClosed=current?.context?.kind==='peace'&&(peaceInquiry?.status!=='awaiting_decision'||stalePeace);
  const agentRequest=current?.context?.kind==='agent_release_request'?(s.releaseRequests||[]).find(r=>r.mailId===current.id):null;
  const agentClosed=current?.context?.kind==='agent_release_request'&&agentRequest?.status!=='awaiting_decision';

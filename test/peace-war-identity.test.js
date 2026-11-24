@@ -34,6 +34,14 @@ test('an automated court dismisses a stale request instead of waiting forever',(
 test('legacy letters without a recorded war identity retain their existing compatibility',()=>{
  const s=setup();const old={actor:'senate',target:'caesar',subject:'peace',status:'awaiting_decision',remaining:6};s.inquiries=[old];syncPeaceLetters(s);assert.ok(receivedMail(s).some(m=>m.id===old.mailId));assert.equal(peaceWarIsCurrent(s,old),true);assert.ok(answerPeaceOffer(s,'senate','refuse').ok);
 });
+test('a fulfilled peace proposal is not mislabeled as a failed stale offer',()=>{
+ let completed=false;
+ for(let i=1;i<=80&&!completed;i++){
+  const s=setup(i*100003);assert.ok(sendInquiry(s,'senate','caesar','peace').ok);const l=s.inquiries[0];l.status='awaiting_decision';l.remaining=6;syncPeaceLetters(s);assert.ok(answerPeaceOffer(s,'senate','accept').ok);tick(s);
+  if(l.peaceSettlement==='concluded'){completed=true;assert.doesNotMatch(mailboxHtml(s,{lang:'zh',selected:l.mailId}),/属于已结束的战争/)}
+ }
+ assert.ok(completed);
+});
 test('a new war does not discard an unrelated unanswered official inquiry',()=>{
  const s=setup();assert.ok(sendInquiry(s,'caesar','senate','leaders').ok);reopen(s);assert.equal(hasPendingInquiry(s,'caesar','senate'),true);assert.equal(sendInquiry(s,'caesar','senate','peace').reason,'pending');
 });
