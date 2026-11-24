@@ -47,6 +47,7 @@ try{
   assert.match(await page.locator('#tech-stone-fortification').innerText(),/Fortification[\s\S]*Coastal Fortification/);
   assert.match(await page.locator('#tech-road-milestones').innerText(),/Road Milestones[\s\S]*existing local road/);
   assert.match(await page.locator('#tech-road-milestones a[target="_blank"]').getAttribute('href'),/Caius_Gracchus/);
+  assert.match(await page.locator('#tech-roadmaking a[target="_blank"]').getAttribute('href'),/parcoarcheologicoappiaantica\.it\/il-parco\/storia\/lappia-ieri\/regina-viarum/);
   assert.match(await page.locator('#tech-improved-shipbuilding').innerText(),/Ship construction −1 month/);
   assert.match(await page.locator('#tech-maritime-warehousing').innerText(),/limited by hull capacity/);
   assert.match(await page.locator('#tech-military-transport-organization').innerText(),/49 BCE[\s\S]*Pompey’s army[\s\S]*game abstraction[\s\S]*Civil Wars 1\.27–29/);

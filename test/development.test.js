@@ -68,7 +68,7 @@ test('every building reference has a distinct drawing and names its cited histor
 });
 test('period engineering references name the checked source instead of only its host',()=>{
  for(const [id,title] of [
-  ['roadmaking','UNESCO World Heritage Centre, Via Appia. Regina Viarum'],
+  ['roadmaking','Parco Archeologico dell’Appia Antica, Regina Viarum'],
   ['bridge-engineering','Caesar, Civil Wars 1.40–41, 1.48–54'],
   ['stone-fortification','MuséoParc Alésia, Archaeology of the Siege'],
   ['supply-organization','Javier Salido Dominguez, Architecture in the Service of the Roman Army (2015)'],
@@ -82,7 +82,7 @@ test('period engineering references name the checked source instead of only its 
  const dam=MATERIALS.find(x=>x.id==='dam-engineering');
  const road=MATERIALS.find(x=>x.id==='roadmaking');
  const bridge=BUILDINGS.find(x=>x.id==='bridge');
- assert.equal(road.source.url,'https://whc.unesco.org/en/list/1708/');
+ assert.equal(road.source.url,'https://www.parcoarcheologicoappiaantica.it/il-parco/storia/lappia-ieri/regina-viarum/');
  assert.equal(MATERIALS.find(x=>x.id==='stone-fortification').source.url,'https://alesia.com/en/archaeology/');
  assert.match(bridge.context[0],/Sicoris.*simulation values/);
  assert.match(bridge.context[1],/西科里斯河.*模拟数值/);
