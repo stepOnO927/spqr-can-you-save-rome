@@ -406,6 +406,9 @@ test('Armenian highland provisioning needs adoption and a reachable owned hill',
 test('Galatian auxiliaries require research and adoption and affect only supported local recruits',()=>{
  const id='galatian-auxiliary-muster',idea=IDEAS.find(item=>item.id===id);
  assert.match(idea.source.url,/Civil_Wars\/3A/);
+ assert.match(idea.context[0],/among the cavalry/);
+ assert.match(idea.context[1],/骑兵之中/);
+ assert.match(idea.context[0],/all newly raised forces/);
  assert.match(techIllustration(idea),/<svg/);
  const s=newGrandGame('galatia');s.wars=[];s.factions.galatia.treasury=500;
  const d=development(s,'galatia'),home=s.regions.find(r=>r.id==='galatia');

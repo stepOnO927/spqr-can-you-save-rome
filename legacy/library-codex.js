@@ -1,4 +1,4 @@
-import {MATERIALS,IDEAS,IDEA_CATEGORIES,BUILDINGS} from '../development.js?v=73';
+import {MATERIALS,IDEAS,IDEA_CATEGORIES,BUILDINGS} from '../development.js?v=74';
 import {CHARACTER_CATALOG} from '../characters.js';
 import {techIllustration} from '../tech-art.js?v=22';
 

@@ -1,0 +1,24 @@
+# Development card passage audit
+
+The campaign begins in 49 BCE. A source can establish that an earlier practice existed, or describe an event later in the civil war, without establishing a new invention or a standing policy in 49 BCE. Caesar is also a participant describing his own campaigns. The numerical effects, research times, adoption gates and technology prerequisites are game rules.
+
+This ledger records **passage-level checks**, not merely links that opened. Status `checked` means the cited passage supports the limited historical example in the card. It does not validate the game mechanic or a broader claim. Remaining cards still require individual review; this is not certification of all 84 development cards.
+
+| Card ID | Passage checked | What the passage supports, and its limit | Status |
+| --- | --- | --- | --- |
+| `armory-craft` | [Caesar, *Civil Wars* 1.34](https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/1B%2A.html) | Massilia set up arms workshops while preparing for the siege. No documented recruitment discount. | checked |
+| `siege-machinery` | [Caesar, *Civil Wars* 2.1–2](https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/2A%2A.html) | Trebonius used earthworks, covered approaches and towers; the defenders used engines. A permanent workshop is a game adaptation. | checked |
+| `bridge-engineering` | [Caesar, *Civil Wars* 1.40–41, 1.48–54](https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/1B%2A.html) | Sicoris bridges carried supplies, were broken by flooding, and prompted repairs and another crossing. Income and march bonuses are game values. | checked |
+| `port-facilities` | [Caesar, *Civil Wars* 1.34–36](https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/1B%2A.html) | Domitius came by sea; the Massilians gathered merchant ships and repaired their fleet. This does not describe a standard port plan. | checked |
+| `warehouse-management` | [Caesar, *Civil Wars* 1.34, 1.36](https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/1B%2A.html) | Massilia brought in grain and reserved supplies for a possible siege. Storage capacity is not measured there. | checked |
+| `shipyard-craft` | [Caesar, *Civil Wars* 1.36](https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/1B%2A.html) | Caesar says twelve warships were built at Arelate and equipped within thirty days. This is one reported emergency effort, not a universal build time. | checked |
+| `improved-shipbuilding` | [Caesar, *Civil Wars* 1.36](https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/1B%2A.html) | The same Arelate episode supports rapid mobilization; the research bonus is an adaptation. | checked |
+| `naval-equipment` | [Caesar, *Civil Wars* 1.57–58](https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/1B%2A.html) | Caesar reports prepared iron hooks, grapples and missiles. He calls his own ships slow and heavy; the card's larger hull rule is separate. | checked |
+| `repair-facilities` | [Caesar, *Civil Wars* 2.4](https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/2A%2A.html) | The Massilians repaired and equipped old ships after a defeat. A permanent dockyard is a game abstraction. | checked |
+| `maritime-warehousing` | [Caesar, *Civil Wars* 2.22](https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/2A%2A.html) | Older millet and barley had been put into public storage for emergencies. The passage does not measure cargo throughput. | checked |
+| `fleet-coordination` | [Caesar, *Civil Wars* 1.36, 1.57](https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/1B%2A.html) | Brutus received command and crews prepared for battle. An enduring coordination bonus is a game rule. | checked |
+| `maritime-intelligence` | [Caesar, *Civil Wars* 2.3](https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/2A%2A.html) | Nasidius sent a small vessel ahead with notice of his approach. This does not establish a permanent intelligence network. | checked |
+| `naval-crew-training` | [Caesar, *Gallic War* 3.9](https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Gallic_War/3%2A.html) | Caesar ordered rowers drafted and sailors and steersmen gathered. Routine training and its combat value are game interpretations. | checked |
+| `galatian-auxiliary-muster` | [Caesar, *Civil Wars* 3.4](https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/3A%2A.html) | In the account of Pompey's later army, Deiotarus's six hundred Gauls appear among cavalry. The game's benefit to all local recruits is explicitly an adaptation, not an attested 49 BCE institution. | checked and wording corrected |
+
+Next: review the remaining material, idea and naval cards one by one against their cited passages; log any correction here before treating the catalog as historically audited.
