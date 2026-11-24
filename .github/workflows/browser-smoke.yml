@@ -198,6 +198,7 @@ jobs:
               node tools/faction-save-transfer-smoke.mjs
               node tools/breakaway-identity-smoke.mjs
               node tools/construction-smoke.mjs
+              node tools/civic-construction-smoke.mjs
               node tools/ritual-precinct-smoke.mjs
               node tools/population-migration-smoke.mjs
               node tools/civilization-smoke.mjs

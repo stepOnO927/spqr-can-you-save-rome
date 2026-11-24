@@ -354,7 +354,7 @@ export function advanceMarkets(s){
   item.stock+=produced;item.produced+=produced;item.warDisrupted=good==='grain'&&agriculturalDisruption(s,r);
   const used=Math.min(item.stock,item.consumption);item.stock-=used;item.consumed+=used;
   item.shortage=item.consumption-used;
-  const warehouseLimit=Math.max(80,item.production*24);
+  const warehouseLimit=Math.max(80,item.production*24)+(r.buildings?.includes('market_halls')?20:0);
   if(item.stock>warehouseLimit){item.surplusDiscarded=(item.surplusDiscarded||0)+item.stock-warehouseLimit;item.stock=warehouseLimit}
  }
  for(const market of Object.values(markets.regions))for(const [good,item] of Object.entries(market.goods))item.price=marketPrice(market,good);
