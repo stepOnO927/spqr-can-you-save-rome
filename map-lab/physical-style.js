@@ -22,12 +22,10 @@ const rosetta=rivers.features.find(feature=>feature.properties.name==='Rosetta B
 const damietta=rivers.features.find(feature=>feature.properties.name==='Damietta Branch').geometry.coordinates;
 const nileDelta={type:'Feature',properties:{name:'Nile Delta (approximate)'},geometry:{type:'Polygon',coordinates:[[...rosetta,...damietta.slice().reverse(),rosetta[0]]]}};
 
-// At local scale, separate lowland, upland and exposed rock more clearly.
-// These are modern elevation bands, not reconstructed ancient land cover.
-const localElevationPalette=['interpolate',['linear'],['elevation'],-100,'#e5d9b8',0,'#dfd5b1',100,'#c6cba1',300,'#a7b88d',700,'#829c7d',1200,'#6c8676',1800,'#8b9384',2600,'#b9b8a5',3500,'#e4dfcc'];
-// Narrow transitions give the Italian close atlas readable hypsometric bands
-// without smearing the Apennines into a soft shaded texture. Modern elevation only.
-const italyElevationPalette=['interpolate',['linear'],['elevation'],-100,'#e9ddbd',80,'#e9ddbd',120,'#c9c49f',280,'#c9c49f',320,'#a7ac84',680,'#a7ac84',720,'#8a9777',1180,'#8a9777',1220,'#877d68',1780,'#877d68',1820,'#aa9c83',2600,'#aa9c83'];
+// Narrow transitions make the close atlas legible across adjacent theaters.
+// These bands depict modern elevation, not reconstructed ancient land cover.
+const closeElevationPalette=['interpolate',['linear'],['elevation'],-100,'#e9ddbd',80,'#e9ddbd',120,'#c9c49f',280,'#c9c49f',320,'#a7ac84',680,'#a7ac84',720,'#8a9777',1180,'#8a9777',1220,'#877d68',1780,'#877d68',1820,'#aa9c83',2600,'#aa9c83'];
+const localElevationPalette=closeElevationPalette;
 // Around the Nile Delta the local DEM changes mostly within 0–50 m. Use
 // narrower earth-tone intervals there so real low relief remains legible.
 const egyptElevationPalette=['interpolate',['linear'],['elevation'],-100,'#e8ddb9',0,'#e3d9b6',10,'#dfd0aa',25,'#d7c399',50,'#cbb288',100,'#bea178',300,'#aa8d6c',700,'#887866',1200,'#69796f',1800,'#8b9384',2600,'#b9b8a5',3500,'#e4dfcc'];
@@ -82,23 +80,23 @@ export const physicalStyle={
   {id:'relief-detail',type:'hillshade',source:'elevation-detail',minzoom:6,paint:{'hillshade-exaggeration':.14,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
   {id:'land-elevation-fine',type:'color-relief',source:'elevation-fine',minzoom:7,paint:{'color-relief-opacity':.82,'color-relief-color':regionalElevationPalette}},
   {id:'relief-fine',type:'hillshade',source:'elevation-fine',minzoom:7,paint:{'hillshade-exaggeration':.1,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
-  {id:'land-elevation-aegean-ultra',type:'color-relief',source:'elevation-aegean-ultra',minzoom:8,paint:{'color-relief-opacity':.94,'color-relief-color':localElevationPalette}},
+  {id:'land-elevation-aegean-ultra',type:'color-relief',source:'elevation-aegean-ultra',minzoom:8,paint:{'color-relief-opacity':1,'color-relief-color':localElevationPalette}},
   {id:'relief-aegean-ultra',type:'hillshade',source:'elevation-aegean-ultra',minzoom:8,paint:{'hillshade-exaggeration':.08,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
-  {id:'land-elevation-aegean-higher',type:'color-relief',source:'elevation-aegean-higher',minzoom:9,paint:{'color-relief-opacity':.94,'color-relief-color':localElevationPalette}},
+  {id:'land-elevation-aegean-higher',type:'color-relief',source:'elevation-aegean-higher',minzoom:9,paint:{'color-relief-opacity':1,'color-relief-color':localElevationPalette}},
   {id:'relief-aegean-higher',type:'hillshade',source:'elevation-aegean-higher',minzoom:9,paint:{'hillshade-exaggeration':.08,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
-  {id:'land-elevation-iberia-ultra',type:'color-relief',source:'elevation-iberia-ultra',minzoom:8,paint:{'color-relief-opacity':.94,'color-relief-color':localElevationPalette}},
+  {id:'land-elevation-iberia-ultra',type:'color-relief',source:'elevation-iberia-ultra',minzoom:8,paint:{'color-relief-opacity':1,'color-relief-color':localElevationPalette}},
   {id:'relief-iberia-ultra',type:'hillshade',source:'elevation-iberia-ultra',minzoom:8,paint:{'hillshade-exaggeration':.08,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
-  {id:'land-elevation-iberia-higher',type:'color-relief',source:'elevation-iberia-higher',minzoom:9,paint:{'color-relief-opacity':.94,'color-relief-color':localElevationPalette}},
+  {id:'land-elevation-iberia-higher',type:'color-relief',source:'elevation-iberia-higher',minzoom:9,paint:{'color-relief-opacity':1,'color-relief-color':localElevationPalette}},
   {id:'relief-iberia-higher',type:'hillshade',source:'elevation-iberia-higher',minzoom:9,paint:{'hillshade-exaggeration':.08,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
-  {id:'land-elevation-gaul-ultra',type:'color-relief',source:'elevation-gaul-ultra',minzoom:8,paint:{'color-relief-opacity':.94,'color-relief-color':localElevationPalette}},
+  {id:'land-elevation-gaul-ultra',type:'color-relief',source:'elevation-gaul-ultra',minzoom:8,paint:{'color-relief-opacity':1,'color-relief-color':localElevationPalette}},
   {id:'relief-gaul-ultra',type:'hillshade',source:'elevation-gaul-ultra',minzoom:8,paint:{'hillshade-exaggeration':.08,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
-  {id:'land-elevation-gaul-higher',type:'color-relief',source:'elevation-gaul-higher',minzoom:9,paint:{'color-relief-opacity':.94,'color-relief-color':localElevationPalette}},
+  {id:'land-elevation-gaul-higher',type:'color-relief',source:'elevation-gaul-higher',minzoom:9,paint:{'color-relief-opacity':1,'color-relief-color':localElevationPalette}},
   {id:'relief-gaul-higher',type:'hillshade',source:'elevation-gaul-higher',minzoom:9,paint:{'hillshade-exaggeration':.08,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
   // Make the mountains legible at native local resolution without drawing
   // the angular, low-density contour polygons as prominent outlines.
-  {id:'land-elevation-ultra',type:'color-relief',source:'elevation-ultra',minzoom:8,paint:{'color-relief-opacity':.82,'color-relief-color':italyElevationPalette}},
+  {id:'land-elevation-ultra',type:'color-relief',source:'elevation-ultra',minzoom:8,paint:{'color-relief-opacity':1,'color-relief-color':closeElevationPalette}},
   {id:'relief-ultra',type:'hillshade',source:'elevation-ultra',minzoom:8,paint:{'hillshade-exaggeration':.08,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
-  {id:'land-elevation-higher',type:'color-relief',source:'elevation-higher',minzoom:9,paint:{'color-relief-opacity':.9,'color-relief-color':italyElevationPalette}},
+  {id:'land-elevation-higher',type:'color-relief',source:'elevation-higher',minzoom:9,paint:{'color-relief-opacity':1,'color-relief-color':closeElevationPalette}},
   {id:'relief-higher',type:'hillshade',source:'elevation-higher',minzoom:9,paint:{'hillshade-exaggeration':.08,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
   {id:'land-elevation-egypt-ultra',type:'color-relief',source:'elevation-egypt-ultra',minzoom:8,paint:{'color-relief-opacity':.94,'color-relief-color':egyptElevationPalette}},
   {id:'relief-egypt-ultra',type:'hillshade',source:'elevation-egypt-ultra',minzoom:8,paint:{'hillshade-exaggeration':.08,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
@@ -198,7 +196,7 @@ for(const [region,bounds] of regionalDetail)for(const [level,zoom] of [['ultra',
  const source=`elevation-${region}-${level}`;
  physicalStyle.sources[source]={type:'raster-dem',tiles:['./terrain/{z}/{x}/{y}.png'],encoding:'terrarium',tileSize:256,minzoom:zoom,maxzoom:zoom,bounds,attribution:terrainAttribution};
  localLayers.push(
-  {id:`land-${source}`,type:'color-relief',source,minzoom:zoom,paint:{'color-relief-opacity':.94,'color-relief-color':localElevationPalette}},
+  {id:`land-${source}`,type:'color-relief',source,minzoom:zoom,paint:{'color-relief-opacity':1,'color-relief-color':localElevationPalette}},
   {id:`relief-${region}-${level}`,type:'hillshade',source,minzoom:zoom,paint:{'hillshade-exaggeration':.08,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}}
  );
 }

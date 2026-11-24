@@ -8,6 +8,8 @@ const root=resolve(fileURLToPath(new URL('..',import.meta.url)));
 const output=resolve(root,'outputs','cartography-review');
 await mkdir(output,{recursive:true});
 const width=Number(process.env.SPQR_MAP_WIDTH)||1440,height=Number(process.env.SPQR_MAP_HEIGHT)||(width<=700?844:900),close=process.env.SPQR_MAP_FOCUS_CLOSE==='1',suffix=(close?'-local':'')+(width<=700?`-${width}`:height<=720?`-${width}x${height}`:'');
+const customCenter=process.env.SPQR_MAP_CENTER?.split(',').map(Number);
+if(customCenter&&(customCenter.length!==2||!customCenter.every(Number.isFinite)))throw new Error('SPQR_MAP_CENTER must be longitude,latitude');
 const browser=await chromium.launch({headless:true,executablePath:process.env.SPQR_CHROME_PATH||'C:/Program Files/Google/Chrome/Application/chrome.exe',args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 const page=await browser.newPage({viewport:{width,height}}),errors=[];
 page.on('pageerror',error=>errors.push(error.message));
@@ -46,11 +48,11 @@ try{
  }
  const ready=()=>page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return !map.isMoving()&&map.areTilesLoaded()&&document.querySelector('#map-charting').hidden&&Number(getComputedStyle(document.querySelector('#map')).opacity)>.99},null,{timeout:30000});
  const trialZoom=Number(process.env.SPQR_MAP_FOCUS_ZOOM)||(close?9.05:5.7);
- await page.evaluate(async({close,trialZoom})=>{const {map}=await import(document.querySelector('script[type="module"]').src);if(trialZoom>map.getMaxZoom())map.setMaxZoom(trialZoom);map.jumpTo({center:close?[12.6,44.1]:[13.8,42.3],zoom:trialZoom})},{close,trialZoom});
+ await page.evaluate(async({close,trialZoom,customCenter})=>{const {map}=await import(document.querySelector('script[type="module"]').src);if(trialZoom>map.getMaxZoom())map.setMaxZoom(trialZoom);map.jumpTo({center:customCenter||(close?[12.6,44.1]:[13.8,42.3]),zoom:trialZoom})},{close,trialZoom,customCenter});
  await page.waitForTimeout(2700);await ready();await page.waitForTimeout(750);
- if(close){
+ if(close&&!customCenter){
   const ariminum=page.locator('.grand-site[data-site="italiaN"]');
-  assert.equal(await ariminum.isVisible(),true);
+  await ariminum.waitFor({state:'visible',timeout:5000});
   const cityAndFlag=()=>page.evaluate(()=>{const city=document.querySelector('.grand-site[data-site="italiaN"]'),flag=document.querySelector('.army[data-army="italy"]'),a=city.getBoundingClientRect(),b=flag.getBoundingClientRect();return {size:parseFloat(getComputedStyle(city).fontSize),named:city.textContent.trim().length>2,overlap:a.left<b.right&&b.left<a.right&&a.top<b.bottom&&b.top<a.bottom}});
   const checkCityFlag=async label=>{const result=await cityAndFlag();assert.ok(result.size>=9&&result.named&&!result.overlap,`${label}: ${JSON.stringify(result)}`)};
   await checkCityFlag('Ariminum should stay named beside the field standard without covering it');
@@ -75,11 +77,19 @@ try{
   }
   await page.locator('#map-mode').selectOption('terrain');
  }
+ if(close&&customCenter){
+  await page.locator('#map-mode').selectOption('terrain');
+  if(process.env.SPQR_MAP_EXPECT_BANDS==='1'){
+   assert.match(await page.locator('.legend').innerText(),/Modern elevation bands/);
+   await page.locator('#language').click();assert.match(await page.locator('.legend').innerText(),/现代高程色带/);
+   await page.locator('#language').click();
+  }
+ }
  await page.screenshot({path:resolve(output,`atlas-focus-before${suffix}.png`)});
  await page.locator('#atlas-focus').click();
  assert.equal(await page.locator('#locator').isVisible(),false);
  assert.equal(await page.locator('.army').first().isVisible(),false);
- assert.equal(await page.locator(`.grand-site[data-site="${close?'italiaN':'roma'}"]`).isVisible(),true);
+ if(!customCenter)assert.equal(await page.locator(`.grand-site[data-site="${close?'italiaN':'roma'}"]`).isVisible(),true);
  assert.equal(await page.locator('#atlas-caption').isVisible(),true);
  const caption=await page.locator('#atlas-caption').boundingBox(),controls=await page.locator('.map-controls').boundingBox();
  assert.ok(caption.x+caption.width+5<=controls.x,`Focus caption overlaps map controls: ${JSON.stringify({caption,controls})}`);
