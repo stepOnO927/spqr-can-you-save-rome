@@ -17,6 +17,20 @@ import {nationalBudget} from '../national-budget.js';
 import {afterActionHtml} from '../recon-ui.js';
 import {budgetHtml} from '../budget-ui.js';
 
+test('the full development catalog has distinct local diagrams and bilingual historical notes',()=>{
+ const nodes=[...MATERIALS,...IDEAS];
+ const nodeArt=nodes.map(techIllustration),buildingArt=BUILDINGS.map(buildingIllustration);
+ assert.equal(nodes.length,84);
+ assert.equal(new Set(nodeArt).size,nodes.length);
+ assert.equal(new Set(buildingArt).size,BUILDINGS.length);
+ for(const item of nodes){
+  assert.equal(item.name.length,2,item.id);
+  assert.equal(item.context.length,2,item.id);
+  assert.match(item.source?.url||'',/^https:\/\//,item.id);
+ }
+ assert.ok([...nodeArt,...buildingArt].every(svg=>svg.startsWith('<svg')&&!/<image\b|https?:\/\//.test(svg)));
+});
+
 test('construction panel shows a bilingual cash runway before paying for works',()=>{
  const s=newGrandGame('caesar'),site=s.regions.find(r=>r.owner==='caesar');
  const openingNet=nationalBudget(s,'caesar').projectedNet;

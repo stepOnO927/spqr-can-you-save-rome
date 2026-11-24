@@ -166,6 +166,7 @@ try{
     await page.locator('#entry-file').setInputFiles({name:`replace-${lang}.json`,mimeType:'application/json',buffer:Buffer.from(JSON.stringify(replacing))});
     await page.locator('[data-tab="ideas"]').click();
     await selectIdea('diplomatic-accommodation');
+    assert.match(await page.locator('#tech-diplomatic-accommodation').innerText(),lang==='zh'?/马赛使者宣称对凯撒和庞培同样友善[\s\S]*多米提乌斯入城/:/Massilian envoys professed equal goodwill[\s\S]*Domitius entered/);
     const replacement=page.locator('[data-adopt-idea="diplomatic-accommodation"][data-slot="0"]');
     assert.equal(await replacement.isEnabled(),true,lang);
     assert.equal(await page.locator('[data-adopt-idea="diplomatic-accommodation"][data-slot="1"]').isDisabled(),true,lang);
