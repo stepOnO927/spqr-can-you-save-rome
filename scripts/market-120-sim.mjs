@@ -5,6 +5,8 @@ import {rulerPortrait} from '../han/rulers.js';
 import {courtPortraitSrc} from '../han/court-portrait.js';
 import {proposeAgreement} from '../agreements.js?v=focus-agreement-consent-1';
 import {advanceMarketAI} from '../trade-markets.js?v=faces-import-legs-1';
+import {attachHanWorld,hanWorld,romanView,buyEasternImport} from '../han/world.js?v=faces-import-legs-1';
+import {placeEasternTrade} from '../han/markets.js?v=faces-wheels-1';
 
 const state=newGame('han');
 for(const [a,b] of [['senate','egypt'],['armenia','parthia'],['armenia','galatia'],['senate','galatia']]){
@@ -124,4 +126,49 @@ for(const tx of resales){
  assert.equal(autonomous.persons[shipment.merchantId]?.profession,'merchant');
  assert.equal(autonomous.tradeMarkets.transactions.filter(entry=>entry.shipment===tx.shipment).length,1,'a resale must settle once');
 }
-console.log(JSON.stringify({...summary,han:{months:120,year:han.year,month:han.month,emperor:han.throne.occupant,markets:Object.keys(han.tradeMarkets.regions).length,shipments:han.tradeMarkets.shipments.length,delivered:hanDelivered},autonomous:{months:120,delivered:paid.length,resales:resales.length,goods:[...new Set(resales.map(x=>x.commodity))],merchantVentures:ventures.length,multiLegVentures:multiLegVentures.length}}));
+// The Roman and eastern market ledgers also run together in an optional
+// Senate campaign. A paid eastern lot crosses both projections, spends four
+// more months on Roman roads, and survives a save while still in transit.
+let attached=newGame('senate');
+const attachedWorld=attachHanWorld(attached,{seed:49});
+const eastbound=placeEasternTrade(attachedWorld.state,{seller:'han',buyer:'external',origin:'changan',destination:'mediterranean_gate',commodity:'silk',quantity:1});
+assert.equal(eastbound.ok,true,eastbound.reason);
+assert.ok(eastbound.quote.months>12,'Han silk cannot reach the Roman exchange instantly');
+const combinedBalance=(campaign,good)=>{
+ const roman=romanGoodsBalance(campaign,good),eastern=goodsBalance(hanWorld(campaign).state,good);
+ const finalLeg=Object.values(hanWorld(campaign).bridge.settled).filter(x=>x.status==='in_transit'&&x.commodity===good).reduce((sum,x)=>sum+x.quantity,0);
+ return {physical:roman.physical+eastern.physical+finalLeg,produced:roman.produced+eastern.produced,used:roman.consumed+roman.discarded+roman.manufactured+roman.construction+roman.military+eastern.consumed+eastern.discarded+eastern.manufactured+eastern.military+eastern.lost+eastern.requisitioned};
+};
+const combinedGoods=[...new Set([...romanGoods,...easternGoods])];
+const openingCombined=Object.fromEntries(combinedGoods.map(good=>[good,combinedBalance(attached,good).physical]));
+let romanPurchase=null,loadedInTransit=false;
+for(let i=0;i<120;i++){
+ const before=attached.year*12+attached.month;
+ tick(attached);
+ assert.equal(attached.year*12+attached.month,before+1,'attached Roman and Han campaign time stalled');
+ const offered=romanView(attached).availableImports.find(x=>x.id===eastbound.shipment.id);
+ if(offered){
+  assert.equal(romanPurchase,null,'the same eastern lot was offered twice');
+  const cash=attached.factions.senate.treasury,quote=offered.portQuotes.achaia;
+  assert.ok(quote?.months>0,'the Achaian final leg must take time');
+  const purchase=buyEasternImport(attached,offered.id,'achaia');
+  assert.equal(purchase.ok,true,purchase.reason);
+  assert.equal(purchase.receipt.status,'in_transit');
+  assert.equal(attached.factions.senate.treasury,cash-quote.total,'Roman buyer must pay exactly once');
+  romanPurchase=purchase.receipt;
+ }
+ if(i===39){
+  assert.equal(romanPurchase?.status,'in_transit','the eastern lot must still be traveling at the save point');
+  attached=upgradeSave(structuredClone(attached));
+  loadedInTransit=hanWorld(attached).bridge.settled[eastbound.shipment.id]?.status==='in_transit';
+  assert.equal(loadedInTransit,true,'save upgrade lost the paid final leg');
+ }
+ for(const good of combinedGoods){
+  const balance=combinedBalance(attached,good);
+  assert.equal(balance.physical+balance.used,openingCombined[good]+balance.produced,`${good} units diverged across the Roman-Han bridge after month ${i+1}`);
+ }
+}
+assert.ok(romanPurchase&&loadedInTransit,'the Roman buyer never received the eastern offer');
+assert.equal(hanWorld(attached).bridge.settled[eastbound.shipment.id].status,'delivered');
+assert.equal(attached.markets.transactions.filter(x=>x.linkedHanShipment===eastbound.shipment.id&&x.status==='imported').length,1,'the eastern lot must settle once in Rome');
+console.log(JSON.stringify({...summary,han:{months:120,year:han.year,month:han.month,emperor:han.throne.occupant,markets:Object.keys(han.tradeMarkets.regions).length,shipments:han.tradeMarkets.shipments.length,delivered:hanDelivered},autonomous:{months:120,delivered:paid.length,resales:resales.length,goods:[...new Set(resales.map(x=>x.commodity))],merchantVentures:ventures.length,multiLegVentures:multiLegVentures.length},attached:{months:120,year:attached.year,month:attached.month,hanShipment:eastbound.shipment.id,romanReceipt:hanWorld(attached).bridge.settled[eastbound.shipment.id].status,loadedInTransit,commoditiesBalanced:combinedGoods.length}}));
