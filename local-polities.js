@@ -40,6 +40,7 @@ export const LOCAL_ENTITY_TEMPLATES = Object.freeze([
     coordinateSource: 'https://pleiades.stoa.org/places/413045', historical: true, spatialAccuracy: 'approximate_site_point',
     description: ['Picene town held by Attius Varus until its decurions objected to keeping Caesar outside in 49 BCE. Its point is not a theater border; local forces and stores are gameplay estimates.', '皮凯努姆城镇；公元前49年阿提乌斯·瓦鲁斯驻守此地，随后当地议员反对将凯撒拒于城外。地点标记并非战区边界；兵力与存粮为游戏估算。'],
     initialController: 'senate', maxFootholdLevel: 3, militia: 500, fort: 0, treasury: 7, food: 9,
+    fiscalWeight: 0,
     submissionAffinity: {caesar: 0.2}
   },
   {
@@ -122,7 +123,7 @@ export function villageDevelopment(village) {
 export function localEntityRevenue(state, actor) {
   let revenue = 0;
   for (const region of state.regions.filter(item => item.owner === actor)) for (const entity of region.localEntities || []) {
-    if (entity.type === 'roman_town') revenue += entity.controller === actor ? entity.resistance >= 60 ? 0 : 1 : -1;
+    if (entity.type === 'roman_town') revenue += (entity.fiscalWeight ?? 1) * (entity.controller === actor ? entity.resistance >= 60 ? 0 : 1 : -1);
     if (['city_state','microstate','tribe','strongman'].includes(entity.type)) {
       if (entity.controller === actor && entity.resistance < 60) revenue += entity.administrativeStatus === 'administered' ? entity.type === 'city_state' ? 3 : 2 : entity.type === 'city_state' ? 2 : 1;
       else if (entity.controller === entity.id && (entity.access[actor] > now(state) || entity.overlord === actor)) revenue++;

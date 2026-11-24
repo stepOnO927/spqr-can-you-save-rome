@@ -27,7 +27,8 @@ async function open(address) {
  });
  const response = await page.goto(address, {waitUntil:'domcontentloaded'});
  assert.equal(response.status(), 200, address);
- await page.locator('#save-transfer-open').waitFor();
+ try { await page.locator('#save-transfer-open').waitFor(); }
+ catch(error){const boot=await page.locator('#boot-status').textContent().catch(()=>null);throw Error(`${error.message}; boot=${boot}; browser errors=${failures.slice(-6).join(' | ')}`)}
  assert.ok(await page.locator('script[src*="cloudflareinsights.com/beacon.min.js"]').count() <= 1, 'at most one Cloudflare beacon');
  return page;
 }

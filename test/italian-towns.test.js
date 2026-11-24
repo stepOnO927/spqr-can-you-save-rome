@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame, tick, region, upgradeSave} from '../engine.js';
 import {transferTerritory} from '../territory.js';
-import {localEntity, localSubmissionQuote, offerLocalSubmission, advanceLocalEntities, localSiegeQuote, besiegeLocalEntity, startLocalAdministration} from '../local-polities.js';
+import {localEntity, localEntityRevenue, localSubmissionQuote, offerLocalSubmission, advanceLocalEntities, localSiegeQuote, besiegeLocalEntity, startLocalAdministration} from '../local-polities.js';
 import {startupDiagnostics} from '../inspector-diagnostics.js';
 import {configureStartingDifficulty} from '../difficulty.js';
 
@@ -64,6 +64,13 @@ test('Roman town decisions receive a campaign seed and retain it through save lo
   const seed = localEntity(first, 'auximum').seed;
   assert.notEqual(seed, localEntity(second, 'auximum').seed);
   assert.equal(localEntity(upgradeSave(JSON.parse(JSON.stringify(first))), 'auximum').seed, seed);
+});
+
+test('Auximum adds a local objective without counting its theater tax twice', () => {
+  const state = newGame('caesar'), withTown = localEntityRevenue(state, 'senate');
+  const north = region(state, 'italiaN');
+  north.localEntities = north.localEntities.filter(entity => entity.id !== 'auximum');
+  assert.equal(localEntityRevenue(state, 'senate'), withTown);
 });
 
 test('a real army can besiege a hostile port town without annexing the host theater', () => {

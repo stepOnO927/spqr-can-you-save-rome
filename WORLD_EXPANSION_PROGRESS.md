@@ -4,7 +4,7 @@ This file tracks the four supplied specifications as one development goal. The e
 
 ## 24 November checkpoint
 
-- Added [Auximum](https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/1A%2A.html) as a separately controlled Picene town in northern Italy with an approximate [Pleiades site point](https://pleiades.stoa.org/places/413045). Its clickable Map Lab marker and objective use the existing town expedition, submission, siege, resistance and legal-title paths without changing the host theater. The reported civic sympathy increases its chance of accepting a Caesarian submission from 60% to 80% after the existing two-month courier; the outcome still varies by campaign seed. Forces and stores are simulation values. Focused Node checks pass; hosted package and browser checks remain pending for this head.
+- Added [Auximum](https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/1A%2A.html) as a separately controlled Picene town in northern Italy with an approximate [Pleiades site point](https://pleiades.stoa.org/places/413045). Its clickable Map Lab marker and objective use the existing town expedition, submission, siege, resistance and legal-title paths without changing the host theater. The reported civic sympathy increases its chance of accepting a Caesarian submission from 60% to 80% after the existing two-month courier; the outcome still varies by campaign seed. Forces and stores are simulation values. Its fiscal weight is zero because the host theater already budgets Picene taxes; the new point cannot double-count that income. Focused Node checks pass; hosted package and browser checks remain pending for this head.
 
 ## 23 November checkpoint
 
