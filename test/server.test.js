@@ -9,7 +9,11 @@ test('preview routes expose game pages and optimized assets',()=>{
   ['/han/play.js','/han/play.js'],['/map-lab/lab.css','/map-lab/lab.css'],
   ['/assets/portraits/arsinoe-128.jpg','/assets/portraits/arsinoe-128.jpg'],
   ['/assets/fonts/noto-sans-sc-chinese-simplified-400-normal.woff2','/assets/fonts/noto-sans-sc-chinese-simplified-400-normal.woff2'],
-  ['/map-lab/SOURCES.md','/map-lab/SOURCES.md']
+  ['/map-lab/SOURCES.md','/map-lab/SOURCES.md'],
+  ['/bundles/app.js','/bundles/app.js'],['/bundles/map-lab/lab.js','/bundles/map-lab/lab.js'],
+  ['/bundles/han/play.js','/bundles/han/play.js'],
+  ['/bundles/chunks/chunk-AB12CD34.js','/bundles/chunks/chunk-AB12CD34.js'],
+  ['/vendor/html2canvas.min.js','/vendor/html2canvas.min.js']
  ])assert.equal(publicPathname(request),expected,request);
 });
 
@@ -18,6 +22,7 @@ test('preview routes deny private files and malformed paths',()=>{
   '/.git/config','/.env','/package.json','/server.mjs','/tools/browser-smoke.mjs',
   '/test/server.test.js','/scripts/build-pages.mjs','/node_modules/maplibre-gl/package.json',
   '/assets/portraits/arsinoe-master.png','/assets/portraits/arsinoe.jpg',
+  '/bundles/private.js','/bundles/chunks/../../package.json','/vendor/internal.js',
   '/%2e%2e/.git/config','/assets%5cportraits%5carsinoe-128.jpg','/han//play.js'
  ])assert.equal(publicPathname(request),null,request);
  assert.throws(()=>publicPathname('/%E0%A4%A'),URIError);
