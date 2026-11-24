@@ -17,6 +17,8 @@ test('a sender receives no Chronicle receipt for any private courier outcome',()
  for(let seed=0;seed<160;seed++){
   const s=setup(seed),logs=advance(s),l=s.warningLetters.find(x=>x.id==='warning:privacy');seen.add(l.status);
   assert.deepEqual(warningLedger(s,'caesar'),initial,'outbound ledger must not reveal transport or response');
+  assert.equal(s.relations['caesar:egypt'],setup(seed).relations['caesar:egypt'],'a shared relation must not signal the private arrival');
+  if(l.decision?.kind==='heeded')assert.ok(s.world.politicalMemories.some(m=>m.observer==='egypt'&&m.subject==='caesar'&&m.kind==='shared_warning'&&m.weight===2),'the recipient still remembers the helpful warning privately');
   assert.equal(logs.filter(x=>x.meta?.warning===l.id).length,0,'no message may bypass the sender knowledge projection');
  }
  assert.ok(seen.has('lost'),'real courier losses exercised');assert.ok(seen.has('delayed'),'real courier delays exercised');
