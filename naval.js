@@ -1,7 +1,7 @@
 import {GRAND_SITES,GRAND_ROUTES} from './grand-map-data.js?v=4';
 import {activeEffects,localBuildingEffects,recordMerchantContact} from './development.js?v=73';
 import {officeOf} from './office-system.js';
-import {nationalBudget} from './national-budget.js?v=47';
+import {nationalBudget} from './national-budget.js?v=48';
 
 // Sea areas and costs are game-scale approximations of the 49 BCE Mediterranean.
 export const SEA_ZONES=[
@@ -883,6 +883,32 @@ function aiWagonOrders(s,owner){
 function hostileSeaLanding(s,owner,origin){
  return GRAND_ROUTES.some(([from,to,kind])=>{if(kind!=='sea')return false;const other=from===origin?to:to===origin?from:null,target=s.regions.find(r=>r.id===other);return !!target?.port&&atWar(s,owner,target.owner)});
 }
+const LAND_APPROACHES=new Map();
+for(const [from,to,kind] of GRAND_ROUTES)if(kind!=='sea'){
+ if(!LAND_APPROACHES.has(from))LAND_APPROACHES.set(from,[]);
+ if(!LAND_APPROACHES.has(to))LAND_APPROACHES.set(to,[]);
+ LAND_APPROACHES.get(from).push(to);LAND_APPROACHES.get(to).push(from);
+}
+function shortLandApproach(s,owner,origin,destination,maxLegs=5){
+ const owners=new Map(s.regions.map(r=>[r.id,r.owner])),seen=new Set([origin]),frontier=[[origin,0]];
+ for(let i=0;i<frontier.length;i++){
+  const [here,legs]=frontier[i];if(here===destination)return true;if(legs>=maxLegs)continue;
+  for(const next of LAND_APPROACHES.get(here)||[]){
+   if(seen.has(next)||owners.get(next)!==owner&&!atWar(s,owner,owners.get(next)))continue;
+   seen.add(next);frontier.push([next,legs+1]);
+  }
+ }
+ return false;
+}
+function seaLiftNeedsNewShips(s,owner,origin){
+ // A new hull takes months, and a distant dock adds a staging voyage. Do not
+ // purchase it for a nearby enemy coast already reachable by the same army on land.
+ return GRAND_ROUTES.some(([from,to,kind])=>{
+  if(kind!=='sea')return false;
+  const other=from===origin?to:to===origin?from:null,target=s.regions.find(r=>r.id===other);
+  return !!target?.port&&atWar(s,owner,target.owner)&&!shortLandApproach(s,owner,origin,other);
+ });
+}
 function aiTransportStagingPort(s,owner,f){
  if(fleetCapacity(f,s)<1200||s.factions[owner].treasury<35)return null;
  const capacity=fleetCapacity(f,s),knownThreats=reportedHostileFleets(s,owner),escortStrength=warshipCount(f);
@@ -955,7 +981,7 @@ function aiTransportShipbuilding(s,owner){
  const treasury=s.factions[owner].treasury,cashflow=aiNavalCashflow(s,owner);
  if(treasury<100||cashflow<=0)return false;
  const fleets=s.naval.fleets.filter(f=>f.owner===owner&&ships(f));
- const coastalArmies=s.armies.filter(a=>a.owner===owner&&a.men>=1200&&!a.move&&!a.siege&&s.regions.some(r=>r.id===a.region&&r.owner===owner&&r.port)&&hostileSeaLanding(s,owner,a.region)).sort((a,b)=>b.men-a.men);
+ const coastalArmies=s.armies.filter(a=>a.owner===owner&&a.men>=1200&&!a.move&&!a.siege&&s.regions.some(r=>r.id===a.region&&r.owner===owner&&r.port)&&seaLiftNeedsNewShips(s,owner,a.region)).sort((a,b)=>b.men-a.men);
  for(const army of coastalArmies){
   if(fleets.some(f=>fleetCapacity(f,s)>=army.men))continue;
   const candidate=fleets.filter(f=>f.port&&!f.reserve&&!f.mobilizing&&!f.order&&fleetCapacity(f,s)>0&&s.regions.some(r=>r.id===f.port&&r.owner===owner&&r.buildings?.includes('shipyard'))&&!s.naval.queues.some(q=>q.port===f.port)).sort((a,b)=>fleetCapacity(b,s)-fleetCapacity(a,s))[0];

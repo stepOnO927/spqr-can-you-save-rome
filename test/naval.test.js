@@ -1371,13 +1371,22 @@ test('a solvent AI replaces missing transport capacity for an actual coastal arm
  assert.equal(moveArmy(restored,army.id,'t075').ok,true);
  assert.equal(repaired.order?.kind,'transport','the added hull serves an actual military order');
  const peaceful=newGrandGame('egypt');peaceful.armies.find(a=>a.id==='italy').region='italiaS';peaceful.naval.fleets.find(f=>f.id==='senate-adriatic').ships.transport=1;
- peaceful.regions.find(r=>r.id==='t044').owner='senate'; // No other Senate coastal army has a hostile sea landing.
  advanceNaval(peaceful);
  assert.ok(!peaceful.naval.queues.some(q=>q.owner==='senate'&&q.type==='transport'),'the AI does not build invasion transports for a peaceful coast');
  const cashPoor=newGrandGame('egypt'),poorFleet=cashPoor.naval.fleets.find(f=>f.id==='senate-adriatic');
  cashPoor.armies.find(a=>a.id==='italy').region='italiaS';cashPoor.regions.find(r=>r.id==='t075').owner='caesar';
  poorFleet.ships.transport=1;cashPoor.factions.senate.treasury=35;advanceNaval(cashPoor);
  assert.ok(!cashPoor.naval.queues.some(q=>q.owner==='senate'&&q.type==='transport'),'a cash-poor command does not spend its last money on new lift');
+});
+test('AI does not build an Italian transport for a Spanish army with a short land approach',()=>{
+ const s=newGrandGame('egypt'),army=s.armies.find(a=>a.id==='spain');
+ assert.equal(army.region,'hispaniaN');
+ assert.equal(s.regions.find(r=>r.id==='t044').owner,'caesar');
+ assert.ok(GRAND_ROUTES.some(([from,to,kind])=>kind==='sea'&&[from,to].includes('hispaniaN')&&[from,to].includes('t044')));
+ advanceNaval(s);
+ assert.ok(!s.naval.queues.some(q=>q.owner==='senate'&&q.type==='transport'),'a land-accessible Massilia does not justify a distant new hull');
+ aiTurn(s,'senate');
+ assert.equal(army.move?.sea,false,'the army can advance toward the same enemy by land');
 });
 test('a reinforced army sees its real single-fleet lift limit and uncrewed ships cannot ferry it',()=>{
  const s=newGrandGame('senate'),unit=s.armies.find(a=>a.id==='italy'),fleet=s.naval.fleets.find(f=>f.id==='senate-adriatic');
@@ -1888,7 +1897,6 @@ test('patrols from separate states can each confront pirates in shared waters',(
 });
 test('naval AI assigns orders to each available fleet instead of only its first',()=>{
  const s=newGrandGame('caesar'),first=s.naval.fleets.find(f=>f.owner==='senate'),second=structuredClone(first);second.id='senate-east';second.zone='eastern';second.port=null;s.naval.fleets.push(second);
- s.regions.find(r=>r.id==='t044').owner='senate'; // Keep the patrol test free of the new Spanish sea landing.
  advanceNaval(s);assert.equal(first.order?.kind,'patrol');assert.equal(second.order?.kind,'patrol');
 });
 test('AI divides escorts between two raided trade routes and uses current route losses',()=>{

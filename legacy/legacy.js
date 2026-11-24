@@ -7,7 +7,7 @@ import {availableActivities,resolveActivity} from './activities.js?v=19';
 import {harborDossier,beginHarborDossier,corroborateHarborDossier,closeHarborDossier,HARBOR_COSTS} from './intelligence-case.js?v=14';
 import {boundaryCase,beginBoundaryCase,corroborateBoundaryCase,closeBoundaryCase,BOUNDARY_COSTS} from './legal-case.js?v=11';
 import {palaceCouncil,conveneCouncil,draftCharter,settleCouncil,COUNCIL_COST,COUNCIL_AUDIENCES,COUNCIL_CHARTERS,COUNCIL_RESPONSES} from './palace-council.js?v=14';
-import {newGrandGame} from '../engine.js?v=265';
+import {newGrandGame} from '../engine.js?v=266';
 import {stageHandoff} from '../view-handoff.js';
 import {achievementDefinition} from '../achievement-system.js?v=5';
 import {archivePanelHtml} from './archive-ui.js?v=6';
