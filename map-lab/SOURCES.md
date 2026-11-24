@@ -12,6 +12,10 @@ This experimental scene and the original campaign can transfer their current sta
 
 Map tiles and fonts require a network connection. No ancient vegetation layer, complete dated province subdivision, exact 49 BCE road alignment, or exact 49 BCE control survey is claimed.
 
+## Religious tradition layer
+
+The campaign's per-theater tradition percentages are invented gameplay weights, not historical census figures. They group overlapping civic, temple, ancestral and local practices for a simple policy model; they do not claim mutually exclusive individual identities. Migration blends the destination weights, while local tolerance has a stronger satisfaction effect in more mixed theaters. Only the player's own theater weights are displayed. The initial labels and broad geography draw on late Republican Mediterranean and [Arsacid religious context](https://www.iranicaonline.org/articles/arsacids-iv/). The [Pew Research Center's chronology of religion in China](https://www.pewresearch.org/religion/wp-content/uploads/sites/7/2023/08/PF_2023.08.30_religion-china_REPORT.pdf) helps guard against treating later Buddhist or organized Daoist developments as Han institutions in 49 BCE. The model does not start with Christian or Buddhist communities.
+
 ## Named road reconstructions
 
 The displayed linework is a subset of [Ancient World Mapping Center road data](https://github.com/AWMC/geodata/tree/master/Cultural-Data/roads), derived from the Barrington Atlas and AWMC modifications to OpenStreetMap, © AWMC and OpenStreetMap contributors, available under the [Open Database License 1.0](https://opendatacommons.org/licenses/odbl/1-0/). The derived database is `../republican-roads.js`, generated from AWMC `roads.geojson` blob `e5b53dfb7aab621eb25d31d66457562240524ff2` by `../tools/build-republican-roads.mjs`. It selects named features 637 (Via Appia, Rome–Capua), 1467 (Via Aemilia), and 1480 and 1550 (Via Flaminia), preserves the source feature IDs and source-map attributes, and rounds coordinates to five decimal places. Decimal precision is not a claim of survey accuracy.

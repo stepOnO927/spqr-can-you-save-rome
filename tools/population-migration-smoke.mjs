@@ -23,14 +23,21 @@ try{
  await page.locator('[data-city="NARBO"]').dispatchEvent('click');
  await page.locator('#city-region').click();
  assert.match(await page.locator('#command-detail').innerText(),/最近迁徙[\s\S]*来自远高卢/);
+ assert.match(await page.locator('#command-detail').innerText(),/宗教传统（游戏估算）[\s\S]*高卢地方传统/);
+ await page.locator('#map-mode').selectOption('religion');
+ assert.match(await page.locator('#map-mode-note').innerText(),/游戏估算/);
+ assert.match(await page.locator('.legend').innerText(),/高卢地方传统/);
  await page.locator('#language').click();
  assert.match(await page.locator('#command-detail').innerText(),/Recent migration[\s\S]*arrived from Further Gaul/);
+ assert.match(await page.locator('#command-detail').innerText(),/Religious traditions \(game estimate\)[\s\S]*Gallic local traditions/);
+ assert.match(await page.locator('#map-mode-note').innerText(),/gameplay estimates/);
  await page.locator('#save').click();
  await page.evaluate(()=>{const state=JSON.parse(localStorage.getItem('spqr-save-1'));sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state}))});
  await page.reload({waitUntil:'domcontentloaded'});
  await page.locator('[data-city="NARBO"]').dispatchEvent('click');
  await page.locator('#city-region').click();
  assert.match(await page.locator('#command-detail').innerText(),/Recent migration[\s\S]*arrived from Further Gaul/);
+ assert.match(await page.locator('#command-detail').innerText(),/Religious traditions \(game estimate\)[\s\S]*Gallic local traditions/);
  assert.deepEqual(errors,[]);
- console.log('Real population migration appears in both languages and survives a saved atlas reload.');
+ console.log('Migration and religious traditions appear in both languages and survive a saved atlas reload.');
 }finally{await browser.close()}

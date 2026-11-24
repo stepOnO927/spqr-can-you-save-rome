@@ -3,6 +3,7 @@ import {NAME_POOLS,generateFictionalName} from './fictional-names.js?v=faces-whe
 import {CHARACTER_CATALOG} from './characters.js?v=faces-name-disagreement-1';
 import {hasNationalIdea} from './national-ideas.js?v=grand-chessboard-2';
 import {ROUTES} from './data.js?v=phase-x-1';
+import {startingTraditions,traditionDiversity,transferTraditions} from './religious-demographics.js';
 
 const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
 const log=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.log.slice(0,80)};
@@ -23,6 +24,7 @@ export function initializeReligion(s){
   if(!Number.isFinite(r.population.baseline))r.population.baseline=Math.max(1,r.population.total);
   if(!Number.isFinite(r.population.satisfaction))r.population.satisfaction=clamp(r.loyalty??60,0,100);
   if(!Number.isFinite(r.population.householdWealth))r.population.householdWealth=Math.max(0,Math.floor(r.population.total/5000));
+  r.population.traditions||=startingTraditions(r.id);
  }
  s.world.religiousInstitutions||=[];s.world.religionInvestigations||=[];s.world.religionReports||={};s.world.religionSeed??=720049;
  if(!s.world.religionSeeded){
@@ -76,7 +78,7 @@ function migratePopulation(s){
   const from=regions.get(move.from),to=regions.get(move.to),count=Math.min(move.count,Math.max(0,from.population.total-1));
   if(!count||to.owner!==move.owner)continue;
   const wealth=Math.min(from.population.householdWealth||0,Math.floor((from.population.householdWealth||0)*count/from.population.total));
-  from.population.total-=count;to.population.total+=count;from.population.householdWealth-=wealth;to.population.householdWealth+=wealth;
+  transferTraditions(from,to,count);from.population.total-=count;to.population.total+=count;from.population.householdWealth-=wealth;to.population.householdWealth+=wealth;
   const record={from:from.id,to:to.id,count,year:s.year,month:s.month};(s.world.populationMigrations||=[]).push(record);s.world.populationMigrations=s.world.populationMigrations.slice(-80);
   if(move.owner===s.player)log(s,`${count.toLocaleString('en-US')} people moved from ${from.name[0]} to ${to.name[0]} after local hardship.`,`因当地生活困难，${count.toLocaleString('zh-CN')}人从${from.name[1]}迁往${to.name[1]}。`);
  }
@@ -97,7 +99,7 @@ export function religiousPolicy(s,actor,id,action){
  if(action==='privilege'){o.privilegedBy.push(actor);o.relations[actor]=clamp(relation+15,-100,100)}
  if(action==='revoke'){o.privilegedBy=o.privilegedBy.filter(id=>id!==actor);o.relations[actor]=clamp(relation-8,-100,100)}
  if(action==='restrict'){o.relations[actor]=clamp(relation-20,-100,100);r.population.satisfaction=clamp(r.population.satisfaction-Math.ceil(share*20)*(o.legitimacy>50?2:1),0,100);f.stability=clamp(f.stability+1,0,100)}
- if(action==='tolerance'){o.relations[actor]=clamp(relation+8,-100,100);r.population.satisfaction=clamp(r.population.satisfaction+3,0,100);f.legitimacy=clamp(f.legitimacy+1,0,100)}
+ if(action==='tolerance'){o.relations[actor]=clamp(relation+8,-100,100);r.population.satisfaction=clamp(r.population.satisfaction+1+Math.round(traditionDiversity(r.population)*4),0,100);f.legitimacy=clamp(f.legitimacy+1,0,100)}
  if(['negotiate','tolerance'].includes(action)&&hasNationalIdea(s,actor,'tolerance'))o.relations[actor]=clamp(o.relations[actor]+2,-100,100);
  if(action==='investigate')s.world.religionInvestigations.push({actor,id,status:'pending',remaining:3,year:s.year,month:s.month});
  const loyaltyChange={recognize:4,sponsor:3,negotiate:2,privilege:4,revoke:-3,restrict:-10,tolerance:3,investigate:0}[action];o.institutionalLoyalty=clamp(o.institutionalLoyalty+loyaltyChange,0,100);
