@@ -33,6 +33,11 @@ try{
  const boxes=[];
  for(const [language,label] of [['en','MARE INTERNVM'],['zh','地中海']]){
   if(language==='zh')await page.locator('#lang').click();
+  if(language==='zh'){
+   const bosporus=page.locator('#map-svg .grand-region-label', {hasText:'博斯普鲁斯王国'});
+   assert.equal(await bosporus.count(),1);
+   assert.match(await bosporus.locator('title').textContent(),/辛梅里安博斯普鲁斯/);
+  }
   const sea=page.locator('#map-svg .sea-name');
   assert.equal(await sea.textContent(),label);
   const box=await sea.evaluate(el=>{const {x,y,width,height}=el.getBBox();return {x,y,width,height}});
