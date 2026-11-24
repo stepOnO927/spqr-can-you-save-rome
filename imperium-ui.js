@@ -9,6 +9,7 @@ import {COMPONENTS,CULTURE_NAMES,templatesFor,templateStats,saveTemplate,duplica
 import {ROLES,ROLE_NAMES,MODES,plansFor,planById,createPlan,assignRole,removeRole,approvePlan,pausePlan,cancelPlan,editPlan,assessPlan,adviserCounsel,approveRecommendation,legalStep} from './battle-plans.js?v=faces-name-disagreement-1';
 import {operationPartners,shareOperation,operationNoticeRoute} from './operation-intelligence.js?v=operation-notices-1';
 import {sendLetter,courierMonths} from './epistulae.js?v=faces-name-disagreement-1';
+import {jointOperationsPanel,bindJointOperations} from './joint-operations-ui.js?v=joint-operations-1';
 
 // IMPERIUM screens: national strategy tree, legion designer, operational planner.
 // UI state is local to this module; game state changes only through engine APIs.
@@ -162,12 +163,13 @@ export function plannerPanel(state,lang,selectedArmy){
  const own=state.regions.filter(r=>r.owner===owner),armies=state.armies.filter(a=>a.owner===owner&&a.men>0),commanders=Object.values(state.world.characters).filter(c=>c.alive&&c.faction===owner);
  if(!ui.addArmy&&selectedArmy&&armies.some(a=>a.id===selectedArmy))ui.addArmy=selectedArmy;
  const list=`<ul class="imp-plans">${plans.map(p=>`<li class="${p.id===ui.plan?'on':''}"><button data-imp-plan="${p.id}"><b>${esc(p.name)}</b><small class="ps-${p.status}">${esc(L2.pstatus[p.status])} · ${p.roles.length}</small></button></li>`).join('')||`<li><small>${L2.noPlans}</small></li>`}</ul><div class="imp-row"><label class="sr" for="imp-pname">${L2.planName}</label><input id="imp-pname" placeholder="${L2.planName}" maxlength="48"><button class="action" data-imp-new-plan>${L2.newPlan}</button></div>`;
- if(!plan)return `<div class="panel-heading"><span class="eyebrow">CONSILIVM BELLI</span><h2>${L2.planner}</h2></div>${list}`;
+ if(!plan)return `<div class="panel-heading"><span class="eyebrow">CONSILIVM BELLI</span><h2>${L2.planner}</h2></div>${list}${jointOperationsPanel(state,lang,null)}`;
  const editable=!['completed','cancelled','failed'].includes(plan.status),report=assessPlan(state,owner,plan.id),counsel=adviserCounsel(state,owner,plan.id);
  const roleTarget=r=>r.role==='offensive'?r.path.map(id=>rname(id,lang)).join(' → '):rname(r.target,lang);
  const targets=ui.addRole==='offensive'?[]:['frontline','defensive','fallback','reserve','supply_guard'].includes(ui.addRole)?own.map(r=>r.id):REGIONS.map(r=>r.id).filter(id=>state.regions.some(r=>r.id===id)&&(ui.addRole!=='siege'||reportedControl(state,owner,id)?.owner!==owner));
  return `<div class="panel-heading"><span class="eyebrow">CONSILIVM BELLI</span><h2>${L2.planner}</h2></div>${list}
  <article class="imp-plan"><h3>${esc(plan.name)} <small class="ps-${plan.status}">${esc(L2.pstatus[plan.status])}</small></h3>
+ ${jointOperationsPanel(state,lang,plan)}
  ${operationSharingPanel(state,lang,plan)}
  ${plan.attention?`<p class="imp-err" role="alert">${esc(L2.attention[plan.attention]||plan.attention)}</p>`:''}
  <label for="imp-mode">${L2.mode}</label><select id="imp-mode" ${editable?'':'disabled'}>${MODES.map(m=>`<option value="${m}" ${plan.mode===m?'selected':''}>${esc(L2.modes[m])}</option>`).join('')}</select>
@@ -202,6 +204,7 @@ export function isDrawing(){return !!ui.drawing}
 
 // ---------- binding ----------
 export function bindImperium({state,lang,render,flash,log}){
+ bindJointOperations({s:state,lang,render,flash,sendLetter,courierMonths});
  const $=s=>document.querySelector(s),all=s=>document.querySelectorAll(s),L2=tx(lang),owner=state.player;
  const reasonMsg=r=>L2.st[r]||(typeof r==='string'?r:'');
  all('[data-imp-open-focus]').forEach(el=>el.onclick=()=>{ui.focusOpen=true;render()});

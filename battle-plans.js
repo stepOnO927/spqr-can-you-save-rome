@@ -117,7 +117,7 @@ function activateSupply(s,plan){
  for(const r of plan.roles){const a=army(s,r.armyId);if(a&&region(s,a.region)?.owner===plan.owner)ids.add(a.region)}
  for(const id of [...ids].slice(0,4)){region(s,id).supply+=2;plan.supplyBoost.push({region:id,n:2})}
 }
-export function planControlled(s,armyId){return plansState(s).some(p=>['active','preparing'].includes(p.status)&&p.mode==='automatic'&&p.roles.some(r=>r.armyId===armyId&&!r.state.done&&!r.state.suspended))}
+export function planControlled(s,armyId){return plansState(s).some(p=>['active','preparing'].includes(p.status)&&(p.mode==='automatic'||['waiting_reply','waiting_confirmation','agreed'].includes(p.coordination?.state))&&p.roles.some(r=>r.armyId===armyId&&!r.state.done&&!r.state.suspended))}
 
 // ---------- assessment & counsel ----------
 const freshSightings=(s,owner)=>Object.values(s.knowledge?.[owner]||{}).flatMap(k=>Object.values(k.sightings||{})).filter(x=>x.owner!==owner&&isDeliveredReport(s,x)&&sightingAge(s,x)>=0&&sightingAge(s,x)<=12);
@@ -194,6 +194,29 @@ function reconSweep(s,plan,r,a){
  for(const u of s.armies){if(u.owner===plan.owner||u.move||!places.has(u.region)||!s.knowledge?.[plan.owner]?.[u.owner])continue;const k=s.knowledge[plan.owner][u.owner];k.sightings||={};k.sightings[u.id]={id:u.id,name:[...u.name],owner:u.owner,region:u.region,year:s.year,month:s.month,commanderId:null,strengthBand:[Math.max(0,Math.floor(u.men*.75/1000)*1000),Math.max(1000,Math.ceil(u.men*1.25/1000)*1000)],profile:u.formation?.profile||null,source:'recon',planId:plan.id};count++}
  return count;
 }
+export function operationFingerprint(plan){
+ return JSON.stringify(plan.roles.map(r=>[r.armyId,r.role,r.target,r.path]).sort((a,b)=>a[0].localeCompare(b[0])));
+}
+export function coordinationProblem(s,plan,{requireIdle=false}={}){
+ const c=plan.coordination,owner=plan.owner;
+ if(c?.version!==1||!Array.isArray(c.wars))return 'record';
+ if(!['active','preparing'].includes(plan.status))return 'plan_status';
+ if(!s.factions[owner]||(s.world.dynasticGenerations?.[owner]||0)!==c.ownGeneration)return 'court';
+ if(!isWar(s,owner,c.enemy)||(s.world.warGenerations?.[[owner,c.enemy].sort().join(':')]||0)!==c.warGeneration)return 'war';
+ if(isWar(s,owner,c.partner)||!((s.alliances||[]).some(p=>p.includes(owner)&&p.includes(c.partner))||['defensive','offensive'].some(t=>activeAgreement(s,owner,c.partner,t))))return 'partnership';
+ if(operationFingerprint(plan)!==c.signature)return 'orders';
+ if(s.wars.some(w=>w.includes(owner)&&!c.wars.includes(w.find(p=>p!==owner))))return 'new_war';
+ for(const r of plan.roles){const a=army(s,r.armyId);if(!a||a.owner!==owner||a.men<=0)return 'forces';if(a.move||a.siege)return 'engaged';if(requireIdle&&a.reorg)return 'reorganization';if(['offensive','siege'].includes(r.role)&&reportedControl(s,owner,r.target)?.owner!==c.enemy)return 'control'}
+ return null;
+}
+function jointOrdersAllowed(s,plan){
+ const c=plan.coordination;if(!c||['independent','launched'].includes(c.state))return true;
+ plan.recommendations=[];
+ if(c.version!==1||!Array.isArray(c.wars)||c.state!=='agreed'||date(s)<c.launchAt)return false;
+ const problem=date(s)!==c.launchAt?'deadline':coordinationProblem(s,plan,{requireIdle:true});
+ if(problem){c.state=problem==='deadline'?'missed':'changed';c.stopReason=problem;c.needsWithdrawal=true;plan.status='paused';return false}
+ c.state='launched';c.releasedYear=s.year;c.releasedMonth=s.month;return true;
+}
 export function advanceBattlePlans(s,{autoplayPlayer=false,issueOrder,estimatedStrength,log=()=>{}}={}){
  const plans=plansState(s);
  for(const plan of plans){
@@ -217,6 +240,7 @@ export function advanceBattlePlans(s,{autoplayPlayer=false,issueOrder,estimatedS
    if(plan.preparation.progress>=plan.preparation.target){plan.status='active';activateSupply(s,plan);event(s,plan,'prepared',{},log)}
    else continue;
   }
+  if(!jointOrdersAllowed(s,plan))continue;
   if(plan.supplyPriority&&plan.supplyBoost.length){if(f.treasury>=3)f.treasury-=3;else{endSupply(s,plan)}}
   if(f.food<0&&plan.mode!=='manual'){event(s,plan,'supply',{},log);if(!automatedOwner){plan.status='needs_attention';plan.attention='supply';continue}}
   plan.recommendations=[];
