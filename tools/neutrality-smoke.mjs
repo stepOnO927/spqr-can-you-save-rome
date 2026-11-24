@@ -1,0 +1,45 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+
+async function incomingFixture(){
+ const {newGame,tick,sendStrategicOffer}=await import('/engine.js?v=faces-name-disagreement-1'),{sendAgreementProposal,advanceAgreementProposals,answerAgreementProposal}=await import('/agreement-negotiations.js?v=focus-agreement-consent-1'),{syncAgreementLetters,receivedMail,replyToLetter}=await import('/epistulae.js?v=faces-name-disagreement-1');
+ const advance=s=>{if(++s.month>12){s.month=1;s.year++}advanceAgreementProposals(s);syncAgreementLetters(s)};
+ for(let n=1;n<=100;n++){
+  const s=newGame('caesar');s.difficulty='beginner';s.seed=n*1000003;s.alliances=[];s.wars.push(['egypt','parthia']);s.relations['caesar:egypt']=60;
+  for(const id of ['caesar','egypt'])Object.assign(s.factions[id],{treasury:300,food:300,stability:80});
+  const offer=sendAgreementProposal(s,'egypt','caesar','neutrality',{enemy:'parthia'});if(!offer.ok)throw Error(offer.reason);advance(s);advance(s);
+  if(s.world.agreementLetters[0].phase!=='awaiting_player')continue;
+  const copy=structuredClone(s),letter=receivedMail(copy).find(m=>m.context?.kind==='agreement_offer'&&m.context.proposalId===offer.id);if(!replyToLetter(copy,letter.id,'accept_agreement',{answerAgreementProposal}).ok)continue;for(let i=0;i<4;i++)tick(copy);
+  if(copy.world.agreementLetters[0].status!=='accepted')continue;
+  const beforeAidSeed=copy.seed,aid=sendStrategicOffer(copy,'egypt','caesar','parthia',{kind:'request_aid'});if(!aid.ok)continue;for(let i=0;i<2;i++)tick(copy);if(copy.world.strategicOffers.find(o=>o.id===aid.id)?.status!=='awaiting_decision')continue;
+  localStorage.setItem('spqr-lang','zh');sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state:s}));return {id:offer.id,beforeAidSeed};
+ }
+ throw Error('No reproducible incoming confirmation fixture');
+}
+const browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']}),errors=[];
+let page;
+try{
+ page=await browser.newPage({viewport:{width:1920,height:1080}});page.on('pageerror',e=>errors.push(e.message));await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
+ const chosen=await page.evaluate(incomingFixture),proposalId=chosen.id;await page.reload();
+ async function save(){const close=page.locator('#mail-close');if(await close.isVisible())await close.click();await page.locator('#new').click();await page.locator('[data-slot="save"]').click();return page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')))}
+ async function openMail(kind,id){await page.locator('#mail-open').click();const state=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1'))),message=state.mail.messages.find(m=>m.context?.kind===kind&&(kind==='agreement_offer'?m.context.proposalId===id:m.context.offerId===id));assert.ok(message);await page.locator(`[data-mail-select="${message.id}"]`).click()}
+ let s=await save();const before=s.factions.caesar.treasury;await openMail('agreement_offer',proposalId);assert.match(await page.locator('.mail-letter').innerText(),/12个月/);assert.match(await page.locator('.mail-letter').innerText(),/帕提亚/);
+ const accept=page.locator('[data-mail-reply="accept_agreement"]');await accept.click();assert.match(await accept.innerText(),/确认答复/);await accept.click();s=await save();assert.equal(s.factions.caesar.treasury,before);assert.equal(s.agreements.some(t=>t.type==='neutrality'),false);
+ for(let i=0;i<3;i++)await page.locator('#step').click();s=await save();assert.equal(s.agreements.some(t=>t.type==='neutrality'),false);
+ await page.locator('#step').click();s=await save();const treaty=s.agreements.find(t=>t.type==='neutrality');assert.ok(treaty);assert.deepEqual(treaty.terms.warParties,['egypt','parthia']);assert.equal(treaty.terms.neutral,'caesar');
+ await page.locator('[data-tab="government"]').click();const defaultPartner=await page.locator('#agreement-target').inputValue();assert.ok(defaultPartner);assert.equal(s.wars.some(w=>w.includes(s.player)&&w.includes(defaultPartner)),false);assert.equal(await page.locator('#agreement-propose').isEnabled(),true);assert.equal(await page.locator('[data-dip="parthia"][data-act="war"]').isDisabled(),true);assert.match(await page.locator('[data-dip="parthia"][data-act="war"]').getAttribute('title'),/中立承诺/);
+ await page.locator(`[data-breach="${treaty.id}"]`).scrollIntoViewIfNeeded();await page.evaluate(()=>document.fonts.ready);await page.screenshot({path:'neutrality-controls-1920x1080.png'});
+ await page.locator('#lang').click();await page.locator('[data-tab="government"]').click();assert.match(await page.locator(`[data-breach="${treaty.id}"]`).locator('..').innerText(),/Egypt|Parthia/);await page.locator('#lang').click();
+ await page.locator('#open-atlas').click();await page.locator('#turn-date').waitFor();await page.locator('[data-city="ROMA"]').waitFor();await page.locator('#factions').click();await page.locator('[data-faction="parthia"]').click();await page.locator('[data-page="diplomacy"]').click();assert.equal(await page.locator('[data-diplomacy="war"]').isDisabled(),true);assert.match(await page.locator('[data-diplomacy="war"]').getAttribute('title'),/中立承诺/);
+ await page.locator('#help').click();await page.locator('#help-search').fill('特定战争中立');assert.match(await page.locator('#help-results').innerText(),/12个月/);assert.match(await page.locator('#help-results').innerText(),/贸易/);await page.waitForTimeout(8000);await page.evaluate(()=>document.fonts.ready);await page.screenshot({path:'neutrality-atlas-help-1920x1080.png'});
+ await page.locator('#return-campaign').click();await page.locator('[data-tab="government"]').click();s=await save();assert.equal(s.agreements.find(t=>t.id===treaty.id).status,'active');
+ const stagedAid=await page.evaluate(async()=>{const {sendStrategicOffer}=await import('/engine.js?v=faces-name-disagreement-1'),s=JSON.parse(localStorage.getItem('spqr-save-1')),r=sendStrategicOffer(s,'egypt','caesar','parthia',{kind:'request_aid'});if(!r.ok)throw Error(r.reason);sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state:s}));return {id:r.id,seed:s.seed}});const offerId=stagedAid.id;console.log('NEUTRALITY_AID_SEED '+JSON.stringify({predicted:chosen.beforeAidSeed,actual:stagedAid.seed}));await page.reload();for(let i=0;i<2;i++)await page.locator('#step').click();s=await save();const cash=s.factions.caesar.treasury,food=s.factions.caesar.food;
+ await openMail('strategic_offer',offerId);let aid=page.locator('[data-mail-reply="send_war_aid"]');await aid.click();await aid.click();assert.match(await page.locator('body').innerText(),/中立承诺阻止/);s=await save();assert.equal(s.factions.caesar.treasury,cash);assert.equal(s.factions.caesar.food,food);assert.equal(s.world.strategicOffers.find(o=>o.id===offerId).status,'awaiting_decision');
+ await page.locator('[data-tab="government"]').click();const breach=page.locator(`[data-breach="${treaty.id}"]`);await breach.click();assert.match(await breach.innerText(),/确认违约/);await breach.click();s=await save();assert.equal(s.agreements.find(t=>t.id===treaty.id).status,'breached');assert.equal(s.diplomaticCredibility.caesar,80);assert.equal(await page.locator('[data-dip="parthia"][data-act="war"]').isEnabled(),true);
+ await openMail('strategic_offer',offerId);aid=page.locator('[data-mail-reply="send_war_aid"]');await aid.click();await aid.click();s=await save();assert.equal(s.factions.caesar.treasury,cash-12);assert.equal(s.factions.caesar.food,food-8);assert.equal(s.world.strategicOffers.find(o=>o.id===offerId).phase,'return');assert.equal(s.world.strategicOffers.find(o=>o.id===offerId).sealed.decision,'accepted');
+ await page.evaluate(async()=>{const {newGame}=await import('/engine.js?v=faces-name-disagreement-1'),s=newGame('caesar');s.wars=[];sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state:s}))});await page.reload();await page.locator('[data-tab="government"]').click();await page.locator('#agreement-target').selectOption('egypt');await page.locator('#agreement-type').selectOption('neutrality');assert.equal(await page.locator('#agreement-propose').isDisabled(),true);assert.match(await page.locator('#agreement-guide').innerText(),/正在交战/);await page.locator('#agreement-type').selectOption('trade');assert.equal(await page.locator('#agreement-propose').isEnabled(),true);assert.equal(await page.locator('#agreement-enemy-wrap').isVisible(),false);
+ assert.deepEqual(errors,[]);console.log('NEUTRALITY_UI: actual consent and confirmation, both-map war restrictions, bilingual terms, help, save/load, aid refusal and explicit breach before real aid dispatch verified');
+ }catch(error){
+ if(page){console.log('NEUTRALITY_UI_FAILURE '+JSON.stringify({url:page.url(),errors,panel:await page.locator('#command-detail').innerText().catch(()=>''),directory:await page.locator('[data-faction]').count()}));await page.screenshot({path:'neutrality-failure-1920x1080.png'}).catch(()=>{})}
+ throw error;
+}finally{await browser.close()}

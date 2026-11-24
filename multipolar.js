@@ -2,7 +2,7 @@ import {isDeliveredReport} from './person-knowledge.js?v=faces-name-disagreement
 import {ROUTES} from './data.js?v=phase-x-1';
 import {reportedControl} from './control-intelligence.js?v=control-delivery-1';
 import {reportedDiplomacy} from './diplomatic-knowledge.js?v=control-delivery-1';
-import {activeAgreement} from './agreements.js?v=focus-agreement-consent-1';
+import {activeAgreement,neutralityBlocksWar} from './agreements.js?v=focus-agreement-consent-1';
 import {politicalMemoryAdjustment} from './political-memory.js?v=grand-chessboard-2';
 
 const pair=(a,b)=>[a,b].sort().join(':'),now=s=>s.year*12+s.month;
@@ -44,7 +44,7 @@ export function assessOpportunities(s,actor,estimateStrength){
   const reports=(s.knowledge?.[actor]?.[target]?.reports||[]).filter(r=>isDeliveredReport(s,r)&&r.kind==='stability'&&['stable','strained','fragile'].includes(r.value)&&now(s)-((r.observationYear??r.year)*12+(r.observationMonth??r.month))>=0&&now(s)-((r.observationYear??r.year)*12+(r.observationMonth??r.month))<=24).sort((a,b)=>((b.observationYear??b.year)*12+(b.observationMonth??b.month))-((a.observationYear??a.year)*12+(a.observationMonth??a.month)));
   const sightings=Object.values(s.knowledge?.[actor]?.[target]?.sightings||{}).filter(x=>{const age=now(s)-((x.observationYear??x.year)*12+(x.observationMonth??x.month));return isDeliveredReport(s,x)&&Number.isFinite(age)&&age>=0&&age<=12});
   const border=places.size>0,distant=border?sightings.filter(x=>x.region&&!places.has(x.region)).length:0,frontierSightings=sightings.filter(x=>places.has(x.region)).length;
-  const knownWars=documents.filter(d=>d.kind==='war'&&d.parties.includes(target)).length,relation=s.relations[pair(actor,target)]??0,estimate=estimateStrength(s,actor,target),memory=politicalMemoryAdjustment(s,actor,target),allied=s.alliances.some(a=>a.includes(actor)&&a.includes(target)),treaty=!!activeAgreement(s,actor,target,'non_aggression');
+  const knownWars=documents.filter(d=>d.kind==='war'&&d.parties.includes(target)).length,relation=s.relations[pair(actor,target)]??0,estimate=estimateStrength(s,actor,target),memory=politicalMemoryAdjustment(s,actor,target),allied=s.alliances.some(a=>a.includes(actor)&&a.includes(target)),treaty=!!activeAgreement(s,actor,target,'non_aggression')||neutralityBlocksWar(s,actor,target);
   const commitments=(s.agreements||[]).filter(t=>t.parties.includes(actor)&&t.parties.includes(target)&&activeAgreement(s,actor,target,t.type)===t).map(t=>t.type),reportedSupport=documents.filter(d=>d.parties.includes(target)&&(d.kind==='alliance'||d.kind==='coalition'||d.type==='defensive'||d.type==='guarantee')).length;
   const suspectedSupport=new Set((s.knowledge?.[actor]?.[target]?.reports||[]).filter(r=>{const age=now(s)-((r.observationYear??r.year)*12+(r.observationMonth??r.month));return r.kind==='secret_treaty'&&isDeliveredReport(s,r)&&typeof r.value==='string'&&r.value!=='unknown'&&r.confidence!=='disputed'&&Number.isFinite(age)&&age>=0&&age<=24}).map(r=>r.value)).size;
   const ratio=ownStrength/Math.max(1000,estimate),readiness=f.food>=25&&f.treasury>=35&&f.stability>=40,preference=({conqueror:5,schemer:2,diplomat:-4,reformer:-3,survivor:-3}[personality]||0),instability=reports[0]?.value||'unknown';
