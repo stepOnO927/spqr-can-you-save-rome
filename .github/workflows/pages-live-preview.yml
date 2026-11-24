@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       source_url:
-        description: Existing public Pages origin
+        description: Existing public save origin
         required: true
-        default: https://spqr-can-you-save-rome.pages.dev/
+        default: https://stepono927.github.io/spqr-can-you-save-rome/
       target_url:
         description: Tested review preview origin
         required: true
@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      SPQR_SOURCE_URL: ${{ inputs.source_url || 'https://spqr-can-you-save-rome.pages.dev/' }}
+      SPQR_SOURCE_URL: ${{ inputs.source_url || 'https://stepono927.github.io/spqr-can-you-save-rome/' }}
       SPQR_TARGET_URL: ${{ inputs.target_url || 'https://9856174d.spqr-can-you-save-rome.pages.dev/' }}
     steps:
       - uses: actions/checkout@v4
