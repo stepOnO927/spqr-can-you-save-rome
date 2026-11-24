@@ -24,7 +24,7 @@
   notice.innerHTML='<p></p><button type="button">OK / 知道了</button>';
   const local=unavailable.some(x=>x.startsWith('localStorage')),session=unavailable.some(x=>x.startsWith('sessionStorage'));
   notice.querySelector('p').textContent=(local?'浏览器禁止保存：本页进度仅在关闭或刷新前保留，请用“迁移存档”导出文件。 / Browser storage is unavailable: progress lasts only until this page closes or reloads; export with “Transfer saves”. ':'')+(session?'会话存储不可用，不能安全切换地图。 / Session storage is unavailable; switching maps is disabled.':'');
-  Object.assign(notice.style,{position:'fixed',zIndex:'2147483646',left:'50%',top:'50%',transform:'translate(-50%,-50%)',width:'min(430px,90vw)',padding:'16px',background:'#24312d',color:'#fff3d6',border:'2px solid #c8aa68',boxShadow:'0 8px 40px #000b',font:'14px/1.5 sans-serif'});
+  Object.assign(notice.style,{position:'fixed',zIndex:'2147483646',left:'50%',top:'50%',transform:'translate(-50%,-50%)',width:'min(430px,90vw)',padding:'16px',background:'#24312d',color:'#fff3d6',border:'2px solid #c8aa68',boxShadow:'0 8px 40px #000b',font:'14px/1.5 "SPQR CJK",sans-serif'});
   notice.querySelector('button').onclick=()=>notice.remove();document.body.append(notice);
  };
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',show,{once:true});else show();
