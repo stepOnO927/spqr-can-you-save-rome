@@ -11,7 +11,7 @@ import {campaignEndingHtml,campaignVictoryHtml,campaignSettlementHtml} from './a
 import {budgetHtml} from './budget-ui.js?v=41';
 import {holdPosition,strategicRetreat,armySupply,encircled} from './grand-operations.js?v=48';
 import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation,bindIdeaSelection,openInscriptionEditor} from './development-ui.js?v=77';
-import {drawMap,mapPoint} from './map.js?v=69';
+import {drawMap,mapPoint} from './map.js?v=70';
 import {avoidGrandLabelCollisions} from './map-label-layout.js?v=3';
 import {chronicleHtml,notificationsHtml,briefingHtml,battleReportHtml,reportLabel,eventDate} from './reports-ui.js?v=19';
 import {unreadCount,markRead,latestCritical,eventText} from './campaign-reports.js?v=14';
@@ -146,7 +146,7 @@ function render(){
     }
   }
   const a=army(state,selectedArmy),destinations=ordering&&a?adjacent(a.region,state).map(x=>region(state,x.to)):[];
-  document.querySelector('.map-wrap').insertAdjacentHTML('beforeend',`<div class="map-tools"><button id="political" class="${mapMode==='political'?'active':''}">${t('political')}</button><button id="terrain-map" class="${mapMode==='terrain'?'active':''}">${t('terrainMap')}</button><button id="zoom-in">+</button><button id="zoom-out">−</button></div>${ordering?`<div class="march-prompt">${t('target')} <label>${t('chooseDestination')} <select id="march-destination"><option value="">—</option>${destinations.map(r=>`<option value="${r.id}">${esc(n(r.name))}</option>`).join('')}</select></label> <button id="cancel-march">${t('cancel')}</button></div>`:''}<div class="map-attribution">${t(state.grandMap?'mapNote':'legacyMapNote')}</div>`);
+  document.querySelector('.map-wrap').insertAdjacentHTML('beforeend',`<div class="map-tools"><button id="political" class="${mapMode==='political'?'active':''}">${t('political')}</button><button id="terrain-map" class="${mapMode==='terrain'?'active':''}">${t('terrainMap')}</button><button id="zoom-in">+</button><button id="zoom-out">−</button></div>${ordering?`<div class="march-prompt">${t('target')} <label>${t('chooseDestination')} <select id="march-destination"><option value="">—</option>${destinations.map(r=>`<option value="${r.id}">${esc(n(r.name))}</option>`).join('')}</select></label> <button id="cancel-march">${t('cancel')}</button>${state.grandMap?`<small class="march-key"><span class="march-key-land">${lang==='zh'?'陆路':'Land'}</span><span class="march-key-sea">${lang==='zh'?'海路（需运输船）':'Sea (requires transports)'}</span></small>`:''}</div>`:''}<div class="map-attribution">${t(state.grandMap?'mapNote':'legacyMapNote')}</div>`);
   document.querySelector('.inspector').classList.toggle('closed',!panelOpen);
   document.querySelector('.inspector').classList.toggle('wide',tab==='development'||tab==='ideas');
   document.querySelector('.inspector').classList.toggle('research',tab==='development');
