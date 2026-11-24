@@ -74,7 +74,7 @@
   --han-text-dim:#b8a78d;
   /* Type. Web fonts are optional: the system stacks below are the designed fallback, because
      the Poki build ships without network fonts. */
-  --iv-display:'Cinzel','Trajan Pro 3','Trajan Pro','Cormorant Garamond','Palatino Linotype','Book Antiqua',Palatino,'Songti SC','Noto Serif SC','Source Han Serif SC',Georgia,serif;
+  --iv-display:'Cinzel','Trajan Pro 3','Trajan Pro','Cormorant Garamond','Palatino Linotype','Book Antiqua',Palatino,'SPQR CJK','Songti SC','Noto Serif SC','Source Han Serif SC',Georgia,serif;
   --iv-serif:'Palatino Linotype','Book Antiqua',Palatino,'Iowan Old Style','SPQR CJK','Songti SC','Noto Serif SC','Source Han Serif SC','SimSun',Georgia,serif;
   --iv-ui:'Manrope','Segoe UI Variable Text','Segoe UI','Helvetica Neue',Arial,'SPQR CJK','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
   --han-display:'Kaiti SC','STKaiti','KaiTi','SPQR CJK','Songti SC','Noto Serif SC','Source Han Serif SC','SimSun',Georgia,serif;
