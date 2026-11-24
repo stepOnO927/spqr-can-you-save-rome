@@ -134,6 +134,19 @@ test('AI courts pay the same recruitment costs and only use their received leads
  assert.equal(s.factions.egypt.treasury,before-20);
 });
 
+test('AI waits a year before paying to approach the same refused foreign contact again',()=>{
+ const s=newGame('caesar');s.wars=[];s.relations['egypt:senate']=80;s.factions.egypt.treasury=300;s.civilization.prestige.egypt=8;
+ s.inventions.egypt.research={id:'water',remaining:2};
+ const id=createFictionalPerson(s,{name:['Untrained contact','未受训的联系人'],faction:'senate',birthYear:-80,location:'roma'});
+ s.knowledge.egypt.senate.reports.push({kind:'office_finance',value:id,year:s.year,month:s.month,peopleNames:{[id]:['Known contact','已知联系人']}});
+ aiCivilization(s,'egypt');assert.equal(s.civilization.recruitment.length,1);
+ advanceCivilization(s);advanceCivilization(s);advanceCivilization(s);
+ assert.equal(s.civilization.recruitment[0].status,'refused');
+ s.civilization.prestige.egypt=8;const treasury=s.factions.egypt.treasury;
+ aiCivilization(s,'egypt');assert.equal(s.civilization.recruitment.length,1);
+ assert.equal(s.factions.egypt.treasury,treasury);
+});
+
 test('an AI court at war reserves its treasury and research for the campaign',()=>{
  const s=newGame('caesar'),senate=s.factions.senate;
  senate.treasury=100;s.civilization.prestige.senate=8;
