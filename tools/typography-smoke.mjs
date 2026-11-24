@@ -20,15 +20,16 @@ try {
     const glyphs=[...new Set('罗马军团凯撒庞培地图城市战役健康继承情报书信外交征召选择难度埃及帕提亚')];
     function raster(c){ctx.clearRect(0,0,60,60);ctx.fillText(c,3,3);const pixels=ctx.getImageData(0,0,60,60).data;let hash=2166136261,ink=0;for(let i=3;i<pixels.length;i+=4){ink+=pixels[i];hash=Math.imul(hash^pixels[i],16777619)>>>0}return {hash,ink}}
     const missing=raster('\u0378'),rendered=glyphs.map(raster),uncovered=[],visibleGlyphs=new Set();let count=0;
+    function hasFallback(family){const list=family.split(',').map(f=>f.trim().replace(/["']/g,'')),index=list.indexOf('SPQR CJK');return index>=0&&!list.slice(0,index).some(f=>['serif','sans-serif','system-ui','monospace','cursive','fantasy'].includes(f))}
     const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);while(walker.nextNode()){
      const text=walker.currentNode,el=text.parentElement;if(!/[\u3400-\u9fff]/.test(text.textContent)||!el||el.closest('script,style,option'))continue;
      const rect=el.getBoundingClientRect(),css=getComputedStyle(el);if(rect.width<=0||rect.height<=0||css.visibility==='hidden'||css.display==='none')continue;
-     count++;for(const c of text.textContent.match(/[\u3400-\u9fff]/gu)||[])visibleGlyphs.add(c);if(!css.fontFamily.includes('SPQR CJK'))uncovered.push(`${el.tagName}: ${text.textContent.slice(0,30)} (${css.fontFamily})`);
+     count++;for(const c of text.textContent.match(/[\u3400-\u9fff]/gu)||[])visibleGlyphs.add(c);if(!hasFallback(css.fontFamily))uncovered.push(`${el.tagName}: ${text.textContent.slice(0,30)} (${css.fontFamily})`);
     }
     for(const el of document.querySelectorAll('input,select,textarea')){
      const text=el.tagName==='SELECT'?el.selectedOptions[0]?.textContent||'':el.value||el.placeholder||'',rect=el.getBoundingClientRect(),css=getComputedStyle(el);
      if(!/[\u3400-\u9fff]/.test(text)||rect.width<=0||rect.height<=0||css.visibility==='hidden'||css.display==='none')continue;
-     count++;for(const c of text.match(/[\u3400-\u9fff]/gu)||[])visibleGlyphs.add(c);if(!css.fontFamily.includes('SPQR CJK'))uncovered.push(`${el.tagName}: ${text.slice(0,30)} (${css.fontFamily})`);
+     count++;for(const c of text.match(/[\u3400-\u9fff]/gu)||[])visibleGlyphs.add(c);if(!hasFallback(css.fontFamily))uncovered.push(`${el.tagName}: ${text.slice(0,30)} (${css.fontFamily})`);
     }
     return {loaded:faces.some(f=>f.family.replace(/["']/g,'')==='SPQR CJK'&&f.status==='loaded'),glyphs:glyphs.length,unique:new Set(rendered.map(r=>r.hash)).size,missing:rendered.filter(r=>r.ink===0||r.hash===missing.hash).length,missingVisible:[...visibleGlyphs].filter(c=>{const r=raster(c);return r.ink===0||r.hash===missing.hash}),count,uncovered};
    });
