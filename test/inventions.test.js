@@ -5,7 +5,7 @@ import {MATERIALS,IDEAS,CATEGORIES,activeModifiers,buildingModifiers,startResear
 
 const advance=(s,n)=>{for(let i=0;i<n;i++)tick(s)};
 test('material research unlocks a local building, with separate construction and real income',()=>{
- const s=newGame('egypt');assert.equal(MATERIALS.length,15);assert.equal(new Set(MATERIALS.map(i=>i.image)).size,15);
+ const s=newGame('egypt');assert.ok(MATERIALS.length>=16);assert.equal(new Set(MATERIALS.map(i=>i.image)).size,MATERIALS.length);
  assert.equal(startConstruction(s,'egypt','egyptUpper','granaries').reason,'knowledge');
  assert.equal(startResearch(s,'egypt','granaries').ok,true);assert.deepEqual(s.regions.find(r=>r.id==='egyptUpper').buildings,[]);
  advance(s,4);assert.ok(s.inventions.egypt.knownMaterial.includes('granaries'));

@@ -10,8 +10,11 @@ const sum=(items,key)=>items.reduce((n,x)=>n+(x[key]||0),0);
 const url={engineering:'https://www.metmuseum.org/-/media/files/learn/for-educators/publications-for-educators/roman.pdf',roads:'https://whc.unesco.org/en/list/1708',water:'https://www.worldhistory.org/Roman_Aqueduct/',port:'https://www.worldhistory.org/article/2041/roman-ports/',army:'https://assets.cambridge.org/97805218/82699/excerpt/9780521882699_excerpt.pdf',mill:'https://www.worldhistory.org/article/907/roman-mills/',law:'https://www.cambridge.org/core/books/cambridge-companion-to-the-roman-republic/power-and-process-under-the-republican-constitution/72F9A38F210BBF2B5FD9D7EF6AC59DBB',tax:'https://www.cambridge.org/core/journals/social-science-history/article/abs/perils-of-privatization/ED0CC74ECD0C79B068BB3CE233932B04',culture:'https://www.cambridge.org/core/journals/greece-and-rome/article/abs/roman-education-in-the-late-republic-and-early-empire/DE44732153A1D79F555EB7AD58856237'};
 // The different engravings are generated from distinct, subject-specific silhouettes.
 const drawings={dams:'M8 38h48M14 35l5-17h26l5 17M27 18V9h10v9M4 46q8-5 16 0t16 0t16 0',water:'M8 43h48M12 34h40M16 34V18h32v16M22 18V9h8v9M36 18V9h8v9',irrigation:'M7 12h50M13 12v30m15-30v30m15-30v30m15-30v30M6 42h50M9 32q4-6 8 0t8 0t8 0t8 0t8 0',sewers:'M7 17h50M10 17v27h44V17M18 42V29q14-18 28 0v13M8 48h48',inscriptions:'M17 48V15h30v33M11 15h42M24 23h16m-16 7h16m-16 7h12',barracks:'M7 44h50M11 44V26l20-17 21 17v18M20 44V30h10v14m8 0V30h8v14',mines:'M8 48h48M12 42l11-23 8 8 7-18 14 33M19 38l18-18m-12 2 18 18',roads:'M6 46l15-37h22l15 37M24 9l-7 37m23-37 7 37M9 38h47M14 27h37',bridges:'M4 43h56M9 43V28h46v15M9 28q10 0 10 15m0 0q10-25 20 0m0 0q8-15 16-15M8 25h48',granaries:'M8 46h48M12 46V20l20-11 20 11v26M20 25h24M20 32h24M20 39h24',ports:'M5 44h54M12 37h40M16 37l5-18h22l5 18M32 19V6m0 4 12 9H32M7 49q8-4 16 0t16 0t16 0',shipyards:'M7 37q24 23 50 0H7M16 36V14h30v22M31 14V5m0 3 15 6H31M11 47h42',metalworking:'M6 41h52M11 25h42l-7 16H18l-7-16M17 25l5-11h21l4 11M32 14V5M23 48h18',siege:'M8 46h48M16 44V26h27v18M23 26l7-16h11l9 19M31 10l19 19M10 25l15 7',warehouses:'M8 48h48M11 48V17h42v31M7 17l25-10 25 10M20 25h10v10H20zm15 0h10v10H35zM27 48V39h11v9'};
-const STONE_REQUIREMENTS={dams:2,water:1,sewers:1,inscriptions:1,roads:1,bridges:2,granaries:1,ports:2,warehouses:1};
-const TIMBER_REQUIREMENTS={dams:2,barracks:2,mines:1,bridges:2,granaries:1,ports:2,shipyards:2,siege:2,warehouses:1};
+// A culture-neutral enclosure silhouette avoids presenting one tradition's
+// temple architecture as the form used by every 49 BCE community.
+drawings.ritual_precinct='M8 47h48M12 42V15h40v27M12 20h40M22 42V29h20v13M28 29v-9h8v9M17 14l15-8 15 8';
+const STONE_REQUIREMENTS={dams:2,water:1,sewers:1,inscriptions:1,roads:1,bridges:2,granaries:1,ports:2,warehouses:1,ritual_precinct:1};
+const TIMBER_REQUIREMENTS={dams:2,barracks:2,mines:1,bridges:2,granaries:1,ports:2,shipyards:2,siege:2,warehouses:1,ritual_precinct:1};
 const IRON_REQUIREMENTS={metalworking:1,shipyards:1,siege:1};
 const localMaterial=(s,regionId,good)=>s.markets?.regions?.[regionId]?.goods?.[good]??initializeMarkets(s).regions[regionId].goods[good];
 const material=(id,en,zh,descEn,descZh,cost,duration,prereq,effect,source,site='any')=>({id,branch:'material',name:[en,zh],description:[descEn,descZh],cost,duration,prereq,effect,source,image:`data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 56"><rect width="64" height="56" fill="#25352f"/><path d="${drawings[id]}" fill="none" stroke="#d7bb7d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`)}`,site,buildCost:Math.max(12,Math.round(cost*.7)),buildTime:Math.max(2,Math.round(duration*.7)),stoneCost:STONE_REQUIREMENTS[id]||0,timberCost:TIMBER_REQUIREMENTS[id]||0,ironCost:IRON_REQUIREMENTS[id]||0});
@@ -21,6 +24,7 @@ export const MATERIALS=[
  material('irrigation','Field irrigation','农田灌溉','Adapt canals and channels to local farmland.','因地修整渠道，为农田供水。',21,4,['water'],{food:2,upkeep:1},url.engineering,'farm'),
  material('sewers','Drainage improvements','排水设施改良','Extend existing urban drains; Rome had sewers long before 49 BCE.','扩建既有城市排水系统；罗马的下水道早于前49年。',18,4,['water'],{loyalty:2,upkeep:1},url.engineering,'urban'),
  material('inscriptions','Public stone inscriptions','公共石刻','Commission durable public records and decrees.','刻写并公开法令与纪事。',15,3,[],{loyalty:1,upkeep:1},url.engineering),
+ material('ritual_precinct','Local ritual precinct (game reconstruction)','地方祭仪场所（游戏复原）','Maintain a shared local ceremonial space; its form follows the community rather than a universal temple design.','维护当地共用的祭仪场所；形制依社群而异，并非统一神庙样式。',20,4,[],{satisfaction:1,upkeep:1},'https://www.metmuseum.org/essays/eastern-religions-in-the-roman-world'),
  material('barracks','Barracks improvement','兵营改良','Expand existing garrison quarters and training grounds.','扩建现有驻军营舍与操练场。',21,4,[],{recruit:1,upkeep:1},url.army),
  material('mines','Mine organization','矿场整顿','Organize extraction in suitable hill country.','在适宜丘陵整顿采矿生产。',24,5,['metalworking'],{tax:3,upkeep:1},url.engineering,'hills'),
  material('roads','Road maintenance network','道路维护体系','Improve already established roads and relay maintenance.','整修已存在的道路并组织接力维护。',18,4,[],{tax:1,march:1,upkeep:1},url.roads),
@@ -93,10 +97,14 @@ export function aiInnovation(s,owner){
  // The distant Han court needs a war chest to defend its frontier and capital.
  const reserve=owner==='han'?125:0;
  const affordable=cost=>f.treasury-cost>=reserve;
- const candidates=ALL.filter(i=>!canResearch(s,owner,i.id)&&affordable(i.cost));
- if(!x.research&&candidates.length){const pick=candidates[Math.abs(s.year*12+s.month+owner.length*7)%candidates.length];startResearch(s,owner,pick.id)}
+ // Keep existing research choices stable when new optional projects are
+ // introduced. A ritual site answers actual hardship, not a calendar roll.
+ const candidates=ALL.filter(i=>i.id!=='ritual_precinct'&&!canResearch(s,owner,i.id)&&affordable(i.cost));
+ const ritualNeed=s.regions.some(r=>r.owner===owner&&r.population?.satisfaction<45&&!r.buildings?.includes('ritual_precinct'));
+ const ritualReady=ritualNeed&&!s.wars.some(w=>w.includes(owner))&&f.treasury>=reserve+80&&!canResearch(s,owner,'ritual_precinct')&&affordable(20);
+ if(!x.research){if(ritualReady)startResearch(s,owner,'ritual_precinct');else if(candidates.length){const pick=candidates[Math.abs(s.year*12+s.month+owner.length*7)%candidates.length];startResearch(s,owner,pick.id)}}
  if(s.month%4===0){
-  const project=s.regions.filter(r=>r.owner===owner).flatMap(r=>x.knownMaterial.map(id=>[r,id])).find(([r,id])=>!canConstruct(s,owner,r.id,id)&&affordable(byId(id).buildCost));
+  const project=s.regions.filter(r=>r.owner===owner).flatMap(r=>x.knownMaterial.map(id=>[r,id])).find(([r,id])=>(id!=='ritual_precinct'||r.population?.satisfaction<45)&&!canConstruct(s,owner,r.id,id)&&affordable(byId(id).buildCost));
   if(project&&f.treasury>50)startConstruction(s,owner,project[0].id,project[1]);
   const idea=x.knownIdeas.find(id=>!Object.values(x.active).flat().includes(id)&&!canEquip(s,owner,id));
   if(idea&&f.treasury>50&&affordable(8))equipIdea(s,owner,idea);

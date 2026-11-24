@@ -24,6 +24,15 @@ test('sponsorship transfers real treasury, privileges change taxes, and policy a
  const satisfaction=r.population.satisfaction,relation=o.relations.senate;assert.ok(religiousPolicy(s,'senate',o.id,'restrict').ok);assert.ok(r.population.satisfaction<satisfaction);assert.equal(o.relations.senate,relation-20);
  const parallel=JSON.parse(JSON.stringify(s));parallel.world.religiousInstitutions.find(x=>x.id===o.id).privilegedBy=[];tick(s);tick(parallel);assert.equal(s.factions.senate.treasury,parallel.factions.senate.treasury-1);assert.equal(o.wealth,wealth+11);
 });
+test('religious policy dispatch names the real local institution and current official',()=>{
+ const state=newGame('senate'),college=state.world.religiousInstitutions.find(o=>o.id==='roman_college');
+ const name=state.world.dynasties.catalog[college.leader].name;
+ assert.ok(religiousPolicy(state,'senate',college.id,'sponsor').ok);
+ assert.match(state.log[0].en,/Public priestly college.*Latium/);
+ assert.ok(state.log[0].en.includes(name[0]));
+ assert.match(state.log[0].zh,/公共祭司团.*资助/);
+ assert.ok(state.log[0].zh.includes(name[1]));
+});
 test('institutions grow from local population, spend their own funds and can change leadership peacefully',()=>{
  const s=newGame('senate'),o=s.world.religiousInstitutions.find(x=>x.id==='roman_college'),r=s.regions.find(x=>x.id==='roma');r.population.satisfaction=40;o.relations.senate=-10;o.factions.civic=64;o.factions.traditional=36;const followers=o.followers,leader=o.leader;s.month=6;
  advanceReligion(s);assert.ok(o.followers>followers);assert.ok(o.followers<=r.population.total);assert.ok(r.population.satisfaction>40);assert.notEqual(o.leader,leader);assert.equal(o.leader,o.council[1]);assert.ok(o.history.some(x=>x.action==='relief'));

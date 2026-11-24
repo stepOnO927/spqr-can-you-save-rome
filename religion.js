@@ -3,6 +3,7 @@ import {NAME_POOLS,generateFictionalName} from './fictional-names.js?v=faces-whe
 import {CHARACTER_CATALOG} from './characters.js?v=faces-name-disagreement-1';
 import {hasNationalIdea} from './national-ideas.js?v=grand-chessboard-2';
 import {ROUTES} from './data.js?v=phase-x-1';
+import {buildingModifiers} from './inventions.js?v=mission-discount-1';
 import {startingTraditions,traditionDiversity,transferTraditions} from './religious-demographics.js';
 
 const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
@@ -13,6 +14,9 @@ const templates=[
  {id:'theban_temples',region:'egyptUpper',name:['Theban temple network','底比斯神庙网络'],description:['A simulated network of Egyptian temple communities.','埃及神庙共同体的模拟网络。'],kind:'temple_network',culture:NAME_POOLS.egyptian.culture,names:[['Psenamun','普塞纳蒙'],['Taimhotep','塔伊姆霍特普']]},
  {id:'syrian_association',region:'syria',name:['Syrian civic association','叙利亚公民协会'],description:['A simulated local religious and charitable association.','当地宗教与慈善协会的模拟组织。'],kind:'local_association',names:[['Maron','马隆'],['Helena of Antioch','安条克的海伦娜']]}
 ];
+const policyNames={
+ recognize:['recognized','承认'],sponsor:['funded','资助'],negotiate:['negotiated with','协商'],privilege:['granted privileges to','授予特权'],revoke:['revoked privileges from','撤销特权'],restrict:['restricted','限制'],tolerance:['adopted toleration toward','宽容'],investigate:['opened an inquiry into','调查']
+};
 
 // Demographic values are gameplay estimates, not historical census figures.
 // Existing saved populations and institutions are never reset.
@@ -99,12 +103,17 @@ export function religiousPolicy(s,actor,id,action){
  if(action==='privilege'){o.privilegedBy.push(actor);o.relations[actor]=clamp(relation+15,-100,100)}
  if(action==='revoke'){o.privilegedBy=o.privilegedBy.filter(id=>id!==actor);o.relations[actor]=clamp(relation-8,-100,100)}
  if(action==='restrict'){o.relations[actor]=clamp(relation-20,-100,100);r.population.satisfaction=clamp(r.population.satisfaction-Math.ceil(share*20)*(o.legitimacy>50?2:1),0,100);f.stability=clamp(f.stability+1,0,100)}
- if(action==='tolerance'){o.relations[actor]=clamp(relation+8,-100,100);r.population.satisfaction=clamp(r.population.satisfaction+1+Math.round(traditionDiversity(r.population)*4),0,100);f.legitimacy=clamp(f.legitimacy+1,0,100)}
+ if(action==='tolerance'){o.relations[actor]=clamp(relation+8,-100,100);r.population.satisfaction=clamp(r.population.satisfaction+1+Math.round(traditionDiversity(r.population)*4)+(buildingModifiers(r).satisfaction||0),0,100);f.legitimacy=clamp(f.legitimacy+1,0,100)}
  if(['negotiate','tolerance'].includes(action)&&hasNationalIdea(s,actor,'tolerance'))o.relations[actor]=clamp(o.relations[actor]+2,-100,100);
  if(action==='investigate')s.world.religionInvestigations.push({actor,id,status:'pending',remaining:3,year:s.year,month:s.month});
  const loyaltyChange={recognize:4,sponsor:3,negotiate:2,privilege:4,revoke:-3,restrict:-10,tolerance:3,investigate:0}[action];o.institutionalLoyalty=clamp(o.institutionalLoyalty+loyaltyChange,0,100);
  o.history.push({action,actor,...(action==='negotiate'&&authority?{authority:authority.id}:{}),year:s.year,month:s.month});o.history=o.history.slice(-30);
- if(actor===s.player)log(s,action==='negotiate'&&authority?`${s.world.dynasties.catalog[authority.id]?.name?.[0]||'An experienced religious official'} helped negotiate a local religious policy.`:'A policy toward a local religious institution was enacted.',action==='negotiate'&&authority?`${s.world.dynasties.catalog[authority.id]?.name?.[1]||'一位资深宗教人士'}协助商谈当地宗教政策。`:'已对当地宗教机构实施一项政策。');
+ if(actor===s.player){
+  const official=o.leader&&s.world.characters[o.leader]?.alive?s.world.dynasties.catalog[o.leader]?.name:null;
+  const subject=official?`${o.name[0]} (led by ${official[0]})`:o.name[0],subjectZh=official?`${o.name[1]}（主持者：${official[1]}）`:o.name[1];
+  const namedAuthority=action==='negotiate'&&authority?s.world.dynasties.catalog[authority.id]?.name:null;
+  log(s,namedAuthority?`${namedAuthority[0]} helped negotiate with ${subject} in ${r.name[0]}.`:`Your government ${policyNames[action][0]} ${subject} in ${r.name[0]}${cost?`; ${cost} treasury spent`:''}.`,namedAuthority?`${namedAuthority[1]}协助商谈与${subjectZh}在${r.name[1]}的关系。`:`本方在${r.name[1]}：${subjectZh} · ${policyNames[action][1]}${cost?`；支出国库${cost}`:''}。`);
+ }
  return {ok:true,cost};
 }
 export function advanceReligion(s){
@@ -150,5 +159,5 @@ export function advanceReligion(s){
   const prefer=o.factions.civic>65?o.council[1]:o.factions.civic<35?o.council[0]:o.leader;
   if(prefer&&s.world.characters[prefer]?.alive)o.leader=prefer;
  }
- if(s.month===12){for(const r of s.regions){const f=s.factions[r.owner],p=r.population;if(!f||!p)continue;const hardship=(f.food<0?-0.008:0)+(p.satisfaction<35?-0.004:0),growth=0.002+hardship;p.total=Math.max(0,Math.round(p.total*(1+growth)));p.satisfaction=clamp(p.satisfaction+(f.tax==='high'?-2:f.tax==='low'?1:0)+(f.food<0?-2:0),0,100);p.householdWealth=Math.max(0,p.householdWealth+Math.floor(r.food/2)-(f.tax==='high'?2:0));const local=localInstitutions(s,r.id),total=local.reduce((n,o)=>n+o.followers,0);if(total>p.total)for(const o of local)o.followers=Math.floor(o.followers*p.total/total)}migratePopulation(s)}
+ if(s.month===12){for(const r of s.regions){const f=s.factions[r.owner],p=r.population;if(!f||!p)continue;const hardship=(f.food<0?-0.008:0)+(p.satisfaction<35?-0.004:0),growth=0.002+hardship;p.total=Math.max(0,Math.round(p.total*(1+growth)));p.satisfaction=clamp(p.satisfaction+(f.tax==='high'?-2:f.tax==='low'?1:0)+(f.food<0?-2:0)+(buildingModifiers(r).satisfaction||0),0,100);p.householdWealth=Math.max(0,p.householdWealth+Math.floor(r.food/2)-(f.tax==='high'?2:0));const local=localInstitutions(s,r.id),total=local.reduce((n,o)=>n+o.followers,0);if(total>p.total)for(const o of local)o.followers=Math.floor(o.followers*p.total/total)}migratePopulation(s)}
 }
