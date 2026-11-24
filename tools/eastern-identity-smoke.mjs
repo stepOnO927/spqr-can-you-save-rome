@@ -24,6 +24,11 @@ try{
   await page.locator('#lang').click();
   assert.match(await page.locator('#overview .realm-banner').innerText(),faction==='wusun'?/乌孙/:/匈奴/);
   assert.equal(await standard.count()>0,true);
+  await page.locator('#save').click();
+  await page.reload({waitUntil:'domcontentloaded'});
+  await page.locator('#load').click();
+  assert.equal(await page.locator('#overview .realm-banner .faction-banner').getAttribute('style'),bannerColor);
+  assert.equal(await page.locator('#map [data-army] .faction-standard').count()>0,true);
  }
  assert.deepEqual(errors,[]);
  console.log('Eastern faction banners and army standards browser checks passed.');
