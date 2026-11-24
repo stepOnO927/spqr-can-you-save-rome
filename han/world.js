@@ -7,8 +7,8 @@
 // along the Silk Road and through Parthia: every report is years old when it
 // arrives, and Rome starts with nothing but an old account.
 import {newHanGame,tick as hanTick,loadHanSave} from './engine.js?v=dossier-archive-1';
-import {REGIONS,FACTIONS} from './data.js?v=dossier-archive-1';
 import {isLiuClan} from './dynasty.js?v=dossier-archive-1';
+import {formatHanLog} from './log-text.js';
 
 export const DLC_KEY='hanWorld';
 const mi=(y,m)=>y*12+m;
@@ -29,8 +29,7 @@ export function attachHanWorld(s,{seed=null}={}){
  s.world[DLC_KEY]={state,queue:[],known:{snapshot,dispatches:[],firstLive:null,silkCargoes:0},embassy:null,lastDeliveries:0};
  return s.world[DLC_KEY];
 }
-const fill=(h,e,lang)=>{const n=id=>h.persons[id]?.name?.[lang]||id;const f=id=>FACTIONS[id]?.name?.[lang]||id;const reg=id=>REGIONS.find(r=>r.id===id)?.name?.[lang]||id;
- return String(e.text[lang]).replace('%NAME2%',n(e.who2)).replace('%NAME%',n(e.who)).replace('%REGION%',e.region?reg(e.region):'').replace('%FACTION2%',f(e.faction2)).replace('%FACTION%',f(e.faction))};
+const fill=formatHanLog;
 function relayDelay(h){return h.silk.contact.anxi.level==='trade'?RELAY_MONTHS.trade:RELAY_MONTHS.hearsay}
 function snapshotOf(h){const e=h.throne.orthodox||h.throne.occupant;return {year:h.year,month:h.month,owners:Object.fromEntries(h.regions.map(r=>[r.id,r.owner])),emperor:e,emperorName:e?h.persons[e]?.name:null,dynasty:h.throne.dynasty.name,dynastyOrthodox:!!h.throne.dynasty.orthodox,orthodoxIsLiu:!h.throne.orthodox||isLiuClan(h,h.throne.orthodox)}}
 

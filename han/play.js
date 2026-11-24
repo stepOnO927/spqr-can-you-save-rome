@@ -12,6 +12,7 @@ import {changeDependency,dependencyOf} from './dependencies.js';
 import {declareWar,propose,atWar} from './frontier.js';
 import {init as initExperience,act as experienceAction,lesson as experienceLesson} from './experience.js?v=dossier-archive-1';
 import {renderExperience} from './experience-ui.js?v=dossier-archive-1';
+import {formatHanLog} from './log-text.js';
 const $=id=>document.getElementById(id),D=(en,zh)=>lang?zh:en,L=a=>Array.isArray(a)?a[lang]||a[0]:a;
 let lang=localStorage.getItem('spqr-han-lang')==='zh'?1:0,s=null,selected=null,army=null,pendingMarch=null,camera='all',mode='political',courtOpen=false,courtOffice='dasinong',courtCandidate=null,hanTutorialStarted=false,hanTutorialCompleted=false;
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -75,7 +76,7 @@ function render(){
  if($('cancel'))$('cancel').onclick=()=>{a.move=null;message('Movement canceled.','行军已取消。');render()};
  if($('autonomy'))$('autonomy').onclick=()=>{changeDependency(s,r.owner,'grant_autonomy');render()};
  if($('aid'))$('aid').onclick=()=>{const v=changeDependency(s,r.owner,'request_aid');message(v.ok?`Received ${v.aid} manpower.`:'Request refused.',v.ok?`获得${v.aid}名兵员。`:'请求被拒绝。');render()};
- $('chronicle').innerHTML=`<h3>${D('Recent events','近期事件')}</h3>${s.log.slice(-6).reverse().map(e=>`<p>${esc(e.year||s.year)} · ${esc(L(e.text||e.message||e))}</p>`).join('')||`<p class="muted">${D('The campaign has just begun.','战役刚刚开始。')}</p>`}`;
+ $('chronicle').innerHTML=`<h3>${D('Recent events','近期事件')}</h3>${s.log.slice(-6).reverse().map(e=>`<p>${esc(e.year||s.year)} · ${esc(formatHanLog(s,e,lang))}</p>`).join('')||`<p class="muted">${D('The campaign has just begun.','战役刚刚开始。')}</p>`}`;
  renderExperience(s,lang,{navigate:navigateExperience,render,message});
  if(hanTutorialStarted&&!hanTutorialCompleted&&!s.experience?.skipped&&!experienceLesson(s)){hanTutorialCompleted=true;analytics.track('tutorial_completed',{}, {humanAction:false})}
 }
