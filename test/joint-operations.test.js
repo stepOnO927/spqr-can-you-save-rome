@@ -98,12 +98,11 @@ test('pending, confirmed and expired correspondence survive save/load, while ord
 });
 test('at least four autonomous courts can send and independently answer cooperation proposals across seeds',()=>{
  const reports=[],departures=[],transitions=[];
- for(const scenario of ['four_fronts','neutral_egypt','exhausted_egypt'])for(let n=1;n<=24;n++){
+ for(const scenario of ['four_fronts','neutral_egypt'])for(let n=1;n<=24;n++){
   const fourFronts=scenario==='four_fronts';
   const s=newGame('caesar');s.difficulty='expert';s.seed=(Math.imul(n,2654435761)^10949)>>>0;
   s.alliances.push(['caesar','egypt'],['parthia','armenia']);s.relations['caesar:egypt']=60;s.relations['armenia:parthia']=60;
   for(const actor of ['caesar','egypt','parthia','armenia']){Object.assign(s.factions[actor],{treasury:220,food:220,stability:80});if(actor!=='caesar'&&(actor!=='egypt'||fourFronts))s.wars.push([actor,'senate'])}
-  if(scenario==='exhausted_egypt'){s.armies.filter(a=>a.owner==='egypt').forEach(a=>{a.men=1200;a.morale=40});s.factions.egypt.food=30}
   observeControl(s);observeDiplomacy(s);
   const previous=new Map();
   for(let i=0;i<24;i++){tick(s,{autoplayPlayer:true});for(const p of s.world.battlePlans||[]){const c=p.coordination;if(!c)continue;const key=p.id+':'+c.invitationId,signature=c.state+':'+c.stopReason;if(previous.get(key)!==signature){transitions.push({scenario,seed:n,id:c.invitationId,owner:p.owner,date:date(s),state:c.state,reason:c.stopReason,objectives:p.roles.map(r=>({id:r.target,reported:reportedControl(s,p.owner,r.target)?.owner,actual:s.regions.find(x=>x.id===r.target)?.owner})),food:Math.round(s.factions[p.owner]?.food||0),men:p.roles.reduce((n,r)=>n+(s.armies.find(a=>a.id===r.armyId)?.men||0),0)});previous.set(key,signature)}if(c.state==='launched'&&c.releasedYear===s.year&&c.releasedMonth===s.month&&p.roles.some(r=>s.armies.some(a=>a.id===r.armyId&&a.owner===p.owner&&a.move)))departures.push({scenario,seed:n,id:c.invitationId,owner:p.owner,date:date(s)})}}

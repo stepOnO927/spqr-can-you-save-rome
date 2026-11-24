@@ -17,6 +17,7 @@ const messages=s=>s.mail?.messages||[];
 const waiting=c=>c&&['waiting_reply','waiting_confirmation','agreed'].includes(c.state);
 export const hasJointCommitment=(s,owner)=>plans(s,owner).some(p=>waiting(p.coordination));
 export const jointReservedArmies=(s,owner)=>new Set(plans(s,owner).filter(p=>waiting(p.coordination)).flatMap(p=>p.roles.map(r=>r.armyId)));
+export const jointReservedObjectives=(s,owner)=>new Set(plans(s,owner).filter(p=>waiting(p.coordination)).flatMap(p=>p.roles.filter(r=>['offensive','siege'].includes(r.role)&&!r.state.done&&!r.state.suspended).map(r=>r.target)));
 const ownPlan=(s,owner,id)=>plans(s,owner).find(p=>p.id===id);
 const generation=(s,owner)=>s.world.dynasticGenerations?.[owner]||0;
 const warGeneration=(s,owner,enemy)=>s.world.warGenerations?.[pair(owner,enemy)]||0;
