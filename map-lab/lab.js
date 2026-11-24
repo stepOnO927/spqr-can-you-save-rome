@@ -99,6 +99,7 @@ for(const id of ['hanGuanzhong','hanHenan','hanShu','hanHexi','shanshanOasis']){
 }
 const terrainMarkers=[];
 for(const [id,point] of Object.entries(namedPoints)){
+ if(!region(state,id))continue;
  const el=document.createElement('button');el.type='button';el.className=`terrain-map-marker terrain-${terrainFor(id)[0]}`;el.dataset.terrainRegion=id;el.textContent='◆';el.onclick=e=>{e.stopPropagation();if(marchPlanner.active)return;showRegion(region(state,id))};terrainMarkers.push(marker(el,point,'center',[0,28]));
 }
 for(const [from,to] of [['cisalpine','narbo'],['narbo','hispaniaN'],['italiaN','roma'],['cisalpine','italiaN'],['armenia','parthia'],['galatia','armenia']]){
