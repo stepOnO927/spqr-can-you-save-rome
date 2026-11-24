@@ -12,6 +12,10 @@ This experimental scene and the original campaign can transfer their current sta
 
 Map tiles and fonts require a network connection. No ancient vegetation layer, complete dated province subdivision, exact 49 BCE road alignment, or exact 49 BCE control survey is claimed.
 
+## Marcus Terentius Varro
+
+The game includes Varro as a scholar and Pompeian legate in its 49 BCE opening. [Caesar's *Civil War*, book 1](https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/1B%2A.html) places him in Further Spain; [book 2](https://lectito.app/caesar/civil-war-2/) describes his campaign there. Caesar's account is a partisan primary source. [Oxford's Roman agricultural writers entry](https://academic.oup.com/reference/62365/reference-article/554610103) dates his life approximately 116–27 BCE, so the game displays an age range. Varro's later allegiances, appointments and recruitment outcomes in a played campaign are simulation. His portrait is original imagined game artwork, not a documented likeness.
+
 ## Religious tradition layer
 
 The campaign's per-theater tradition percentages are invented gameplay weights, not historical census figures. They group overlapping civic, temple, ancestral and local practices for a simple policy model; they do not claim mutually exclusive individual identities. Migration blends the destination weights, while local tolerance has a stronger satisfaction effect in more mixed theaters. Only the player's own theater weights are displayed. The initial labels and broad geography draw on late Republican Mediterranean and [Arsacid religious context](https://www.iranicaonline.org/articles/arsacids-iv/). The [Pew Research Center's chronology of religion in China](https://www.pewresearch.org/religion/wp-content/uploads/sites/7/2023/08/PF_2023.08.30_religion-china_REPORT.pdf) helps guard against treating later Buddhist or organized Daoist developments as Han institutions in 49 BCE. The model does not start with Christian or Buddhist communities.

@@ -4,7 +4,7 @@ import {personTravelRoute} from './person-travel-route.js';
 
 const pair=(a,b)=>[a,b].sort().join(':');
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
-const namedRoles={antony:['military'],labienus:['military'],scipio:['military','statesman'],cicero:['statesman','scholar'],cato:['statesman'],lepidus:['statesman']};
+const namedRoles={antony:['military'],labienus:['military'],scipio:['military','statesman'],cicero:['statesman','scholar'],cato:['statesman'],lepidus:['statesman'],varro:['military','scholar']};
 const note=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.log.slice(0,80)};
 const offerName=offer=>offer.name||(!CHARACTER_CATALOG[offer.id]?.fictional?CHARACTER_CATALOG[offer.id]?.name:null)||['Unrecorded name','姓名未记录'];
 

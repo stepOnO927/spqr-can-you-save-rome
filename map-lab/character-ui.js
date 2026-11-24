@@ -11,7 +11,7 @@ import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,characterAgeRange,success
 import {queueMission} from '../engine.js?v=faces-name-disagreement-1';
 import {previewPersonTravel,startPersonTravel,setJourneyHalt,requestPersonalMeeting,audiencePublicRecord} from '../personal-diplomacy.js?v=faces-name-disagreement-1';
 import {renderMissingSearch,bindMissingSearch} from '../missing-search-ui.js?v=faces-name-disagreement-1';
-const portraits=new Set(['caesar','pompey','cleopatra','arsinoe','orodes','artavasdes','ptolemy','juba','bocchus','bogud','pacorus','antony','cato','scipio','labienus','cicero','lepidus','deiotarus','pharnaces']);
+const portraits=new Set(['caesar','pompey','cleopatra','arsinoe','orodes','artavasdes','ptolemy','juba','bocchus','bogud','pacorus','antony','cato','scipio','labienus','cicero','lepidus','deiotarus','pharnaces','varro']);
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const reportDate=(r,zh)=>{const year=r.observationYear??r.year,month=r.observationMonth??r.month;return Number.isFinite(year)&&Number.isInteger(month)?`${month}/${campaignYear(year)}`:(zh?'观察日期未知':'Observation date unknown')};
 const receiptDate=(r,zh)=>{const year=r.receivedYear??r.year,month=r.receivedMonth??r.month;return Number.isFinite(year)&&Number.isInteger(month)?`${month}/${campaignYear(year)}`:(zh?'日期未知':'date unknown')};

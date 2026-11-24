@@ -8,6 +8,7 @@ export const CHARACTER_CATALOG = {
  labienus:{name:['Titus Labienus','提图斯·拉比埃努斯'],birth:null,faction:'senate',role:['Roman commander','罗马指挥官'],culture:['Roman','罗马'],source:'https://www.enciklopedija.hr/clanak/labijen-tit-vojskovodja'},
  lepidus:{name:['Marcus Aemilius Lepidus','马尔库斯·埃米利乌斯·雷必达'],birth:null,faction:'caesar',role:['Roman politician','罗马政治人物'],culture:['Roman','罗马'],source:'https://brockhaus.de/ecs/enzy/article/lepidus-20'},
  scipio:{name:['Quintus Caecilius Metellus Scipio','梅特卢斯·西庇阿'],birth:null,faction:'senate',role:['Roman senator and commander','罗马元老与指挥官'],culture:['Roman','罗马'],source:'https://academic.oup.com/edited-volume/61673/chapter-abstract/548509305'},
+ varro:{name:['Marcus Terentius Varro','马尔库斯·特伦提乌斯·瓦罗'],birth:[-117,-115],faction:'senate',role:['Roman scholar and Pompeian legate','罗马学者与庞培派副将'],culture:['Roman','罗马'],source:'https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/1B%2A.html'},
  cleopatra:{name:['Cleopatra VII','克娄巴特拉七世'],birth:[-70,-69],faction:'egypt',role:['Ptolemaic co-ruler','托勒密王朝共同统治者'],culture:['Ptolemaic Egyptian','托勒密埃及'],source:'https://www.metmuseum.org/toah/hd/ptol/hd_ptol.htm'},
  ptolemy:{name:['Ptolemy XIII','托勒密十三世'],birth:[-62,-61],faction:'egypt',role:['Ptolemaic co-ruler','托勒密王朝共同统治者'],culture:['Ptolemaic Egyptian','托勒密埃及'],source:'https://www.metmuseum.org/toah/hd/gkru/hd_gkru.htm'},
  arsinoe:{name:['Arsinoë IV','阿尔西诺伊四世'],birth:[-69,-60],faction:'egypt',role:['Ptolemaic princess','托勒密王朝公主'],culture:['Ptolemaic Egyptian','托勒密埃及'],source:'https://www.trismegistos.org/calendar/bennett/ptolemies/arsinoe_iv.htm'},
@@ -34,9 +35,12 @@ export function initializeWorld(s){
  if(s.world.characters.han_yuan&&s.world.characters.han_xuan){s.world.characters.han_yuan.parents||=['han_xuan'];s.world.characters.han_xuan.children||=['han_yuan']}
  // Add the new historical figure once to old saves, without resetting existing people.
  if(!s.world.arsinoeInitialized){if(!s.world.characters.arsinoe&&s.factions?.egypt)s.world.characters.arsinoe={id:'arsinoe',faction:'egypt',health:'healthy',location:s.regions.some(r=>r.id==='egypt'&&r.owner==='egypt')?'egypt':null,alive:true,loyalty:75,influence:50};s.world.arsinoeInitialized=true}
+ // A documented 49 BCE participant can enter older campaigns once. Do not
+ // invent his survival beyond his recorded lifetime or replace a saved person.
+ if(!s.world.varroInitialized){if(!s.world.characters.varro&&s.factions?.senate&&s.year<=-27)s.world.characters.varro={id:'varro',faction:'senate',health:'healthy',location:s.regions.find(r=>r.owner==='senate'&&r.id==='hispaniaS')?.id||s.regions.find(r=>r.owner==='senate')?.id||null,alive:true,loyalty:75,influence:50};s.world.varroInitialized=true}
  for(const c of Object.values(s.world.characters)){if(c.loyalty===undefined)c.loyalty=75;if(c.influence===undefined)c.influence=50;if(c.wounds===undefined)c.wounds=c.health==='wounded'?1:0;if(c.illnessEpisodes===undefined)c.illnessEpisodes=0}
  // Theater-level scenario positions, not claims about historical whereabouts.
- if(!s.world.personLocationsInitialized){const homes={antony:'cisalpine',lepidus:'cisalpine',cicero:'roma',cato:'roma',labienus:'roma',scipio:'roma',cleopatra:'egypt',ptolemy:'egypt',arsinoe:'egypt',orodes:'parthia',pacorus:'parthia',artavasdes:'armenia',juba:'numidia',bocchus:'mauretania',bogud:'mauretania',deiotarus:'galatia',pharnaces:'bosporus',han_xuan:'hanGuanzhong',han_yuan:'hanGuanzhong'};for(const [id,place] of Object.entries(homes)){const c=s.world.characters[id];if(c&&c.location==null)c.location=place}s.world.personLocationsInitialized=true}
+ if(!s.world.personLocationsInitialized){const homes={antony:'cisalpine',lepidus:'cisalpine',cicero:'roma',cato:'roma',labienus:'roma',scipio:'roma',varro:'hispaniaS',cleopatra:'egypt',ptolemy:'egypt',arsinoe:'egypt',orodes:'parthia',pacorus:'parthia',artavasdes:'armenia',juba:'numidia',bocchus:'mauretania',bogud:'mauretania',deiotarus:'galatia',pharnaces:'bosporus',han_xuan:'hanGuanzhong',han_yuan:'hanGuanzhong'};for(const [id,place] of Object.entries(homes)){const c=s.world.characters[id];if(c&&c.location==null)c.location=place}s.world.personLocationsInitialized=true}
  if(!s.world.personalRelations)s.world.personalRelations={};
  if(!s.meetings)s.meetings=[];
  if(!s.world.claimants)s.world.claimants={};
@@ -164,6 +168,7 @@ export const HISTORICAL_BIO={
  labienus:['Roman commander who had served under Caesar before joining his opponents.','罗马指挥官，曾在凯撒麾下服役，后来加入其对手。'],
  lepidus:['Roman politician who supported Caesar and was praetor in 49 BCE.','罗马政治人物，支持凯撒，公元前49年任裁判官。'],
  scipio:['Roman senator, consul in 52 BCE, and a leading supporter of Pompey.','罗马元老，公元前52年任执政官，是庞培的重要支持者。'],
+ varro:['Roman scholar and Pompeian legate in Further Spain in 49 BCE. His later allegiance and every in-game appointment are simulated.','罗马学者，公元前49年在远西班牙担任庞培派副将；此后的立场和游戏中的任命均属模拟。'],
  cleopatra:['Ptolemaic queen who initially shared the throne with her brother Ptolemy XIII.','托勒密王朝女王，最初与弟弟托勒密十三世共同统治。'],
  ptolemy:['Ptolemaic king and co-ruler with Cleopatra VII in the opening period of the civil war.','托勒密王朝国王，在内战初期与克娄巴特拉七世共同统治。'],
  arsinoe:['Ptolemaic princess and sister of Cleopatra VII and Ptolemy XIII; later involved in the Alexandrian conflict.','托勒密王朝公主，克娄巴特拉七世和托勒密十三世的姐妹；后来卷入亚历山大城的冲突。'],

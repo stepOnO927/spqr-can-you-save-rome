@@ -12,6 +12,7 @@ export const HISTORICAL_DEATHS={
  orodes:{years:[38,37],disputed:true,sources:[{label:['Encyclopaedia Iranica: Orodes II','伊朗百科：奥罗德二世'],url:'https://www.iranicaonline.org/articles/orodes-ii/'},{label:['Encyclopaedia Iranica: Women in pre-Islamic Persia','伊朗百科：伊斯兰之前波斯的女性'],url:'https://www.iranicaonline.org/articles/women-i/'}]},
  lepidus:{years:[13,12],disputed:true,sources:[{label:['Encyclopedia of Ancient History','古代史百科全书'],url:'https://onlinelibrary.wiley.com/doi/10.1002/9781444338386.wbeah20004'}]},
  scipio:{years:[46],sources:[{label:['Oxford Classical Dictionary: Sittius','牛津古典辞典：西提乌斯'],url:'https://academic.oup.com/edited-volume/61673/chapter-abstract/550500711'}]},
+ varro:{years:[27],sources:[{label:['Oxford: The Roman Agricultural Writers','牛津：《罗马农业著作家》'],url:'https://academic.oup.com/reference/62365/reference-article/554610103'}]},
  ptolemy:{years:[47],sources:[{label:['Trismegistos: Ptolemy XIII','Trismegistos：托勒密十三世'],url:'https://www.trismegistos.org/calendar/bennett/ptolemies/ptolemy_xiii.htm'}]},
  artavasdes:{years:[31],sources:[{label:['Encyclopaedia Iranica: Armenia','伊朗百科：亚美尼亚'],url:'https://www.iranicaonline.org/articles/armenia-ii/'}]},
  juba:{years:[46],sources:[{label:['Oxford Classical Dictionary: Juba I','牛津古典辞典：朱巴一世'],url:'https://academic.oup.com/edited-volume/61673/chapter-abstract/549669445'}]},

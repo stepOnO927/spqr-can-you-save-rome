@@ -130,6 +130,7 @@ jobs:
               node tools/regional-court-vacancy-smoke.mjs
               node tools/court-portrait-smoke.mjs
               node tools/senator-portraits-smoke.mjs
+              node tools/varro-profile-smoke.mjs
               node tools/senate-record-privacy-smoke.mjs
               node tools/roman-market-sales-smoke.mjs
               node tools/roman-supply-contract-smoke.mjs
