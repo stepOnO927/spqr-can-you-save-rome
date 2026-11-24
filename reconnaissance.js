@@ -1,7 +1,7 @@
 import {adjacent, army, region, isWar} from './engine.js';
-import {activeEffects} from './development.js?v=69';
-import {recordEvent} from './campaign-reports.js?v=17';
-import {armySupply} from './grand-operations.js?v=56';
+import {activeEffects} from './development.js?v=70';
+import {recordEvent} from './campaign-reports.js?v=18';
+import {armySupply} from './grand-operations.js?v=57';
 
 const draw=s=>{s.reconSeed??=((s.seed??1)^0x9e3779b9)>>>0;s.reconSeed=(Math.imul(s.reconSeed,1664525)+1013904223)>>>0;return s.reconSeed/4294967296};
 const turn=s=>s.year*12+s.month;
