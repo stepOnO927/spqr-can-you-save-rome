@@ -13,6 +13,15 @@ page.on('pageerror',error=>errors.push(error.message));
 const base=`http://127.0.0.1:${process.env.SPQR_SMOKE_PORT||5173}`;
 try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','en'));
+ // Keep this protection-and-independence journey reproducible while the
+ // production new-campaign picker continues to draw a fresh random seed.
+ await page.addInitScript(()=>{
+  const random=crypto.getRandomValues.bind(crypto);
+  Object.defineProperty(crypto,'getRandomValues',{value:array=>{
+   if(array instanceof Uint32Array&&array.length===1){array[0]=2;return array}
+   return random(array);
+  }});
+ });
  await page.goto(`${base}/`,{waitUntil:'domcontentloaded'});
  const option=page.locator('#faction-choice option[value^="generated:"]').first();
  await option.waitFor({state:'attached'});const id=await option.getAttribute('value');assert.ok(id);
@@ -24,6 +33,7 @@ try{
  if(await page.locator('[data-local-recruit]').isEnabled())await page.locator('[data-local-recruit]').click();
  await page.locator('#step').click();
  await page.locator('#step').click();
+ assert.equal(await page.locator('[data-local-protection]').isEnabled(),true,'fixed-seed city can request protection after its trade courier returns');
  await page.locator('[data-local-protection]').click();
  assert.match(await page.locator('.local-council').innerText(),/Protection request in transit/);
  for(let month=0;month<3;month++)await page.locator('#step').click();
