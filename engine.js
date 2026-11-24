@@ -257,8 +257,19 @@ export function setTax(s,owner,level){
   return true;
 }
 
-export function canFormAlliance(s,actor,target,{priorConsent=false}={}){
- return actor!==target&&!!s.factions[actor]&&!!s.factions[target]&&actor!=='rebels'&&target!=='rebels'&&s.regions.some(r=>r.owner===actor)&&s.regions.some(r=>r.owner===target)&&!isWar(s,actor,target)&&(priorConsent||relation(s,actor,target)+personalDiplomaticCredit(s,actor,target)>=30)&&!isAllied(s,actor,target)&&!s.wars.some(w=>(w.includes(actor)&&isAllied(s,target,w.find(x=>x!==actor)))||(w.includes(target)&&isAllied(s,actor,w.find(x=>x!==target))));
+export function canFormAlliance(s,actor,target,{priorConsent=false,recipientReview=false}={}){
+ const viewer=recipientReview?target:actor,other=recipientReview?actor:target;
+ if(actor===target||!s.factions[actor]||!s.factions[target]||actor==='rebels'||target==='rebels'||(!recipientReview&&!s.regions.some(r=>r.owner===actor))||!s.regions.some(r=>r.owner===target)||isWar(s,actor,target)||isAllied(s,actor,target))return false;
+ if(!priorConsent&&relation(s,actor,target)+personalDiplomaticCredit(s,viewer,other)<30)return false;
+ if(recipientReview){
+  // A recipient knows its own obligations and dated foreign reports, not
+  // a remote court's live wars, alliances or surviving personal contacts.
+  const reports=reportedDiplomacy(s,target).filter(r=>r.status==='active'&&isDeliveredReport(s,r));
+  const knownActorWar=reports.some(r=>r.kind==='war'&&r.parties.includes(actor)&&isAllied(s,target,r.parties.find(p=>p!==actor)));
+  const ownWarWithKnownActorAlly=s.wars.some(w=>w.includes(target)&&reports.some(r=>r.kind==='alliance'&&r.parties.includes(actor)&&r.parties.includes(w.find(p=>p!==target))));
+  return !knownActorWar&&!ownWarWithKnownActorAlly;
+ }
+ return !s.wars.some(w=>(w.includes(actor)&&isAllied(s,target,w.find(x=>x!==actor)))||(w.includes(target)&&isAllied(s,actor,w.find(x=>x!==target))));
 }
 export function diplomacy(s, actor, target, action, options={}){
   if(actor===target || !s.factions[actor] || !s.factions[target] || target==='rebels'||actor==='rebels' || !s.regions.some(r=>r.owner===actor) || !s.regions.some(r=>r.owner===target))return false;

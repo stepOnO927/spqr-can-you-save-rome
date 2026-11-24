@@ -1,4 +1,4 @@
-import {AGREEMENT_TYPES,activeAgreement,checkAgreement,proposeAgreement} from './agreements.js?v=dossier-archive-1';
+import {AGREEMENT_TYPES,agreementCredentials,activeAgreement,checkAgreement,proposeAgreement} from './agreements.js?v=dossier-archive-1';
 
 const COURIER_COST=2;
 const proposalDefinition=type=>type==='full_alliance'?{cost:0}:AGREEMENT_TYPES[type];
@@ -13,7 +13,7 @@ export function sendAgreementProposal(s,actor,target,type,{secret=false}={}){
  s.world.agreementLetters||=[];if(s.world.agreementLetters.some(x=>x.actor===actor&&x.target===target&&x.status==='pending'))return {ok:false,reason:'pending'};
  if(f.treasury<COURIER_COST+def.cost)return {ok:false,reason:'treasury'};
  const id=s.world.nextAgreementLetter||1;s.world.nextAgreementLetter=id+1;f.treasury-=COURIER_COST;
- const letter={id,actor,target,type,secret:!!secret,status:'pending',phase:'outbound',remaining:2,sent:{year:s.year,month:s.month},seed:(s.seed??0)>>>0};s.world.agreementLetters.push(letter);
+ const letter={id,actor,target,type,secret:!!secret,credentials:agreementCredentials(s,actor),status:'pending',phase:'outbound',remaining:2,sent:{year:s.year,month:s.month},seed:(s.seed??0)>>>0};s.world.agreementLetters.push(letter);
  if(s.world.agreementLetters.length>100){const i=s.world.agreementLetters.findIndex(x=>x.status!=='pending');if(i>=0)s.world.agreementLetters.splice(i,1)}
  return {ok:true,id,cost:COURIER_COST,months:4};
 }
@@ -36,7 +36,7 @@ export function advanceAgreementProposals(s,{checkAlliance=()=>false,concludeAll
   if(letter.phase==='outbound'){
    if(roll(letter,0x349a61f3)<.1){letter.sealed={outcome:'no_reply',year:s.year,month:s.month};letter.phase='return';letter.remaining=2;continue}
    if(!autoplayPlayer&&letter.target===s.player&&letter.actor!==s.player){letter.phase='awaiting_player';letter.remaining=6;continue}
-   const result=letter.type==='full_alliance'?{ok:checkAlliance(s,letter.actor,letter.target),reason:'declined'}:checkAgreement(s,letter.actor,letter.target,letter.type);
+   const result=letter.type==='full_alliance'?{ok:checkAlliance(s,letter.actor,letter.target,{recipientReview:true}),reason:'declined'}:checkAgreement(s,letter.actor,letter.target,letter.type,{recipientReview:true,credentials:letter.credentials});
    const outcome=!result.ok?(result.reason==='declined'?'refused':'unavailable'):roll(letter,0x92f03d41)<.15?'refused':'accepted';
    letter.sealed={outcome,year:s.year,month:s.month};letter.phase='return';letter.remaining=2;continue;
   }
