@@ -26,7 +26,7 @@ const P={
  laurel:'<path d="M12 21c-5-1.5-8-5-8-10M12 21c5-1.5 8-5 8-10"/><path d="M4.5 8c1.8.3 3 1.5 3.2 3.2M5.5 13c1.8-.100 3.1.8 3.8 2.3M8 17.2c1.5-.500 2.9 0 3.9 1.2M19.5 8c-1.8.3-3 1.5-3.2 3.2M18.5 13c-1.8-.100-3.1.8-3.8 2.3M16 17.2c-1.5-.500-2.9 0-3.9 1.2"/>'
 };
 // The eastern reports tab keeps its character, set as a small cinnabar seal rather than a pictogram.
-const SEAL_EAST='<svg class="iv-icon iv-seal-east" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="1.5" fill="currentColor" stroke="none"/><text x="12" y="16.8" text-anchor="middle" font-size="12.5" font-weight="700" fill="#f4e6c8" stroke="none" font-family="\'Songti SC\',\'Noto Serif SC\',\'SimSun\',serif">東</text></svg>';
+const SEAL_EAST='<svg class="iv-icon iv-seal-east" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="1.5" fill="currentColor" stroke="none"/><text x="12" y="16.8" text-anchor="middle" font-size="12.5" font-weight="700" fill="#f4e6c8" stroke="none" font-family="\'SPQR CJK\',\'Songti SC\',\'Noto Serif SC\',\'SimSun\',serif">東</text></svg>';
 const STAT_ICON={treasury:'treasury',food:'food',manpower:'manpower',stability:'stability',legitimacy:'legitimacy',strength:'strength'};
 
 export function uiIcon(name){
