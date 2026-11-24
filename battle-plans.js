@@ -197,13 +197,24 @@ function reconSweep(s,plan,r,a){
 export function operationFingerprint(plan){
  return JSON.stringify(plan.roles.map(r=>[r.armyId,r.role,r.target,r.path]).sort((a,b)=>a[0].localeCompare(b[0])));
 }
+export function coordinationProblem(s,plan,{requireIdle=false}={}){
+ const c=plan.coordination,owner=plan.owner;
+ if(c?.version!==1||!Array.isArray(c.wars))return 'record';
+ if(!['active','preparing'].includes(plan.status))return 'plan_status';
+ if(!s.factions[owner]||(s.world.dynasticGenerations?.[owner]||0)!==c.ownGeneration)return 'court';
+ if(!isWar(s,owner,c.enemy)||(s.world.warGenerations?.[[owner,c.enemy].sort().join(':')]||0)!==c.warGeneration)return 'war';
+ if(isWar(s,owner,c.partner)||!((s.alliances||[]).some(p=>p.includes(owner)&&p.includes(c.partner))||['defensive','offensive'].some(t=>activeAgreement(s,owner,c.partner,t))))return 'partnership';
+ if(operationFingerprint(plan)!==c.signature)return 'orders';
+ if(s.wars.some(w=>w.includes(owner)&&!c.wars.includes(w.find(p=>p!==owner))))return 'new_war';
+ for(const r of plan.roles){const a=army(s,r.armyId);if(!a||a.owner!==owner||a.men<=0)return 'forces';if(a.move||a.siege)return 'engaged';if(requireIdle&&a.reorg)return 'reorganization';if(['offensive','siege'].includes(r.role)&&reportedControl(s,owner,r.target)?.owner!==c.enemy)return 'control'}
+ return null;
+}
 function jointOrdersAllowed(s,plan){
  const c=plan.coordination;if(!c||['independent','launched'].includes(c.state))return true;
  plan.recommendations=[];
  if(c.version!==1||!Array.isArray(c.wars)||c.state!=='agreed'||date(s)<c.launchAt)return false;
- const allied=!isWar(s,plan.owner,c.partner)&&((s.alliances||[]).some(p=>p.includes(plan.owner)&&p.includes(c.partner))||['defensive','offensive'].some(t=>activeAgreement(s,plan.owner,c.partner,t)));
- const valid=date(s)===c.launchAt&&allied&&isWar(s,plan.owner,c.enemy)&&(s.world.warGenerations?.[[plan.owner,c.enemy].sort().join(':')]||0)===c.warGeneration&&(s.world.dynasticGenerations?.[plan.owner]||0)===c.ownGeneration&&operationFingerprint(plan)===c.signature&&!s.wars.some(w=>w.includes(plan.owner)&&!c.wars.includes(w.find(p=>p!==plan.owner)))&&plan.roles.every(r=>{const a=army(s,r.armyId);return a&&a.owner===plan.owner&&a.men>0&&!a.move&&!a.siege&&!a.reorg&&(!['offensive','siege'].includes(r.role)||reportedControl(s,plan.owner,r.target)?.owner===c.enemy)});
- if(!valid){c.state=date(s)>c.launchAt?'missed':'changed';c.needsWithdrawal=true;plan.status='paused';return false}
+ const problem=date(s)!==c.launchAt?'deadline':coordinationProblem(s,plan,{requireIdle:true});
+ if(problem){c.state=problem==='deadline'?'missed':'changed';c.stopReason=problem;c.needsWithdrawal=true;plan.status='paused';return false}
  c.state='launched';c.releasedYear=s.year;c.releasedMonth=s.month;return true;
 }
 export function advanceBattlePlans(s,{autoplayPlayer=false,issueOrder,estimatedStrength,log=()=>{}}={}){

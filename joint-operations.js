@@ -6,7 +6,7 @@ import {reportedControl} from './control-intelligence.js?v=dossier-archive-1';
 import {reportedDiplomacy} from './diplomatic-knowledge.js?v=dossier-archive-1';
 import {politicalMemoryAdjustment,rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
 import {operationPartners,operationNoticeRoute} from './operation-intelligence.js?v=operation-notices-1';
-import {createPlan,assignRole,approvePlan,cancelPlan,findRoute,operationFingerprint} from './battle-plans.js?v=dossier-archive-1';
+import {createPlan,assignRole,approvePlan,cancelPlan,findRoute,operationFingerprint,coordinationProblem} from './battle-plans.js?v=dossier-archive-1';
 
 // The existing mailbox is the correspondence ledger. Each court reserves only
 // its OWN plan; a foreign plan is never dereferenced to discover its intentions.
@@ -16,6 +16,7 @@ const plans=(s,owner)=>(s.world.battlePlans||[]).filter(p=>p.owner===owner);
 const messages=s=>s.mail?.messages||[];
 const waiting=c=>c&&['waiting_reply','waiting_confirmation','agreed'].includes(c.state);
 export const hasJointCommitment=(s,owner)=>plans(s,owner).some(p=>waiting(p.coordination));
+export const jointReservedArmies=(s,owner)=>new Set(plans(s,owner).filter(p=>waiting(p.coordination)).flatMap(p=>p.roles.map(r=>r.armyId)));
 const ownPlan=(s,owner,id)=>plans(s,owner).find(p=>p.id===id);
 const generation=(s,owner)=>s.world.dynasticGenerations?.[owner]||0;
 const warGeneration=(s,owner,enemy)=>s.world.warGenerations?.[pair(owner,enemy)]||0;
@@ -42,9 +43,7 @@ function reserve(s,plan,partner,enemy,invitationId,launchAt,state){
  plan.recommendations=[];return plan.coordination;
 }
 function validReservation(s,plan){
- const c=plan.coordination,owner=plan.owner;
- return c?.version===1&&Array.isArray(c.wars)&&['active','preparing'].includes(plan.status)&&s.factions[owner]&&generation(s,owner)===c.ownGeneration&&war(s,owner,c.enemy)&&warGeneration(s,owner,c.enemy)===c.warGeneration&&operationPartners(s,owner).includes(c.partner)&&operationFingerprint(plan)===c.signature&&
-  !s.wars.some(w=>w.includes(owner)&&!c.wars.includes(w.find(p=>p!==owner)))&&plan.roles.every(r=>{const a=s.armies.find(a=>a.id===r.armyId);return a&&a.owner===owner&&a.men>0&&!a.move&&!a.siege&&(!['offensive','siege'].includes(r.role)||reportedControl(s,owner,r.target)?.owner===c.enemy)});
+ return !coordinationProblem(s,plan);
 }
 function post(s,owner,recipient,subject,body,context,{sendLetter,source,destination,destinationKnown,threadId,expires}={}){
  return sendLetter(s,{senderInstitution:owner,senderFaction:owner,recipient,category:'military',priority:'important',confidentiality:'confidential',confidence:'unverified',subject,body,options:[],context,source,destination,destinationKnown,threadId,expires});
@@ -99,7 +98,7 @@ export function releaseJointOperation(s,owner,planId,{sendLetter,resume=false}={
  if(resume&&['paused','needs_attention'].includes(plan.status))approvePlan(s,owner,plan.id);
  return {ok:true};
 }
-function stop(s,plan,state){plan.coordination.state=state;if(['active','preparing'].includes(plan.status))plan.status='paused';plan.recommendations=[];note(s,plan.owner,`“${plan.name}”: joint operation waits ended without authorization to depart. Review or resume independently.`,`“${plan.name}”：协同等待结束，未获出兵授权。请复核，或明确选择独立执行。`)}
+function stop(s,plan,state,reason=state){plan.coordination.state=state;plan.coordination.stopReason=reason;plan.coordination.stoppedYear=s.year;plan.coordination.stoppedMonth=s.month;if(['active','preparing'].includes(plan.status))plan.status='paused';plan.recommendations=[];note(s,plan.owner,`“${plan.name}”: joint operation waits ended without authorization to depart. Review or resume independently.`,`“${plan.name}”：协同等待结束，未获出兵授权。请复核，或明确选择独立执行。`)}
 
 function aiPlanReady(s,owner,plan,enemy,{estimatedStrength}){
  const roles=plan.roles.filter(r=>['offensive','siege'].includes(r.role)&&!r.state.done),force=roles.reduce((n,r)=>n+(s.armies.find(a=>a.id===r.armyId&&a.owner===owner)?.men||0),0);
@@ -158,10 +157,11 @@ export function advanceJointOperations(s,{sendLetter,estimatedStrength,autoplayP
  }
  for(const owner of Object.keys(s.factions))for(const plan of plans(s,owner)){
   const c=plan.coordination;
-  if(c?.needsWithdrawal){const state=c.state;delete c.needsWithdrawal;releaseJointOperation(s,owner,plan.id,{sendLetter});stop(s,plan,state);continue}
+  if(c?.needsWithdrawal){const state=c.state,reason=c.stopReason;delete c.needsWithdrawal;releaseJointOperation(s,owner,plan.id,{sendLetter});stop(s,plan,state,reason);continue}
   if(!waiting(c))continue;
-  if(!validReservation(s,plan)||((owner!==s.player||autoplayPlayer)&&!aiPlanReady(s,owner,plan,c.enemy,{estimatedStrength}))){
-   releaseJointOperation(s,owner,plan.id,{sendLetter});stop(s,plan,'changed');
+  const problem=coordinationProblem(s,plan)||((owner!==s.player||autoplayPlayer)&&!aiPlanReady(s,owner,plan,c.enemy,{estimatedStrength})?'readiness':null);
+  if(problem){
+   releaseJointOperation(s,owner,plan.id,{sendLetter});stop(s,plan,'changed',problem);
   }else if(now(s)>=c.launchAt)stop(s,plan,'missed');
  }
 }

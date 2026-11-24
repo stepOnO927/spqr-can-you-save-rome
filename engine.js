@@ -25,7 +25,7 @@ import {advanceFocuses,focusModifiers} from './national-focus.js?v=dossier-archi
 import {seedTemplates,formationCombatFactor,formationMarchDelta,formationSiegeReduction,formationUpkeepDelta,observeFormationRecon,advanceReorganizations,aiDesignFormations,aiRecruitFormation,aiReorganize,advanceCommandInfluence} from './legion-designer.js?v=dossier-archive-1';
 import {advanceBattlePlans,aiBattlePlans,planControlled} from './battle-plans.js?v=dossier-archive-1';
 import {shareAiOperation} from './operation-intelligence.js?v=operation-notices-1';
-import {advanceJointOperations,proposeAiJointOperation,hasJointCommitment} from './joint-operations.js?v=joint-operations-1';
+import {advanceJointOperations,proposeAiJointOperation,hasJointCommitment,jointReservedArmies} from './joint-operations.js?v=joint-operations-1';
 import {makePeaceTerms,peaceOfferRegions,peaceConcessionCredit,canSettlePeaceTerms,applyPeaceTransfer,peaceWarIsCurrent} from './peace-terms.js?v=territorial-peace-1';
 // IMPERIUM systems are on by default. A scenario or an isolated legacy test may set
 // world.imperium.enabled=false to run the pre-expansion AI unchanged.
@@ -728,7 +728,7 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
     if(!hasJointCommitment(s,owner))shareAiOperation(s,owner,{sendLetter,autoplayPlayer});
     // Reorganize quarterly, or soon after a lost battle when a battered army is safe at home.
     const beaten=(s.battles||[]).some(b=>(b.attackerWins?b.defender.owner:b.attacker.owner)===owner&&(s.year*12+s.month)-(b.year*12+b.month)<=2);
-    if((s.month%4===2&&f.treasury>70||beaten&&f.treasury>35)&&(!strategy||!['recover','stabilize'].includes(strategy.goal)||beaten))aiReorganize(s,owner,{log});
+    if((s.month%4===2&&f.treasury>70||beaten&&f.treasury>35)&&(!strategy||!['recover','stabilize'].includes(strategy.goal)||beaten))aiReorganize(s,owner,{exclude:jointReservedArmies(s,owner),log});
   }
   const reportedNeighbors=()=>owned.flatMap(r=>adjacent(r.id).map(e=>({id:e.to,owner:reportedControl(s,owner,e.to)?.owner}))).filter(r=>r.owner);
   // Review bounded, private opportunity estimates when observed wars change or
