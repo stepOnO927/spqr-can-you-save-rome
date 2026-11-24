@@ -2,7 +2,7 @@ name: SPQR quality
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, codex/world-kings-clean-review-20261122]
   workflow_dispatch:
   schedule:
     - cron: '17 4 * * 1'

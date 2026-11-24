@@ -2,7 +2,7 @@ name: Cloudflare Pages package
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, codex/world-kings-clean-review-20261122]
 permissions:
   contents: read
 jobs:

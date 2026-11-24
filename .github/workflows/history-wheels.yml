@@ -17,6 +17,8 @@ on:
       - 'tools/history-wheels-campaigns.mjs'
       - '.github/workflows/history-wheels.yml'
   workflow_dispatch:
+  push:
+    branches: [codex/world-kings-clean-review-20261122]
 permissions:
   contents: read
 jobs:

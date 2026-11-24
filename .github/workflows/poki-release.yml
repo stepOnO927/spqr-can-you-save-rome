@@ -2,7 +2,7 @@ name: Poki release validation
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, codex/world-kings-clean-review-20261122]
   workflow_dispatch:
 permissions:
   contents: read

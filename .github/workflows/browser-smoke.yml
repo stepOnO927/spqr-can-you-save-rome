@@ -3,6 +3,8 @@ on:
   pull_request:
     paths-ignore:
       - '**.md'
+  push:
+    branches: [codex/world-kings-clean-review-20261122]
 permissions:
   contents: read
 jobs:
