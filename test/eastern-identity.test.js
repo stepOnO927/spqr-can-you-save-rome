@@ -9,6 +9,7 @@ test('each playable eastern polity has a distinct game reconstruction and a stab
  const kits=PLAYABLE.map(id=>identity(id));
  assert.ok(kits.every(kit=>kit!==IDENTITIES.shared));
  assert.equal(new Set(kits.map(kit=>kit.abbr)).size,PLAYABLE.length);
+ assert.equal(new Set(PLAYABLE.map(id=>factionMark(id,'insignia'))).size,PLAYABLE.length,'every playable polity needs a visibly distinct compact mark');
  for(const id of ['huhanye','zhizhi','wusun','wusun_lesser','kangju','dayuan','yuezhi','qiuci']){
   assert.match(factionMark(id,'standard'),/faction-standard/);
   assert.match(identityStory(id,null,'en').provenance,/not a documented ancient national flag/);

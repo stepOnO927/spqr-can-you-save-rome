@@ -55,6 +55,7 @@ const motifs={
 };
 const breakawayPalette=['#714b40','#4c6670','#706044','#53694e','#70546b','#796443','#496767','#815747'];
 const breakawayDetails=['<path d="M8 32l5-5m14 0 5 5"/>','<path d="M7 31h7m12 0h7"/>','<path d="M9 30l4 3m14 0 4-3"/>','<circle cx="20" cy="34" r="2"/>'];
+const easternDevices=Array.from({length:16},(_,index)=>[[9,9],[31,9],[9,31],[31,31]].filter((_,bit)=>index&(1<<bit)).map(([x,y])=>`<circle cx="${x}" cy="${y}" r="1.5" fill="currentColor" stroke="none"/>`).join(''));
 const hashId=id=>{let n=2166136261;for(const c of String(id))n=Math.imul(n^c.charCodeAt(0),16777619);return n>>>0};
 const validSavedKit=f=>!!f&&typeof f==='object'&&[f.primary,f.accent,f.map].every(c=>typeof c==='string'&&/^#[0-9a-fA-F]{6}$/.test(c))&&typeof f.abbr==='string'&&/^[A-Z0-9]{2,10}$/.test(f.abbr)&&Object.hasOwn(motifs,f.motif)&&Number.isInteger(f.detail)&&f.detail>=0&&f.detail<breakawayDetails.length&&Number.isInteger(f.cut)&&f.cut>=0&&f.cut<=2;
 // Saved game artwork: a breakaway state keeps its origin's motif and receives
@@ -67,7 +68,8 @@ export function ensureBreakawayIdentity(s,id,parent){
  s.world.factionIdentities[id]=kit;return kit;
 }
 const easternMotif={parthian:'bow',yuezhi:'knot',saka:'horse',sogdian:'oasis',western:'tiara',oasis:'oasis'};
-const easternKits=Object.fromEntries(Object.entries(EURASIAN_FACTIONS).filter(([id])=>!IDENTITIES[id]).map(([id,f])=>[id,{primary:f.color,accent:'#e5d1a3',map:f.color,abbr:(id.replace(/[^a-z0-9]/g,'').slice(0,3)+hashId(id).toString(36).slice(-1)).toUpperCase(),motif:easternMotif[f.culture]||'oasis'}]));
+const easternCounts=new Map();
+const easternKits=Object.fromEntries(Object.entries(EURASIAN_FACTIONS).filter(([id])=>!IDENTITIES[id]).sort(([a],[b])=>a.localeCompare(b)).map(([id,f])=>{const motif=easternMotif[f.culture]||'oasis',family=`${f.color}:${motif}`,ordinal=easternCounts.get(family)||0;easternCounts.set(family,ordinal+1);return [id,{primary:f.color,accent:'#e5d1a3',map:f.color,abbr:(id.replace(/[^a-z0-9]/g,'').slice(0,3)+hashId(id).toString(36).slice(-1)).toUpperCase(),motif,easternDetail:ordinal%easternDevices.length,cut:Math.floor(ordinal/easternDevices.length)%3}]}));
 export function identity(id,s){const saved=s?.world?.factionIdentities?.[id];return validSavedKit(saved)?saved:IDENTITIES[id]||easternKits[id]||IDENTITIES.shared}
 const inspirations={
  caesar:['Roman Republican vexilla and legion standards','罗马共和国军旗与军团军标'],
@@ -109,5 +111,5 @@ export function factionMark(id,variant='insignia',s){
  const f=identity(id,s),art=motifs[f.motif]||motifs.bands,isBanner=variant==='banner',isStandard=variant==='standard';
  const shape=f.cut===1?'M4 4h32v29l-8-3-8 7-8-7-8 3z':f.cut===2?'M4 4h32v31l-16-6-16 6z':id==='parthia'?'M4 4h31l-6 13 6 17-15-3L4 37z':id==='egypt'?'M5 4h30v25L20 38 5 29z':id==='armenia'?'M5 4h30v31l-8-4-7 6-7-6-8 4z':'M4 4h32v29l-16 4L4 33z';
  const frame=isBanner||isStandard?`<path d="${shape}" fill="var(--identity-primary)" stroke="var(--identity-accent)" stroke-width="${isStandard?1.5:1.2}"/>`:'<circle cx="20" cy="20" r="18" fill="var(--identity-primary)" stroke="var(--identity-accent)" stroke-width="1.5"/>';
- return `<svg class="faction-mark faction-${variant}" viewBox="0 0 40 40" aria-hidden="true" style="--identity-primary:${f.primary};--identity-accent:${f.accent};color:${f.accent}">${frame}<g fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round">${art}${Number.isInteger(f.detail)?breakawayDetails[f.detail]:''}</g></svg>`;
+ return `<svg class="faction-mark faction-${variant}" viewBox="0 0 40 40" aria-hidden="true" style="--identity-primary:${f.primary};--identity-accent:${f.accent};color:${f.accent}">${frame}<g fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round">${art}${Number.isInteger(f.detail)?breakawayDetails[f.detail]:''}${Number.isInteger(f.easternDetail)?easternDevices[f.easternDetail]:''}</g></svg>`;
 }
