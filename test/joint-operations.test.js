@@ -78,6 +78,12 @@ test('the player can explicitly withdraw and resume an independent plan without 
  const f=setup();agreed(f);const other=structuredClone(f.q.coordination);f.p.status='paused';assert.ok(releaseJointOperation(f.s,'senate',f.p.id,{...opts,resume:true}).ok);assert.equal(f.p.status,'active');assert.equal(f.p.coordination.state,'independent');assert.deepEqual(f.q.coordination,other);
  frame(f.s,{orders:true});assert.ok(f.a.move);assert.equal(f.b.move,null);
 });
+test('cooperation memories stay private and are credited only when real correspondence arrives',()=>{
+ const f=setup();accepted(f);assert.equal((f.s.world.politicalMemories||[]).filter(m=>m.kind==='joint_acceptance').length,0);
+ while(f.p.coordination.state!=='agreed')frame(f.s);assert.ok(f.s.world.politicalMemories.some(m=>m.observer==='senate'&&m.subject==='numidia'&&m.kind==='joint_acceptance'));assert.equal(f.s.relations['numidia:senate'],60);
+ const c=f.s.mail.messages.find(m=>m.context?.kind==='joint_confirmation');c.courierRisk=1;while(date(f.s)<c.arrival)frame(f.s);
+ assert.equal(f.s.world.politicalMemories.filter(m=>m.kind==='joint_confirmation').length,0);assert.equal(f.s.relations['numidia:senate'],60);
+});
 test('a court refuses a known-impossible return journey before spending the acceptance fee',()=>{
  const f=setup(),m=deliverOffer(f),before=f.s.factions.numidia.treasury;m.context.launchAt=date(f.s)+1;
  assert.equal(answerJointOperation(f.s,'numidia',m.id,'accept',f.q.id,opts).ok,false);assert.equal(f.s.factions.numidia.treasury,before);assert.equal(f.q.coordination,undefined);
@@ -91,13 +97,13 @@ test('pending, confirmed and expired correspondence survive save/load, while ord
  const ordinary=setup();assert.equal(ordinary.p.coordination,undefined);frame(ordinary.s,{orders:true});assert.ok(ordinary.a.move);
 });
 test('at least four autonomous courts can send and independently answer cooperation proposals across seeds',()=>{
- const reports=[];
+ const reports=[],departures=[];
  for(let n=1;n<=24;n++){
   const s=newGame('caesar');s.difficulty='expert';s.seed=(Math.imul(n,2654435761)^10949)>>>0;
   s.alliances.push(['caesar','egypt'],['parthia','armenia']);s.relations['caesar:egypt']=60;s.relations['armenia:parthia']=60;
   for(const actor of ['caesar','egypt','parthia','armenia']){Object.assign(s.factions[actor],{treasury:220,food:220,stability:80});if(actor!=='caesar')s.wars.push([actor,'senate'])}
   observeControl(s);observeDiplomacy(s);
-  for(let i=0;i<24;i++)tick(s,{autoplayPlayer:true});
+  for(let i=0;i<24;i++){tick(s,{autoplayPlayer:true});for(const p of s.world.battlePlans||[]){const c=p.coordination;if(c?.state==='launched'&&c.releasedYear===s.year&&c.releasedMonth===s.month&&p.roles.some(r=>s.armies.some(a=>a.id===r.armyId&&a.owner===p.owner&&a.move)))departures.push({seed:n,id:c.invitationId,owner:p.owner,date:date(s)})}}
   const letters=s.mail.messages.filter(m=>m.context?.kind?.startsWith('joint_'));reports.push(letters.map(m=>`${m.senderFaction}>${m.recipient}:${m.context.kind}:${m.context.decision||'-'}:${m.delivery}`));
   assert.ok(['caesar','egypt','parthia','armenia'].every(id=>s.world.multipolarPlans[id]),'four courts reviewed the world independently');
  }
@@ -105,4 +111,7 @@ test('at least four autonomous courts can send and independently answer cooperat
  assert.ok(reports.flat().some(x=>x.includes('joint_reply:accept')),'AI sometimes accepts independently');
  assert.ok(reports.flat().some(x=>x.includes('joint_reply:decline')),'AI cooperation is not guaranteed');
  assert.ok(new Set(reports.map(x=>JSON.stringify(x))).size>1,'seeds produce different correspondence');
+ const coordinated=departures.filter(a=>departures.some(b=>b.seed===a.seed&&b.id===a.id&&b.date===a.date&&b.owner!==a.owner));
+ console.log('JOINT_AI_EVIDENCE '+JSON.stringify({scenarios:reports.length,invitations:reports.flat().filter(x=>x.includes('joint_invite')).length,accepted:reports.flat().filter(x=>x.includes('joint_reply:accept')).length,declined:reports.flat().filter(x=>x.includes('joint_reply:decline')).length,coordinatedDepartures:coordinated}));
+ assert.ok(coordinated.length>0,'AI courts must sometimes issue real coordinated orders, not only exchange proposals');
 });

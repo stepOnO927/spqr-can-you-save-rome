@@ -4,7 +4,7 @@ import {courierMonths as mailTravelMonths} from './epistulae.js?v=dossier-archiv
 import {isDeliveredReport} from './person-knowledge.js?v=dossier-archive-1';
 import {reportedControl} from './control-intelligence.js?v=dossier-archive-1';
 import {reportedDiplomacy} from './diplomatic-knowledge.js?v=dossier-archive-1';
-import {politicalMemoryAdjustment} from './political-memory.js?v=grand-chessboard-2';
+import {politicalMemoryAdjustment,rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
 import {operationPartners,operationNoticeRoute} from './operation-intelligence.js?v=operation-notices-1';
 import {createPlan,assignRole,approvePlan,cancelPlan,findRoute,operationFingerprint} from './battle-plans.js?v=dossier-archive-1';
 
@@ -143,14 +143,18 @@ export function advanceJointOperations(s,{sendLetter,estimatedStrength,autoplayP
   const plan=plans(s,owner).find(p=>p.coordination?.invitationId===x.invitationId&&p.coordination.partner===m.senderFaction),c=plan?.coordination;
   x.jointProcessed=true;if(!plan||x.enemy!==c.enemy||x.launchAt!==c.launchAt)continue;
   if(x.kind==='joint_reply'&&c.state==='waiting_reply'){
-   if(x.decision!=='accept'){stop(s,plan,'declined');continue}
+   if(x.decision!=='accept'){rememberPoliticalEvent(s,owner,c.partner,'joint_decline',-1);stop(s,plan,'declined');continue}
+   rememberPoliticalEvent(s,owner,c.partner,'joint_acceptance',1);
    if(!validReservation(s,plan)||now(s)>=c.launchAt){stop(s,plan,'missed');continue}
    const route=operationNoticeRoute(s,owner,c.partner);if(now(s)+mailTravelMonths(s,route.source,m.source)>=c.launchAt){releaseJointOperation(s,owner,plan.id,{sendLetter});stop(s,plan,'missed');continue}
    const result=post(s,owner,c.partner,['Joint operation final confirmation','共同作战最终确认'],['Your acceptance reached us. We confirm our reserved plan for the stated month. This confirmation must reach your court before that month; loss or delay may leave one side acting alone.','贵方接受答复已送达。本方确认在约定月份执行保留计划。此确认须在该月前送达贵方；遗失或延迟可能使一方单独行动。'],{kind:'joint_confirmation',invitationId:c.invitationId,replyId:m.id,enemy:c.enemy,launchAt:c.launchAt},{sendLetter,...operationNoticeRoute(s,owner,c.partner),destination:m.source,destinationKnown:!!m.source,threadId:c.invitationId,expires:c.launchAt-1});
    if(result.ok){c.state='agreed';c.partnerObjective=x.objective;c.confirmationId=result.letter.id;note(s,owner,`“${plan.name}”: acceptance received; final confirmation dispatched. Partner receipt remains unknown.`,`“${plan.name}”：已收到接受答复，最终确认已寄出；对方是否收到仍未知。`)}
   }else if(x.kind==='joint_confirmation'&&c.state==='waiting_confirmation'&&x.replyId===c.replyId){
-   if(validReservation(s,plan)&&now(s)<c.launchAt){c.state='agreed';note(s,owner,`“${plan.name}”: final confirmation received.`,`“${plan.name}”：最终确认已送达。`)}else stop(s,plan,'missed');
-  }else if(x.kind==='joint_withdrawal'&&waiting(c)){stop(s,plan,'partner_withdrew')}
+   if(validReservation(s,plan)&&now(s)<c.launchAt){c.state='agreed';rememberPoliticalEvent(s,owner,c.partner,'joint_confirmation',1);note(s,owner,`“${plan.name}”: final confirmation received.`,`“${plan.name}”：最终确认已送达。`)}else stop(s,plan,'missed');
+  }else if(x.kind==='joint_withdrawal'){
+   c.partnerWithdrawalReceived={year:s.year,month:s.month};rememberPoliticalEvent(s,owner,c.partner,'joint_withdrawal',-1);
+   if(waiting(c))stop(s,plan,'partner_withdrew');else note(s,owner,`“${plan.name}”: a partner withdrawal arrived after the waiting period; your existing orders remain yours to review.`,`“${plan.name}”：对方撤回信在等待结束后送达；已有军令仍由本方复核。`);
+  }
  }
  for(const owner of Object.keys(s.factions))for(const plan of plans(s,owner)){
   const c=plan.coordination;
