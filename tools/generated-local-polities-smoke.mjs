@@ -27,7 +27,7 @@ try{
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:s}));
   return {count:entities.length,name:known.name[0].toUpperCase(),population:known.population,ruler:known.ruler.name[0],chief:chief.name[0].toUpperCase(),village:village.name[0].toUpperCase(),chiefPopulation:chief.population,villagePopulation:village.village.population};
  },fixtureSeed);
- assert.ok(generated.count>=6&&generated.count<=7);
+ assert.ok(generated.count>=7&&generated.count<=8);
  await page.goto(`${base}/map-lab/`,{waitUntil:'domcontentloaded'});
  const marker=page.locator(`.city-marker[data-city="${generated.name}"]`);
  await marker.waitFor({state:'visible'});await marker.click();
