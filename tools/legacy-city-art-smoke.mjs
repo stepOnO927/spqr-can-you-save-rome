@@ -57,6 +57,26 @@ try{
  await page.screenshot({path:resolve(output,'mobile-320-grown-zh.png'),fullPage:true});
  await page.locator('[data-building="temple"]').click();
  assert.ok(await page.locator('.temple-festival').isVisible(),'An unlocked landmark must still open its activity at phone size');
+ await page.evaluate(()=>{
+  const key='spqr-legacy-profile-v1',profile=JSON.parse(localStorage.getItem(key));
+  profile.archive=[{id:'finished-campaign',year:-48,month:3,result:'victory',faction:'caesar',territories:18,battles:1,summary:{method:'military',wins:1,losses:0},battleHistory:[{year:-48,month:3,region:'roma',attacker:'caesar',defender:'senate',winner:'caesar',casualties:120,commander:['Caesar','凯撒']}]}];
+  localStorage.setItem(key,JSON.stringify(profile));
+ });
+ await page.reload({waitUntil:'domcontentloaded'});
+ await page.locator('#nav-archive').click();
+ assert.ok(await page.getByText('阵营胜绩').isVisible());
+ await page.locator('.archive-details summary').click();
+ assert.ok(await page.getByText('战斗纪事').isVisible());
+ assert.ok(await page.getByText(/己方伤亡 120/).isVisible());
+ assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Chinese mobile archive must fit the viewport');
+ await page.screenshot({path:resolve(output,'archive-mobile-zh.png'),fullPage:true});
+ await page.locator('#nav-lang').click();
+ assert.ok(await page.getByText('Faction victories').isVisible());
+ await page.locator('.archive-details summary').click();
+ assert.ok(await page.getByText('Battle history').isVisible());
+ assert.ok(await page.getByText(/own losses 120/).isVisible());
+ assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'English mobile archive must fit the viewport');
+ await page.screenshot({path:resolve(output,'archive-mobile-en.png'),fullPage:true});
  assert.deepEqual(errors,[]);
  assert.deepEqual(missing,[]);
  console.log(JSON.stringify({output,layouts,errors,missing}));

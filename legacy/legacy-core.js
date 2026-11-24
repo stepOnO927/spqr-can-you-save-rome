@@ -60,16 +60,21 @@ export function recordCampaign(profile,state){
   if(achievementId==='challenge')profile.titles.push(state.legacyScenario==='scenario-pharsalus'?'Thessaly Victor':'Rubicon Survivor');
  }
  const ownBattles=(state.battles||[]).filter(b=>b.attacker?.owner===state.player||b.defender?.owner===state.player);
+ const battleHistory=ownBattles.slice(0,80).map(b=>{
+  const attacking=b.attacker?.owner===state.player;
+  return {year:Number.isFinite(b.year)?b.year:null,month:Number.isFinite(b.month)?b.month:null,region:b.region??null,attacker:b.attacker?.owner??null,defender:b.defender?.owner??null,winner:(b.attackerWins?b.attacker?.owner:b.defender?.owner)??null,casualties:Math.max(0,Number(attacking?b.lossA:b.lossD)||0),commander:(attacking?b.attacker?.commander:b.defender?.commander)??null};
+ });
  const savedSummary=state.achievementState.summary;
  const highlights=savedSummary&&(savedSummary.conquests===undefined||savedSummary.worstBattle===undefined)?campaignSummary(state):null;
  const summary=savedSummary?JSON.parse(JSON.stringify({...savedSummary,conquests:savedSummary.conquests??highlights?.conquests,worstBattle:savedSummary.worstBattle===undefined?highlights?.worstBattle:savedSummary.worstBattle})):null;
  const existing=profile.archive.find(a=>a.id===id);
- if(!existing){profile.archive.unshift({id,year:state.achievementState.endedAt.year,month:state.achievementState.endedAt.month,result:state.achievementState.result,faction:state.player,territories:state.regions.filter(r=>r.owner===state.player).length,battles:ownBattles.length,summary,notable:ownBattles.slice(-4).map(b=>({region:b.region,winner:b.attackerWins?b.attacker?.owner:b.defender?.owner}))});profile.archive=profile.archive.slice(0,profile.purchases.includes('archive-capacity')?100:50)}
+ if(!existing){profile.archive.unshift({id,year:state.achievementState.endedAt.year,month:state.achievementState.endedAt.month,result:state.achievementState.result,faction:state.player,territories:state.regions.filter(r=>r.owner===state.player).length,battles:ownBattles.length,battleHistory,summary,notable:ownBattles.slice(-4).map(b=>({region:b.region,winner:b.attackerWins?b.attacker?.owner:b.defender?.owner}))});profile.archive=profile.archive.slice(0,profile.purchases.includes('archive-capacity')?100:50)}
  else if(summary&&(!['caesar','senate'].includes(state.player)||existing.summary?.conquests===undefined)){
   existing.summary=summary;
   existing.battles=ownBattles.length;
   existing.notable=ownBattles.slice(-4).map(b=>({region:b.region,winner:b.attackerWins?b.attacker?.owner:b.defender?.owner}));
  }
+ if(existing&&!Array.isArray(existing.battleHistory))existing.battleHistory=battleHistory;
  if(state.achievementState.result==='victory'){
   profile.triumphs ||= [];
   const record={id,faction:state.player,year:state.achievementState.endedAt.year,month:state.achievementState.endedAt.month,territories:state.regions.filter(r=>r.owner===state.player).length,method:summary?.method==='settlement'?'settlement':'military',scenario:state.legacyScenario||null};

@@ -314,6 +314,26 @@ test('archive tells a foreign campaign story without exposing raw territory IDs'
  assert.doesNotMatch(archivePanelHtml(old,'en'),/<script>/);
  old.archive[0].year=1;assert.match(archivePanelHtml(old,'en'),/1 CE/);
 });
+test('archive preserves a dated battle chronicle and faction victory record after finalization',()=>{
+ const storage=memory(),profile=loadProfile(storage),campaign=newGrandGame('caesar');
+ campaign.battles=[
+  {year:-48,month:3,region:'roma',attacker:{owner:'caesar',commander:['Caesar','凯撒']},defender:{owner:'senate'},attackerWins:true,lossA:120,lossD:410},
+  {year:-49,month:9,region:'italiaN',attacker:{owner:'senate'},defender:{owner:'caesar',commander:['<script>','伪装']},attackerWins:true,lossA:90,lossD:230}
+ ];
+ assert.deepEqual(recordCampaign(profile,campaign),[]);
+ assert.doesNotMatch(archivePanelHtml(profile,'en'),/Battle history|Victory timeline/);
+ campaign.victory=true;endCampaign(campaign,'retired');recordCampaign(profile,campaign);
+ const record=profile.archive[0];assert.equal(record.battleHistory.length,2);
+ assert.deepEqual(record.battleHistory.map(b=>[b.year,b.month,b.casualties,b.winner]),[[-48,3,120,'caesar'],[-49,9,230,'senate']]);
+ const en=archivePanelHtml(profile,'en'),zh=archivePanelHtml(profile,'zh');
+ assert.match(en,/Faction victories/);assert.match(en,/Victory timeline/);assert.match(en,/Battle history/);
+ assert.match(en,/48 BCE · month 3/);assert.match(en,/own losses 120/);
+ assert.match(zh,/阵营胜绩/);assert.match(zh,/胜利年表/);assert.match(zh,/战斗纪事/);assert.match(zh,/己方伤亡 230/);
+ assert.doesNotMatch(en,/<script>/);assert.match(en,/&lt;script&gt;/);
+ const coins=profile.coins;saveProfile(profile,storage);const restored=loadProfile(storage);
+ assert.deepEqual(restored.archive[0].battleHistory,record.battleHistory);
+ assert.deepEqual(recordCampaign(restored,upgradeSave(structuredClone(campaign))),[]);assert.equal(restored.coins,coins);
+});
 test('reimport fills capture and heaviest-loss records from an older finalized save',()=>{
  const profile=loadProfile(memory()),campaign=newGrandGame('caesar');
  campaign.campaignEvents.push({type:'control',newOwner:'caesar',previousOwner:'senate',regionId:'roma'});
