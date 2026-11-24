@@ -1,5 +1,6 @@
 import {CHARACTER_CATALOG,initializeWorld} from './characters.js?v=dossier-archive-1';
 import {reportedPeople,visiblePersonName} from './person-knowledge.js?v=dossier-archive-1';
+import {personTravelRoute} from './person-travel-route.js';
 
 const pair=(a,b)=>[a,b].sort().join(':');
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -54,7 +55,7 @@ export function inviteForeignSpecialist(s,owner,id){
  if(!f||!lead||!target||target===owner||!s.factions[target])return {ok:false,reason:'unknown'};
  if(s.wars?.some(w=>w.includes(owner)&&w.includes(target)))return {ok:false,reason:'war'};
  if((s.relations?.[pair(owner,target)]||0)<0)return {ok:false,reason:'relations'};
- if(c.recruitment.some(x=>x.id===id&&x.status==='pending'))return {ok:false,reason:'busy'};
+ if(c.recruitment.some(x=>x.id===id&&['pending','travel'].includes(x.status)))return {ok:false,reason:'busy'};
  if(c.prestige[owner]<8)return {ok:false,reason:'prestige'};
  if(f.treasury<20)return {ok:false,reason:'treasury'};
  c.prestige[owner]-=8;f.treasury-=20;
@@ -69,7 +70,6 @@ export function advanceCivilization(s){
   const culturalIdeas=(s.inventions?.[owner]?.active?.culture||[]).filter(id=>['rhetorical_education','philosophical_patronage'].includes(id)).length;
   c.prestige[owner]=clamp(c.prestige[owner]+Math.min(3,monuments+culturalIdeas+specialistBonus(s,owner,'scholar')),0,200);
  }
- const traveling=c.recruitment.filter(x=>x.status==='travel');
  for(const offer of c.recruitment.filter(x=>x.status==='pending')){
   if(--offer.remaining>0)continue;
   const p=s.world.characters[offer.id];
@@ -79,17 +79,27 @@ export function advanceCivilization(s){
   const chance=clamp(.32+relation/250+ambition/400-loyalty/250,0,.8);
   c.seed=(Math.imul(c.seed,1664525)+1013904223)>>>0;
   if(!available||c.seed/4294967296>=chance){offer.status='refused';if(offer.owner===s.player)note(s,`${CHARACTER_CATALOG[offer.id].name[0]} declined or could not travel; the invitation cost was spent.`,`${CHARACTER_CATALOG[offer.id].name[1]}拒绝或无法成行；邀约费用已经支付。`);continue}
-  offer.status='travel';offer.remaining=2;
+  const routes=s.regions.filter(r=>r.owner===offer.owner).map(r=>({destination:r,route:personTravelRoute(s,p,offer.target,r.id)})).filter(x=>x.route).sort((a,b)=>a.route.months-b.route.months||a.destination.id.localeCompare(b.destination.id));
+  const selected=routes[0];
+  if(!selected||s.factions[offer.owner].treasury<selected.route.cost){offer.status='refused';if(offer.owner===s.player)note(s,`The journey for ${CHARACTER_CATALOG[offer.id].name[0]} could not be funded or routed.`,`无法为${CHARACTER_CATALOG[offer.id].name[1]}安排或支付行程。`);continue}
+  s.factions[offer.owner].treasury-=selected.route.cost;
+  offer.status='travel';offer.destination=selected.destination.id;offer.travelCost=selected.route.cost;offer.remaining=selected.route.months;
+  p.travel={destination:offer.destination,legs:selected.route.legs,remaining:selected.route.legs[0].months+1};
   if(offer.owner===s.player)note(s,`${CHARACTER_CATALOG[offer.id].name[0]} accepted and began the journey.`,`${CHARACTER_CATALOG[offer.id].name[1]}接受邀约，正在旅途中。`);
  }
- for(const offer of traveling){
-  if(--offer.remaining>0)continue;
-  const p=s.world.characters[offer.id],destination=s.regions.find(r=>r.owner===offer.owner);
-  if(!p?.alive||!destination||p.faction!==offer.target||p.travel){offer.status='lost';continue}
-  p.faction=offer.owner;p.loyalty=clamp(Math.round((p.loyalty||60)*.55),30,70);p.location=destination.id;offer.status='arrived';
+ if(c.recruitment.length>60){const active=c.recruitment.filter(x=>['pending','travel'].includes(x.status)),history=c.recruitment.filter(x=>!['pending','travel'].includes(x.status));c.recruitment=[...history.slice(-60),...active]}
+ return c;
+}
+export function settleRecruitmentTravel(s){
+ const c=initializeCivilization(s);
+ for(const offer of c.recruitment.filter(x=>x.status==='travel')){
+  const p=s.world.characters[offer.id],travel=p?.travel;
+  if(travel){offer.remaining=travel.remaining+travel.legs.slice(1).reduce((n,leg)=>n+leg.months,0);continue}
+  const destination=s.regions.find(r=>r.id===offer.destination),employed=s.armies.some(a=>a.characterId===offer.id)||Object.values(s.world.offices?.[offer.target]||{}).includes(offer.id);
+  if(!p?.alive||p.missing||p.faction!==offer.target||p.location!==offer.destination||destination?.owner!==offer.owner||employed||s.wars.some(w=>w.includes(offer.owner)&&w.includes(offer.target))){offer.status='lost';if(offer.owner===s.player)note(s,`The journey of ${CHARACTER_CATALOG[offer.id].name[0]} did not complete the appointment.`,`未能完成${CHARACTER_CATALOG[offer.id].name[1]}的聘任行程。`);continue}
+  p.faction=offer.owner;p.loyalty=clamp(Math.round((p.loyalty||60)*.55),30,70);offer.status='arrived';offer.remaining=0;
   if(offer.owner===s.player||offer.target===s.player)note(s,`${CHARACTER_CATALOG[offer.id].name[0]} arrived and joined ${offer.owner}.`,`${CHARACTER_CATALOG[offer.id].name[1]}抵达并加入${offer.owner}。`);
  }
- if(c.recruitment.length>60)c.recruitment=c.recruitment.slice(-60);
  return c;
 }
 export function aiCivilization(s,owner){

@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,tick,upgradeSave} from '../engine.js';
 import {startResearch,startConstruction} from '../inventions.js';
-import {initializeCivilization,commissionCulturalEvent,fundEducation,knownForeignSpecialists,inviteForeignSpecialist,specialistRoles,aiCivilization} from '../civilization.js';
+import {initializeCivilization,commissionCulturalEvent,fundEducation,knownForeignSpecialists,inviteForeignSpecialist,specialistRoles,aiCivilization,settleRecruitmentTravel} from '../civilization.js';
+import {advancePersonalDiplomacy} from '../personal-diplomacy.js?v=dossier-archive-1';
 
 const advance=(s,months)=>{for(let i=0;i<months;i++)tick(s)};
 
@@ -40,11 +41,17 @@ test('documented foreign specialist needs a received lead, consent, travel and a
  assert.equal(c.prestige.egypt,8);
  assert.equal(s.factions.egypt.treasury,old-20);
  assert.equal(s.world.characters.cicero.faction,'senate');
- advance(s,1);const saved=upgradeSave(JSON.parse(JSON.stringify(s)));
+ advance(s,1);let saved=upgradeSave(JSON.parse(JSON.stringify(s)));
  assert.equal(saved.civilization.recruitment[0].remaining,2);
  advance(saved,2);assert.equal(saved.civilization.recruitment[0].status,'travel');
+ const journey=saved.civilization.recruitment[0],duration=journey.remaining;
+ assert.ok(duration>2,'Rome-to-Egypt recruitment must use the long civilian route');
+ assert.ok(saved.world.characters.cicero.travel.legs.some(leg=>leg.sea));
+ assert.ok(journey.travelCost>3,'the receiving court pays extra for a sea passage');
  assert.equal(saved.world.characters.cicero.faction,'senate');
- advance(saved,2);assert.equal(saved.civilization.recruitment[0].status,'arrived');
+ advance(saved,2);assert.equal(saved.civilization.recruitment[0].status,'travel');
+ saved=upgradeSave(JSON.parse(JSON.stringify(saved)));
+ advance(saved,duration-2);assert.equal(saved.civilization.recruitment[0].status,'arrived');
  assert.equal(saved.world.characters.cicero.faction,'egypt');
  assert.equal(Object.keys(saved.world.characters).filter(id=>id==='cicero').length,1);
  assert.equal(startResearch(saved,'egypt','rhetorical_education').remaining,3);
@@ -108,4 +115,18 @@ test('ordinary monthly AI turn initiates a specialist invitation from a known le
  tick(s);
  assert.deepEqual(s.civilization.recruitment.map(x=>[x.owner,x.id,x.status]),[['egypt','cicero','pending']]);
  assert.equal(s.civilization.prestige.egypt,0);
+});
+
+test('a newly hostile theater interrupts a funded specialist journey without transferring the person',()=>{
+ const s=newGame('egypt');s.factions.egypt.treasury=300;s.relations['egypt:senate']=80;s.civilization.prestige.egypt=8;s.civilization.seed=0;
+ s.knowledge.egypt.senate.reports.push({kind:'office_finance',value:'cicero',year:s.year,month:s.month});
+ assert.equal(inviteForeignSpecialist(s,'egypt','cicero').ok,true);
+ advance(s,3);
+ const offer=s.civilization.recruitment[0],first=s.world.characters.cicero.travel.legs[0];
+ assert.equal(offer.status,'travel');
+ s.regions.find(r=>r.id===first.to).owner='caesar';
+ for(let i=0;i<=first.months;i++){advancePersonalDiplomacy(s);settleRecruitmentTravel(s)}
+ assert.equal(offer.status,'lost');
+ assert.equal(s.world.characters.cicero.faction,'senate');
+ assert.notEqual(s.world.characters.cicero.location,offer.destination);
 });

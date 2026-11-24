@@ -36,6 +36,18 @@ try{
  await page.locator('#inventions').click();
  assert.match(await page.locator('#invention-screen').innerText(),/CULTURAL PRESTIGE & SPECIALISTS/);
  assert.match(await page.locator('#invention-screen').innerText(),/awaiting reply · 3 months/);
+ await page.locator('#invention-close').click();
+ for(let i=0;i<3;i++)await page.locator('#advance').click();
+ await page.locator('#save').click();
+ const journey=await page.evaluate(()=>{const state=JSON.parse(localStorage.getItem('spqr-save-1'));return {offer:state.civilization.recruitment[0],travel:state.world.characters.cicero.travel}});
+ assert.equal(journey.offer.status,'travel');
+ assert.ok(journey.travel.legs.length>0);
+ assert.ok(journey.offer.travelCost>0);
+ for(let i=0;i<journey.offer.remaining;i++)await page.locator('#advance').click();
+ await page.locator('#save').click();
+ const arrival=await page.evaluate(()=>{const state=JSON.parse(localStorage.getItem('spqr-save-1'));return {offer:state.civilization.recruitment[0],faction:state.world.characters.cicero.faction}});
+ assert.equal(arrival.offer.status,'arrived');
+ assert.equal(arrival.faction,'caesar');
  assert.deepEqual(errors,[]);
- console.log('Cultural Prestige, education and foreign specialist invitation work in both languages and survive atlas save/reload.');
+ console.log('Cultural Prestige, education, delayed foreign recruitment and real travel work in both languages and survive atlas save/reload.');
 }finally{await browser.close()}
