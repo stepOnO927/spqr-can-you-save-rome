@@ -39,7 +39,9 @@ for(let i=0;i<120;i++){
  for(const [id,faction] of Object.entries(state.factions))for(const key of ['treasury','food','manpower'])assert.ok(Number.isFinite(faction[key])&&Math.abs(faction[key])<1_000_000,`${id} ${key} diverged`);
  for(const [id,faction] of Object.entries(state.factions))for(const key of ['stability','legitimacy'])if(faction[key]!=null)assert.ok(Number.isFinite(faction[key])&&faction[key]>=0&&faction[key]<=100,`${id} ${key} left its bounds`);
  for(const market of Object.values(state.markets.regions))for(const item of Object.values(market.goods)){
-  assert.ok(Number.isSafeInteger(item.stock)&&item.stock>=0&&item.stock<=Math.max(80,item.production*24),`invalid ${market.id} stock`);
+  const localRegion=state.regions.find(region=>region.id===market.id);
+  const capacity=Math.max(80,item.production*24)+(localRegion?.buildings?.includes('market_halls')?20:0);
+  assert.ok(Number.isSafeInteger(item.stock)&&item.stock>=0&&item.stock<=capacity,`invalid ${market.id} stock`);
   assert.ok(Number.isFinite(item.price)&&item.price>=1&&item.price<=24,`invalid ${market.id} price`);
  }
  for(const shipment of state.markets.shipments){

@@ -11,6 +11,14 @@ try{
  await page.locator('#start-overlay:not([hidden])').waitFor();
  await page.locator('#roman-faction').selectOption('senate');
  await page.locator('#start-free').click();
+ await page.locator('#save').click();
+ await page.evaluate(()=>{
+  const state=JSON.parse(localStorage.getItem('spqr-save-1'));
+  state.wars=[];
+  for(const army of state.armies){army.move=null;army.siege=null}
+  sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state}));
+ });
+ await page.reload({waitUntil:'domcontentloaded'});
  await page.locator('#inventions').click();
  for(const id of ['quarries','market_halls','archives','baths','civic_offices']){
   await page.locator(`[data-node="${id}"]`).click();
