@@ -1,6 +1,6 @@
-import {GRAND_ROUTES} from './grand-map-data.js?v=3';
-import {accessibleFleet,fleetCapacity,transportCrewReady,isPortBlockaded} from './naval.js?v=84';
-import {activeEffects,localBuildingEffects} from './development.js?v=72';
+import {GRAND_ROUTES} from './grand-map-data.js?v=4';
+import {accessibleFleet,fleetCapacity,transportCrewReady,isPortBlockaded} from './naval.js?v=85';
+import {activeEffects,localBuildingEffects} from './development.js?v=73';
 
 const byId=s=>Object.fromEntries(s.regions.map(r=>[r.id,r]));
 const OPENING_LIFT={caesar:1,senate:2,egypt:2,numidia:1,mauretania:1,armenia:0,parthia:0,galatia:0,bosporus:1,rebels:0};

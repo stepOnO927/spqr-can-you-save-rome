@@ -252,7 +252,10 @@ test('AI invests in a real food project when shortage is approaching and the war
  assert.equal(region(loaded,project.id).construction.buildingId,'irrigation');
  for(let i=0;i<4;i++)tick(loaded);
  assert.ok(region(loaded,project.id).buildings.includes('irrigation'));
- assert.ok(nationalBudget(loaded,'caesar').foodNet>=before+2);
+ const completedFoodNet=nationalBudget(loaded,'caesar').foodNet;
+ const withoutIrrigation=upgradeSave(JSON.parse(JSON.stringify(loaded)));
+ region(withoutIrrigation,project.id).buildings=region(withoutIrrigation,project.id).buildings.filter(id=>id!=='irrigation');
+ assert.ok(completedFoodNet>=nationalBudget(withoutIrrigation,'caesar').foodNet+2,'the completed project adds harvest even if the war changes other provinces');
  const lean=newGrandGame('egypt');lean.factions.caesar.food=35;lean.factions.caesar.treasury=80;
  lean.development.caesar.knownMaterial.push('water-control');
  aiTurn(lean,'caesar');

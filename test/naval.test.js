@@ -1371,6 +1371,7 @@ test('a solvent AI replaces missing transport capacity for an actual coastal arm
  assert.equal(moveArmy(restored,army.id,'t075').ok,true);
  assert.equal(repaired.order?.kind,'transport','the added hull serves an actual military order');
  const peaceful=newGrandGame('egypt');peaceful.armies.find(a=>a.id==='italy').region='italiaS';peaceful.naval.fleets.find(f=>f.id==='senate-adriatic').ships.transport=1;
+ peaceful.regions.find(r=>r.id==='t044').owner='senate'; // No other Senate coastal army has a hostile sea landing.
  advanceNaval(peaceful);
  assert.ok(!peaceful.naval.queues.some(q=>q.owner==='senate'&&q.type==='transport'),'the AI does not build invasion transports for a peaceful coast');
  const cashPoor=newGrandGame('egypt'),poorFleet=cashPoor.naval.fleets.find(f=>f.id==='senate-adriatic');
@@ -1402,7 +1403,7 @@ test('AI takes an available land route instead of stalling at a sea link without
 
 test('new Adriatic harbor crossing requires transports and carries an army through a saved campaign',()=>{
  let s=newGrandGame('senate'),unit=s.armies.find(a=>a.id==='italy'),fleet=s.naval.fleets.find(f=>f.id==='senate-adriatic');
- assert.equal(GRAND_ROUTES.filter(route=>route[2]==='sea').length,33);
+ assert.equal(GRAND_ROUTES.filter(route=>route[2]==='sea').length,40);
  const crossing=GRAND_ROUTES.find(route=>route.slice(0,2).includes('t013')&&route.slice(0,2).includes('t072'));
  assert.equal(crossing?.[2],'sea');assert.ok(crossing[3].distance>=150);
  assert.equal(crossing[3].mountain,false,'hilly ports do not make the water corridor a mountain pass');
@@ -1439,6 +1440,26 @@ test('six additional ports join the transport network without replacing land rou
  for(let month=0;month<5&&s.armies.find(a=>a.id==='xiii').move;month++)tick(s);
  assert.equal(s.armies.find(a=>a.id==='xiii').region,'t029');
  assert.equal(s.naval.fleets.find(f=>f.id==='caesar-adriatic').port,'t029');
+});
+test('seven coastal embarkations use water corridors and a saved army can cross from Ariminum',()=>{
+ const pairs=[['italiaN','t072'],['t049','t060'],['hispaniaN','t044'],['t056','mauretania'],['anatolia','t082'],['t089','t087'],['t104','sicilia']];
+ for(const [a,b] of pairs){
+  const edge=GRAND_ROUTES.find(route=>route.slice(0,2).includes(a)&&route.slice(0,2).includes(b));
+  assert.equal(edge?.[2],'sea',`${a}–${b} must require a fleet`);
+  assert.ok(edge[3].waypoints?.length>0,`${a}–${b} needs a water corridor`);
+ }
+ let s=newGrandGame('senate'),unit=s.armies.find(a=>a.id==='italy'),fleet=s.naval.fleets.find(f=>f.id==='senate-adriatic');
+ s.regions.find(r=>r.id==='italiaN').owner='senate';s.regions.find(r=>r.id==='t072').owner='senate';
+ unit.region='italiaN';unit.men=5200;fleet.port='italiaN';fleet.zone=portZone('italiaN');fleet.ships.transport=0;
+ assert.deepEqual(previewMarch(s,unit.id,'t072'),{ok:false,reason:'transport-capacity',required:5200,available:0});
+ fleet.ships.transport=2;
+ assert.equal(previewMarch(s,unit.id,'t072').sea,true);
+ assert.equal(moveArmy(s,unit.id,'t072').ok,true);
+ s=upgradeSave(structuredClone(s));
+ for(let month=0;month<8&&s.armies.find(a=>a.id==='italy').move;month++)tick(s);
+ assert.equal(s.armies.find(a=>a.id==='italy').region,'t072');
+ assert.equal(s.armies.find(a=>a.id==='italy').move,null);
+ assert.equal(s.naval.fleets.find(f=>f.id==='senate-adriatic').port,'t072');
 });
 test('Ostia to Utica has a transport-gated sea crossing that survives a voyage save',()=>{
  let s=newGrandGame('senate'),unit=s.armies.find(a=>a.id==='italy'),fleet=s.naval.fleets.find(f=>f.id==='senate-adriatic');
@@ -1867,6 +1888,7 @@ test('patrols from separate states can each confront pirates in shared waters',(
 });
 test('naval AI assigns orders to each available fleet instead of only its first',()=>{
  const s=newGrandGame('caesar'),first=s.naval.fleets.find(f=>f.owner==='senate'),second=structuredClone(first);second.id='senate-east';second.zone='eastern';second.port=null;s.naval.fleets.push(second);
+ s.regions.find(r=>r.id==='t044').owner='senate'; // Keep the patrol test free of the new Spanish sea landing.
  advanceNaval(s);assert.equal(first.order?.kind,'patrol');assert.equal(second.order?.kind,'patrol');
 });
 test('AI divides escorts between two raided trade routes and uses current route losses',()=>{

@@ -242,7 +242,7 @@ for(const item of MATERIALS)item.prerequisites=materialPrerequisites[item.id]||i
 for(const item of IDEAS)item.prerequisites=ideaPrerequisites[item.id]||[];
 import {figureActive,scholarExpertise,VARRO_RESEARCH_EXPERTISE} from './great-figures.js';
 import {FACTIONS,ROUTES} from './data.js';
-import {GRAND_ROUTES} from './grand-map-data.js?v=3';
+import {GRAND_ROUTES} from './grand-map-data.js?v=4';
 const ids = x => x.map(item=>item.id);
 const strategicKnowledge=new Set(['stone-fortification','siege-machinery','legion-training']);
 const metalDeposits=new Set(['hispaniaN','hispaniaS','illyricum','anatolia','armenia','gaul']);

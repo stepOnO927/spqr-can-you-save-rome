@@ -1,5 +1,5 @@
 import {FACTIONS,REGIONS} from '../data.js?v=9';
-import {GRAND_SITES} from '../grand-map-data.js?v=3';
+import {GRAND_SITES} from '../grand-map-data.js?v=4';
 import {achievementDefinition} from '../achievement-system.js?v=5';
 
 const labels=new Map([...REGIONS.map(r=>[r.id,r.name]),...GRAND_SITES.map(site=>[site.id,site.site])]);

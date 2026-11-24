@@ -1,4 +1,4 @@
-import {courtMediationPlan} from './character-system.js?v=73';
+import {courtMediationPlan} from './character-system.js?v=74';
 
 export function courtMediationHtml(s,language='en'){
  const actor=s.player;
