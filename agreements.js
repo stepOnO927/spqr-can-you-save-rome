@@ -72,11 +72,23 @@ export function checkAgreement(s,actor,target,type,{evaluateRecipient=true,recip
  if(evaluateRecipient&&relation-(100-credibility)*.4+politicalMemoryAdjustment(s,target,actor)+credit<def.threshold)return {ok:false,reason:'declined'};
  return {ok:true};
 }
-export function proposeAgreement(s,actor,target,type,{secret=false,priorConsent=false,enemy=null}={}){
- const check=checkAgreement(s,actor,target,type,{evaluateRecipient:!priorConsent,enemy});if(!check.ok)return check;const def=AGREEMENT_TYPES[type];
+export function proposeAgreement(s,actor,target,type,{secret=false,priorConsent=false,enemy=null,ratification=null}={}){
+ if(ratification){const f=s.factions?.[actor],def=AGREEMENT_TYPES[type];if(!def||!f||f.treasury<def.cost||!s.regions.some(r=>r.owner===actor)||atWar(s,actor,target)||knownAgreement(s,actor,target,type)||neutralityConflicts(s,actor,target,type,{provider:actor}))return {ok:false,reason:'unavailable'}}
+ const check=checkAgreement(s,actor,target,type,{evaluateRecipient:!priorConsent,enemy});if(!check.ok&&!ratification)return check;const def=AGREEMENT_TYPES[type];
  s.factions[actor].treasury-=def.cost;
  const t={id:`agreement:${s.nextAgreementId||1}`,type,parties:[actor,target],start:{year:s.year,month:s.month},duration:def.duration,expiresAt:date(s)+def.duration,obligations:[...def.obligations],benefits:[...def.benefits],terms:type==='neutrality'?neutralityTerms(actor,target,enemy):['military_support','guarantee'].includes(type)?{provider:actor,recipient:target}:{kind:type,obligations:[...def.obligations],benefits:[...def.benefits],...(type==='trade'?{marketAccess:true}:{})},termination:'expiry, mutual consent, or breach',diplomaticCost:def.cost,breachPenalty:20,secret:!!secret,status:'active'};
- s.nextAgreementId=(s.nextAgreementId||1)+1;s.agreements.push(t);rememberTreatyCopy(s,treatyDocument(t));rememberPoliticalEvent(s,target,actor,'negotiated_agreement',2);return {ok:true,agreement:t};
+ s.nextAgreementId=(s.nextAgreementId||1)+1;
+ if(ratification){
+  t.reference=ratification.reference;t.paperSequence=ratification.sequence;
+  // A dated acceptance can be ratified even if the remote legal situation
+  // changed unseen. Only the actual contract receives the legality result.
+  // Our signed paper never reports that hidden result back to the sender.
+  const paper=treatyDocument(t);if(check.ok)s.agreements.push(t);
+  rememberTreatyCopy(s,paper,[actor],{source:'own_ratification'});
+  rememberPoliticalEvent(s,actor,target,'negotiated_agreement',2);
+  return {ok:true,agreement:paper};
+ }
+ s.agreements.push(t);rememberTreatyCopy(s,treatyDocument(t));rememberPoliticalEvent(s,target,actor,'negotiated_agreement',2);return {ok:true,agreement:t};
 
 }
 export function terminateAgreement(s,id,actor,{mutual=false}={}){

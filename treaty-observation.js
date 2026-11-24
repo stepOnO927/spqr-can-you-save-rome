@@ -57,7 +57,7 @@ export function announceTreatyChange(s,document,actor,{relationPenalty=0,memoryK
   if(relationPenalty)changeStanding(s,actor,recipient,-Math.abs(relationPenalty),noticeId);
   const destination=s.regions.find(r=>reportedControl(s,actor,r.id)?.owner===recipient)?.id||null,names=(document.parties||[]).map(p=>FACTIONS[p]?.short||[p,p]);
   const actorName=FACTIONS[actor]?.short||[actor,actor],label=document.kind==='alliance'?['full alliance','全面同盟']:document.kind==='coalition'?['defensive coalition','防御联盟']:(treatyNames[document.type]||['agreement','条约']);
-  s.mail.events.push({type:'treaty_notice',status:'scheduled',date:now(s),noticeId,spec:{senderInstitution:actor,senderFaction:actor,recipient,category:'diplomatic',priority:'important',source:ownHome,destination,destinationKnown:!!destination,subject:['Diplomatic commitment notice','外交承诺变更通知'],body:[actorName[0]+(document.kind==='coalition'?' withdraws from the ':' renounces the ')+label[0]+' involving '+names.map(n=>n[0]).join(', ')+'. This is the dated notice '+dateText(d.ended)+'; later events may differ.',actorName[1]+(document.kind==='coalition'?'宣布退出':'宣布放弃')+'涉及'+names.map(n=>n[1]).join('、')+'的'+label[1]+'。这是'+dateText(d.ended,'zh')+'发出的书面通知，后续情况可能不同。'],options:[],confidentiality:document.secret?'secret':'ordinary',context:{kind:'treaty_notice',noticeId,document:copy(d),signatories:[...signatories],memoryKind,memoryWeight}}});
+  s.mail.events.push({type:'treaty_notice',status:'scheduled',date:now(s),noticeId,spec:{senderInstitution:actor,senderFaction:actor,recipient,category:'diplomatic',priority:'critical',source:ownHome,destination,destinationKnown:!!destination,subject:['Diplomatic commitment notice','外交承诺变更通知'],body:[actorName[0]+(document.kind==='coalition'?' withdraws from the ':' renounces the ')+label[0]+' involving '+names.map(n=>n[0]).join(', ')+'. This is the dated notice '+dateText(d.ended)+'; later events may differ.',actorName[1]+(document.kind==='coalition'?'宣布退出':'宣布放弃')+'涉及'+names.map(n=>n[1]).join('、')+'的'+label[1]+'。这是'+dateText(d.ended,'zh')+'发出的书面通知，后续情况可能不同。'],options:[],confidentiality:document.secret?'secret':'ordinary',context:{kind:'treaty_notice',noticeId,document:copy(d),signatories:[...signatories],memoryKind,memoryWeight}}});
  }
  return {ok:true,noticeId:id};
 }
@@ -78,6 +78,23 @@ export function receiveTreatyNotice(s,m){
  return true;
 }
 export function knownAgreementToRenounce(s,id,actor){return knownTreatyDocuments(s,actor,'agreement').find(t=>t.id===id)}
+
+// This is the frozen paper that actually arrived, not today's foreign court.
+// Its legal effect may differ from the receiver's resulting understanding.
+export function receiveSignedTreatyCopy(s,document,viewer,{sender,warGeneration=0}={}){
+ const d=copy(document);if(!d?.id||!d.parties?.includes(viewer)||!d.parties.includes(sender)||viewer===sender)return false;
+ const stamp=(d.start||d.terms?.start),signed=stamp?.year*12+stamp?.month;
+ if(Number.isFinite(signed)&&signed>now(s))return false;
+ const old=records(s,viewer)[d.id],oldStamp=old?.start||old?.terms?.start,previous=oldStamp?.year*12+oldStamp?.month;
+ if(old?.participantCopy&&(previous>signed||previous===signed&&(old.paperSequence||0)>(d.paperSequence||0)))return false;
+ if(old?.participantCopy&&old.reference===d.reference&&(old.source==='received_signed_copy'||old.status!=='active'))return false;
+ const ownEnd=old?.ended?.year*12+old?.ended?.month;
+ if(old?.participantCopy&&['own_decision','own_hostilities'].includes(old.source)&&(old.reference===d.reference||ownEnd>=signed))return false;
+ if((s.wars||[]).some(w=>w.includes(viewer)&&w.includes(sender))||(s.world.warGenerations?.[pair(viewer,sender)]||0)!==warGeneration){d.status='ended_by_war';d.ended={year:s.year,month:s.month,actor:viewer}}
+ rememberTreatyCopy(s,d,[viewer],{source:d.status==='ended_by_war'?'own_hostilities':'received_signed_copy'});
+ rememberPoliticalEvent(s,viewer,sender,'negotiated_agreement',2);
+ return true;
+}
 
 export function knownNeutralityBlocksWar(s,actor,target){return knownTreatyDocuments(s,actor,'agreement').filter(t=>t.type==='neutrality').some(t=>t.parties.includes(target)||t.terms?.neutral===actor&&t.terms?.warParties?.includes(target))}
 export function knownNeutralityBlocksAid(s,actor,target){return knownTreatyDocuments(s,actor,'agreement').some(t=>t.type==='neutrality'&&t.terms?.neutral===actor&&t.terms?.warParties?.includes(target))}

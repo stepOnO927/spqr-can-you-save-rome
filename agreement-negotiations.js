@@ -1,5 +1,6 @@
-import {knownAgreement,knownAlliance} from './treaty-observation.js?v=treaty-observation-1';
-import {AGREEMENT_TYPES,neutralityOfferProblem,neutralityConflicts,agreementCredentials,activeAgreement,checkAgreement,proposeAgreement} from './agreements.js?v=focus-agreement-consent-1';
+import {knownAgreement,knownAlliance,rememberTreatyCopy,treatyDocument,receiveSignedTreatyCopy} from './treaty-observation.js?v=treaty-observation-1';
+import {AGREEMENT_TYPES,fullAllianceTerms,neutralityOfferProblem,neutralityConflicts,agreementCredentials,checkAgreement,proposeAgreement} from './agreements.js?v=focus-agreement-consent-1';
+import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
 
 const COURIER_COST=2;
 const proposalDefinition=type=>type==='full_alliance'?{cost:0}:AGREEMENT_TYPES[type];
@@ -32,8 +33,50 @@ export function answerAgreementProposal(s,id,decision){
  letter.playerDecision=outcome;letter.sealed={outcome,year:s.year,month:s.month};letter.phase='return';letter.remaining=2;return {ok:true};
 }
 
-export function advanceAgreementProposals(s,{checkAlliance=()=>false,concludeAlliance=()=>false,autoplayPlayer=false}={}){
+// Ratification is an action at the sender's own court, on receiving the
+// dated acceptance. It cannot return a refusal derived from a foreign event.
+function ratify(s,letter,checkAlliance){
+ const {actor,target,type}=letter,def=proposalDefinition(type),f=s.factions[actor];
+ if(!def)return false;
+ if(!f||!s.regions.some(r=>r.owner===actor)||s.wars.some(w=>w.includes(actor)&&w.includes(target))||f.treasury<def.cost)return false;
+ if(type==='full_alliance'?knownAlliance(s,actor,target):knownAgreement(s,actor,target,type))return false;
+ if(neutralityConflicts(s,actor,target,type,{provider:actor}))return false;
+ if(type==='neutrality'&&(neutralityOfferProblem(s,actor,target,letter.enemy)||(s.world.warGenerations?.[[actor,letter.enemy].sort().join(':')]||0)!==(letter.warGeneration||0)))return false;
+ const reference='agreement-letter:'+letter.id;let document;
+ if(type==='full_alliance'){
+  const pact=[actor,target,{...fullAllianceTerms(s),reference}],legal=checkAlliance(s,actor,target,{priorConsent:true});
+  document={...treatyDocument(pact,'alliance'),paperSequence:letter.id};
+  if(legal)s.alliances.push(pact);
+  rememberTreatyCopy(s,document,[actor],{source:'own_ratification'});
+  rememberPoliticalEvent(s,actor,target,'negotiated_agreement',2);
+ }else{
+  const result=proposeAgreement(s,actor,target,type,{secret:letter.secret,priorConsent:true,enemy:letter.enemy,ratification:{reference,sequence:letter.id}});
+  if(!result.ok)return false;document=result.agreement;
+ }
+ letter.agreement=document.id;letter.ratified={year:s.year,month:s.month};
+ letter.signedCopy={document:structuredClone(document),remaining:2,status:'traveling',warGeneration:s.world.warGenerations?.[[actor,target].sort().join(':')]||0};
+ return true;
+}
+
+function advanceSignedCopy(s,letter){
+ const c=letter.signedCopy;if(c?.status!=='traveling'||--c.remaining>0)return;
+ if(roll(letter,0x2195b3c7)<.1){c.status='lost';return}
+ c.status='received';c.received={year:s.year,month:s.month};
+ receiveSignedTreatyCopy(s,c.document,letter.target,{sender:letter.actor,warGeneration:c.warGeneration});
+}
+
+export function advanceAgreementProposals(s,{checkAlliance=()=>false,autoplayPlayer=false}={}){
  for(const letter of s.world?.agreementLetters||[]){
+  // Old saves may have an acceptance already back at the sender but still
+  // waiting for confirmation. Preserve that consent and the remaining leg;
+  // do not invent an earlier payment or an already delivered signed copy.
+  if(letter.status==='pending'&&letter.phase==='confirmation'){
+   const remaining=Math.max(1,letter.remaining||1);
+   letter.status=ratify(s,letter,checkAlliance)?'accepted':'lapsed';letter.phase='delivered';letter.delivered={year:s.year,month:s.month};
+   if(letter.signedCopy)letter.signedCopy.remaining=remaining;
+   continue;
+  }
+  if(letter.status!=='pending'){advanceSignedCopy(s,letter);continue}
   if(letter.status==='pending'&&letter.phase==='awaiting_player'){
    if(--letter.remaining<=0){letter.playerDecision='no_reply';letter.sealed={outcome:'no_reply',year:s.year,month:s.month};letter.phase='return';letter.remaining=2}continue;
   }
@@ -45,14 +88,8 @@ export function advanceAgreementProposals(s,{checkAlliance=()=>false,concludeAll
    const outcome=!result.ok?(result.reason==='declined'?'refused':'unavailable'):roll(letter,0x92f03d41)<.15?'refused':'accepted';
    letter.sealed={outcome,year:s.year,month:s.month};letter.phase='return';letter.remaining=2;continue;
   }
-  if(letter.phase==='confirmation'){
-   if(roll(letter,0x2195b3c7)<.1){letter.status='no_reply';letter.phase='lost';continue}
-   const result=letter.type==='neutrality'&&(s.world.warGenerations?.[[letter.actor,letter.enemy].sort().join(':')]||0)!==(letter.warGeneration||0)?{ok:false}:letter.type==='full_alliance'?{ok:concludeAlliance(s,letter.actor,letter.target)}:proposeAgreement(s,letter.actor,letter.target,letter.type,{secret:letter.secret,priorConsent:true,enemy:letter.enemy});
-   letter.status=result.ok?'accepted':'lapsed';if(result.agreement)letter.agreement=result.agreement.id;letter.delivered={year:s.year,month:s.month};letter.phase='delivered';continue;
-  }
   const outcome=roll(letter,0x8de729b5)<.1?'no_reply':letter.sealed?.outcome||'no_reply';
-  if(letter.playerDecision==='accepted'&&outcome==='accepted'){letter.phase='confirmation';letter.remaining=2;letter.answered={year:letter.sealed.year,month:letter.sealed.month};delete letter.sealed;continue}
-  if(outcome==='accepted'){const result=letter.type==='neutrality'&&(s.world.warGenerations?.[[letter.actor,letter.enemy].sort().join(':')]||0)!==(letter.warGeneration||0)?{ok:false}:letter.type==='full_alliance'?{ok:concludeAlliance(s,letter.actor,letter.target)}:proposeAgreement(s,letter.actor,letter.target,letter.type,{secret:letter.secret,priorConsent:true,enemy:letter.enemy});letter.status=result.ok?'accepted':'lapsed';if(result.agreement)letter.agreement=result.agreement.id}
+  if(outcome==='accepted')letter.status=ratify(s,letter,checkAlliance)?'accepted':'lapsed';
   else letter.status=outcome==='refused'?'refused':'no_reply';
   letter.answered=letter.sealed?{year:letter.sealed.year,month:letter.sealed.month}:null;delete letter.sealed;letter.phase='delivered';letter.delivered={year:s.year,month:s.month};
   if(letter.actor===s.player){const texts={accepted:['A diplomatic agreement was concluded.','外交条约已达成。'],refused:['The other court declined the proposed agreement.','对方拒绝了条约提议。'],lapsed:['The proposed agreement could not be concluded under current conditions.','当前条件下无法最终达成条约。'],no_reply:['No agreement reply arrived; a letter may have been lost.','未收到条约回信；书信可能遗失。']};const [en,zh]=texts[letter.status];s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.log.slice(0,80)}

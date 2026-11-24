@@ -82,8 +82,8 @@ test('incoming neutrality is an explicit human choice with a real confirmation, 
   let s=fixture(n*1000003);s.player='egypt';sendAgreementProposal(s,'caesar','egypt','neutrality',{enemy:'senate'});step(s,{mail:true});step(s,{mail:true});
   const x=s.world.agreementLetters[0];if(x.phase!=='awaiting_player')continue;
   const letter=receivedMail(s).find(m=>m.context?.proposalId===x.id);assert.ok(letter);assert.match(letter.body[1],/12个月/);assert.match(letter.body[1],/元老院/);assert.equal(s.agreements.length,0);
-  assert.ok(replyToLetter(s,letter.id,'accept_agreement',{answerAgreementProposal}).ok);s=upgradeSave(JSON.parse(JSON.stringify(s)));step(s,{mail:true});step(s,{mail:true});assert.equal(s.agreements.length,0);
-  step(s,{mail:true});step(s,{mail:true});const saved=s.world.agreementLetters[0];if(saved.status==='accepted'){success=true;assert.equal(activeAgreement(s,'caesar','egypt','neutrality').terms.neutral,'egypt')}else{loss=true;assert.equal(s.agreements.length,0)}
+  assert.ok(replyToLetter(s,letter.id,'accept_agreement',{answerAgreementProposal}).ok);s=upgradeSave(JSON.parse(JSON.stringify(s)));step(s,{mail:true});step(s,{mail:true});assert.equal(s.world.diplomaticKnowledge.egypt?.[s.world.agreementLetters[0].agreement],undefined);
+  step(s,{mail:true});step(s,{mail:true});const saved=s.world.agreementLetters[0];if(saved.signedCopy?.status==='received'){success=true;assert.equal(activeAgreement(s,'caesar','egypt','neutrality').terms.neutral,'egypt')}else{loss=true;assert.equal(s.world.diplomaticKnowledge.egypt?.[saved.agreement],undefined)}
  }
  assert.ok(success&&loss,'both successful and lost confirmations remain possible');
  const old=fixture();delete old.world.agreementLetters;const restored=upgradeSave(JSON.parse(JSON.stringify(old)));assert.equal(restored.agreements.filter(t=>t.type==='neutrality').length,0);
