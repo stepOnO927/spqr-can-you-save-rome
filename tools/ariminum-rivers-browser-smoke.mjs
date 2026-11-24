@@ -30,6 +30,16 @@ try{
  assert.deepEqual(visible.map(item=>item.visible),[true,true],JSON.stringify(visible));
  assert.match(await page.locator('#map-mode-note').innerText(),/modern open-map courses/);
  assert.doesNotMatch(await page.locator('#map-mode-note').innerText(),/The close Tiber and Arno lines/);
+ const compact=await page.evaluate(()=>({height:document.querySelector('#map-mode-note').clientHeight,lastLegend:document.querySelector('.legend span:last-child').getBoundingClientRect().bottom}));
+ assert.ok(compact.lastLegend<900,'the collapsed source note leaves the complete terrain legend visible');
+ await page.locator('#brief-toggle').click();await page.locator('#brief-toggle').click();
+ await page.waitForFunction(()=>!document.querySelector('#map-note-toggle').hidden);
+ assert.equal(await page.locator('#map-note-toggle').isVisible(),true,'reopening the briefing restores the note control');
+ await page.locator('#map-note-toggle').click();
+ assert.equal(await page.locator('#map-note-toggle').getAttribute('aria-expanded'),'true');
+ assert.ok(await page.locator('#map-mode-note').evaluate(note=>note.clientHeight)>compact.height,'the full historical caveat can be opened');
+ await page.locator('#map-note-toggle').click();
+ assert.equal(await page.locator('#map-note-toggle').getAttribute('aria-expanded'),'false');
  await page.locator('#map .maplibregl-ctrl-attrib summary').click();
  assert.match(await page.locator('#map .maplibregl-ctrl-attrib-inner').innerText(),/Modern Marecchia and Savio: OpenStreetMap contributors, ODbL 1\.0/);
  await page.locator('#map .maplibregl-ctrl-attrib summary').click();
@@ -38,6 +48,7 @@ try{
  await page.screenshot({path:resolve(output,'without-rivers.png')});
  await page.locator('#language').click();
  assert.match(await page.locator('#map-mode-note').innerText(),/现代开放地图/);
+ assert.match(await page.locator('#map-note-toggle').innerText(),/展开地图说明/);
  assert.deepEqual(errors,[]);assert.deepEqual(missing,[]);
  console.log('Modern Marecchia and Savio render at native zoom in both languages without missing assets.');
 }finally{await browser.close()}

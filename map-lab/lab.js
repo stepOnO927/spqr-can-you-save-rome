@@ -624,6 +624,14 @@ function renderTerrainLegend(){
  if(egyptNearby)items.splice(1,0,['#829a72',lang==='zh'?'尼罗河三角洲低地（示意）':'Nile Delta lowland (schematic)'],['#785f49',lang==='zh'?'现代高程等高线（10–200米）':'Modern elevation contours (10–200 m)']);
  if(!poNearby&&map.getZoom()>=8.3&&center.lng>=8.4&&center.lng<=16.9&&center.lat>=39.9&&center.lat<=47.5)items.splice(1,0,['#60604b',lang==='zh'?'现代高程等高线（500–1500米）':'Modern elevation contours (500–1500 m)']);
  document.querySelector('.legend').innerHTML=items.map(([color,label,dashed])=>`<span><b class="swatch" style="background:${dashed?`repeating-linear-gradient(90deg,${color} 0 4px,transparent 4px 7px)`:color}"></b>${label}</span>`).join('');
+ refreshMapNote();
+}
+function refreshMapNote(){
+ const note=document.querySelector('#map-mode-note'),button=document.querySelector('#map-note-toggle');
+ const expanded=note.classList.contains('expanded');
+ button.hidden=!expanded&&note.scrollHeight<=note.clientHeight+2;
+ button.setAttribute('aria-expanded',String(expanded));
+ button.textContent=lang==='zh'?(expanded?'收起地图说明 ▴':'展开地图说明 ▾'):(expanded?'LESS MAP NOTES ▴':'MORE MAP NOTES ▾');
 }
 function renderHud(){
  renderHudBase();
@@ -650,6 +658,7 @@ function renderHud(){
  if(currentMapMode==='military'){document.querySelector('#map-mode-note').textContent=lang==='zh'?'地点周围的柔和派系色和旗帜表示控制权，并非精确边界；米白色◎数字表示己方兵力，敌军旗帜只来自可能过时的目击。':'Soft faction color around sites and banners show control, not exact borders; ivory ◎ counters show friendly strength. Enemy banners come only from possibly stale sightings.';document.querySelector('.legend').innerHTML=['caesar','senate','shared'].map((id,i)=>`<span class="identity-legend">${factionMark(id)} ${t(['caesar','senate','mixed'][i])}</span>`).join('')+`<span><b class="density-key">◎</b> ${lang==='zh'?'己方兵力（千人）':'Friendly troops (thousands)'}</span><span> ? ${lang==='zh'?'敌军旧目击，数量未知':'Enemy sighting, strength unknown'}</span>`}
  if(currentMapMode==='military')document.querySelector('.legend').insertAdjacentHTML('beforeend',`<span>⌕ ${lang==='zh'?'军议待侦察地点':'War Council recon target'}</span>`);
  if(currentMapMode==='maritime'){document.querySelector('#map-mode-note').textContent=lang==='zh'?'海区与商路为游戏近似；敌舰与海盗危险仅显示有日期的己方报告。封锁仅标己方命令或己港实况。':'Sea zones and lanes are game approximations. Enemy fleets and piracy hazards use dated reports; blockades show our orders or the condition of our own ports.';document.querySelector('.legend').innerHTML=`<span>⚓ ${lang==='zh'?'己方舰队':'Friendly fleet'}</span><span>? ⚓ ${lang==='zh'?'敌舰目击':'Enemy sighting'}</span><span>⚒ ${lang==='zh'?'己方港口设施':'Friendly port facilities'}</span><span>⊘ ${lang==='zh'?'封锁':'Blockade'}</span><span>▰ ${lang==='zh'?'己方补给船':'Friendly supply convoy'}</span><span>⚠ ${lang==='zh'?'有日期的危险报告':'Dated hazard report'}</span><span>─ ${lang==='zh'?'己方商路':'Friendly trade lane'}</span>`}
+ refreshMapNote();
  const goals=objectiveDefinitions(state);
  document.querySelectorAll('#objectives [data-objective]').forEach((button,index)=>{
   const progress=state.objectiveProgress?.[goals[index]?.id];if(!progress)return;
@@ -825,8 +834,9 @@ document.querySelector('#map-mode').onchange=e=>{currentMapMode=e.target.value;r
 document.querySelector('#objective-toggle').onclick=()=>{objectivesOpen=!objectivesOpen;renderHud()};
 
 let briefManuallyToggled=false;
-function setBriefCollapsed(collapsed){const brief=document.querySelector('.brief'),toggle=document.querySelector('#brief-toggle');brief.classList.toggle('collapsed',collapsed);toggle.textContent=collapsed?'›':'‹';toggle.setAttribute('aria-expanded',String(!collapsed));toggle.setAttribute('aria-label',lang==='zh'?(collapsed?'展开战役简报':'收起战役简报'):(collapsed?'Expand campaign briefing':'Collapse campaign briefing'))}
+function setBriefCollapsed(collapsed){const brief=document.querySelector('.brief'),toggle=document.querySelector('#brief-toggle');brief.classList.toggle('collapsed',collapsed);toggle.textContent=collapsed?'›':'‹';toggle.setAttribute('aria-expanded',String(!collapsed));toggle.setAttribute('aria-label',lang==='zh'?(collapsed?'展开战役简报':'收起战役简报'):(collapsed?'Expand campaign briefing':'Collapse campaign briefing'));if(!collapsed)requestAnimationFrame(refreshMapNote)}
 document.querySelector('#brief-toggle').onclick=()=>{briefManuallyToggled=true;setBriefCollapsed(!document.querySelector('.brief').classList.contains('collapsed'))};
+document.querySelector('#map-note-toggle').onclick=()=>{document.querySelector('#map-mode-note').classList.toggle('expanded');refreshMapNote()};
 const compactAtlas=matchMedia('(max-width:600px)');
 const crowdedAtlas=matchMedia('(max-width:1350px) and (max-height:720px)');
 function foldBriefForCompact(){if(compactAtlas.matches&&!briefManuallyToggled)setBriefCollapsed(true)}
