@@ -22,7 +22,17 @@ National-focus treaty effects also send proposals through the courier. When an A
 
 Run `node scripts/multipolar-sim.mjs` for six seeds across the ordinary all-AI opening, a passive-Rome game and a fictional regional-tension opening. No additional war or alliance is forced. In the present 24-month sample the ordinary openings did not produce an opportunistic declaration; the pressure opening produced both declarations and non-declarations. This does not establish that all requested chain reactions or diplomacy actions are implemented.
 
-The current implementation does not yet provide tactical synchronization of accepted attacks, territorial concessions or a general negotiation system for all forms of neutrality. It does not infer an empty garrison or full supply-line status from missing observations. Wider AI-only diplomacy, event-driven reevaluation of every kind of intelligence, long-run balance, betrayal and mediation chains need further work and validation. Existing save data is retained; plans initialize lazily.
+The current implementation does not yet provide tactical synchronization of accepted attacks or a general negotiation system for territorial demands, attack-linked concessions and all forms of neutrality. It does not infer an empty garrison or full supply-line status from missing observations. Wider AI-only diplomacy, event-driven reevaluation of every kind of intelligence, long-run balance, betrayal and mediation chains need further work and validation. Existing save data is retained; plans initialize lazily.
+
+## Conditional territorial peace offers
+
+The existing peace inquiry can include a proposal to transfer one owned frontier theater, identified using the sender's own control reports. The modeled command core, Rome and the last owned theater cannot be offered. This transfers simulated military control, not a claim that the Roman civil-war commands are separate sovereign empires. It is an offer in return for peace, not a demand, an attack subsidy or a general territorial negotiation system.
+
+Both map views provide a confirmed proposal with the ordinary inquiry fee and round-trip estimate. Incoming offers and replies show the terms. A receiver decides independently from its own condition, estimates and the static value of the offered theater; it does not inspect the sender's hidden ownership or forces. A threatened AI may include a low-value frontier concession in its ordinary annual peace approach, with or without an automated Roman player.
+
+No territory changes at dispatch or acceptance. A delivered acceptance ends the war and transfers control together only if the sender still owns the theater, keeps another theater, and the recipient remains adjacent. A different war generation or replacement court invalidates the old terms. Lost or refused replies transfer nothing. Old term-free peace letters retain their existing behavior. The transfer removes invalid local appointments and neutral sieges, changes future economy through ordinary ownership, and does not change army allegiance or teleport troops. A dated transfer record stays on the original inquiry.
+
+`test/territorial-peace.test.js` covers restrictions, fee, save/load, acceptance/refusal/loss, private-state isolation, changed circumstances, military withdrawal and AI offers. `tools/territorial-peace-smoke.mjs` exercises proposals in both views and the player's acceptance of an incoming concession. Cloud gates must pass before merging this feature; these fixtures do not establish long-run balance or complete every form of diplomatic bargaining.
 
 ## Evidence-triggered reviews
 
