@@ -75,10 +75,10 @@
   /* Type. Web fonts are optional: the system stacks below are the designed fallback, because
      the Poki build ships without network fonts. */
   --iv-display:'Cinzel','Trajan Pro 3','Trajan Pro','Cormorant Garamond','Palatino Linotype','Book Antiqua',Palatino,'Songti SC','Noto Serif SC','Source Han Serif SC',Georgia,serif;
-  --iv-serif:'Palatino Linotype','Book Antiqua',Palatino,'Iowan Old Style','Songti SC','Noto Serif SC','Source Han Serif SC','SimSun',Georgia,serif;
-  --iv-ui:'Manrope','Segoe UI Variable Text','Segoe UI','Helvetica Neue',Arial,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
-  --han-display:'Kaiti SC','STKaiti','KaiTi','Songti SC','Noto Serif SC','Source Han Serif SC','SimSun',Georgia,serif;
-  --han-serif:'Songti SC','Noto Serif SC','Source Han Serif SC','STSong','SimSun',Georgia,serif;
+  --iv-serif:'Palatino Linotype','Book Antiqua',Palatino,'Iowan Old Style','SPQR CJK','Songti SC','Noto Serif SC','Source Han Serif SC','SimSun',Georgia,serif;
+  --iv-ui:'Manrope','Segoe UI Variable Text','Segoe UI','Helvetica Neue',Arial,'SPQR CJK','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+  --han-display:'Kaiti SC','STKaiti','KaiTi','SPQR CJK','Songti SC','Noto Serif SC','Source Han Serif SC','SimSun',Georgia,serif;
+  --han-serif:'SPQR CJK','Songti SC','Noto Serif SC','Source Han Serif SC','STSong','SimSun',Georgia,serif;
   /* Scale: 11 / 12 / 13 / 15 / 18 / 22 / 28. Nothing under 11px carries information. */
   --iv-fs-micro:11px;
   --iv-fs-small:12px;
