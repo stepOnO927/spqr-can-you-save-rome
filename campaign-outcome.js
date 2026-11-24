@@ -1,5 +1,5 @@
 import {REGIONS,INITIAL_ARMIES} from './data.js';
-import {GRAND_GROUPS} from './grand-map-data.js?v=2';
+import {GRAND_GROUPS} from './grand-map-data.js?v=3';
 
 const roman=id=>id==='caesar'||id==='senate';
 const rival=id=>id==='caesar'?'senate':'caesar';

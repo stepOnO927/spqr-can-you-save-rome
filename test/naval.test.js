@@ -1402,7 +1402,7 @@ test('AI takes an available land route instead of stalling at a sea link without
 
 test('new Adriatic harbor crossing requires transports and carries an army through a saved campaign',()=>{
  let s=newGrandGame('senate'),unit=s.armies.find(a=>a.id==='italy'),fleet=s.naval.fleets.find(f=>f.id==='senate-adriatic');
- assert.equal(GRAND_ROUTES.filter(route=>route[2]==='sea').length,27);
+ assert.equal(GRAND_ROUTES.filter(route=>route[2]==='sea').length,33);
  const crossing=GRAND_ROUTES.find(route=>route.slice(0,2).includes('t013')&&route.slice(0,2).includes('t072'));
  assert.equal(crossing?.[2],'sea');assert.ok(crossing[3].distance>=150);
  assert.equal(crossing[3].mountain,false,'hilly ports do not make the water corridor a mountain pass');
@@ -1420,6 +1420,25 @@ test('new Adriatic harbor crossing requires transports and carries an army throu
  unit=s.armies.find(a=>a.id==='italy');fleet=s.naval.fleets.find(f=>f.id==='senate-adriatic');
  assert.equal(unit.region,'t072');assert.equal(unit.move,null);
  assert.equal(fleet.port,'t072');assert.equal(fleet.order,null);
+});
+test('six additional ports join the transport network without replacing land routes',()=>{
+ const pairs=[['cisalpine','t013'],['t003','t072'],['t016','t022'],['t078','t082'],['t019','t029'],['t030','t102']];
+ for(const [a,b] of pairs){
+  const edge=GRAND_ROUTES.find(route=>route.slice(0,2).includes(a)&&route.slice(0,2).includes(b));
+  assert.equal(edge?.[2],'sea',`${a}–${b} needs an actual sea edge`);
+  assert.ok(edge[3].waypoints.length>0,`${a}–${b} needs a plotted water corridor`);
+ }
+ let s=newGrandGame('caesar'),unit=s.armies.find(a=>a.id==='xiii'),fleet=s.naval.fleets.find(f=>f.id==='caesar-adriatic');
+ s.regions.find(r=>r.id==='t019').owner='caesar';s.regions.find(r=>r.id==='t029').owner='caesar';
+ unit.region='t019';unit.men=5200;fleet.port='t019';fleet.zone=portZone('t019');fleet.ships.transport=0;
+ assert.deepEqual(previewMarch(s,unit.id,'t029'),{ok:false,reason:'transport-capacity',required:5200,available:0});
+ fleet.ships.transport=2;
+ assert.equal(previewMarch(s,unit.id,'t029').sea,true);
+ assert.equal(moveArmy(s,unit.id,'t029').ok,true);
+ s=upgradeSave(structuredClone(s));
+ for(let month=0;month<5&&s.armies.find(a=>a.id==='xiii').move;month++)tick(s);
+ assert.equal(s.armies.find(a=>a.id==='xiii').region,'t029');
+ assert.equal(s.naval.fleets.find(f=>f.id==='caesar-adriatic').port,'t029');
 });
 test('Ostia to Utica has a transport-gated sea crossing that survives a voyage save',()=>{
  let s=newGrandGame('senate'),unit=s.armies.find(a=>a.id==='italy'),fleet=s.naval.fleets.find(f=>f.id==='senate-adriatic');
