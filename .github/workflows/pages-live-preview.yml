@@ -13,7 +13,7 @@ on:
       target_url:
         description: Tested review preview origin
         required: true
-        default: https://9856174d.spqr-can-you-save-rome.pages.dev/
+        default: https://codex-world-kings-clean-revi.spqr-can-you-save-rome.pages.dev/
 permissions:
   contents: read
 jobs:
@@ -23,7 +23,7 @@ jobs:
     timeout-minutes: 10
     env:
       SPQR_SOURCE_URL: ${{ inputs.source_url || 'https://stepono927.github.io/spqr-can-you-save-rome/' }}
-      SPQR_TARGET_URL: ${{ inputs.target_url || 'https://9856174d.spqr-can-you-save-rome.pages.dev/' }}
+      SPQR_TARGET_URL: ${{ inputs.target_url || 'https://codex-world-kings-clean-revi.spqr-can-you-save-rome.pages.dev/' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
