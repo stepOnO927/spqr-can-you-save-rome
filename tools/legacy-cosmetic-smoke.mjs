@@ -22,6 +22,7 @@ try{
  for(const id of ['camp','banner-eagle','race-blue'])await page.locator(`[data-buy="${id}"]`).click();
  assert.equal(await page.locator('[data-apply="banner-eagle"]').isDisabled(),true);
  assert.equal(await page.locator('[data-apply="race-blue"]').isDisabled(),true);
+ assert.ok(!(await page.locator('.hub-brand').innerText()).includes('♛'),'An eagle cosmetic must not turn the Roman brand into a crown');
  await page.screenshot({path:resolve(output,'wardrobe-en.png'),fullPage:true});
  const balance=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-legacy-profile-v1')).coins);
  await page.locator('[data-apply="banner-classic"]').click();
