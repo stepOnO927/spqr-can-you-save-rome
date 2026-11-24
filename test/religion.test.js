@@ -92,3 +92,65 @@ test('different institutions spend their own money on real local education or in
  assert.equal(upper.supply,capacity+1);assert.equal(temple.works,1);assert.ok(temple.history.some(h=>h.action==='infrastructure'));assert.ok(temple.wealth<30);
  const restored=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(restored.world.religiousInstitutions.find(o=>o.id===temple.id).works,1);assert.equal(restored.regions.find(r=>r.id==='egyptUpper').supply,capacity+1);
 });
+test('hardship causes bounded migration along a friendly land route without creating people or wealth',()=>{
+ let s=newGame('caesar'),from=s.regions.find(r=>r.id==='gaul'),to=s.regions.find(r=>r.id==='narbo');
+ for(const r of s.regions)r.population.satisfaction=65;
+ from.population.satisfaction=10;to.population.satisfaction=90;s.factions.caesar.food=100;s.month=12;
+ const fromBefore=from.population.total,toBefore=to.population.total,wealthBefore=from.population.householdWealth+to.population.householdWealth;
+ advanceReligion(s);
+ const record=s.world.populationMigrations.find(x=>x.from==='gaul');assert.ok(record);
+ assert.equal(record.to,'narbo');assert.ok(record.count>0&&record.count<=800);
+ assert.equal(from.population.total,Math.round(fromBefore*.998)-record.count);
+ assert.equal(to.population.total,Math.round(toBefore*1.002)+record.count);
+ assert.equal(from.population.householdWealth+to.population.householdWealth,wealthBefore+Math.floor(from.food/2)+Math.floor(to.food/2));
+ assert.match(s.log[0].en,/people moved from Further Gaul to Narbonensis/);
+ s=upgradeSave(structuredClone(s));assert.deepEqual(s.world.populationMigrations.find(x=>x.from==='gaul'),record);
+});
+test('population does not migrate across a sea link or an unfriendly border',()=>{
+ const s=newGame('senate'),island=s.regions.find(r=>r.id==='sicilia');
+ for(const r of s.regions)r.population.satisfaction=90;
+ island.population.satisfaction=10;s.month=12;advanceReligion(s);
+ assert.ok(!(s.world.populationMigrations||[]).some(x=>x.from==='sicilia'));
+ const border=s.regions.find(r=>r.id==='italiaN'),neighbor=s.regions.find(r=>r.id==='cisalpine');border.population.satisfaction=10;neighbor.population.satisfaction=90;s.month=12;advanceReligion(s);
+ assert.ok(!(s.world.populationMigrations||[]).some(x=>x.from==='italiaN'&&x.to==='cisalpine'));
+});
+test('36 monthly population updates keep gradual migration recorded across three years',()=>{
+ let s=newGame('caesar');for(const r of s.regions)r.population.satisfaction=65;
+ s.regions.find(r=>r.id==='gaul').population.satisfaction=10;s.regions.find(r=>r.id==='narbo').population.satisfaction=90;s.factions.caesar.food=100;
+ for(let i=0;i<36;i++){s.year=-49+Math.floor(i/12);s.month=i%12+1;advanceReligion(s);if(i===17)s=upgradeSave(structuredClone(s))}
+ const records=s.world.populationMigrations.filter(x=>x.from==='gaul');assert.equal(records.length,3);
+ assert.ok(records.every(x=>x.to==='narbo'&&x.month===12&&x.count>0&&x.count<=800));
+ assert.ok(records[0].count>=records[2].count,'movement should shrink as the origin loses population');
+});
+test('a restrictive policy can cause actual relocation when local conditions cross the hardship threshold',()=>{
+ const setup=()=>{const s=newGame('senate');for(const r of s.regions)r.population.satisfaction=65;s.regions.find(r=>r.id==='roma').population.satisfaction=45;s.regions.find(r=>r.id==='italiaN').population.satisfaction=90;s.factions.senate.food=100;s.month=12;return s};
+ const control=setup(),restricted=setup(),college=restricted.world.religiousInstitutions.find(o=>o.id==='roman_college');
+ assert.ok(religiousPolicy(restricted,'senate',college.id,'restrict').ok);
+ advanceReligion(control);advanceReligion(restricted);
+ assert.ok(!(control.world.populationMigrations||[]).some(x=>x.from==='roma'));
+ assert.ok(restricted.world.populationMigrations.some(x=>x.from==='roma'&&x.to==='italiaN'));
+ assert.ok(restricted.regions.find(r=>r.id==='roma').population.total<control.regions.find(r=>r.id==='roma').population.total);
+});
+test('a religious official earns a bounded negotiation benefit through completed local works',()=>{
+ let s=newGame('senate');const college=s.world.religiousInstitutions.find(o=>o.id==='roman_college'),r=s.regions.find(x=>x.id==='roma'),leader=college.leader;
+ college.wealth=30;college.relations.senate=0;r.population.satisfaction=20;
+ s.month=6;advanceReligion(s);s.month=12;advanceReligion(s);
+ assert.equal(s.world.characters[leader].religiousWorks,2);
+ assert.equal(college.history.filter(h=>h.action==='relief'&&h.authority===leader).length,2);
+ const beforeRelation=college.relations.senate,beforeSatisfaction=r.population.satisfaction;
+ assert.equal(religiousPolicy(s,'senate',college.id,'negotiate').ok,true);
+ assert.equal(college.relations.senate,beforeRelation+10);
+ assert.equal(r.population.satisfaction,beforeSatisfaction+3);
+ assert.equal(college.history.at(-1).authority,leader);
+ assert.match(s.log[0].en,/Aulus Fabius helped negotiate/);
+ assert.match(s.log[0].zh,/奥卢斯·法比乌斯协助商谈/);
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));
+ const saved=s.world.religiousInstitutions.find(o=>o.id==='roman_college'),person=s.world.characters[leader];
+ assert.equal(person.religiousWorks,2);assert.equal(saved.history.at(-1).authority,leader);
+ person.alive=false;s.year++;s.month=1;advanceReligion(s);assert.equal(saved.leader,saved.council[1]);
+ const relation=saved.relations.senate,satisfaction=s.regions.find(x=>x.id==='roma').population.satisfaction;
+ assert.equal(religiousPolicy(s,'senate',saved.id,'negotiate').ok,true);
+ assert.equal(saved.relations.senate,relation+8);
+ assert.equal(s.regions.find(x=>x.id==='roma').population.satisfaction,satisfaction+2);
+ assert.equal(saved.history.at(-1).authority,undefined);
+});

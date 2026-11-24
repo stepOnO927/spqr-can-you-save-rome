@@ -22,6 +22,7 @@ import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=faces-import-leg
 import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from './strategic-planning.js?v=multipolar-2';
 import {advancePersonalPlans} from './personal-plans.js?v=multipolar-2';
 import {initializeInventions,advanceInventions,aiInnovation,activeModifiers as inventionModifiers,buildingModifiers} from './inventions.js?v=mission-discount-1';
+import {initializeCivilization,advanceCivilization,settleRecruitmentTravel,aiCivilization} from './civilization.js';
 import {advanceFocuses,focusModifiers} from './national-focus.js?v=faces-name-disagreement-1';
 import {seedTemplates,formationCombatFactor,formationMarchDelta,formationSiegeReduction,formationUpkeepDelta,observeFormationRecon,advanceReorganizations,aiDesignFormations,aiRecruitFormation,aiReorganize,advanceCommandInfluence} from './legion-designer.js?v=faces-name-disagreement-1';
 import {advanceBattlePlans,aiBattlePlans,planControlled} from './battle-plans.js?v=faces-name-disagreement-1';
@@ -81,7 +82,7 @@ export function newGame(player='caesar'){
   // A new campaign starts with frontier observations, not every foreign army's
   // exact opening location. Existing saves keep their accumulated sightings.
   for(const targets of Object.values(s.knowledge))for(const knowledge of Object.values(targets))knowledge.sightings={};
-  linkCommanders(s);initializeDynasties(s);seedOpeningFictionalHouseholds(s);seedOpeningCommanders(s);seedHanCommanders(s);seedHanCourt(s);seedHanFrontierPeople(s);observeArmies(s);observeControl(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeChronicle(s);initializeAgreements(s);initializeMarkets(s);initializeInventions(s);migrateImperium(s);initializeMail(s);initializeWheels(s);const created=initializeGovernments(s);advanceLegend(created);return created;
+  linkCommanders(s);initializeDynasties(s);seedOpeningFictionalHouseholds(s);seedOpeningCommanders(s);seedHanCommanders(s);seedHanCourt(s);seedHanFrontierPeople(s);observeArmies(s);observeControl(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeChronicle(s);initializeAgreements(s);initializeMarkets(s);initializeInventions(s);initializeCivilization(s);migrateImperium(s);initializeMail(s);initializeWheels(s);const created=initializeGovernments(s);advanceLegend(created);return created;
 }
 
 export function newDynastyScenario(){const s=newGame('egypt');createDisputedHeirScenario(s);return s}
@@ -137,7 +138,7 @@ export function upgradeSave(s){
  // Older audience entries distinguished hidden absence from unanswered mail.
  for(const event of s.log||[])if(event.en==='Personal audience: no contact.'&&event.zh==='未能见到对方；对方可能不在、无法会面或局势有变。'){event.en='Personal audience: no reply.';event.zh='个人会面请求没有收到答复。'}
  if(!s.chronicleVisibilityVersion){for(const event of s.log||[])event.legacyUnverified=true;s.chronicleVisibilityVersion=1}
- migrateRegionalPowers(s);migrateEasternTheaters(s);migrateHanFrontier(s);initializeDynasties(s);seedOpeningCommanders(s);seedHanCommanders(s);seedHanCourt(s);seedHanFrontierPeople(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeControlKnowledge(s);initializeChronicle(s);initializeAgreements(s);initializeMarkets(s);initializeInventions(s);migrateImperium(s);migrateBattleIds(s);upgradeMissionIdentities(s);upgradeHanWorld(s);initializeMail(s);initializeWheels(s);syncAgentReleaseLetters(s);syncPeaceLetters(s);syncOfficialInquiryLetters(s);syncStrategicOfferLetters(s);syncCoalitionLetters(s);syncAgreementLetters(s);if(s.world?.cursus)initializeCursus(s); for(const a of s.armies){a.provisions??=Math.ceil(a.men/1000*MARCH_CONFIG.provisionCapacityPerThousand);a.fatigue??=0;a.journeyHistory||=[];if(a.move){a.move.elapsed??=0;a.move.pace||='normal';a.move.totalMonths??=a.move.remaining+a.move.elapsed;a.move.provisionCost??=Math.max(1,Math.ceil(a.men/1000*MARCH_CONFIG.provisionPerThousand*a.move.totalMonths));a.move.progress??=a.move.elapsed/Math.max(1,a.move.totalMonths)}}
+ migrateRegionalPowers(s);migrateEasternTheaters(s);migrateHanFrontier(s);initializeDynasties(s);seedOpeningCommanders(s);seedHanCommanders(s);seedHanCourt(s);seedHanFrontierPeople(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeControlKnowledge(s);initializeChronicle(s);initializeAgreements(s);initializeMarkets(s);initializeInventions(s);initializeCivilization(s);migrateImperium(s);migrateBattleIds(s);upgradeMissionIdentities(s);upgradeHanWorld(s);initializeMail(s);initializeWheels(s);syncAgentReleaseLetters(s);syncPeaceLetters(s);syncOfficialInquiryLetters(s);syncStrategicOfferLetters(s);syncCoalitionLetters(s);syncAgreementLetters(s);if(s.world?.cursus)initializeCursus(s); for(const a of s.armies){a.provisions??=Math.ceil(a.men/1000*MARCH_CONFIG.provisionCapacityPerThousand);a.fatigue??=0;a.journeyHistory||=[];if(a.move){a.move.elapsed??=0;a.move.pace||='normal';a.move.totalMonths??=a.move.remaining+a.move.elapsed;a.move.provisionCost??=Math.max(1,Math.ceil(a.men/1000*MARCH_CONFIG.provisionPerThousand*a.move.totalMonths));a.move.progress??=a.move.elapsed/Math.max(1,a.move.totalMonths)}}
  const upgraded=refreshReportConfidence(initializeGovernments(s));advanceLegend(upgraded);return upgraded;
  }catch(error){restoreFictionalCatalog(priorCatalog);throw error}
 }
@@ -1024,7 +1025,7 @@ export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
   const warsBefore=s.wars.map(w=>w.slice());
   s.month++;if(s.month>12){s.month=1;s.year++}
   refreshReportConfidence(s);
-  advanceInventions(s);advanceOffices(s,{autoplayPlayer});economy(s);advanceAgreements(s);advanceMarkets(s);advanceCoalitions(s);advanceReligion(s);
+  advanceInventions(s);advanceCivilization(s);advanceOffices(s,{autoplayPlayer});economy(s);advanceAgreements(s);advanceMarkets(s);advanceCoalitions(s);advanceReligion(s);
   if(imperiumOn(s))advanceFocuses(s,{autoplayPlayer,log,sendInquiry});advanceReorganizations(s,{log});
   // Travel and sieges resolve before new AI orders.
   for(const a of [...s.armies]){
@@ -1033,7 +1034,7 @@ export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
     else if(a.siege){a.siege.remaining--;if(a.siege.remaining<=0){const r=region(s,a.siege.region),witnessed=a.owner===s.player||r.owner===s.player;r.owner=a.owner;r.loyalty=36;a.siege=null;if(witnessed)log(s,`${r.name[0]} surrendered after a siege.`,`${r.name[1]}在围攻后投降。`)}}
   }
   advanceMovements(s,{autoplayPlayer});
-  resolveInquiries(s,{autoplayPlayer});syncPeaceLetters(s);if(!autoplayPlayer)syncOfficialInquiryLetters(s);reconcilePeacePersonnel(s);advancePersonnel(s);advanceOperations(s);advanceAgentRequests(s,{autoplayPlayer});if(!autoplayPlayer)syncAgentReleaseLetters(s);advanceCharacters(s);advanceDynasties(s);syncFamilyReplies(s);relieveIncapacitatedCommanders(s);advanceMissingCommanders(s);resolveDynasticWars(s);advanceMediations(s);advanceDisputes(s);advancePersonalPlans(s);advanceConspiracies(s);advancePoliticalContacts(s,addReport);advanceGovernments(s,{autoplayPlayer});if(s.world?.cursus)advanceCursus(s);linkCommanders(s);advancePersonalDiplomacy(s);
+  resolveInquiries(s,{autoplayPlayer});syncPeaceLetters(s);if(!autoplayPlayer)syncOfficialInquiryLetters(s);reconcilePeacePersonnel(s);advancePersonnel(s);advanceOperations(s);advanceAgentRequests(s,{autoplayPlayer});if(!autoplayPlayer)syncAgentReleaseLetters(s);advanceCharacters(s);advanceDynasties(s);syncFamilyReplies(s);relieveIncapacitatedCommanders(s);advanceMissingCommanders(s);resolveDynasticWars(s);advanceMediations(s);advanceDisputes(s);advancePersonalPlans(s);advanceConspiracies(s);advancePoliticalContacts(s,addReport);advanceGovernments(s,{autoplayPlayer});if(s.world?.cursus)advanceCursus(s);linkCommanders(s);advancePersonalDiplomacy(s);settleRecruitmentTravel(s);
   advanceControlScouts(s);observeArmies(s);observeFormationRecon(s);observeControl(s);if(s.month%6===0)observeBalanceOfPower(s);
   if(imperiumOn(s)){advanceBattlePlans(s,{autoplayPlayer,issueOrder:issueMilitaryOrder,estimatedStrength,log});advanceCommandInfluence(s,{log})}
   // Friendly courts may forward fresh scout sightings; recipients judge them on their own.
@@ -1044,9 +1045,9 @@ export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
   if(!autoplayPlayer)syncCoalitionLetters(s);
   advanceMail(s,{proposeAgreement,diplomacy});
   for(const owner of Object.keys(s.factions).filter(id=>autoplayPlayer||id!==s.player)){
-    const override=autoplayPlayer&&owner===s.player&&playerDifficulty;if(!override){aiTurn(s,owner,{autoplayPlayer});if(owner!=='rebels')aiInnovation(s,owner);continue}
+    const override=autoplayPlayer&&owner===s.player&&playerDifficulty;if(!override){aiTurn(s,owner,{autoplayPlayer});if(owner!=='rebels'){aiInnovation(s,owner);aiCivilization(s,owner)}continue}
     const originalDifficulty=s.difficulty,hadDifficulty=Object.prototype.hasOwnProperty.call(s,'difficulty');s.difficulty=playerDifficulty;
-    try{aiTurn(s,owner,{autoplayPlayer});if(owner!=='rebels')aiInnovation(s,owner)}finally{if(hadDifficulty)s.difficulty=originalDifficulty;else delete s.difficulty}
+    try{aiTurn(s,owner,{autoplayPlayer});if(owner!=='rebels'){aiInnovation(s,owner);aiCivilization(s,owner)}}finally{if(hadDifficulty)s.difficulty=originalDifficulty;else delete s.difficulty}
   }
   advanceMarketDiplomacy(s,{autoplayPlayer});advanceMarketAI(s,{autoplayPlayer});observeDiplomacy(s);
   warLetters(s,warsBefore);

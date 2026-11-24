@@ -1,6 +1,6 @@
-import {reportedControl,observeArrival} from './control-intelligence.js?v=control-delivery-1';
+import {observeArrival} from './control-intelligence.js?v=control-delivery-1';
 import {initializeWorld, CHARACTER_CATALOG} from './characters.js?v=faces-name-disagreement-1';
-import {ROUTES} from './data.js?v=phase-x-1';
+import {personTravelRoute} from './person-travel-route.js';
 import {addReport,reportedHealthSubjects,reportedPersonName,apparentAgeRange} from './character-system.js?v=faces-name-disagreement-1';
 import {officeOf} from './office-system.js?v=faces-name-disagreement-1';
 import {fictionalPortraitKey,portraitSeedFor,portraitStation} from './portrait-registry.js?v=missing-fate-privacy-1';
@@ -45,11 +45,7 @@ export function previewPersonTravel(s,id,destination){
  initializeWorld(s);const c=s.world.characters[id],owner=s.player;
  if(!c||c.faction!==owner||!c.alive||c.missing||!c.location||c.travel||officeOf(s,owner,id)||['seriously_ill','dying','deceased'].includes(c.health)||s.armies.some(a=>a.characterId===id)||s.markets?.shipments?.some(x=>x.merchantId===id&&['traveling','blocked'].includes(x.status)))return {ok:false,reason:'unavailable'};
  if(c.location===destination||!s.regions.some(r=>r.id===destination))return {ok:false,reason:'destination'};
- const distances={[c.location]:0},paths={[c.location]:[]},unvisited=new Set(s.regions.map(r=>r.id));
- while(unvisited.size){const current=[...unvisited].filter(x=>distances[x]!==undefined).sort((a,b)=>distances[a]-distances[b])[0];if(!current)break;unvisited.delete(current);if(current===destination)break;
-  for(const edge of ROUTES.filter(x=>x[0]===current||x[1]===current)){const next=edge[0]===current?edge[1]:edge[0],r=s.regions.find(x=>x.id===next);if(!r||!unvisited.has(next)||atWar(s,owner,reportedControl(s,owner,next)?.owner))continue;const months=(edge[2]==='sea'?3:1)+(r.terrain==='hills'||r.terrain==='desert'?1:0)+(['frail','wounded'].includes(c.health)?1:0),distance=distances[current]+months;if(distances[next]===undefined||distance<distances[next]){distances[next]=distance;paths[next]=[...paths[current],{to:next,months,sea:edge[2]==='sea'}]}}
- }
- if(!paths[destination])return {ok:false,reason:'route'};const legs=paths[destination],cost=3+legs.filter(x=>x.sea).length*8;if(s.factions[owner].treasury<cost)return {ok:false,reason:'treasury'};return {ok:true,legs,months:distances[destination],cost};
+ const route=personTravelRoute(s,c,owner,destination);if(!route)return {ok:false,reason:'route'};if(s.factions[owner].treasury<route.cost)return {ok:false,reason:'treasury'};return {ok:true,...route};
 }
 export function startPersonTravel(s,id,destination){const p=previewPersonTravel(s,id,destination);if(!p.ok)return p;s.factions[s.player].treasury-=p.cost;s.world.characters[id].travel={destination,legs:p.legs,remaining:p.legs[0].months};return p}
 // An order cannot teleport a traveler back to the last recorded theater. They

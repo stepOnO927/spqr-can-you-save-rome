@@ -2,6 +2,7 @@ import {createFictionalPerson,initializeDynasties} from './dynasties.js?v=faces-
 import {NAME_POOLS,generateFictionalName} from './fictional-names.js?v=faces-wheels-1';
 import {CHARACTER_CATALOG} from './characters.js?v=faces-name-disagreement-1';
 import {hasNationalIdea} from './national-ideas.js?v=grand-chessboard-2';
+import {ROUTES} from './data.js?v=phase-x-1';
 
 const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
 const log=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.log.slice(0,80)};
@@ -50,6 +51,36 @@ export function initializeReligion(s){
 export function localInstitutions(s,region){return (s.world?.religiousInstitutions||[]).filter(o=>o.region===region)}
 export function populationFactor(r){return r.population?clamp(r.population.total/Math.max(1,r.population.baseline),.7,1.2):1}
 export function religiousTaxCost(s,faction){return (s.world?.religiousInstitutions||[]).filter(o=>o.privilegedBy.includes(faction)&&s.regions.some(r=>r.id===o.region&&r.owner===faction)).length}
+function workingAuthority(s,o,actor){
+ const person=s.world.characters[o.leader];
+ return person?.alive&&person.faction===actor&&person.location===o.region&&!person.travel&&(person.religiousWorks||0)>=2?person:null;
+}
+function recordInstitutionWork(s,o,action,extra={}){
+ const person=s.world.characters[o.leader];
+ if(person?.alive&&person.location===o.region){person.religiousWorks=(person.religiousWorks||0)+1;person.influence=clamp((person.influence||0)+2,0,100)}
+ o.history.push({action,...extra,...(person?.alive?{authority:person.id}:{}),year:s.year,month:s.month});
+ o.history=o.history.slice(-30);
+}
+function migratePopulation(s){
+ const regions=new Map(s.regions.map(r=>[r.id,r])),plans=[];
+ for(const from of s.regions){
+  const people=from.population;
+  if(!people||people.total<1000||people.satisfaction>=45||!s.factions[from.owner]||from.owner==='rebels')continue;
+  const neighbors=ROUTES.filter(([a,b,kind])=>kind!=='sea'&&(a===from.id||b===from.id)).map(([a,b])=>regions.get(a===from.id?b:a)).filter(to=>to?.owner===from.owner&&to.population?.satisfaction>=Math.max(55,people.satisfaction+20));
+  neighbors.sort((a,b)=>b.population.satisfaction-a.population.satisfaction||a.id.localeCompare(b.id));
+  const to=neighbors[0];if(!to)continue;
+  const count=Math.min(800,Math.floor(people.total*(45-people.satisfaction)/35*.0025));
+  if(count>0)plans.push({from:from.id,to:to.id,count,owner:from.owner});
+ }
+ for(const move of plans){
+  const from=regions.get(move.from),to=regions.get(move.to),count=Math.min(move.count,Math.max(0,from.population.total-1));
+  if(!count||to.owner!==move.owner)continue;
+  const wealth=Math.min(from.population.householdWealth||0,Math.floor((from.population.householdWealth||0)*count/from.population.total));
+  from.population.total-=count;to.population.total+=count;from.population.householdWealth-=wealth;to.population.householdWealth+=wealth;
+  const record={from:from.id,to:to.id,count,year:s.year,month:s.month};(s.world.populationMigrations||=[]).push(record);s.world.populationMigrations=s.world.populationMigrations.slice(-80);
+  if(move.owner===s.player)log(s,`${count.toLocaleString('en-US')} people moved from ${from.name[0]} to ${to.name[0]} after local hardship.`,`因当地生活困难，${count.toLocaleString('zh-CN')}人从${from.name[1]}迁往${to.name[1]}。`);
+ }
+}
 export function religiousPolicy(s,actor,id,action){
  initializeReligion(s);const o=s.world.religiousInstitutions.find(x=>x.id===id),r=o&&s.regions.find(x=>x.id===o.region),f=s.factions[actor];
  if(!o||!r||r.owner!==actor||!f)return {ok:false,reason:'unavailable'};
@@ -59,10 +90,10 @@ export function religiousPolicy(s,actor,id,action){
  if(action==='revoke'&&!o.privilegedBy.includes(actor))return {ok:false,reason:'unavailable'};
  if(action==='investigate'&&s.world.religionInvestigations.some(x=>x.actor===actor&&x.id===id&&x.status==='pending'))return {ok:false,reason:'pending'};
  if(f.treasury<cost)return {ok:false,reason:'treasury'};
- f.treasury-=cost;const relation=o.relations[actor]??0,share=o.followers/Math.max(1,r.population.total);
+ f.treasury-=cost;const relation=o.relations[actor]??0,share=o.followers/Math.max(1,r.population.total),authority=workingAuthority(s,o,actor);
  if(action==='recognize'){o.recognizedBy.push(actor);o.relations[actor]=clamp(relation+12,-100,100);f.legitimacy=clamp(f.legitimacy+2,0,100)}
  if(action==='sponsor'){o.wealth+=10;o.relations[actor]=clamp(relation+12,-100,100);o.legitimacy=clamp(o.legitimacy+2,0,100)}
- if(action==='negotiate'){o.relations[actor]=clamp(relation+8,-100,100);if(relation>-40){r.population.satisfaction=clamp(r.population.satisfaction+2,0,100);r.loyalty=clamp(r.loyalty+1,0,100)}}
+ if(action==='negotiate'){o.relations[actor]=clamp(relation+8+(authority?2:0),-100,100);if(relation>-40){r.population.satisfaction=clamp(r.population.satisfaction+2+(authority?1:0),0,100);r.loyalty=clamp(r.loyalty+1,0,100)}}
  if(action==='privilege'){o.privilegedBy.push(actor);o.relations[actor]=clamp(relation+15,-100,100)}
  if(action==='revoke'){o.privilegedBy=o.privilegedBy.filter(id=>id!==actor);o.relations[actor]=clamp(relation-8,-100,100)}
  if(action==='restrict'){o.relations[actor]=clamp(relation-20,-100,100);r.population.satisfaction=clamp(r.population.satisfaction-Math.ceil(share*20)*(o.legitimacy>50?2:1),0,100);f.stability=clamp(f.stability+1,0,100)}
@@ -70,8 +101,8 @@ export function religiousPolicy(s,actor,id,action){
  if(['negotiate','tolerance'].includes(action)&&hasNationalIdea(s,actor,'tolerance'))o.relations[actor]=clamp(o.relations[actor]+2,-100,100);
  if(action==='investigate')s.world.religionInvestigations.push({actor,id,status:'pending',remaining:3,year:s.year,month:s.month});
  const loyaltyChange={recognize:4,sponsor:3,negotiate:2,privilege:4,revoke:-3,restrict:-10,tolerance:3,investigate:0}[action];o.institutionalLoyalty=clamp(o.institutionalLoyalty+loyaltyChange,0,100);
- o.history.push({action,actor,year:s.year,month:s.month});o.history=o.history.slice(-30);
- if(actor===s.player)log(s,'A policy toward a local religious institution was enacted.','已对当地宗教机构实施一项政策。');
+ o.history.push({action,actor,...(action==='negotiate'&&authority?{authority:authority.id}:{}),year:s.year,month:s.month});o.history=o.history.slice(-30);
+ if(actor===s.player)log(s,action==='negotiate'&&authority?`${s.world.dynasties.catalog[authority.id]?.name?.[0]||'An experienced religious official'} helped negotiate a local religious policy.`:'A policy toward a local religious institution was enacted.',action==='negotiate'&&authority?`${s.world.dynasties.catalog[authority.id]?.name?.[1]||'一位资深宗教人士'}协助商谈当地宗教政策。`:'已对当地宗教机构实施一项政策。');
  return {ok:true,cost};
 }
 export function advanceReligion(s){
@@ -106,16 +137,16 @@ export function advanceReligion(s){
   const change=Math.round(o.followers*(o.legitimacy>=50&&relation>=-20?.02:-.02));o.followers=clamp(o.followers+change,0,capacity);
   o.wealth+=Math.min(3,Math.floor(o.followers/10000));o.influence=clamp(Math.round(o.followers/Math.max(1,r.population.total)*100+o.legitimacy*.25),0,100);
   if(government.tax==='high'&&o.followers>r.population.total*.04){o.relations[r.owner]=clamp(relation-2,-100,100);r.population.satisfaction=clamp(r.population.satisfaction-1,0,100)}
-  if(o.wealth>=8&&r.population.satisfaction<55&&relation>=-20){o.wealth-=5;r.population.satisfaction=clamp(r.population.satisfaction+3,0,100);r.loyalty=clamp(r.loyalty+1,0,100);o.history.push({action:'relief',year:s.year,month:s.month})}
+  if(o.wealth>=8&&r.population.satisfaction<55&&relation>=-20){o.wealth-=5;r.population.satisfaction=clamp(r.population.satisfaction+3,0,100);r.loyalty=clamp(r.loyalty+1,0,100);recordInstitutionWork(s,o,'relief')}
   // Annual projects spend the institution's own money and affect existing
   // theater capacity or a real local person's education, never a free army.
-  if(s.month===12&&relation>=10&&o.priorities.includes('infrastructure')&&o.wealth>=20&&o.works<2){o.wealth-=12;o.works++;r.supply++;o.history.push({action:'infrastructure',year:s.year,month:s.month})}
-  else if(s.month===12&&relation>=0&&o.priorities.includes('education')&&o.wealth>=14){const pupil=Object.values(s.world.characters).find(c=>c.alive&&c.faction===r.owner&&c.location===r.id&&!c.institutionalOnly&&c.birthYear!=null&&s.year-c.birthYear>=0&&s.year-c.birthYear<25&&(c.education||0)<75);if(pupil){o.wealth-=6;pupil.education=Math.min(100,(pupil.education||0)+6);o.history.push({action:'education',person:pupil.id,year:s.year,month:s.month})}}
+  if(s.month===12&&relation>=10&&o.priorities.includes('infrastructure')&&o.wealth>=20&&o.works<2){o.wealth-=12;o.works++;r.supply++;recordInstitutionWork(s,o,'infrastructure')}
+  else if(s.month===12&&relation>=0&&o.priorities.includes('education')&&o.wealth>=14){const pupil=Object.values(s.world.characters).find(c=>c.alive&&c.faction===r.owner&&c.location===r.id&&!c.institutionalOnly&&c.birthYear!=null&&s.year-c.birthYear>=0&&s.year-c.birthYear<25&&(c.education||0)<75);if(pupil){o.wealth-=6;pupil.education=Math.min(100,(pupil.education||0)+6);recordInstitutionWork(s,o,'education',{person:pupil.id})}}
   // Competing civic and traditional priorities can displace the current
   // leader, but neither faction is inherently violent or conspiratorial.
   const direction=relation<0?2:-1;o.factions.civic=clamp(o.factions.civic+direction,0,100);o.factions.traditional=100-o.factions.civic;o.dispute=Math.abs(o.factions.civic-50)*2;
   const prefer=o.factions.civic>65?o.council[1]:o.factions.civic<35?o.council[0]:o.leader;
   if(prefer&&s.world.characters[prefer]?.alive)o.leader=prefer;
  }
- if(s.month===12)for(const r of s.regions){const f=s.factions[r.owner],p=r.population;if(!f||!p)continue;const hardship=(f.food<0?-0.008:0)+(p.satisfaction<35?-0.004:0),growth=0.002+hardship;p.total=Math.max(0,Math.round(p.total*(1+growth)));p.satisfaction=clamp(p.satisfaction+(f.tax==='high'?-2:f.tax==='low'?1:0)+(f.food<0?-2:0),0,100);p.householdWealth=Math.max(0,p.householdWealth+Math.floor(r.food/2)-(f.tax==='high'?2:0));const local=localInstitutions(s,r.id),total=local.reduce((n,o)=>n+o.followers,0);if(total>p.total)for(const o of local)o.followers=Math.floor(o.followers*p.total/total)}
+ if(s.month===12){for(const r of s.regions){const f=s.factions[r.owner],p=r.population;if(!f||!p)continue;const hardship=(f.food<0?-0.008:0)+(p.satisfaction<35?-0.004:0),growth=0.002+hardship;p.total=Math.max(0,Math.round(p.total*(1+growth)));p.satisfaction=clamp(p.satisfaction+(f.tax==='high'?-2:f.tax==='low'?1:0)+(f.food<0?-2:0),0,100);p.householdWealth=Math.max(0,p.householdWealth+Math.floor(r.food/2)-(f.tax==='high'?2:0));const local=localInstitutions(s,r.id),total=local.reduce((n,o)=>n+o.followers,0);if(total>p.total)for(const o of local)o.followers=Math.floor(o.followers*p.total/total)}migratePopulation(s)}
 }
