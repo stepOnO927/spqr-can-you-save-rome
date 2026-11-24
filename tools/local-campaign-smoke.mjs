@@ -47,7 +47,7 @@ try{
  await page.waitForURL(base+'/');
  await page.locator('.local-council').waitFor();
  assert.ok((await page.locator('.local-council').innerText()).includes('Completed trades'));
- const prepared=configureStartingDifficulty(newGame('caesar'),'standard',false,{localSeed:273});
+ const prepared=configureStartingDifficulty(newGame('caesar'),'standard',false,{localSeed:2});
  const preparedCity=playableLocalCities(prepared).find(entity=>entity.procedural),preparedHost=prepared.regions.find(region=>region.id===preparedCity.theater).owner;
  startLocalCampaign(prepared,preparedCity.id);assert.equal(localProtectionOffer(prepared),true);
  for(let month=0;month<3;month++)tick(prepared);

@@ -210,15 +210,11 @@ export function generatedLocalPolities(seed,difficulty,availableTheaters,startYe
  const rng={value:seed>>>0},sites=weightedOrder(seed,LOCAL_GENERATION_SITES.filter(site=>availableTheaters.has(site.theater)).map(site=>({...site,type:generatedType(site,seed)})),site=>regionProfile(site.theater).political);
  const count=Math.min(sites.length,integer({value:mixedSeed(seed,'polity-count')},...band.count)),used=new Set(),usedRulers=new Set();
  const result=[];
- const selected=[];
- const quota=count===1?[sites.find(site=>['city_state','microstate'].includes(site.type))?.type||'city_state']:
-  count===2?['city_state','microstate']:
-  count===3?['city_state','microstate','tribe']:
-  count<=5?['city_state','microstate','tribe','strongman']:
-  count<=7?['city_state','microstate','city_state','microstate','tribe','strongman']:
-  ['city_state','microstate','city_state','microstate','tribe','strongman','tribe','strongman'];
- for(const type of quota){const index=sites.findIndex(site=>site.type===type);if(index>=0)selected.push(...sites.splice(index,1))}
- selected.push(...sites.slice(0,count-selected.length));
+ // Keep one playable civic start available; every remaining slot is drawn
+ // from the geographic weights, without category quotas.
+ const firstCity=sites.findIndex(site=>site.type==='city_state');
+ if(firstCity>0)sites.unshift(...sites.splice(firstCity,1));
+ const selected=sites.slice(0,count);
  for(const site of selected){
   const localRng={value:siteSeed(seed,`${site.theater}:identity`)};
   let name,english;

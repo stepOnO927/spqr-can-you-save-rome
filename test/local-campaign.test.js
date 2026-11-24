@@ -10,7 +10,7 @@ import {importSaves} from '../save-transfer.js';
 import {localCouncilHtml} from '../local-campaign-ui.js';
 import {advanceLocalEntities,advanceLocalTrade} from '../local-polities.js';
 
-const opening=(difficulty='standard')=>{const state=configureStartingDifficulty(newGame('caesar'),difficulty,false,{localSeed:273});const city=playableLocalCities(state).find(entity=>entity.procedural);assert.ok(city);const host=state.regions.find(region=>region.id===city.theater);const owner=host.owner;startLocalCampaign(state,city.id);return {state,city,host,owner}};
+const opening=(difficulty='standard')=>{const state=configureStartingDifficulty(newGame('caesar'),difficulty,false,{localSeed:2});const city=playableLocalCities(state).find(entity=>entity.procedural);assert.ok(city);const host=state.regions.find(region=>region.id===city.theater);const owner=host.owner;startLocalCampaign(state,city.id);return {state,city,host,owner}};
 
 test('generated city is a playable site without transferring its host theater',()=>{
  const {state,city,host,owner}=opening(),f=state.factions[state.player];

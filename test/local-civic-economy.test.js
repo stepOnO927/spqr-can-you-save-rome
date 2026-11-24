@@ -64,7 +64,7 @@ test('historical and seeded generated cities start stronger and maintain valid b
  for(const id of ['massilia','generated:sicilia']){
   let priorOpening=null,priorAfter=null;
   for(const mode of ['travel','beginner','standard','hard','expert']){
-   const state=configureStartingDifficulty(newGame('caesar'),mode,false,{localSeed:11}),city=localEntity(state,id);
+   const state=configureStartingDifficulty(newGame('caesar'),mode,false,{localSeed:2}),city=localEntity(state,id);
    assert.ok(city);
    const opening={population:city.population,militia:city.militia,treasury:city.treasury,food:city.food};
    if(priorOpening)for(const key of Object.keys(opening))assert.ok(opening[key]>=priorOpening[key],`${id} ${mode} opening ${key}`);

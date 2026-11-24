@@ -29,7 +29,7 @@ test('regional weights vary seeded polity, village, and wilderness density witho
   for(const entity of wilds)hits.wilderness[entity.theater]=(hits.wilderness[entity.theater]||0)+1;
  }
  for(const values of Object.values(counts))assert.equal(values.size,2,'neighboring seeds must sample both values in each count band');
- for(const [type,values] of Object.entries(polityTypes))assert.ok(values.size>=2,`${type} count must vary between standard campaigns`);
+ for(const [type,values] of Object.entries(polityTypes)){if(type==='city_state')assert.ok(values.has(1),'every campaign needs a playable city');else assert.ok(values.has(0),`${type} must be absent in some standard campaigns`);assert.ok([...values].some(value=>value>=2),`${type} must have multiple sites in other campaigns`)}
  assert.ok(hits.political.sicilia>hits.political.africa*1.4);
  assert.ok(hits.village.achaia>hits.village.media*1.5);
  assert.ok(hits.wilderness.egyptUpper>hits.wilderness.hispaniaN);
@@ -83,18 +83,14 @@ test('one seeded microstate never weakens when difficulty rises',()=>{
 test('difficulty raises generated polity counts and coherent population, militia and resource bands',()=>{
  const modes=['travel','beginner','standard','hard','expert'];
  for(const seed of [1,42,305419896,4000000000]){
-  let previous=0,previousAnchor=null;const previousProfiles=new Map();
+  let previous=0,previousAnchor=null;const previousProfiles=new Map();let previousIds=new Set();
   for(const mode of modes){
    const s=start(mode,seed),entities=generated(s),band=LOCAL_GENERATION_BANDS[mode],anchor=s.regions.flatMap(r=>r.localEntities||[]).find(e=>e.id==='massilia');
    assert.ok(entities.length>=band.count[0]&&entities.length<=band.count[1]);assert.ok(entities.length>previous);previous=entities.length;
    assert.equal(s.world.localGeneration.count,entities.length);assert.equal(s.world.localGeneration.seed,seed);
    assert.equal(new Set(entities.map(e=>e.name[0])).size,entities.length);
-   if(entities.length===1)assert.ok(['city_state','microstate'].includes(entities[0].type));
-   if(entities.length>=2)for(const type of ['city_state','microstate'])assert.ok(entities.some(entity=>entity.type===type));
-   if(entities.length>=3)for(const type of ['city_state','microstate','tribe'])assert.ok(entities.some(entity=>entity.type===type));
-   if(entities.length>=4)assert.ok(entities.some(entity=>entity.type==='strongman'));
-   if(entities.length>=6)for(const type of ['city_state','microstate'])assert.ok(entities.filter(entity=>entity.type===type).length>=2);
-   if(entities.length>=8)for(const type of ['tribe','strongman'])assert.ok(entities.filter(entity=>entity.type===type).length>=2);
+   for(const id of previousIds)assert.ok(entities.some(entity=>entity.id===id),`${id} disappeared at ${mode}`);
+   previousIds=new Set(entities.map(entity=>entity.id));
    assert.equal(new Set(entities.map(e=>e.ruler.name[0])).size,entities.length);
    for(const e of entities){assert.equal(e.historical,false);assert.equal(e.spatialAccuracy,'fictional_approximate_point');assert.equal(e.controller,e.id);assert.ok(e.population>=e.militia*4);assert.ok(e.food>0&&e.treasury>0);assert.ok(e.strategy>=band.skill[0]&&e.strategy<=band.skill[1]);assert.ok(s.regions.some(r=>r.id===e.theater&&r.localEntities.includes(e)));assert.equal(s.world.localRulers[e.ruler.id].polityId,e.id);assert.deepEqual(s.world.localRulers[e.ruler.id].name,e.ruler.name);assert.ok(s.year-s.world.localRulers[e.ruler.id].birthYear>=28);const prior=previousProfiles.get(e.id);if(prior)for(const key of ['population','militia','treasury','food','fort','strategy'])assert.ok(e[key]>=prior[key],`${e.id} ${key} fell at ${mode}`);previousProfiles.set(e.id,e)}
    assert.equal(villages(s).length,entities.filter(e=>e.type==='strongman').length);
@@ -141,7 +137,7 @@ test('a generated independent village follows host control while retaining its l
 });
 
 test('higher council skill weighs local strength and nearby military pressure in negotiations',()=>{
- const s=start('expert',100),e=generated(s).find(entity=>entity.type==='city_state');
+ const s=start('expert',1),e=generated(s).find(entity=>entity.type==='city_state');
  e.strategy=1;e.treasury=40;
  const noPressure=localOfferChance(s,e,'caesar','protectorate');
  e.strategy=5;assert.ok(localOfferChance(s,e,'caesar','protectorate')<noPressure);
