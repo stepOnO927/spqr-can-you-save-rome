@@ -24,7 +24,7 @@ import {advanceFocuses,focusModifiers} from './national-focus.js?v=dossier-archi
 import {seedTemplates,formationCombatFactor,formationMarchDelta,formationSiegeReduction,formationUpkeepDelta,observeFormationRecon,advanceReorganizations,aiDesignFormations,aiRecruitFormation,aiReorganize,advanceCommandInfluence} from './legion-designer.js?v=dossier-archive-1';
 import {advanceBattlePlans,aiBattlePlans,planControlled} from './battle-plans.js?v=dossier-archive-1';
 import {shareAiOperation} from './operation-intelligence.js?v=operation-notices-1';
-import {makePeaceTerms,peaceOfferRegions,peaceConcessionCredit,canSettlePeaceTerms,applyPeaceTransfer} from './peace-terms.js?v=territorial-peace-1';
+import {makePeaceTerms,peaceOfferRegions,peaceConcessionCredit,canSettlePeaceTerms,applyPeaceTransfer,peaceWarIsCurrent} from './peace-terms.js?v=territorial-peace-1';
 // IMPERIUM systems are on by default. A scenario or an isolated legacy test may set
 // world.imperium.enabled=false to run the pre-expansion AI unchanged.
 const imperiumOn=s=>s.world?.imperium?.enabled!==false;
@@ -366,6 +366,7 @@ const letterMonths={senate:2,caesar:2,egypt:4,egypt_claimant:4,numidia:3,maureta
 export function inquiryCost(s,actor){return Math.max(1,3-(activeModifiers(s,actor).intelligence||0))}
 export function inquiryDuration(target){return letterMonths[target]||4}
 export function supportsCourtInquiry(target){return !!courtReports[target]}
+export function hasPendingInquiry(s,actor,target){return (s.inquiries||[]).some(x=>x.actor===actor&&x.target===target&&['pending','awaiting_decision'].includes(x.status)&&(x.subject!=='peace'||peaceWarIsCurrent(s,x)))}
 export function sendInquiry(s,actor,target,subject='leaders',{offerRegion=null}={}){
  if(!['leaders','successor','availability','representative','clashes','peace'].includes(subject)||subject==='clashes'&&!['egypt','parthia'].includes(target))return {ok:false,reason:'subject'};
  if(actor===target||!s.factions[actor]||!courtReports[target]||!s.regions.some(r=>r.owner===actor))return {ok:false,reason:'unavailable'};
@@ -375,9 +376,9 @@ export function sendInquiry(s,actor,target,subject='leaders',{offerRegion=null}=
  if(target.endsWith('_claimant')&&!s.regions.some(r=>reportedControl(s,actor,r.id)?.owner===target)&&!Object.values(s.knowledge[actor]?.[target]?.sightings||{}).some(x=>isDeliveredReport(s,x))&&!s.knowledge[actor]?.[target]?.reportedLeaders?.length)return {ok:false,reason:'unavailable'};
  const cost=inquiryCost(s,actor);
  if(s.factions[actor].treasury<cost)return {ok:false,reason:'treasury'};
- if((s.inquiries||[]).some(x=>x.actor===actor&&x.target===target&&['pending','awaiting_decision'].includes(x.status)))return {ok:false,reason:'pending'};
+ if(hasPendingInquiry(s,actor,target))return {ok:false,reason:'pending'};
  const duration=inquiryDuration(target);s.factions[actor].treasury-=cost;
- (s.inquiries||=[]).unshift({actor,target,sentYear:s.year,sentMonth:s.month,remaining:duration,duration,subject,status:'pending',source:'official court',confidence:'unverified',...(peaceTerms?{peaceTerms}:{}),...(target.endsWith('_claimant')?{targetGeneration:s.world.dynasticGenerations?.[target]||0}:{})});
+ (s.inquiries||=[]).unshift({actor,target,sentYear:s.year,sentMonth:s.month,remaining:duration,duration,subject,status:'pending',source:'official court',confidence:'unverified',...(peaceTerms?{peaceTerms}:subject==='peace'?{peaceWarGeneration:s.world.warGenerations?.[pair(actor,target)]||0}:{}),...(target.endsWith('_claimant')?{targetGeneration:s.world.dynasticGenerations?.[target]||0}:{})});
  if(actor===s.player)log(s,`A letter was sent to ${FACTIONS[target].short[0]}; a reply may take ${duration} months.`,`已向${FACTIONS[target].short[1]}寄信；等待回信约需${duration}个月。`);
  return {ok:true,duration};
 }
@@ -385,7 +386,7 @@ export function sendInquiry(s,actor,target,subject='leaders',{offerRegion=null}=
 // decision becomes effective only when the reply reaches the sender.
 export function answerPeaceOffer(s,actor,decision){
  if(!['accept','refuse'].includes(decision))return {ok:false,reason:'decision'};
- const letter=(s.inquiries||[]).find(x=>x.actor===actor&&x.target===s.player&&x.subject==='peace'&&x.status==='awaiting_decision');
+ const letter=(s.inquiries||[]).find(x=>x.actor===actor&&x.target===s.player&&x.subject==='peace'&&x.status==='awaiting_decision'&&peaceWarIsCurrent(s,x));
  if(!letter||!isWar(s,actor,s.player))return {ok:false,reason:'unavailable'};
  letter.status='pending';letter.phase='return';letter.remaining=Math.max(1,Math.floor((letter.duration||2)/2));
  letter.sealed={status:decision==='accept'?'answered':'refused',year:s.year,month:s.month,acceptedByPlayer:decision==='accept',...(decision==='accept'?{claim:['The peace offer is accepted.','接受议和提议。']}:{})};
@@ -407,6 +408,7 @@ export function answerOfficialInquiry(s,actor,subject,choice){
 function resolveInquiries(s,{autoplayPlayer=false}={}){
  for(const letter of s.inquiries||[]){
   if(letter.status==='awaiting_decision'){
+   if(letter.subject==='peace'&&!peaceWarIsCurrent(s,letter)){letter.status='no_reply';continue}
    if(letter.subject!=='peace'){if(autoplayPlayer&&letter.target===s.player){answerOfficialInquiry(s,letter.actor,letter.subject,'answer_limited');continue}if(!s.regions.some(r=>r.owner===letter.target)||--letter.remaining<=0)letter.status='no_reply';continue}
    if(autoplayPlayer&&letter.target===s.player&&isWar(s,letter.actor,letter.target)){const f=s.factions[letter.target],threat=estimatedStrength(s,letter.target,letter.actor),own=strength(s,letter.target),accept=f.stability<45||f.food<15||f.treasury<10||threat>=own*Math.max(.2,.8-2*peaceConcessionCredit(s,letter));answerPeaceOffer(s,letter.actor,accept?'accept':'refuse');continue}
    if(!isWar(s,letter.actor,letter.target)||--letter.remaining<=0)letter.status='no_reply';continue
@@ -419,7 +421,7 @@ function resolveInquiries(s,{autoplayPlayer=false}={}){
   if(!letter.sealed&&letter.remaining<=Math.floor((letter.duration||2)/2)){
    const roll=rnd(s),hostile=isWar(s,letter.actor,letter.target),rel=relation(s,letter.actor,letter.target);
    if(letter.subject==='peace'&&!autoplayPlayer&&letter.target===s.player&&letter.actor!==s.player){
-    if(roll<.18||!hostile||!s.regions.some(r=>r.owner===letter.target)){letter.status='no_reply';continue}
+    if(roll<.18||!hostile||!peaceWarIsCurrent(s,letter)||!s.regions.some(r=>r.owner===letter.target)){letter.status='no_reply';continue}
     letter.status='awaiting_decision';letter.phase='at_court';letter.remaining=6;
     log(s,`A peace offer has arrived from ${FACTIONS[letter.actor].short[0]}; your decision is needed.`,`${FACTIONS[letter.actor].short[1]}的议和书信已送达，等待你的决定。`);continue;
    }
@@ -430,7 +432,7 @@ function resolveInquiries(s,{autoplayPlayer=false}={}){
    }
    const sealed={status:'answered',year:s.year,month:s.month};
    if(roll<.18||!s.regions.some(r=>r.owner===letter.target)||(letter.target.endsWith('_claimant')&&(letter.targetGeneration??0)!==(s.world.dynasticGenerations?.[letter.target]||0)))sealed.status='no_reply';
-   else if(letter.subject==='peace'&&!hostile)sealed.status='no_reply';
+   else if(letter.subject==='peace'&&(!hostile||!peaceWarIsCurrent(s,letter)))sealed.status='no_reply';
    else if(roll<(hostile?.65-peaceConcessionCredit(s,letter):rel<0?.46:.34)||letter.subject==='peace'&&estimatedStrength(s,letter.target,letter.actor)<strength(s,letter.target)*Math.max(.2,.6-2*peaceConcessionCredit(s,letter))&&s.factions[letter.target].stability>35)sealed.status='refused';
    else{
    const current=s.world.leadership[letter.target]||[],opening=OPENING_LEADERS[letter.target]||[],claimants=s.world.claimants[letter.target]||[],subject=letter.subject||'leaders';

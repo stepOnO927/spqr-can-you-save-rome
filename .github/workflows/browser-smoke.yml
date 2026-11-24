@@ -31,6 +31,7 @@ jobs:
           node() { echo "BROWSER_CHECK: $*" >&2; command timeout 240s node "$@"; }
           case "${{ matrix.part }}" in
             1)
+              node tools/peace-war-identity-smoke.mjs
               node tools/territorial-peace-smoke.mjs
               node tools/roman-conclusion-smoke.mjs
               node tools/operation-notice-smoke.mjs

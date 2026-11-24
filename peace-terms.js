@@ -6,6 +6,13 @@ const neighbors=id=>ROUTES.filter(r=>r[0]===id||r[1]===id).map(r=>r[0]===id?r[1]
 const core=id=>({caesar:'cisalpine',senate:'roma',egypt_claimant:'egypt',parthia_claimant:'parthia'}[id]||id);
 const protectedRegion=(owner,id)=>id==='roma'||id===core(owner);
 const war=(s,a,b)=>(s.wars||[]).some(w=>w.includes(a)&&w.includes(b));
+export function peaceWarIsCurrent(s,letter){
+ if(!war(s,letter.actor,letter.target))return false;
+ const generation=letter.peaceTerms?.warGeneration??letter.peaceWarGeneration;
+ // Old term-free letters did not record a conflict identity. Preserve their
+ // legacy behavior rather than inventing a past war number from today's state.
+ return generation==null||Number.isInteger(generation)&&generation>=0&&(s.world.warGenerations?.[pair(letter.actor,letter.target)]||0)===generation;
+}
 export function peaceOfferRegions(s,actor,target){
  const own=s.regions.filter(r=>r.owner===actor);
  if(own.length<2||!war(s,actor,target))return [];
@@ -36,6 +43,7 @@ export function peaceTermsText(letter,language='en'){
 // Enforce the actual contract only at settlement. No decision or UI uses these
 // private revalidation details to infer a foreign change before delivery.
 export function canSettlePeaceTerms(s,letter){
+ if(!peaceWarIsCurrent(s,letter))return false;
  if(!letter.peaceTerms)return true;
  if(!shape(letter)||!war(s,letter.actor,letter.target))return false;
  const t=letter.peaceTerms;
