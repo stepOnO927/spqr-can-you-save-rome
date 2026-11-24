@@ -67,6 +67,12 @@ try{
  panel=page.locator('#command-detail');
  assert.match(await panel.innerText(),/ROMAN TOWN · Iguvium/);
  assert.match(await panel.innerText(),/Thermus/);
+ const auximum=page.locator('.city-marker[data-city="AUXIMUM"]');
+ await auximum.waitFor({state:'visible'});
+ await page.locator('[data-town-objective="auximum"]').evaluate(node=>node.click());
+ assert.match(await panel.innerText(),/ROMAN TOWN · Auximum/);
+ assert.match(await panel.innerText(),/Attius Varus/);
+ assert.match(await panel.innerText(),/Local control: Senate/);
  for(const [id,name] of [['ariminum','Ariminum'],['capua','Capua'],['brundisium','Brundisium']]){
   const target=page.locator(`[data-town-objective="${id}"]`);
   assert.match(await target.innerText(),new RegExp(`Secure ${name}`));
@@ -74,5 +80,5 @@ try{
   assert.match(await panel.innerText(),new RegExp(`ROMAN TOWN · ${name}`));
  }
  assert.deepEqual(errors,[]);
- console.log('Five Italian town objectives open sourced local panels; a saved Corfinium siege leaves theater control and legal title distinct.');
+ console.log('Six Italian town objectives open sourced local panels; a saved Corfinium siege leaves theater control and legal title distinct.');
 }finally{await browser.close()}

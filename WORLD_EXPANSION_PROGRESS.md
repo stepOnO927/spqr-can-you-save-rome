@@ -2,6 +2,10 @@
 
 This file tracks the four supplied specifications as one development goal. The expansion is **in progress**. A functioning slice is not a claim of world coverage.
 
+## 24 November checkpoint
+
+- Added [Auximum](https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/1A%2A.html) as a separately controlled Picene town in northern Italy with an approximate [Pleiades site point](https://pleiades.stoa.org/places/413045). Its clickable Map Lab marker and objective use the existing town expedition, submission, siege, resistance and legal-title paths without changing the host theater. The reported civic sympathy increases its chance of accepting a Caesarian submission from 60% to 80% after the existing two-month courier; the outcome still varies by campaign seed. Forces and stores are simulation values. Focused Node checks pass; hosted package and browser checks remain pending for this head.
+
 ## 23 November checkpoint
 
 - Latest review head `ee3b39e3` integrates public `main` through `9a2eaf52`. The branch retains Imperium Visual even though an intervening main commit removed it, while porting the known-rival diplomacy directory and adding the main-line browser audit of all nine player treaty controls. The focused rival/contact suite passes 10/10. [Hosted quality](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45261274833) passes **1,397/1,397**; [Pages package and three-entry browser](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45261274868), [Poki](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45261275064), [36-month browser](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45261274954) and [all three deep browser partitions](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45261274931) pass. Part 1 checks all nine player treaty types and desktop/phone visuals; part 2 confirms the reported-rival directory, saved town objective and archived political contact. The Pages package remains 339 public files, 5.15 MiB total, largest 1.06 MiB.

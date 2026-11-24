@@ -35,6 +35,14 @@ export const LOCAL_ENTITY_TEMPLATES = Object.freeze([
     initialController: 'senate', maxFootholdLevel: 3, militia: 450, fort: 0, treasury: 6, food: 8
   },
   {
+    id: 'auximum', type: 'roman_town', name: ['Auximum', '奥克西穆姆'], theater: 'italiaN',
+    coordinates: [13.47691, 43.48646], source: 'https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/1A%2A.html',
+    coordinateSource: 'https://pleiades.stoa.org/places/413045', historical: true, spatialAccuracy: 'approximate_site_point',
+    description: ['Picene town held by Attius Varus until its decurions objected to keeping Caesar outside in 49 BCE. Its point is not a theater border; local forces and stores are gameplay estimates.', '皮凯努姆城镇；公元前49年阿提乌斯·瓦鲁斯驻守此地，随后当地议员反对将凯撒拒于城外。地点标记并非战区边界；兵力与存粮为游戏估算。'],
+    initialController: 'senate', maxFootholdLevel: 3, militia: 500, fort: 0, treasury: 7, food: 9,
+    submissionAffinity: {caesar: 0.2}
+  },
+  {
     id: 'corfinium', type: 'roman_town', name: ['Corfinium', '科尔菲尼乌姆'], theater: 'italiaS',
     coordinates: [13.842185, 42.123814], source: 'https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/1A%2A.html',
     coordinateSource: 'https://pleiades.stoa.org/places/413105', historical: true, spatialAccuracy: 'approximate_site_point',
@@ -173,6 +181,9 @@ export function generateOpeningLocalPolities(state,difficulty,seed){
  if(!LOCAL_GENERATION_BANDS[difficulty])throw new Error('Invalid local generation difficulty');
  const number=seed>>>0;
  const hash=id=>[...id].reduce((value,char)=>Math.imul(value^char.charCodeAt(0),16777619)>>>0,number);
+ for(const region of state.regions)for(const entity of region.localEntities||[]){
+  if(entity.type==='roman_town')entity.seed=hash(`${entity.id}:decisions`);
+ }
  for(const id of ['massilia','bibracte','commagene']){
   const entity=localEntity(state,id);if(!entity)continue;
   const profile=historicalLocalProfile(hash(id),difficulty,entity.type,id==='massilia'?1.15:1);
@@ -533,7 +544,8 @@ export function advanceLocalEntities(state) {
       const pending=entity.pending,{actor, proposal, expectedController} = pending;
       const submission = proposal === 'submission';
       const buyer=state.factions[actor],supplyReady=proposal!=='supplies'||pending.escrow===SUPPLY_PRICE&&buyer?.food<20&&entity.food-SUPPLY_FOOD>=Math.max(4,Math.ceil((entity.population||3000)/3000))&&localTradeOpen(state,entity,actor);
-      const accepted = submission ? entity.type === 'roman_town' && entity.controller === expectedController && state.wars.some(pair => pair.includes(actor) && pair.includes(expectedController)) && host(state, entity)?.owner === actor && !entity.siege && state.armies.some(army => army.owner === actor && army.region === entity.theater && !army.move && army.men >= Math.max(1000, entity.militia)) && roll(entity) < 0.6 : entity.controller === entity.id && !entity.siege && supplyReady && roll(entity) < localOfferChance(state,entity,actor,proposal);
+      const submissionChance = Math.max(0.15, Math.min(0.85, 0.6 + (Number(entity.submissionAffinity?.[actor]) || 0)));
+      const accepted = submission ? entity.type === 'roman_town' && entity.controller === expectedController && state.wars.some(pair => pair.includes(actor) && pair.includes(expectedController)) && host(state, entity)?.owner === actor && !entity.siege && state.armies.some(army => army.owner === actor && army.region === entity.theater && !army.move && army.men >= Math.max(1000, entity.militia)) && roll(entity) < submissionChance : entity.controller === entity.id && !entity.siege && supplyReady && roll(entity) < localOfferChance(state,entity,actor,proposal);
       entity.lastOutcome = {actor, proposal, accepted, year: state.year, month: state.month,...(proposal==='supplies'?{food:accepted?SUPPLY_FOOD:0,price:accepted?SUPPLY_PRICE:0,refunded:accepted?0:pending.escrow===SUPPLY_PRICE&&buyer?SUPPLY_PRICE:0}:{})};
       entity.pending = null;
       if (accepted && proposal === 'access') entity.access[actor] = now(state) + 24;
