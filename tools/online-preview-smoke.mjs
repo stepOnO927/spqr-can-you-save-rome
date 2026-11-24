@@ -11,10 +11,12 @@ try{
  const response=await page.goto(new URL('/map-lab/',base).href,{waitUntil:'domcontentloaded',timeout:30000});
  if(response.status()!==200)throw Error(`Atlas returned ${response.status()}`);
  if((await page.title()).includes('Login – Vercel'))throw Error('Preview requires Vercel login; public browser test cannot continue');
+ console.log('Hosted atlas document loaded');
  await page.locator('#start-free').click();
  await page.locator('.maplibregl-canvas').waitFor({timeout:30000});
  await page.evaluate(async()=>{window.__spqrSmokeMap=(await import(document.querySelector('script[type="module"]').src)).map});
  await page.waitForFunction(()=>window.__spqrSmokeMap.isStyleLoaded()&&window.__spqrSmokeMap.areTilesLoaded(),null,{timeout:30000});
+ console.log('Hosted atlas sources loaded');
  const local=await page.evaluate(()=>{const map=window.__spqrSmokeMap;return {zoom:map.getZoom(),hasSea:!!map.getLayer('sea-final'),hasDetailedTerrain:!!map.getLayer('land-elevation-higher'),hasNaval:!!document.querySelector('#naval'),hasPaperGrain:map.hasImage('land-grain')||map.hasImage('sea-grain')}});
  if(!local.hasSea||!local.hasDetailedTerrain||!local.hasNaval||local.hasPaperGrain)throw Error(`Deployed branch is missing expected features or still drawing decorative grain: ${JSON.stringify(local)}`);
  const catalog=await page.evaluate(async()=>{const {IDEAS,MATERIALS,BUILDINGS}=await import('../development.js');const idea=IDEAS.find(item=>item.id==='maritime-cultural-exchange'),dam=MATERIALS.find(item=>item.id==='dam-engineering'),building=BUILDINGS.find(item=>item.id==='dam'),road=MATERIALS.find(item=>item.id==='roadmaking'),patronage=IDEAS.find(item=>item.id==='philosophical-patronage');return {english:idea?.context?.[0],chinese:idea?.context?.[1],damSource:dam?.source?.title,damEnglish:dam?.context?.[0],damChinese:dam?.context?.[1],buildingEnglish:building?.context?.[0],buildingChinese:building?.context?.[1],roadSource:road?.source?.url,patronageSource:patronage?.source?.url,reservoir:MATERIALS.find(item=>item.id==='reservoir-design')?.source?.title}});
@@ -24,10 +26,16 @@ try{
  await page.locator('#map-charting').waitFor({state:'hidden',timeout:30000});
  const terrain=await (await page.waitForFunction(()=>{const map=window.__spqrSmokeMap;const result={zoom:map.getZoom(),center:map.getCenter().toArray(),detailLoaded:map.isSourceLoaded('elevation-higher'),seaLoaded:map.isSourceLoaded('ocean')};return map.areTilesLoaded()&&result.detailLoaded&&result.seaLoaded&&Number(getComputedStyle(document.querySelector('#map')).opacity)>.99?result:false},null,{timeout:30000})).jsonValue();
  if(!terrain.detailLoaded||!terrain.seaLoaded)throw Error(`Hosted atlas tiles did not settle: ${JSON.stringify({terrain,missing:missing.slice(0,20),errors})}`);
+ console.log('Hosted Italian terrain loaded');
+ await page.evaluate(()=>window.__spqrSmokeMap.jumpTo({center:[10.7,44.8],zoom:9.05}));
+ await page.locator('#map-charting').waitFor({state:'hidden',timeout:30000});
+ const poDrainage=await (await page.waitForFunction(()=>{const map=window.__spqrSmokeMap;return map.areTilesLoaded()&&map.isSourceLoaded('po-roman-drainage')?{visible:map.getLayoutProperty('po-roman-drainage-line','visibility'),rendered:map.queryRenderedFeatures({layers:['po-roman-drainage-line']}).length}:false},null,{timeout:30000})).jsonValue();
+ if(poDrainage.visible!=='visible'||poDrainage.rendered<1)throw Error(`Hosted Roman-period Po layer did not render: ${JSON.stringify(poDrainage)}`);
+ console.log('Hosted Roman-period Po layer rendered');
  if(await page.locator('html').getAttribute('lang')!=='zh-CN')await page.locator('#language').click();
  if(await page.locator('html').getAttribute('lang')!=='zh-CN')throw Error('Chinese language switch failed');
  await page.locator('#language').click();
  if(await page.locator('html').getAttribute('lang')!=='en')throw Error('English language switch failed');
  if(errors.length||missing.length)throw Error(`Hosted atlas errors: ${JSON.stringify({errors,missing})}`);
- console.log(JSON.stringify({base,local,catalogChecked:true,terrain,errors,missing},null,2));
+ console.log(JSON.stringify({base,local,catalogChecked:true,terrain,poDrainage,errors,missing},null,2));
 }finally{await browser.close()}
