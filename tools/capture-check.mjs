@@ -10,7 +10,7 @@ try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
  await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});
  await page.locator('#start-overlay:not([hidden])').waitFor({timeout:30000});await page.locator('#start-free').click();
- await page.locator('[data-city="ROMA"]').waitFor();await page.waitForTimeout(8000);
+ await page.locator('[data-city="ROMA"]').waitFor();await page.waitForTimeout(8000);await page.evaluate(()=>document.fonts.ready);
  const library='**/html2canvas@1.4.1/**';await page.route(library,route=>route.abort());await page.locator('#capture').click();
  await page.waitForFunction(()=>document.querySelector('#status')?.textContent.includes('截图失败')&&!document.querySelector('#capture')?.disabled);
  await page.unroute(library);

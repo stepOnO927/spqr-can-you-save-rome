@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,region,isWar,sendInquiry,tick} from '../engine.js?v=audience-silence-1';
-import {startDynasticWar,resolveDynasticWars,settleDynasticWar} from '../civil-war.js?v=undated-name-1';
-import {assignSuccession} from '../characters.js?v=succession-ui-recovery-1';
-import {egyptianClaimantCandidate,advanceCharacters,contestLeadership,advanceDisputes,addReport,supportClaimant,advanceOperations,queueMission} from '../character-system.js?v=guardian-age-1';
+import {newGame,upgradeSave,region,isWar,sendInquiry,tick} from '../engine.js?v=dossier-archive-1';
+import {startDynasticWar,resolveDynasticWars,settleDynasticWar} from '../civil-war.js?v=dossier-archive-1';
+import {assignSuccession} from '../characters.js?v=dossier-archive-1';
+import {egyptianClaimantCandidate,advanceCharacters,contestLeadership,advanceDisputes,addReport,supportClaimant,advanceOperations,queueMission} from '../character-system.js?v=dossier-archive-1';
 // These tests pin pre-IMPERIUM subsystem behaviour with engineered random seeds;
 // they run with the expansion's AI layer switched off (world.imperium.enabled=false).
 const legacyIsolated=g=>{g.world.imperium={enabled:false};return g};
@@ -69,8 +69,8 @@ test('letters and missions addressed to an old claimant court do not reach a lat
 test('a prepared response can still arrive after the original claimant court falls',()=>{
  const s=legacyIsolated(newGame('caesar'));contestLeadership(s,'egypt','cleopatra');assert.equal(startDynasticWar(s,'egypt','cleopatra'),true);s.controlKnowledge.caesar.egyptUpper={owner:'egypt_claimant',year:-49,month:1,source:'travelers'};assert.equal(sendInquiry(s,'caesar','egypt_claimant').ok,true);
  // A previously composed reply is already in transit; ending the court does not erase it.
- s.inquiries[0].sealed={status:'answered',year:-49,month:1,report:{kind:'leaders',leaders:['cleopatra'],source:'official',confidence:'unverified'}};assert.equal(settleDynasticWar(s,'egypt'),true);s.world.intelSeed=1000;
- for(let i=0;i<4;i++)tick(s);assert.equal(s.inquiries[0].status,'answered');
+ const sent=s.inquiries.find(x=>x.actor==='caesar'&&x.target==='egypt_claimant');sent.sealed={status:'answered',year:-49,month:1,report:{kind:'leaders',leaders:['cleopatra'],source:'official',confidence:'unverified'}};assert.equal(settleDynasticWar(s,'egypt'),true);s.world.intelSeed=1000;
+ for(let i=0;i<4;i++)tick(s);assert.equal(sent.status,'answered');
 });
 
 test('the death of the last claimant resolves an incumbent vacancy and preserves accepted reserves',()=>{

@@ -1,8 +1,9 @@
-import {isDeliveredReport} from './person-knowledge.js?v=undated-name-1';
+import {isDeliveredReport,reportedPersonalContact} from './person-knowledge.js?v=dossier-archive-1';
 import {FACTIONS,ROUTES} from './data.js?v=phase-x-1';
-import {reportedDiplomacy} from './diplomatic-knowledge.js?v=diplomatic-chronicle-1';
-import {reportedMovements,movementReportLeaderName} from './movements.js?v=guardian-age-1';
-import {visiblePersonName} from './character-system.js?v=guardian-age-1';
+import {reportedDiplomacy} from './diplomatic-knowledge.js?v=dossier-archive-1';
+import {reportedMovements,movementReportLeaderName} from './movements.js?v=dossier-archive-1';
+import {visiblePersonName} from './character-system.js?v=dossier-archive-1';
+import {reportedControl} from './control-intelligence.js?v=dossier-archive-1';
 
 const opening=['caesar','senate','egypt','numidia','mauretania','armenia','parthia','galatia','bosporus'];
 const pair=(a,b)=>[a,b].sort().join(':');
@@ -11,9 +12,9 @@ const atWar=(s,a,b)=>s.wars.some(w=>w.includes(a)&&w.includes(b));
 const name=id=>FACTIONS[id]?.short||[id,id];
 const activeMovement=m=>!['settled','collapsed','defeated','victorious'].includes(m.stage);
 const labels={
- war:['At war','交战'],shared_threat:['Possible shared threat','可能的共同威胁'],relation:['Official relations','官方关系'],alliance:['Alliance','同盟'],agreement:['Agreement','条约'],coalition:['Coalition member','联盟成员'],opposes:['Declared concern','公开防范'],leadership:['Reported leadership','报告中的领导'],ownLeadership:['Leadership','本方领导'],office:['Own personnel','本方人员'],family:['Family tie','家族关系'],familyAccord:['Family agreement','家族协定'],patronage:['Recorded family support','已记录的家族支持'],personal:['Recorded personal relationship','已记录的私人关系'],institution:['Local institution','当地机构'],movement:['Political movement','政治运动'],suspicion:['Reported suspicion','报告中的嫌疑']
+ war:['At war','交战'],shared_threat:['Possible shared threat','可能的共同威胁'],relation:['Official relations','官方关系'],alliance:['Alliance','同盟'],agreement:['Agreement','条约'],secret_treaty:['Reported secret agreement','秘密协议报告'],coalition:['Coalition member','联盟成员'],opposes:['Declared concern','公开防范'],leadership:['Reported leadership','报告中的领导'],ownLeadership:['Leadership','本方领导'],office:['Own personnel','本方人员'],family:['Family tie','家族关系'],familyAccord:['Family agreement','家族协定'],patronage:['Recorded family support','已记录的家族支持'],personal:['Recorded personal relationship','已记录的私人关系'],institution:['Local institution','当地机构'],movement:['Political movement','政治运动'],suspicion:['Reported suspicion','报告中的嫌疑']
 };
-const kinds={non_aggression:['Non-aggression','互不侵犯'],military_access:['Military access','军事通行'],trade:['Trade','贸易'],intelligence:['Intelligence sharing','情报共享'],defensive:['Defensive agreement','防御协议'],offensive:['Offensive agreement','进攻协议'],military_support:['Wartime aid','战时援助'],political:['Political cooperation','政治合作'],guarantee:['Independence guarantee','独立保障'],full:['Alliance','同盟']};
+const kinds={neutrality:['Named-war neutrality','特定战争中立'],non_aggression:['Non-aggression','互不侵犯'],military_access:['Military access','军事通行'],trade:['Trade','贸易'],intelligence:['Intelligence sharing','情报共享'],defensive:['Defensive agreement','防御协议'],offensive:['Offensive agreement','进攻协议'],military_support:['Wartime aid','战时援助'],political:['Political cooperation','政治合作'],guarantee:['Independence guarantee','独立保障'],full:['Alliance','同盟']};
 const stages={dissatisfaction:['Dissatisfaction','不满'],organized:['Opposition','反对派'],network:['Leadership network','领导网络'],negotiation:['Confrontation','政治对峙'],crisis:['Political crisis','政治危机'],armed:['Armed conflict','武装冲突']};
 
 // Only own facts, public commitments and the observer's dated records enter
@@ -27,8 +28,10 @@ export function buildChessboard(s,viewer=s.player){
  const ownId='f:'+viewer;add(ownId,'faction',name(viewer),'confirmed',[[`Your command: treasury ${f.treasury}, food ${f.food}, stability ${f.stability}.`,`本方国库 ${f.treasury}、粮食 ${f.food}、稳定度 ${f.stability}。`]]);
  const docs=reportedDiplomacy(s,viewer).filter(d=>d.status==='active'&&!d.parties.includes(viewer));
  const factionIds=new Set(opening);for(const d of docs)for(const id of [...d.parties,d.target].filter(Boolean))factionIds.add(id);
+ const secretReports=Object.entries(s.knowledge?.[viewer]||{}).flatMap(([target,k])=>(k.reports||[]).filter(r=>r.kind==='secret_treaty'&&isDeliveredReport(s,r)&&FACTIONS[target]&&FACTIONS[r.value]&&r.value!==target&&r.value!==viewer).map(r=>({target,report:r}))).slice(0,8);
+ for(const {target,report} of secretReports){factionIds.add(target);factionIds.add(report.value)}
  for(const w of s.wars.filter(x=>x.includes(viewer)))for(const id of w)factionIds.add(id);
- for(const k of Object.values(s.controlKnowledge?.[viewer]||{}))if(k.owner&&FACTIONS[k.owner])factionIds.add(k.owner);
+ for(const id of Object.keys(s.controlKnowledge?.[viewer]||{})){const k=reportedControl(s,viewer,id);if(k?.owner&&FACTIONS[k.owner])factionIds.add(k.owner)}
  for(const id of [...factionIds].filter(id=>id!==viewer&&FACTIONS[id]).slice(0,14)){
   const relation=s.relations[pair(viewer,id)]??0,enemy=atWar(s,viewer,id),id2='f:'+id;
   add(id2,'faction',name(id),'reported',[[`Official relationship with your command: ${relation}. Other information may be old or absent.`,`与本方的官方关系：${relation}。其他情报可能过时或缺失。`]]);
@@ -44,6 +47,7 @@ export function buildChessboard(s,viewer=s.player){
  const coalitions=[...(s.coalitions||[]).filter(c=>c.status==='active'&&c.parties.includes(viewer)).map(c=>({id:c.id,kind:'coalition',parties:c.parties,leader:c.leader,target:c.target,own:true,cohesion:c.cohesion})),...docs.filter(d=>d.kind==='coalition')].slice(0,4);
  for(const c of coalitions){const cid='c:'+c.id;add(cid,'coalition',['Defensive coalition','防御联盟'],c.own?'confirmed':'reported',c.own?[[`Your coalition reports cohesion ${c.cohesion}. Members retain independent interests.`,`本方联盟的凝聚力为 ${c.cohesion}；各成员仍有独立利益。`]]:[['A public coalition report; membership and purpose may be outdated.','公开联盟报告；成员与目标可能过时。']]);for(const id of c.parties)link(cid,'f:'+id,'coalition',c.own?'confirmed':'reported',['Membership','成员'],c.own?null:{year:c.year,month:c.month});link(cid,'f:'+c.target,'opposes',c.own?'confirmed':'reported',['Declared defensive concern; not proof of imminent war.','公开防范对象；不代表即将开战。'],c.own?null:{year:c.year,month:c.month})}
  for(const d of docs.filter(x=>x.kind!=='coalition').slice(0,12)){const a='f:'+d.parties[0],b='f:'+d.parties[1],label=d.kind==='war'?['war','战争']:(kinds[d.type]||[d.type,d.type]);link(a,b,d.kind==='war'?'war':d.kind==='alliance'?'alliance':'agreement','reported',[`Public report: ${label[0]}; it may be outdated.`,`公开报告：${label[1]}；可能过时。`],{year:d.year,month:d.month})}
+ for(const {target,report:r} of secretReports){const year=r.observationYear??r.year,month=r.observationMonth??r.month;link('f:'+target,'f:'+r.value,'secret_treaty',r.confidence==='rumor'?'rumor':'reported',['A source reported a secret agreement; its terms and current status are unknown.','来源报告存在秘密协议；条款及当前状态未知。'],Number.isFinite(year)&&Number.isInteger(month)?{year,month}:null)}
  // Shared enemies suggest a possible incentive to cooperate, not a known
  // coalition or a disclosure of an actual private diplomatic proposal.
  const knownWars=[...docs.filter(d=>d.kind==='war'),...s.wars.filter(w=>w.includes(viewer)).map(parties=>({parties}))],suggested=new Set();
@@ -70,7 +74,8 @@ export function buildChessboard(s,viewer=s.player){
  const knownPeople=nodes.filter(n=>n.type==='person');const ownIds=new Set(ownPeople.map(c=>c.id));
  for(let i=0;i<knownPeople.length;i++)for(let j=i+1;j<knownPeople.length;j++){
   const a=knownPeople[i].id.slice(2),b=knownPeople[j].id.slice(2);if(!ownIds.has(a)&&!ownIds.has(b))continue;
-  const rel=s.world.personalRelations?.[pair(a,b)];if(rel&&(rel.meetings>0||ownIds.has(a)&&ownIds.has(b))&&rel.trust){const good=rel.trust>0;link('p:'+a,'p:'+b,'personal','reported',good?['Recorded contact suggests cooperation; intentions may change.','已有接触显示可能合作；意图可能改变。']:['Recorded contact suggests tension; intentions may change.','已有接触显示可能存在紧张；意图可能改变。'])}
+  if(ownIds.has(a)&&ownIds.has(b)){const rel=s.world.personalRelations?.[pair(a,b)];if(rel?.trust){const good=rel.trust>0;link('p:'+a,'p:'+b,'personal','reported',good?['Known relations suggest cooperation.','本方已知关系显示可能合作。']:['Known relations suggest tension.','本方已知关系显示可能紧张。'])}}
+  else{const own=ownIds.has(a)?a:b,other=own===a?b:a,contact=reportedPersonalContact(s,viewer,own,other);if(contact)link('p:'+a,'p:'+b,'personal','reported',['A meeting was recorded; the relationship may have changed.','曾记录一次会面；关系可能已经改变。'],{year:contact.year,month:contact.month})}
   if(ownIds.has(a)&&ownIds.has(b)){const ca=s.world.characters[a],cb=s.world.characters[b];if(ca.spouse===b||cb.spouse===a||ca.parents?.includes(b)||cb.parents?.includes(a)||ca.adoptiveParents?.includes(b)||cb.adoptiveParents?.includes(a))link('p:'+a,'p:'+b,'family','confirmed',['Recorded family relationship.','已记录的家族关系。'])}
  }
  for(const [target,k] of Object.entries(s.knowledge?.[viewer]||{}))for(const r of (k.reports||[]).filter(x=>isDeliveredReport(s,x)&&x.kind==='conspiracy'&&x.character&&age(s,x)>=0&&age(s,x)<=24).slice(0,2)){
@@ -91,7 +96,7 @@ export function buildChessboard(s,viewer=s.player){
  const loaded=ownArmies.find(a=>{const r=s.regions.find(x=>x.id===a.region);return r&&a.men>r.supply*1000});if(loaded)risks.push({level:'watch',text:['An army exceeds its theater’s listed supply limit. This is a warning, not a prediction.','一支军队超过战区列示的补给上限。这是警示而非预测。'],evidence:['Own army and theater records','本方军队与战区记录']});
  const ownReports=s.knowledge?.[viewer]?.[viewer]?.reports||[];if(ownReports.some(r=>isDeliveredReport(s,r)&&r.kind==='conspiracy'&&r.character&&age(s,r)>=0&&age(s,r)<=24))risks.push({level:'rumor',text:['An unverified internal report alleges a plot. The accusation may be wrong.','一份未经核实的内部报告声称存在阴谋；指控可能有误。'],evidence:['Dated intelligence report','有日期的情报报告']});
  if(docs.some(d=>d.kind==='coalition'&&d.target===viewer))risks.push({level:'reported',text:['A reported coalition names your command as a concern. Its current cohesion and intentions are unknown.','有报告称某联盟将本方列为防范对象；其当前凝聚力和意图未知。'],evidence:['Public coalition report; may be stale','公开联盟报告，可能过时']});
- const ownPlaces=new Set(ownRegions.map(r=>r.id)),frontier=new Set();for(const [a,b] of ROUTES){const other=ownPlaces.has(a)?b:ownPlaces.has(b)?a:null,reported=other&&s.controlKnowledge?.[viewer]?.[other]?.owner;if(reported&&reported!==viewer&&(atWar(s,viewer,reported)||(s.relations[pair(viewer,reported)]??0)<=-20))frontier.add(reported)}
+ const ownPlaces=new Set(ownRegions.map(r=>r.id)),frontier=new Set();for(const [a,b] of ROUTES){const other=ownPlaces.has(a)?b:ownPlaces.has(b)?a:null,reported=other&&reportedControl(s,viewer,other)?.owner;if(reported&&reported!==viewer&&(atWar(s,viewer,reported)||(s.relations[pair(viewer,reported)]??0)<=-20))frontier.add(reported)}
  if(frontier.size>=2)risks.push({level:'estimate',text:['Several reported frontier powers are hostile or at war with your command. They could seek cooperation, but this is not evidence of a coalition.','多个边境报告中的势力与本方敌对或交战；它们可能寻求合作，但这并非联盟已经形成的证据。'],evidence:['Own relations and dated frontier reports; control may be stale','本方关系与有日期的边境报告；控制情况可能过时']});
  const militaryAgreement=(s.agreements||[]).some(t=>t.status==='active'&&(['defensive','offensive'].includes(t.type)||t.type==='guarantee'&&(t.terms?.recipient||t.parties[1])===viewer)&&t.parties.includes(viewer)&&now<t.expiresAt&&!atWar(s,t.parties[0],t.parties[1]));
  if(!s.alliances.some(a=>a.includes(viewer))&&!coalitions.some(c=>c.own)&&!militaryAgreement)risks.push({level:'estimate',text:['Few formal military commitments are known to support your command. Isolation is possible, not inevitable.','已知支持本方的正式军事承诺较少；可能面临孤立，但并非必然。'],evidence:['Own diplomatic commitments','本方外交承诺']});

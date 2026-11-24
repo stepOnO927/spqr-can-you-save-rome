@@ -31,6 +31,10 @@ jobs:
           node() { echo "BROWSER_CHECK: $*" >&2; command timeout 240s node "$@"; }
           case "${{ matrix.part }}" in
             1)
+              node tools/peace-war-identity-smoke.mjs
+              node tools/territorial-peace-smoke.mjs
+              node tools/roman-conclusion-smoke.mjs
+              node tools/operation-notice-smoke.mjs
               node tools/poki-mobile-smoke.mjs
               node tools/short-screen-smoke.mjs
               node tools/runtime-storage-failure-smoke.mjs
@@ -38,6 +42,8 @@ jobs:
               node tools/inspector-smoke.mjs
               node tools/hundred-days-smoke.mjs
               node tools/roman-hundred-days-smoke.mjs
+              node tools/history-wheels-smoke.mjs
+              node tools/training-combat-smoke.mjs
               node tools/save-transfer-controls-smoke.mjs
               node tools/storage-denied-smoke.mjs
               node tools/travel-smoke.mjs
@@ -51,19 +57,29 @@ jobs:
               node tools/frontier-response-smoke.mjs
               node tools/player-aid-letter-smoke.mjs
               node tools/player-coalition-mail-smoke.mjs
+              node tools/focus-agreement-consent-smoke.mjs
               node tools/family-courier-smoke.mjs
+              node tools/dynastic-intelligence-contact-smoke.mjs
+              node tools/commander-name-correspondence-smoke.mjs
               node tools/family-reply-smoke.mjs
+              node tools/marriage-correspondence-smoke.mjs
               node tools/asylum-courier-smoke.mjs
               node tools/agreement-courier-smoke.mjs
+              node tools/all-agreement-types-smoke.mjs
+              node tools/military-access-effect-smoke.mjs
+              node tools/treaty-war-effects-smoke.mjs
               node tools/alliance-courier-smoke.mjs
               node tools/family-letter-name-privacy-smoke.mjs
               node tools/future-family-reports-smoke.mjs
               node tools/future-dossier-smoke.mjs
+              node tools/archived-dossier-smoke.mjs
+              node tools/archived-leadership-summary-smoke.mjs
               node tools/mission-inbox-smoke.mjs
               node tools/agent-release-mail-smoke.mjs
               node tools/conspiracy-name-smoke.mjs
               node tools/regency-tenure-smoke.mjs
               node tools/inquiry-inbox-smoke.mjs
+              node tools/incoming-official-inquiry-smoke.mjs
               node tools/meeting-observed-name-smoke.mjs
               node tools/personal-audience-mail-smoke.mjs
               node tools/player-request-aid-smoke.mjs
@@ -73,8 +89,21 @@ jobs:
               node tools/cursus-applicant-smoke.mjs
               node tools/han-court-smoke.mjs
               node tools/genealogy-dossier-smoke.mjs
+              node tools/legend-smoke.mjs
               node tools/genealogy-personal-actions-smoke.mjs
+              node tools/guardianship-playability-smoke.mjs
+              node tools/fictional-family-age-smoke.mjs
+              node tools/family-loan-visibility-smoke.mjs
+              node tools/contact-credit-privacy-smoke.mjs
+              node tools/archived-political-contact-smoke.mjs
+              node tools/claimant-diplomatic-directory-smoke.mjs
+              node tools/mission-history-smoke.mjs
+              node tools/missing-leadership-smoke.mjs
+              node tools/commander-age-uncertainty-smoke.mjs
+              node tools/claimant-aid-forces-smoke.mjs
+              node tools/cross-border-estate-smoke.mjs
               node tools/foreign-name-privacy-smoke.mjs
+              node tools/office-misdirection-privacy-smoke.mjs
               node tools/campaign-intelligence-privacy-smoke.mjs
               node tools/strategy-board-name-privacy-smoke.mjs
               node tools/authority-name-privacy-smoke.mjs
@@ -84,8 +113,11 @@ jobs:
               node tools/multipolar-smoke.mjs
               node tools/player-strategic-offer-smoke.mjs
               node tools/peace-mail-courier-smoke.mjs
+              node tools/peace-changed-circumstances-smoke.mjs
               node tools/imperium-smoke.mjs
               node tools/fort-intelligence-smoke.mjs
+              node tools/control-delivery-smoke.mjs
+              node tools/secret-treaty-smoke.mjs
               node tools/warning-ledger-smoke.mjs
               node tools/chronicle-person-smoke.mjs
               node tools/unknown-person-smoke.mjs
@@ -95,26 +127,32 @@ jobs:
               node tools/senator-portraits-smoke.mjs
               node tools/senate-record-privacy-smoke.mjs
               node tools/mail-privacy-smoke.mjs
+              node tools/mail-sender-identity-smoke.mjs
               node tools/gathering-presence-smoke.mjs
               node tools/gathering-delegate-smoke.mjs
               node tools/atlas-mail-alert-smoke.mjs
               ;;
             3)
-              node scripts/imperium-sim.mjs > imperium-simulation.json
               node tools/onboarding-smoke.mjs
+              node tools/march-planner-smoke.mjs
+              node scripts/imperium-sim.mjs > imperium-simulation.json
               node tools/systems-smoke.mjs
               node tools/intelligence-partners-smoke.mjs
+              node tools/archived-exchange-smoke.mjs
               node tools/trade-intelligence-smoke.mjs
               node tools/portrait-institutions-smoke.mjs
               node tools/legacy-identity-smoke.mjs
               node tools/safe-save-smoke.mjs
               node tools/health-succession-smoke.mjs
               node tools/succession-ui-recovery-smoke.mjs
+              node tools/roman-vacancy-smoke.mjs
               node tools/newborn-age-smoke.mjs
               node tools/born-portraits-smoke.mjs
               node tools/born-portraits-six-smoke.mjs
               node tools/born-portraits-eight-smoke.mjs
               node tools/born-portraits-nine-smoke.mjs
+              node tools/born-portraits-eleven-smoke.mjs
+              node tools/born-portraits-thirteen-smoke.mjs
               node tools/inheritance-settlement-smoke.mjs
               node tools/inheritance-privacy-smoke.mjs
               node tools/satisfaction-map-smoke.mjs
@@ -123,8 +161,12 @@ jobs:
               node tools/civic-portrait-smoke.mjs
               node tools/dossier-rumor-smoke.mjs
               node tools/captive-release-smoke.mjs
+              node tools/voluntary-agent-handover-smoke.mjs
               node tools/inquiry-price-smoke.mjs
               node tools/mission-discount-smoke.mjs
+              node tools/succession-intelligence-lead-smoke.mjs
+              node tools/reported-identity-snapshot-smoke.mjs
+              node tools/office-age-uncertainty-smoke.mjs
               node tools/merge-map-switch-smoke.mjs
               node tools/scenario-systems-smoke.mjs
               node tools/construction-smoke.mjs
@@ -140,6 +182,7 @@ jobs:
           name: browser-smoke-evidence-${{ matrix.part }}
           path: |
             browser-smoke-1920x1080.png
+            first-command-*.png
             capture-control-1920x1080.png
             map-benchmark-1920x1080.png
             leader-overview-1920x1080.png
@@ -147,3 +190,68 @@ jobs:
             multipolar-simulation.json
             server.log
 
+  typography:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright@1.64.1
+      - run: npx playwright install chromium
+      - run: |
+          node server.mjs > typography-server.log 2>&1 &
+          for i in {1..30}; do curl -fsS http://127.0.0.1:5173/ >/dev/null && break; sleep 1; done
+          timeout 240s node tools/typography-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: chinese-typography-evidence
+          path: |
+            typography-*.png
+            typography-server.log
+
+  joint-operations:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright@1.64.1
+      - run: npx playwright install chromium
+      - run: |
+          node server.mjs > joint-operations-server.log 2>&1 &
+          for i in {1..30}; do curl -fsS http://127.0.0.1:5173/ >/dev/null && break; sleep 1; done
+          timeout 240s node tools/joint-operations-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: joint-operations-evidence
+          path: |
+            joint-operations-*-1920x1080.png
+            joint-operations-server.log
+
+  neutrality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright@1.64.1
+      - run: npx playwright install chromium
+      - run: |
+          node server.mjs > neutrality-server.log 2>&1 &
+          for i in {1..30}; do curl -fsS http://127.0.0.1:5173/ >/dev/null && break; sleep 1; done
+          timeout 240s node tools/neutrality-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: neutrality-evidence
+          path: |
+            neutrality-*-1920x1080.png
+            neutrality-server.log

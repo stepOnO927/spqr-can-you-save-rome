@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=audience-silence-1';
-import {assignSuccession,knownLeaders,CHARACTER_CATALOG} from '../characters.js?v=succession-ui-recovery-1';
-import {advanceGovernments,deriveGovernment} from '../governance.js?v=guardian-age-1';
-import {queueMission,advanceOperations,reportedHealthSubjects} from '../character-system.js?v=guardian-age-1';
-import {createFictionalPerson} from '../dynasties.js?v=guardian-age-1';
+import {newGame,upgradeSave} from '../engine.js?v=dossier-archive-1';
+import {assignSuccession,knownLeaders,CHARACTER_CATALOG} from '../characters.js?v=dossier-archive-1';
+import {advanceGovernments,deriveGovernment} from '../governance.js?v=dossier-archive-1';
+import {queueMission,advanceOperations,reportedHealthSubjects} from '../character-system.js?v=dossier-archive-1';
+import {createFictionalPerson} from '../dynasties.js?v=dossier-archive-1';
 const states={armenia:'artavasdes',numidia:'juba',galatia:'deiotarus',bosporus:'pharnaces'};
 const high=Array.from({length:100000},(_,i)=>i).find(i=>((Math.imul(i,1664525)+1013904223)>>>0)/4294967296>.98);
 function setup(faction){const s=newGame('caesar'),id=states[faction];s.wars=[];s.world.characters[id].alive=false;s.world.characters[id].health='deceased';assignSuccession(s,faction);s.factions[faction].treasury=100;s.factions[faction].stability=60;s.world.dynasties.seed=1;return s}
@@ -12,7 +12,7 @@ function step(s,n=1){for(let i=0;i<n;i++){s.month++;if(s.month>12){s.month=1;s.y
 test('regional courts may recover after a delay using explicitly fictional nominees and real funds',()=>{
  for(const [faction,original] of Object.entries(states)){
   const s=setup(faction);assert.equal(deriveGovernment(s,faction).kind,'vacant');const balance=s.factions[faction].treasury;step(s,6);assert.deepEqual(s.world.leadership[faction],[]);assert.equal(s.factions[faction].treasury,balance);
-  step(s);const id=s.world.leadership[faction][0],person=s.world.characters[id];assert.match(id,/^fictional:/);assert.equal(CHARACTER_CATALOG[id].fictional,true);assert.match(CHARACTER_CATALOG[id].name[0],/^Fictional /);assert.deepEqual(person.parents,[]);assert.deepEqual(person.adoptiveParents,[]);assert.equal(s.factions[faction].treasury,balance-5);assert.equal(deriveGovernment(s,faction).kind,'normal');
+  step(s);const id=s.world.leadership[faction][0],person=s.world.characters[id];assert.match(id,/^fictional:/);assert.equal(CHARACTER_CATALOG[id].fictional,true);assert.ok(CHARACTER_CATALOG[id].regnalName?.[0]);assert.deepEqual(person.parents,[]);assert.deepEqual(person.adoptiveParents,[]);assert.equal(s.factions[faction].treasury,balance-5);assert.equal(deriveGovernment(s,faction).kind,'normal');
   const life=s.world.dynasties.lives[id];assert.ok(life.some(x=>/fictional court nominee/.test(x.en)));assert.ok(!life.some(x=>x.en==='Born in the simulated campaign.'));
   assert.deepEqual(knownLeaders(s,'caesar',faction),[original]);assert.ok(!reportedHealthSubjects(s,'caesar',faction).includes(id));assert.ok(!s.log.some(x=>x.en.includes(CHARACTER_CATALOG[id].name[0])));
  }

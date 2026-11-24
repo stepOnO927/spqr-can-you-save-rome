@@ -1,0 +1,249 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {newGame,upgradeSave,forecastEconomy,setTax,tick,estimatedStrength} from '../engine.js';
+import {receivedMail,replyToLetter,syncCoalitionLetters} from '../epistulae.js';
+import {AMBITIONS,availableAmbitions,chooseAmbition,ambitionStatus,advanceWheels,financeDecision,commanderDecision} from '../history-wheels.js';
+import {newHanGame,tick as hanTick,serialize,loadHanSave} from '../han/engine.js';
+import {available as hanAvailable,choose as hanChoose,status as hanStatus,advance as advanceHanAmbition} from '../han/ambitions.js';
+import {finalizeCampaign} from '../legacy.js';
+import {planSuccession} from '../governance.js';
+import {startFocus} from '../national-focus.js';
+import {proposeAgreement} from '../agreements.js';
+import {recommendations} from '../experience.js';
+import {sendCoalitionInvitation,advanceCoalitionInvitations,answerCoalitionInvitation} from '../coalition-negotiations.js';
+
+test('national ambitions are selected, measurable and save compatible',()=>{
+ for(const side of ['caesar','senate']){
+  const s=newGame(side);
+  assert.equal(availableAmbitions(s).includes('dynastic'),false);
+  for(const id of availableAmbitions(s)){
+   assert.ok(AMBITIONS[id].name[0]&&AMBITIONS[id].name[1]);
+   assert.equal(chooseAmbition(s,id),true);
+   const status=ambitionStatus(s);
+   assert.ok(status.title[0]&&status.progress[1]);
+   assert.equal(typeof status.done,'boolean');
+  }
+  chooseAmbition(s,'cultural');
+  assert.match(ambitionStatus(s).progress[0],side==='senate'?/\/1 cultural/:/\/2 cultural/);
+  chooseAmbition(s,'custom');
+  const saved=upgradeSave(JSON.parse(JSON.stringify(s)));
+  assert.equal(saved.historyWheels.ambition,'custom');
+  assert.equal(saved.historyWheels.changes.length,availableAmbitions(s).length+2);
+ }
+ const old=newGame('caesar');delete old.historyWheels;old.factions.caesar.treasury=37;
+ const migrated=upgradeSave(JSON.parse(JSON.stringify(old)));
+ assert.equal(migrated.factions.caesar.treasury,37);
+ assert.deepEqual(migrated.historyWheels.chains,[]);
+ const peaceful=newGame('egypt');
+ chooseAmbition(peaceful,'military');
+ assert.equal(ambitionStatus(peaceful).done,false,'starting at peace is not a military accomplishment');
+ assert.equal(peaceful.historyWheels.militaryBaseline.regions,peaceful.regions.filter(r=>r.owner==='egypt').length);
+});
+
+test('dynastic ambition requires a real eligible successor and a valid designation',()=>{
+ const egypt=newGame('egypt');
+ assert.equal(availableAmbitions(egypt).includes('dynastic'),true);
+ assert.equal(chooseAmbition(egypt,'dynastic'),true);
+ assert.equal(ambitionStatus(egypt).done,false);
+ const before=egypt.factions.egypt.treasury;
+ assert.equal(planSuccession(egypt,'arsinoe').ok,true);
+ assert.equal(egypt.factions.egypt.treasury,before-5);
+ egypt.factions.egypt.stability=65;
+ assert.equal(ambitionStatus(egypt).done,true);
+ assert.match(ambitionStatus(egypt).progress[0],/Arsino/);
+ const mauretania=newGame('mauretania');
+ assert.equal(availableAmbitions(mauretania).includes('dynastic'),false);
+});
+
+test('financial strain creates one causal chain with a real policy choice and persistent outcome',()=>{
+ const s=newGame('caesar');
+ s.factions.caesar.treasury=-20;
+ for(const a of s.armies.filter(a=>a.owner==='caesar'))a.men=30000;
+ assert.ok(forecastEconomy(s).treasury<0);
+ advanceWheels(s,{forecast:forecastEconomy});
+ s.month++;
+ advanceWheels(s,{forecast:forecastEconomy});
+ const chain=s.historyWheels.chains[0];
+ assert.ok(chain);
+ assert.equal(chain.cause.treasury,-20);
+ assert.equal(chain.cause.forecast,forecastEconomy(s).treasury);
+ assert.ok(chain.letterId);
+ assert.ok(s.world.characters[chain.senderId]?.alive);
+ const letter=s.mail.messages.find(m=>m.id===chain.letterId);
+ letter.delivery='received';letter.arrival=s.year*12+s.month;
+ assert.equal(replyToLetter(s,letter.id,'finance_high_tax',{setTax,financeDecision}).ok,true);
+ assert.equal(s.factions.caesar.tax,'high');
+ assert.equal(chain.response,'finance_high_tax');
+ assert.equal(chain.events[1].parentId,chain.events[0].id);
+ assert.equal(receivedMail(s).find(m=>m.id===letter.id).responses.length,1);
+ const saved=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.equal(saved.historyWheels.chains[0].id,chain.id);
+ assert.equal(saved.historyWheels.chains[0].response,'finance_high_tax');
+ tick(saved);
+ assert.ok(saved.historyWheels.chains.length===1);
+ assert.ok(saved.historyWheels.chains[0].events.length>=3);
+});
+
+test('long campaigns do not duplicate active financial chains',()=>{
+ for(const side of ['caesar','senate']){
+  const s=newGame(side);chooseAmbition(s,'economic');
+  for(let i=0;i<120;i++)tick(s);
+  const ids=s.historyWheels.chains.map(c=>c.id);
+  assert.equal(new Set(ids).size,ids.length);
+  assert.ok(s.historyWheels.chains.every(c=>c.status!=='active'||c.events.length>0));
+  assert.ok(s.historyWheels.chains.length<=10);
+ }
+});
+
+test('a battle-tested commander petitions through the real loyalty and treasury rules',()=>{
+ const s=newGame('caesar');
+ const unit=s.armies.find(a=>a.id==='viii');
+ const officer=s.world.characters.antony;unit.characterId=officer.id;officer.location=unit.region;
+ officer.battlesCommanded=2;officer.loyalty=35;
+ s.month++;advanceWheels(s,{forecast:forecastEconomy});
+ const chain=s.historyWheels.chains.find(c=>c.type==='commander_petition');
+ assert.ok(chain);assert.equal(chain.cause.armyId,unit.id);assert.equal(chain.characterId,officer.id);
+ assert.ok(s.log.some(e=>e.eventId===chain.events[0].id&&e.kind==='character'&&e.characterId===officer.id));
+ const letter=s.mail.messages.find(m=>m.id===chain.letterId);
+ assert.ok(letter);assert.equal(letter.senderId,officer.id);
+ letter.delivery='received';letter.arrival=s.year*12+s.month;
+ const treasury=s.factions[s.player].treasury;
+ assert.equal(replyToLetter(s,letter.id,'commander_reassure',{commanderDecision}).ok,true);
+ assert.equal(s.factions[s.player].treasury,treasury-8);
+ assert.equal(officer.loyalty,50);
+ assert.equal(chain.response,'commander_reassure');
+ const restored=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.equal(restored.historyWheels.chains.find(c=>c.id===chain.id).characterId,officer.id);
+ restored.month++;advanceWheels(restored,{forecast:forecastEconomy});
+ assert.ok(restored.historyWheels.chains.find(c=>c.id===chain.id).reviewedAt);
+ restored.victory=true;
+ const archive=finalizeCampaign(restored).archive;
+ assert.equal(archive.causalChains.find(c=>c.id===chain.id).characterName[1],'马尔库斯·安东尼');
+ assert.ok(archive.causalChains.find(c=>c.id===chain.id).territoryName);
+});
+
+test('Han and a small western state use distinct ambitions and preserve them through 36 months',()=>{
+ for(const side of ['han','shanshan']){
+  const s=newHanGame(side,{seed:49});
+  assert.equal(hanAvailable(s).includes('dynasty'),side==='han');
+  assert.equal(hanChoose(s,side==='han'?'dynasty':'independence'),true);
+  for(let i=0;i<36;i++)hanTick(s);
+  const restored=loadHanSave(serialize(s));
+  assert.equal(restored.nationalAmbition.id,side==='han'?'dynasty':'independence');
+  assert.equal(typeof hanStatus(restored).done,'boolean');
+  assert.ok(hanStatus(restored).title[1]);
+ }
+});
+
+test('official Roman finalization archives ambition changes and observed causal links',()=>{
+ const s=newGame('caesar');chooseAmbition(s,'economic');chooseAmbition(s,'diplomatic');
+ s.victory=true;
+ const result=finalizeCampaign(s);
+ assert.equal(result.ok,true);
+ assert.equal(result.archive.nationalAmbition.id,'diplomatic');
+ assert.equal(result.archive.nationalAmbition.changes.length,2);
+ assert.deepEqual(result.archive.causalChains,[]);
+});
+
+test('diplomatic history follows the existing courier, independent replies and player knowledge',()=>{
+ const s=newGame('caesar');
+ s.relations['caesar:egypt']=40;s.relations['egypt:numidia']=40;s.relations['egypt:senate']=-30;s.relations['numidia:senate']=-30;
+ s.world.diplomaticKnowledge.egypt={caesar:{id:'caesar',status:'active',parties:['egypt','caesar']},numidia:{id:'numidia',status:'active',parties:['egypt','numidia']}};
+ assert.equal(sendCoalitionInvitation(s,'egypt',['caesar','numidia'],'senate').ok,true);
+ advanceWheels(s,{forecast:forecastEconomy});
+ assert.equal(s.historyWheels.chains.length,0,'a sealed foreign invitation is not yet player knowledge');
+ const step=()=>{s.month++;advanceCoalitionInvitations(s,estimatedStrength,()=>.5);syncCoalitionLetters(s);advanceWheels(s,{forecast:forecastEconomy})};
+ step();assert.equal(s.historyWheels.chains.length,0);
+ step();
+ const chain=s.historyWheels.chains.find(c=>c.type==='coalition_history');
+ assert.ok(chain);assert.equal(chain.status,'active');assert.equal(chain.events.length,1);
+ const letter=receivedMail(s).find(m=>m.context?.kind==='coalition_offer');
+ assert.ok(letter);assert.equal(replyToLetter(s,letter.id,'accept_coalition',{answerCoalitionInvitation}).ok,true);
+ step();assert.equal(chain.response,'accepted');assert.equal(chain.status,'active');
+ step();assert.equal(chain.status,'active','a provisional foreign reply is still hidden');
+ step();step();
+ assert.equal(chain.status,'accepted');assert.ok(chain.coalitionId);assert.equal(chain.events.length,3);
+ assert.equal(chain.events[1].parentId,chain.events[0].id);
+ const restored=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.equal(restored.historyWheels.chains.find(c=>c.id===chain.id).coalitionId,chain.coalitionId);
+ restored.victory=true;
+ assert.ok(finalizeCampaign(restored).archive.causalChains.some(c=>c.id===chain.id&&c.factions.includes('egypt')));
+});
+
+test('Han continuity ambitions need an unbroken record and preserve older milestones',()=>{
+ const step=s=>{s.month++;if(s.month>12){s.month=1;s.year++}advanceHanAmbition(s)};
+ const han=newHanGame('han',{seed:91});
+ assert.equal(hanChoose(han,'dynasty'),true);han.factions.han.stability=80;
+ assert.equal(hanStatus(han).done,false);
+ const chosen={...han.nationalAmbition.chosenAt};
+ assert.equal(hanChoose(han,'dynasty'),true);
+ assert.deepEqual(han.nationalAmbition.chosenAt,chosen,'reselecting a goal must not restart its clock');
+ for(let i=0;i<5;i++)step(han);
+ han.factions.han.stability=20;step(han);
+ assert.match(hanStatus(han).progress[0],/0\/36 months/);
+ han.factions.han.stability=80;
+ for(let i=0;i<35;i++)step(han);
+ assert.equal(hanStatus(han).done,false);
+ step(han);assert.equal(hanStatus(han).done,true);
+ const restored=loadHanSave(serialize(han));
+ assert.equal(hanStatus(restored).done,true);
+ const oasis=newHanGame('shanshan',{seed:91});
+ hanChoose(oasis,'independence');oasis.factions.shanshan.stability=80;
+ assert.equal(hanStatus(oasis).done,false);
+ for(let i=0;i<24;i++)step(oasis);
+ assert.equal(hanStatus(oasis).done,true);
+ const legacy=newHanGame('shanshan',{seed:91});
+ hanChoose(legacy,'independence');delete legacy.nationalAmbition.version;
+ legacy.experience||={};legacy.experience.milestones=[{id:'ambition:independence'}];
+ assert.equal(hanStatus(legacy).done,true,'older earned milestones must remain earned');
+});
+
+test('economic ambition requires a real investment after selection while older saves keep progress',()=>{
+ const s=newGame('egypt');chooseAmbition(s,'economic');
+ s.factions.egypt.treasury=120;for(const r of s.regions.filter(r=>r.owner==='egypt'))r.loyalty=65;
+ assert.equal(ambitionStatus(s).done,false,'natural treasury growth alone is not a completed project');
+ assert.ok(recommendations(s).some(r=>r.id==='economic_project'&&r.target.kind==='focus'),'guidance should open a real prerequisite project');
+ assert.equal(startFocus(s,'egypt','egy_house_ptolemy').ok,true);
+ for(let i=0;i<2;i++)tick(s);
+ assert.equal(startFocus(s,'egypt','egy_nile_administration').ok,true);
+ for(let i=0;i<4;i++)tick(s);
+ s.factions.egypt.treasury=120;for(const r of s.regions.filter(r=>r.owner==='egypt'))r.loyalty=65;
+ assert.equal(ambitionStatus(s).done,true,'a completed economic focus counts');
+ assert.equal(ambitionStatus(upgradeSave(JSON.parse(JSON.stringify(s)))).done,true);
+ const trade=newGame('egypt');chooseAmbition(trade,'economic');
+ trade.relations['egypt:parthia']=80;
+ assert.equal(proposeAgreement(trade,'egypt','parthia','trade').ok,true);
+ trade.factions.egypt.treasury=120;for(const r of trade.regions.filter(r=>r.owner==='egypt'))r.loyalty=65;
+ assert.equal(ambitionStatus(trade).done,true,'a newly concluded active trade agreement counts');
+ const old=newGame('egypt');chooseAmbition(old,'economic');delete old.historyWheels.economicBaseline;
+ old.factions.egypt.treasury=120;for(const r of old.regions.filter(r=>r.owner==='egypt'))r.loyalty=65;
+ assert.equal(ambitionStatus(old).done,true,'old saves retain the earlier goal rule');
+});
+
+test('changing national ambition has a visible political cost while first choice is free',()=>{
+ const roman=newGame('egypt'),f=roman.factions.egypt;
+ const initial={stability:f.stability,legitimacy:f.legitimacy};
+ assert.equal(chooseAmbition(roman,'military'),true);
+ assert.equal(f.stability,initial.stability);assert.equal(f.legitimacy,initial.legitimacy);
+ assert.equal(chooseAmbition(roman,'economic'),true);
+ assert.equal(f.stability,Math.max(0,initial.stability-3));
+ assert.equal(f.legitimacy,Math.max(0,initial.legitimacy-2));
+ assert.deepEqual(roman.historyWheels.changes.at(-1).cost,{stability:3,legitimacy:2});
+ assert.match(roman.log[0].en,/administrative disruption/);
+ assert.match(roman.log[0].zh,/稳定度降低3/);
+ const after={stability:f.stability,legitimacy:f.legitimacy,count:roman.historyWheels.changes.length};
+ assert.equal(chooseAmbition(roman,'economic'),true);
+ assert.deepEqual({stability:f.stability,legitimacy:f.legitimacy,count:roman.historyWheels.changes.length},after);
+ assert.equal(chooseAmbition(roman,'custom',{metric:'treasury',target:100}),true);
+ const customCount=roman.historyWheels.changes.length,customStability=f.stability;
+ assert.equal(chooseAmbition(roman,'custom',{metric:'treasury',target:100}),true);
+ assert.equal(roman.historyWheels.changes.length,customCount);
+ assert.equal(f.stability,customStability);
+ assert.equal(upgradeSave(JSON.parse(JSON.stringify(roman))).historyWheels.changes.at(-1).cost.stability,3);
+ const han=newHanGame('han'),court=han.factions.han,opening=court.stability;
+ assert.equal(hanChoose(han,'frontier'),true);assert.equal(court.stability,opening);
+ assert.equal(hanChoose(han,'reform'),true);assert.equal(court.stability,Math.max(0,opening-3));
+ assert.deepEqual(han.nationalAmbition.changes.at(-1).cost,{stability:3});
+ const changed=court.stability;assert.equal(hanChoose(han,'reform'),true);assert.equal(court.stability,changed);
+ assert.equal(loadHanSave(serialize(han)).nationalAmbition.changes.at(-1).cost.stability,3);
+});

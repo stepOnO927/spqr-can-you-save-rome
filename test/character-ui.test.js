@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=audience-silence-1';
-import {createCharacterUI} from '../map-lab/character-ui.js?v=audience-silence-1';
-import {addReport} from '../character-system.js?v=guardian-age-1';
-import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=audience-silence-1';
-import {createFictionalPerson} from '../dynasties.js?v=guardian-age-1';
+import {newGame,upgradeSave} from '../engine.js?v=dossier-archive-1';
+import {createCharacterUI} from '../map-lab/character-ui.js?v=dossier-archive-1';
+import {addReport} from '../character-system.js?v=dossier-archive-1';
+import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=dossier-archive-1';
+import {createFictionalPerson} from '../dynasties.js?v=dossier-archive-1';
 
 // A small DOM stub exercises the real handler without requiring a network listener.
 // It does not replace a browser or layout test.
@@ -165,8 +165,8 @@ test('a reported claimant can be contacted through the diplomacy panel',()=>{
  try{const ui=createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{},onStateChanged:()=>refreshed++});ui.addMissions(content,'egypt');const box=content.children[2],cash=s.factions.senate.treasury;assert.match(box.innerHTML,/报告可能过时或错误/);box.querySelector('#claimant-support').onclick();box.querySelector('#claimant-feedback').children[0].onclick();assert.equal(s.factions.senate.treasury,cash-10);assert.equal(s.operations[0].type,'support');assert.equal(s.operations[0].remaining,4);assert.equal(refreshed,1)}finally{globalThis.document=prior}
 });
 test('claimant support exposes only the player’s established personal contacts',()=>{
- const prior=globalThis.document,s=newGame('senate'),content=new Element();addReport(s,'senate','egypt',{kind:'claimants',leaders:['cleopatra','ptolemy'],source:'spy',confidence:'unverified'});s.world.personalRelations['cicero:cleopatra']={trust:15,meetings:3};s.world.personalRelations['antony:cleopatra']={trust:50,meetings:1};globalThis.document={createElement:tag=>new Element(tag)};
- try{createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}}).addMissions(content,'egypt');const box=content.children[2],choice=box.querySelector('#claimant-choice'),representative=box.querySelector('#claimant-representative');assert.match(representative.innerHTML,/西塞罗 · 信任 15/);assert.doesNotMatch(representative.innerHTML,/安东尼/);choice.value='ptolemy';choice.onchange();assert.doesNotMatch(representative.innerHTML,/西塞罗/);choice.value='cleopatra';choice.onchange();representative.value='cicero';box.querySelector('#claimant-support').onclick();box.querySelector('#claimant-feedback').children[0].onclick();assert.equal(s.operations[0].representative,'cicero');assert.equal(s.operations[0].remaining,4)}finally{globalThis.document=prior}
+ const prior=globalThis.document,s=newGame('senate'),content=new Element();addReport(s,'senate','egypt',{kind:'claimants',leaders:['cleopatra','ptolemy'],source:'spy',confidence:'unverified'});s.world.personalRelations['cicero:cleopatra']={trust:15,meetings:3};s.world.personalRelations['antony:cleopatra']={trust:50,meetings:1};s.meetings.push({actor:'senate',targetFaction:'egypt',person:'cicero',target:'cleopatra',status:'met',year:s.year,month:s.month,contactCredit:3});globalThis.document={createElement:tag=>new Element(tag)};
+ try{createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}}).addMissions(content,'egypt');const box=content.children[2],choice=box.querySelector('#claimant-choice'),representative=box.querySelector('#claimant-representative');assert.match(representative.innerHTML,/西塞罗 · 已记录联系 3\/10/);assert.doesNotMatch(representative.innerHTML,/安东尼/);choice.value='ptolemy';choice.onchange();assert.doesNotMatch(representative.innerHTML,/西塞罗/);choice.value='cleopatra';choice.onchange();representative.value='cicero';box.querySelector('#claimant-support').onclick();box.querySelector('#claimant-feedback').children[0].onclick();assert.equal(s.operations[0].representative,'cicero');assert.equal(s.operations[0].remaining,4)}finally{globalThis.document=prior}
 });
 test('a held agent can be sent a release request from the diplomacy panel',()=>{
  const prior=globalThis.document,s=newGame('senate'),content=new Element();s.world.captives.push({id:'p1',owner:'senate',holder:'egypt',state:'held'});let refreshed=0;globalThis.document={createElement:tag=>new Element(tag)};
@@ -315,12 +315,16 @@ test('envoy relation missions explain the delayed diplomatic benefit before conf
  try{createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}}).addMissions(content,'egypt');const box=content.children[0],subject=box.querySelector('#mission-subject');assert.match(box.innerHTML,/改善关系（仅使者）/);subject.value='relations';box.missions.find(x=>x.dataset.mission==='envoy').onclick();const feedback=box.querySelector('#mission-feedback');assert.match(feedback.textContent,/双方关系最多提高8/);assert.match(feedback.textContent,/可能拒绝/);feedback.children[0].onclick();assert.equal(s.operations[0].subject,'relations');assert.equal(s.operations[0].type,'envoy');assert.ok(s.operations[0].remaining>=3)}finally{globalThis.document=prior}
 });
 
-test('personal trust displays complete fictional IDs and hides foreign-only relationships after loading',()=>{
+test('character dossiers show own trust and dated foreign contact without hidden live trust',()=>{
  const prior=globalThis.document,panel=new Element();let s=newGame('caesar');
  s.world.personalRelations={'fictional:1:fictional:2':{trust:41,meetings:2},'fictional:1:fictional:3':{trust:23,meetings:1},'fictional:3:fictional:4':{trust:88,meetings:3}};
  s=upgradeSave(JSON.parse(JSON.stringify(s)));globalThis.document={querySelector:()=>panel,createElement:tag=>new Element(tag)};
- try{const ui=createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}});ui.show('fictional:1');let html=panel.children.map(x=>x.innerHTML).join('');assert.match(html,/莉维娅·玛尔基娅: 41/);assert.match(html,/姓名未记录: 23/);
-  panel.children=[];ui.show('fictional:3');html=panel.children.map(x=>x.innerHTML).join('');assert.match(html,/普布利乌斯·瓦雷努斯: 23/);assert.doesNotMatch(html,/: 88/);
+ try{const ui=createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}});ui.show('fictional:1');let html=panel.children.map(x=>x.innerHTML).join('');assert.match(html,/莉维娅·玛尔基娅: 41/);assert.doesNotMatch(html,/: 23/);
+  panel.children=[];ui.show('fictional:3');html=panel.children.map(x=>x.innerHTML).join('');assert.doesNotMatch(html,/: 23|: 88/);
+  s.meetings.push({actor:'caesar',targetFaction:'senate',person:'fictional:1',target:'fictional:3',status:'met',year:s.year,month:s.month,contactCredit:2});
+  panel.children=[];ui.show('fictional:3');const recorded=panel.children.map(x=>x.innerHTML).join('');assert.match(recorded,/普布利乌斯·瓦雷努斯/);assert.match(recorded,/联系加成 2\/10/);assert.doesNotMatch(recorded,/: 23|: 88/);
+  s.world.personalRelations['fictional:1:fictional:3']={trust:99,meetings:999};s.meetings.push({actor:'caesar',targetFaction:'senate',person:'fictional:1',target:'fictional:3',status:'met',year:s.year+1,month:s.month,contactCredit:9});
+  panel.children=[];ui.show('fictional:3');html=panel.children.map(x=>x.innerHTML).join('');assert.equal(html,recorded);
  }finally{globalThis.document=prior}
 });
 
@@ -416,4 +420,10 @@ test('reported claimants can be opened directly from the intelligence report',()
 test('foreign character dossiers distinguish rumors from unverified reports and retain staleness',()=>{
  const prior=globalThis.document,s=newGame('senate');addReport(s,'senate','egypt',{kind:'location',character:'cleopatra',value:'egypt',source:'travelers',confidence:'rumor'});addReport(s,'senate','egypt',{kind:'stance',character:'cleopatra',value:'guarded',source:'meeting',confidence:'rumor'});
  try{for(const language of ['zh','en']){const panel=new Element();globalThis.document={querySelector:()=>panel,createElement:tag=>new Element(tag)};const ui=createCharacterUI({getState:()=>s,getLanguage:()=>language,inspect:()=>{}});ui.show('cleopatra');let html=panel.children.find(x=>x.className==='help-list').innerHTML;const label=language==='zh'?'传闻':'Rumor';assert.equal((html.match(new RegExp(label,'g'))||[]).length,2);assert.doesNotMatch(html,language==='zh'?/商旅 · [^<]*未经核实/:/Travelers · [^<]*Unverified/);s.year+=3;panel.children=[];ui.show('cleopatra');html=panel.children.find(x=>x.className==='help-list').innerHTML;assert.equal((html.match(new RegExp(language==='zh'?'情报过期':'Outdated','g'))||[]).length,2);s.year-=3}}finally{globalThis.document=prior}
+});
+
+
+test('mission history keeps active operations and reports visible while limiting older rows',()=>{
+ const prior=globalThis.document,s=newGame('caesar'),content=new Element();s.operations=Array.from({length:35},(_,i)=>({id:'old-'+i,actor:'caesar',target:'egypt',type:'spy',subject:'strength',status:'complete',resolvedYear:s.year,resolvedMonth:s.month}));s.operations.push({id:'active',actor:'caesar',target:'egypt',type:'envoy',subject:'leaders',status:'pending',remaining:2});addReport(s,'caesar','egypt',{kind:'stability',value:'stable',source:'spy'});globalThis.document={createElement:tag=>new Element(tag),querySelector:()=>new Element()};
+ try{createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}}).addMissions(content,'egypt');const html=content.children[0].querySelector('#mission-records').innerHTML;assert.match(html,/data-operation-id="active"/);assert.equal((html.match(/data-operation-status="complete"/g)||[]).length,10);assert.match(html,/显示更早行动 · 25/);assert.match(html,/政治稳定度估计/);assert.equal(s.operations.length,36)}finally{globalThis.document=prior}
 });

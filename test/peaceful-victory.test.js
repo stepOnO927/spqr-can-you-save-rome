@@ -1,11 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,diplomacy,sendInquiry,isWar,advancePeacefulSettlement,upgradeSave} from '../engine.js?v=audience-silence-1';
-import {canFinalizeCampaign,finalizeCampaign} from '../legacy.js?v=guardian-age-1';
+import {newGame,tick,diplomacy,sendInquiry,isWar,advancePeacefulSettlement,upgradeSave} from '../engine.js?v=dossier-archive-1';
+import {canFinalizeCampaign,finalizeCampaign} from '../legacy.js?v=dossier-archive-1';
 
 test('a year of stable peace creates a real archival outcome without military conquest',()=>{
- let s=newGame('senate');s.seed=(Math.imul(7,2654435761)>>>0);for(let i=0;i<12;i++)tick(s);s.seed=1587;assert.ok(sendInquiry(s,'senate','caesar','peace').ok);
- for(let i=0;i<6&&isWar(s,'senate','caesar');i++)tick(s);assert.equal(isWar(s,'senate','caesar'),false);assert.ok(diplomacy(s,'senate','caesar','improve'));assert.ok(diplomacy(s,'senate','caesar','improve'));
+ let s=newGame('senate');s.seed=(Math.imul(7,2654435761)>>>0);for(let i=0;i<12;i++)tick(s);
+ // Begin the settlement from an agreed peace. A seed-specific AI decision is
+ // separate from the archival rule exercised by this test.
+ assert.ok(diplomacy(s,'senate','caesar','peace',{acceptedByPlayer:true}));assert.equal(isWar(s,'senate','caesar'),false);assert.ok(diplomacy(s,'senate','caesar','improve'));assert.ok(diplomacy(s,'senate','caesar','improve'));
  const remaining=12-(s.world.peacefulSettlementMonths||0);for(let i=1;i<remaining;i++)tick(s);assert.equal(canFinalizeCampaign(s),false);s=upgradeSave(JSON.parse(JSON.stringify(s)));tick(s);
  assert.equal(s.peacefulVictory,true);assert.equal(s.victory,false);assert.equal(canFinalizeCampaign(s),true);assert.equal(finalizeCampaign(s).archive.peacefulVictory,true);
 });

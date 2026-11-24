@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=audience-silence-1';
-import {requestAgentRelease,advanceAgentRequests,answerAgentRelease} from '../character-system.js?v=guardian-age-1';
-import {syncAgentReleaseLetters,receivedMail,replyToLetter} from '../epistulae.js?v=guardian-age-1';
-import {mailboxHtml} from '../mail-ui.js?v=guardian-age-1';
+import {newGame,upgradeSave} from '../engine.js?v=dossier-archive-1';
+import {requestAgentRelease,advanceAgentRequests,answerAgentRelease} from '../character-system.js?v=dossier-archive-1';
+import {syncAgentReleaseLetters,receivedMail,replyToLetter} from '../epistulae.js?v=dossier-archive-1';
+import {mailboxHtml} from '../mail-ui.js?v=dossier-archive-1';
 const actions={answerAgentRelease};
 function setup(seed){const s=newGame('caesar');s.world.captives.push({id:'agent1',owner:'senate',holder:'caesar',state:'held'});assert.equal(requestAgentRelease(s,'senate','agent1').ok,true);advanceAgentRequests(s);s.world.intelSeed=seed;advanceAgentRequests(s);syncAgentReleaseLetters(s);return s}
 const letters=s=>receivedMail(s).filter(m=>m.context?.kind==='agent_release_request');
@@ -22,4 +22,8 @@ test('a decision from the security panel closes the same letter, and an old requ
 });
 test('ignoring a delivered request sends no response and it eventually expires',()=>{
  const s=setup(1000),m=letters(s)[0];assert.equal(replyToLetter(s,m.id,'ignore',actions).ok,true);assert.equal(s.releaseRequests[0].status,'awaiting_decision');assert.equal(s.mail.messages.filter(x=>x.threadId===m.threadId).length,1);for(let i=0;i<6;i++)advanceAgentRequests(s);assert.equal(s.releaseRequests[0].status,'no_reply');assert.equal(s.world.captives[0].state,'held');
+});
+
+test('an institutional agent request does not reveal a hidden Roman leader',()=>{
+ const s=newGame('senate');s.world.captives.push({id:'foreign-roman',owner:'caesar',holder:'senate',state:'held'});s.world.leadership.caesar=['antony'];s.world.characters.caesar.alive=false;s.world.characters.caesar.health='deceased';assert.equal(requestAgentRelease(s,'caesar','foreign-roman').ok,true);advanceAgentRequests(s);s.world.intelSeed=1000;advanceAgentRequests(s);syncAgentReleaseLetters(s);const m=letters(s)[0];assert.ok(m);assert.equal(m.senderId,null);assert.deepEqual(m.senderName,['Caesarian command','凯撒派军队']);
 });

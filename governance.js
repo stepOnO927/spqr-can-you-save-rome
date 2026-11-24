@@ -1,17 +1,18 @@
-import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=undated-name-1';
-import {initializeWorld,successorFor,CHARACTER_CATALOG,ageRange,successionModel,assignSuccession,mauretanianSeatHolders} from './characters.js?v=succession-ui-recovery-1';
-import {recordLifeEvent,dynastyRoll,personAge,isKnownAdult,createFictionalPerson} from './dynasties.js?v=guardian-age-1';
+import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=dossier-archive-1';
+import {initializeWorld,successorFor,CHARACTER_CATALOG,characterAgeRange,successionModel,assignSuccession,mauretanianSeatHolders} from './characters.js?v=dossier-archive-1';
+import {recordLifeEvent,dynastyRoll,personAge,isKnownAdult,createFictionalPerson} from './dynasties.js?v=dossier-archive-1';
 import {FACTIONS} from './data.js?v=phase-x-1';
-import {startDynasticWar} from './civil-war.js?v=undated-name-1';
+import {startDynasticWar} from './civil-war.js?v=dossier-archive-1';
+import {courtNomineeName,recordLegendEvidence} from './legend.js?v=dossier-archive-1';
 
 const unable=c=>!c?.alive||!!c.missing||['seriously_ill','dying','deceased'].includes(c.health);
 const roman=faction=>faction==='caesar'||faction==='senate';
 // Sixteen is a simulation threshold, not a historical claim about when a
 // particular court recognized majority. Uncertain ages are not forced into it.
 const republican=(s,faction)=>roman(faction)&&successionModel(faction,s)==='republican_command';
-const definitelyMinor=(s,faction,id)=>{const age=ageRange(id,s.year);return !republican(s,faction)&&age!==null&&age[1]<16};
+const definitelyMinor=(s,faction,id)=>{const age=characterAgeRange(s,id);return !republican(s,faction)&&age!==null&&age[1]<16};
 // A possible minor is not appointed as a temporary deputy when age is uncertain.
-const possiblyMinor=(s,faction,id)=>{const age=ageRange(id,s.year);return !republican(s,faction)&&age!==null&&age[0]<16};
+const possiblyMinor=(s,faction,id)=>{const age=characterAgeRange(s,id);return !republican(s,faction)&&age!==null&&age[0]<16};
 // A deputy must be reachable in a controlled theater. A location stored on a
 // marching army is its last theater, not the person's present location.
 export const eligibleDeputies=(s,faction)=>successorFor(s,faction).filter(id=>{
@@ -24,7 +25,7 @@ export const eligibleDeputies=(s,faction)=>successorFor(s,faction).filter(id=>{
 
 // This describes the simulated arrangement, not a historical medical or constitutional claim.
 export function deriveGovernment(s,faction){
- initializeWorld(s);const nominal=(s.world.leadership[faction]||[]).filter(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction);
+ initializeWorld(s);const nominal=(s.world.leadership[faction]||[]).filter(id=>(s.world.characters[id]?.alive||s.world.characters[id]?.missing)&&s.world.characters[id].faction===faction);
  // These are separate kingdoms represented by one campaign faction. Never
  // invent a single shared regency, even if both kings are absent or dead.
  if(faction==='mauretania'){
@@ -51,6 +52,7 @@ export function reformRomanGovernment(s,target){
  const cost=target==='roman_principate'?35:45;if(f.treasury<cost)return {ok:false,reason:'treasury'};
  f.treasury-=cost;f.stability=Math.max(0,f.stability-5);s.world.romanRegimes||={};s.world.romanRegimes[faction]=target;
  s.world.romanReforms||=[];s.world.romanReforms.push({faction,target,year:s.year,month:s.month,simulated:true});
+ const ruler=(s.world.leadership[faction]||[]).find(id=>s.world.characters[id]?.alive);if(ruler)recordLegendEvidence(s,ruler,'reform',{reference:`roman-reform:${target}:${s.year}:${s.month}`,audiences:[faction],detail:['Established a new constitutional settlement.','确立新的宪制安排。']});
  s.log.unshift({year:s.year,month:s.month,en:target==='roman_principate'?'A postwar constitutional settlement established a simulated Principate. Dynastic claims now matter alongside appointments, army backing and recognition.':'A later imperial reform established co-emperor appointments and rival court succession in this alternate campaign.',zh:target==='roman_principate'?'战后宪制和解在架空战役中建立元首制。王朝主张与任命、军队支持及承认共同影响继任。':'架空战役中的后期帝国改革允许任命共治皇帝，并可能出现竞争宫廷。'});s.log=s.log.slice(0,80);
  return {ok:true,cost};
 }
@@ -93,7 +95,7 @@ export function withdrawSuccessionPlan(s){
 }
 
 export function planSuccession(s,id){
- initializeGovernments(s);const faction=s.player;if(!(s.world.leadership[faction]||[]).some(cid=>s.world.characters[cid]?.alive)||!successionCandidates(s,faction).includes(id))return {ok:false,reason:'unavailable'};
+ initializeGovernments(s);const faction=s.player;if(!(s.world.leadership[faction]||[]).some(cid=>s.world.characters[cid]?.alive||s.world.characters[cid]?.missing)||!successionCandidates(s,faction).includes(id))return {ok:false,reason:'unavailable'};
  if(s.world.successionPlans[faction]===id)return {ok:false,reason:'already'};if(s.factions[faction].treasury<5)return {ok:false,reason:'treasury'};
  s.factions[faction].treasury-=5;s.world.successionPlans[faction]=id;recordLifeEvent(s,id,'Designated as a possible successor; succession remains uncertain.','被指定为可能继任者；最终继任仍未确定。');s.log.unshift({year:s.year,month:s.month,en:`${CHARACTER_CATALOG[id].name[0]} was designated as a possible successor in the simulation.`,zh:`${CHARACTER_CATALOG[id].name[1]}在游戏中被指定为可能的继任者。`});s.log=s.log.slice(0,80);return {ok:true,cost:5};
 }
@@ -101,7 +103,7 @@ export function planSuccession(s,id){
 // Influence is a game abstraction, not a claim about a historical person's power.
 export function supportSuccessor(s,id){
  initializeGovernments(s);const faction=s.player,candidates=successorFor(s,faction),person=s.world.characters[id];
- if(!candidates.includes(id)||!(s.world.leadership[faction]||[]).some(cid=>s.world.characters[cid]?.alive))return {ok:false,reason:'unavailable'};
+ if(!candidates.includes(id)||!(s.world.leadership[faction]||[]).some(cid=>s.world.characters[cid]?.alive||s.world.characters[cid]?.missing))return {ok:false,reason:'unavailable'};
  if(person.influence>=100)return {ok:false,reason:'maximum'};if(s.factions[faction].treasury<8)return {ok:false,reason:'treasury'};
  s.factions[faction].treasury-=8;person.influence=Math.min(100,person.influence+15);person.ambition=Math.min(100,politicalAmbition(s,id)+5);improveLeaderTrust(s,id);recordLifeEvent(s,id,'Received political backing in the simulated campaign.','在模拟战役中获得政治支持。');
  for(const other of candidates.filter(candidate=>candidate!==id)){const rival=s.world.characters[other];rival.loyalty=Math.max(0,rival.loyalty-3)}
@@ -120,6 +122,19 @@ export function appointDeputy(s,id){
  return {ok:true,cost};
 }
 
+// Fill an already vacant republican command; an absent but unconfirmed leader
+// remains nominally in office and cannot be displaced through this action.
+export function appointVacantRomanLeader(s,id){
+ initializeGovernments(s);const faction=s.player,g=deriveGovernment(s,faction);
+ if(!republican(s,faction)||g.kind!=='vacant'||!eligibleDeputies(s,faction).includes(id))return {ok:false,reason:'unavailable'};
+ if(s.factions[faction].treasury<5)return {ok:false,reason:'treasury'};
+ s.factions[faction].treasury-=5;s.world.leadership[faction]=[id];delete s.world.successionPlans[faction];delete s.world.appointments[faction];
+ s.world.governments[faction]=deriveGovernment(s,faction);
+ recordLifeEvent(s,id,'Appointed to a vacant Roman political command in the simulation.','在模拟中获任空缺的罗马政治指挥职位。');
+ s.log.unshift({year:s.year,month:s.month,en:`${CHARACTER_CATALOG[id].name[0]} was appointed to the vacant Roman command in the simulation.`,zh:`${CHARACTER_CATALOG[id].name[1]}在模拟中获任空缺的罗马指挥职位。`});s.log=s.log.slice(0,80);
+ return {ok:true,cost:5};
+}
+
 export function secureRegency(s){
  initializeGovernments(s);const faction=s.player,g=deriveGovernment(s,faction),regent=s.world.characters[g.acting[0]];
  if(g.kind!=='regency'||!regent)return {ok:false,reason:'unavailable'};
@@ -136,7 +151,7 @@ const regionalCourts={armenia:['Armenian','亚美尼亚'],numidia:['Numidian','�
 function advanceRegionalVacancy(s,faction,autoplayPlayer){
  if(!regionalCourts[faction]||faction===s.player&&!autoplayPlayer)return;
  const vacancies=s.world.courtVacancies||={},now=s.year*12+s.month;
- if((s.world.leadership[faction]||[]).some(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction)){delete vacancies[faction];return}
+ if((s.world.leadership[faction]||[]).some(id=>(s.world.characters[id]?.alive||s.world.characters[id]?.missing)&&s.world.characters[id].faction===faction)){delete vacancies[faction];return}
  // An unresolved claimant must retain autonomy; do not appoint over them.
  if(s.world.disputes?.[faction]||(s.world.claimants?.[faction]||[]).some(id=>s.world.characters[id]?.alive))return;
  assignSuccession(s,faction);
@@ -150,15 +165,16 @@ function advanceRegionalVacancy(s,faction,autoplayPlayer){
  if(dynastyRoll(s)>=chance)return;
  const serials=s.world.courtNomineeSerials||={},serial=(serials[faction]||0)+1;serials[faction]=serial;
  const [en,zh]=regionalCourts[faction],place=s.regions.find(r=>r.owner===faction)?.id;
- const sex=serial===1?(faction==='bosporus'?'female':'male'):'unknown';
- const id=createFictionalPerson(s,{name:[`Fictional ${en} court nominee ${serial}`,`虚构${zh}宫廷人选${serial}`],faction,birthYear:s.year-35,location:place,sex,role:['Fictional court nominee in this campaign','本战役虚构宫廷人选'],origin:'court_nominee'});
+ const sex=serial===1?(faction==='bosporus'?'female':'male'):faction==='bosporus'&&serial%4===2?'male':'unknown';
+ const generated=courtNomineeName(s,faction,serial,()=>dynastyRoll(s));
+ const id=createFictionalPerson(s,{name:generated?.name||[`Fictional ${en} court nominee ${serial}`,`虚构${zh}宫廷人选${serial}`],regnalName:generated?.regnalName||null,homage:generated?.homage||null,appearance:generated?.appearance||null,faction,birthYear:s.year-35,location:place,sex,role:['Fictional court nominee in this campaign','本战役虚构宫廷人选'],origin:'court_nominee'});
  f.treasury-=5;s.world.leadership[faction]=[id];delete vacancies[faction];
 }
 
 export function advanceGovernments(s,{autoplayPlayer=false}={}){
  initializeGovernments(s);s.world.regencies||={};for(const faction of Object.keys(s.world.governments)){
   if(!s.factions[faction]||!s.regions.some(r=>r.owner===faction)){if(s.world.courtVacancies)delete s.world.courtVacancies[faction];continue}
-  const before=s.world.governments[faction];if(faction==='mauretania')assignSuccession(s,faction);
+  const before=s.world.governments[faction];if(faction==='mauretania'||republican(s,faction)&&(autoplayPlayer||faction!==s.player)&&deriveGovernment(s,faction).kind==='vacant')assignSuccession(s,faction);
   advanceRegionalVacancy(s,faction,autoplayPlayer);
   const after=deriveGovernment(s,faction);s.world.governments[faction]=after;
   if(after.kind==='regency'&&after.acting.length){
@@ -169,7 +185,7 @@ export function advanceGovernments(s,{autoplayPlayer=false}={}){
    if((['egypt','parthia'].includes(faction)||['roman_principate','later_empire'].includes(successionModel(faction,s)))&&personAge(s,ward)!==null&&personAge(s,ward)<16&&tenure.months>=6&&(regent.ambition??0)>=75&&s.factions[faction].stability<35&&dynastyRoll(s)<.12){
     s.world.claimants[faction]||=[];if(!s.world.claimants[faction].includes(regent.id))s.world.claimants[faction].push(regent.id);
     s.world.disputes[faction]||={months:0,support:{}};s.world.disputes[faction].support||={};s.world.disputes[faction].support[regent.id]=Math.max(30,s.world.disputes[faction].support[regent.id]||0);
-    if(startDynasticWar(s,faction,regent.id)){tenure.usurpation=true;if(faction===s.player)s.log.unshift({year:s.year,month:s.month,en:'The regent raised a rival court and seized a province with an army.',zh:'摄政者另立宫廷，率军夺取一处行省。'})}
+    if(startDynasticWar(s,faction,regent.id)){tenure.usurpation=true;recordLegendEvidence(s,regent.id,'usurpation',{reference:`regency-usurpation:${faction}:${s.year}:${s.month}`,audiences:[faction],detail:['Raised a rival court and seized a province.','另立宫廷并夺取行省。']});recordLegendEvidence(s,regent.id,'power_bid',{reference:`regency-bid:${faction}:${s.year}:${s.month}`,audiences:[faction]});if(faction===s.player)s.log.unshift({year:s.year,month:s.month,en:'The regent raised a rival court and seized a province with an army.',zh:'摄政者另立宫廷，率军夺取一处行省。'})}
    }
   }else if(s.world.regencies[faction]&&s.world.regencies[faction].endedYear==null){s.world.regencies[faction].endedYear=s.year;s.world.regencies[faction].endedMonth=s.month}
   for(const id of after.nominal.filter(id=>!before.nominal.includes(id)))recordLifeEvent(s,id,`Assumed political leadership of ${FACTIONS[faction]?.short[0]||faction} in the simulation.`,`在模拟中成为${FACTIONS[faction]?.short[1]||faction}的政治领袖。`);

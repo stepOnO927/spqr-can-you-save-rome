@@ -1,8 +1,9 @@
 import {FACTIONS,ROUTES} from './data.js?v=phase-x-1';
-import {CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
-import {createFictionalPerson} from './dynasties.js?v=guardian-age-1';
+import {CHARACTER_CATALOG} from './characters.js?v=dossier-archive-1';
+import {createFictionalPerson} from './dynasties.js?v=dossier-archive-1';
 import {hasNationalIdea} from './national-ideas.js?v=grand-chessboard-2';
-import {activeAgreement,terminateAgreement} from './agreements.js?v=agreement-courier-1';
+import {activeAgreement,terminateAgreement} from './agreements.js?v=dossier-archive-1';
+import {reportedPersonalContact} from './person-knowledge.js?v=dossier-archive-1';
 
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const log=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.log.slice(0,80)};
@@ -88,7 +89,7 @@ export function recognizeMovement(s,actor,id,recognize=true){
 }
 export function offerMovementSupport(s,actor,id,representative){
  initializeMovements(s);const report=s.world.movementKnowledge[actor]?.[id],person=s.world.characters[representative];
- if(!report||!active(report)||report.parent===actor||!report.leader||!s.factions[actor]||!person?.alive||person.faction!==actor||person.missing||person.travel||(s.world.personalRelations[[representative,report.leader].sort().join(':')]?.trust||0)<=0)return {ok:false,reason:'contact'};
+ if(!report||!active(report)||report.parent===actor||!report.leader||!s.factions[actor]||!person?.alive||person.faction!==actor||person.missing||person.travel||(reportedPersonalContact(s,actor,representative,report.leader)?.credit||0)<=0)return {ok:false,reason:'contact'};
  if(s.world.movementContacts.some(x=>x.actor===actor&&x.movement===id&&x.status==='pending'))return {ok:false,reason:'pending'};
  if(s.factions[actor].treasury<10)return {ok:false,reason:'treasury'};
  s.factions[actor].treasury-=10;s.world.movementContacts.push({actor,movement:id,reportedLeader:report.leader,representative,remaining:4,status:'pending',year:s.year,month:s.month});return {ok:true,duration:4};

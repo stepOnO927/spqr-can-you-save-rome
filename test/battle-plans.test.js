@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave,issueMilitaryOrder,estimatedStrength} from '../engine.js?v=audience-silence-1';
-import {createPlan,assignRole,approvePlan,pausePlan,cancelPlan,editPlan,planById,plansFor,validatePath,findRoute,assessPlan,adviserCounsel,planControlled,approveRecommendation,aiBattlePlans} from '../battle-plans.js?v=guardian-age-1';
-import {templatesFor,recruitFormation} from '../legion-designer.js?v=guardian-age-1';
+import {newGame,tick,upgradeSave,issueMilitaryOrder,estimatedStrength} from '../engine.js?v=dossier-archive-1';
+import {createPlan,assignRole,approvePlan,pausePlan,cancelPlan,editPlan,planById,plansFor,validatePath,findRoute,assessPlan,adviserCounsel,planControlled,approveRecommendation,aiBattlePlans} from '../battle-plans.js?v=dossier-archive-1';
+import {templatesFor,recruitFormation} from '../legion-designer.js?v=dossier-archive-1';
 import {ROUTES} from '../data.js?v=phase-x-1';
 
 const roundTrip=s=>upgradeSave(JSON.parse(JSON.stringify(s)));
@@ -119,13 +119,16 @@ test('with spare forces and stale intelligence, expert AI adds reconnaissance an
  const roles=plan.roles.map(r=>r.role);assert.ok(roles.includes('recon'),`roles: ${roles}`);assert.ok(roles.includes('supply_guard')||roles.includes('reserve'),`roles: ${roles}`);
 });
 
-test('an AI ally coordinates with a live allied operation against the same objective',async()=>{
- const {observeControl}=await import('../control-intelligence.js?v=fort-intel-1');
+test('an AI ally considers a delivered operational notice rather than a hidden allied plan',async()=>{
+ const {observeControl}=await import('../control-intelligence.js?v=dossier-archive-1');
+ const {shareOperation}=await import('../operation-intelligence.js?v=operation-notices-1'),{sendLetter}=await import('../epistulae.js?v=dossier-archive-1');
  const s=newGame('senate');s.difficulty='expert';
  s.regions.find(r=>r.id==='africa').owner='caesar';s.wars.push(['caesar','numidia']);s.alliances.push(['numidia','senate']);observeControl(s);
  for(const a of s.armies.filter(a=>a.owner==='numidia'))a.men=15000;
  const senatePlan=createPlan(s,'senate',{mode:'automatic',objective:'africa',ai:true}).plan;
  assert.ok(assignRole(s,'senate',senatePlan.id,{armyId:'pompey',role:'offensive',path:['italiaS','sicilia','africa']}).ok);approvePlan(s,'senate',senatePlan.id);
+ assert.ok(shareOperation(s,'senate',senatePlan.id,'numidia',{sendLetter}).ok);
+ const notice=s.mail.messages.find(m=>m.context?.kind==='operation_notice');notice.delivery='received';notice.arrival=s.year*12+s.month;
  const id=aiBattlePlans(s,'numidia',{estimatedStrength});const plan=planById(s,id);
  assert.equal(plan.objective,'africa');assert.ok(plan.events.some(e=>e.kind==='coordinated'));
  // Without the alliance, Numidia makes its own choice and records no coordination.
@@ -133,3 +136,4 @@ test('an AI ally coordinates with a live allied operation against the same objec
  for(const a of t.armies.filter(a=>a.owner==='numidia'))a.men=15000;
  const other=planById(t,aiBattlePlans(t,'numidia',{estimatedStrength}));assert.ok(!other||!other.events.some(e=>e.kind==='coordinated'));
 });
+

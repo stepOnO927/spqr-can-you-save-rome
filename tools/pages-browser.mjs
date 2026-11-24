@@ -1,5 +1,6 @@
 // Run against a dist/ server on port 5174, not the source tree.
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import fs from 'node:fs/promises';
 import {chromium} from 'playwright';
 
@@ -14,6 +15,8 @@ async function open(url){
   assert.equal(response.status(),200,url);
   assert.equal(await page.locator('script[src*="cloudflareinsights.com"]').count(),0,'test server must remove the public beacon');
   assert.equal(await page.evaluate(()=>window.__SPQR_TEST_MODE?.kind),'local_preview');
+  const loaded=await page.evaluate(async()=>{const faces=await document.fonts.load('24px "SPQR CJK"','罗马军团');return faces.some(f=>f.family.replace(/["']/g,'')==='SPQR CJK'&&f.status==='loaded')});
+  assert.equal(loaded,true,'packaged entry must load its bundled Chinese font');
   await page.locator('#save-transfer-open').waitFor();
   await page.locator('.spqr-version').click();
   assert.match(await page.locator('.spqr-release-dialog').innerText(),/0\.1\.0/);
@@ -22,6 +25,13 @@ async function open(url){
 }
 try{
   const main=await open(base+'/');
+  const font=await main.request.get(base+'/assets/fonts/noto-sans-sc-chinese-simplified-400-normal.woff2');
+  assert.equal(font.status(),200);
+  assert.equal(createHash('sha256').update(await font.body()).digest('hex'),'95e3633b6a98f764ba3adfb54504a0cd4799328c009adf9081d6c1850f9c4c78','unchanged font is included in the actual distribution');
+  const licenseUrl=await main.locator('link[rel="license"]').evaluate(el=>el.href),license=await main.request.get(licenseUrl);
+  assert.equal(license.status(),200,'full license must ship with the font');
+  assert.match(await license.text(),/SIL OPEN FONT LICENSE Version 1.1/);
+  assert.match(await license.text(),/Copyright 2014-2021 Adobe/);
   assert.equal(await main.locator('#save-transfer-open').evaluate(button=>button.parentElement.classList.contains('setup-saves')),true);
   await main.locator('#start-campaign').click();
   assert.equal(await main.locator('#save-transfer-open').evaluate(button=>button.parentElement.classList.contains('controls')),true);

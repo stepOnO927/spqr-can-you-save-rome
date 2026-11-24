@@ -1,10 +1,29 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,diplomacy,isWar,moveArmy,previewMarch,tick} from '../engine.js?v=audience-silence-1';
-import {proposeAgreement,terminateAgreement,activeAgreement,advanceAgreements,visibleAgreements} from '../agreements.js?v=agreement-courier-1';
-import {addReport,queueMission,advanceOperations} from '../character-system.js?v=guardian-age-1';
+import {newGame,upgradeSave,diplomacy,isWar,moveArmy,previewMarch,tick} from '../engine.js?v=dossier-archive-1';
+import {proposeAgreement,terminateAgreement,activeAgreement,advanceAgreements,visibleAgreements} from '../agreements.js?v=dossier-archive-1';
+import {addReport,queueMission,advanceOperations} from '../character-system.js?v=dossier-archive-1';
 
 function friendly(s,a,b){s.relations[[a,b].sort().join(':')]=60}
+test('a player declaration discloses every additional treaty enemy without duplicating the original declaration',()=>{
+ const s=newGame('caesar');s.wars=[];s.alliances=[];friendly(s,'egypt','parthia');
+ assert.ok(proposeAgreement(s,'egypt','parthia','defensive',{secret:true}).ok);
+ assert.ok(diplomacy(s,'caesar','egypt','war'));
+ assert.ok(isWar(s,'caesar','parthia'));
+ const notices=s.log.filter(e=>e.en.startsWith('Treaty obligations have brought'));
+ assert.equal(notices.length,1);assert.equal(notices[0].other,'parthia');
+ assert.match(notices[0].zh,/条约义务/);
+ // Actual belligerency is known to the player; the secret treaty terms remain hidden.
+ assert.equal(visibleAgreements(s,'caesar').length,0);
+ assert.equal(s.log.filter(e=>e.en.includes('declared war on')).length,1);
+});
+test('an attack on the player also announces the third country joining against them',()=>{
+ const s=newGame('caesar');s.wars=[];s.alliances=[];friendly(s,'egypt','parthia');
+ assert.ok(proposeAgreement(s,'egypt','parthia','offensive').ok);
+ assert.ok(diplomacy(s,'egypt','caesar','war'));
+ assert.ok(isWar(s,'caesar','parthia'));
+ assert.deepEqual(s.log.filter(e=>e.en.startsWith('Treaty obligations have brought')).map(e=>e.other),['parthia']);
+});
 test('treaties cost resources, expire, survive saves and breaches affect credibility',()=>{
  let s=newGame('egypt');friendly(s,'egypt','parthia');const cash=s.factions.egypt.treasury;
  const result=proposeAgreement(s,'egypt','parthia','non_aggression',{secret:true});assert.ok(result.ok);assert.equal(s.factions.egypt.treasury,cash-4);
@@ -50,12 +69,14 @@ test('intelligence agreement enables existing delayed exchange, preserving repor
 test('hard AI can negotiate with another known neighbor without binding the player',()=>{
  const s=newGame('caesar');s.difficulty='hard';s.month=3;friendly(s,'senate','egypt');
  tick(s);
- assert.ok(s.agreements.some(t=>t.type==='trade'&&t.parties.includes('senate')&&t.parties.includes('egypt')));
+ assert.ok(s.world.agreementLetters.some(t=>t.type==='trade'&&t.actor==='senate'&&t.target==='egypt'&&t.status==='pending'));
+ assert.ok(!s.agreements.some(t=>t.type==='trade'&&t.parties.includes('senate')&&t.parties.includes('egypt')));
  assert.ok(s.agreements.every(t=>!t.parties.includes('caesar')));
 });
 test('a hard AI at war can seek a temporary neutral frontier without binding the player',()=>{
  const s=newGame('caesar');s.difficulty='hard';s.month=9;s.factions.senate.treasury=150;tick(s);
- assert.ok(s.agreements.some(t=>t.type==='non_aggression'&&t.parties.includes('senate')&&!t.parties.includes('caesar')));
+ assert.ok(s.world.agreementLetters.some(t=>t.type==='non_aggression'&&t.actor==='senate'&&t.target!=='caesar'&&t.status==='pending'));
+ assert.ok(!s.agreements.some(t=>t.type==='non_aggression'&&t.parties.includes('senate')&&!t.parties.includes('caesar')));
 });
 
 test('an independence guarantee binds its provider only when its recipient is attacked',()=>{
@@ -70,3 +91,4 @@ test('military aid transfers actual reserves and civic cooperation has a shared 
  assert.equal(s.factions.egypt.treasury,a.cash-2);assert.equal(s.factions.egypt.food,a.food-2);assert.equal(s.factions.armenia.treasury,b.cash+2);assert.equal(s.factions.armenia.food,b.food+2);
  const q=newGame('egypt');friendly(q,'egypt','armenia');assert.ok(proposeAgreement(q,'egypt','armenia','political').ok);q.month=6;const before=q.factions.egypt.stability,cash=q.factions.egypt.treasury;advanceAgreements(q);assert.equal(q.factions.egypt.stability,before+1);assert.equal(q.factions.egypt.treasury,cash-1);
 });
+

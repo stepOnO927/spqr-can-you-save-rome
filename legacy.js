@@ -1,7 +1,7 @@
-import {storedCorrespondentName} from './person-knowledge.js?v=undated-name-1';
-import {syncChronicleDispatches} from './chronicle.js?v=succession-ui-recovery-1';
-import {CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
-import {initializeDynasties} from './dynasties.js?v=guardian-age-1';
+import {storedCorrespondentName} from './person-knowledge.js?v=dossier-archive-1';
+import {syncChronicleDispatches} from './chronicle.js?v=dossier-archive-1';
+import {CHARACTER_CATALOG} from './characters.js?v=dossier-archive-1';
+import {initializeDynasties} from './dynasties.js?v=dossier-archive-1';
 
 export function canFinalizeCampaign(s){return !!(s.victory||s.defeat||s.peacefulVictory||s.world?.dynasties?.scenario?.stage==='resolved')}
 
@@ -28,7 +28,8 @@ export function finalizeCampaign(s){
   generals:[...own].filter(id=>(s.world.characters[id]?.battlesCommanded||0)>0).map(id=>({name:CHARACTER_CATALOG[id]?.name||[id,id],battles:s.world.characters[id].battlesCommanded})),
   betrayals:(s.world.defections||[]).filter(e=>e.from===s.player||e.to===s.player).map(e=>({...e,name:CHARACTER_CATALOG[e.id]?.name||[e.id,e.id]})),
   heirs:[...own].filter(id=>(s.world.characters[id]?.adoptiveParents||[]).length>0).map(id=>({name:CHARACTER_CATALOG[id]?.name||[id,id],adoptiveParents:[...s.world.characters[id].adoptiveParents]})),
-  inheritanceCases:(d.inheritanceDisputes||[]).filter(x=>x.faction===s.player).map(x=>({...x,deceasedName:CHARACTER_CATALOG[x.deceased]?.name||[x.deceased,x.deceased],beneficiaryName:CHARACTER_CATALOG[x.beneficiary]?.name||[x.beneficiary,x.beneficiary]})),
+  inheritanceCases:(d.inheritanceDisputes||[]).filter(x=>x.faction===s.player).map(x=>({...x,deceasedName:CHARACTER_CATALOG[x.deceased]?.name||[x.deceased,x.deceased],beneficiaryName:own.has(x.beneficiary)?CHARACTER_CATALOG[x.beneficiary]?.name||[x.beneficiary,x.beneficiary]:storedCorrespondentName(x.beneficiary,x.beneficiaryName)})),
+  estateTransfers:(d.estateTransfers||[]).filter(x=>x.faction===s.player).map(x=>({id:x.id,recipientName:storedCorrespondentName(x.recipient,x.recipientName),amount:x.amount,status:x.status,year:x.year,month:x.month})),
   marriageOffers:(d.marriageOffers||[]).filter(x=>own.has(x.own)).map(x=>({...x,ownName:CHARACTER_CATALOG[x.own]?.name||[x.own,x.own],foreignName:storedCorrespondentName(x.foreign,x.reportedName)})),
   asylumRequests:(d.asylumRequests||[]).filter(x=>x.host===s.player).map(x=>({...x,claimantName:storedCorrespondentName(x.claimant,x.reportedName)})),
   familyAccords:(d.familyAccords||[]).filter(x=>x.host===s.player).map(x=>({...x,contactName:storedCorrespondentName(x.contact,x.reportedName),childName:x.child?CHARACTER_CATALOG[x.child]?.name||[x.child,x.child]:null})),
@@ -39,6 +40,8 @@ export function finalizeCampaign(s){
   chronicle:(s.chronicle?.entries||[]).map(e=>({...e})),
   monthlyReports:(s.chronicle?.monthly||[]).map(x=>({...x})),
   annualReviews:(s.chronicle?.annual||[]).map(x=>({...x})),
+  nationalAmbition:s.historyWheels?.ambition?{id:s.historyWheels.ambition,chosenAt:{...s.historyWheels.chosenAt},changes:(s.historyWheels.changes||[]).map(x=>({...x})),custom:s.historyWheels.custom?{...s.historyWheels.custom}:null}:null,
+  causalChains:(s.historyWheels?.chains||[]).map(c=>({id:c.id,type:c.type,status:c.status,cause:{...c.cause},factions:c.factions?[...c.factions]:[],coalitionId:c.coalitionId||null,characterId:c.characterId||c.senderId||null,characterName:CHARACTER_CATALOG[c.characterId||c.senderId]?.name||null,armyId:c.armyId||null,territoryId:c.territoryId||null,territoryName:s.regions.find(r=>r.id===c.territoryId)?.name||null,response:c.response,openedAt:c.openedAt,closedAt:c.closedAt||null,events:(c.events||[]).map(e=>({...e}))})),
   victory:!!s.victory,defeat:!!s.defeat,peacefulVictory:!!s.peacefulVictory,scenario:d.scenario?{...d.scenario}:null};
  // Compute and reveal earned distinctions only after an official finalization.
  // They are archival recognition, with no permanent gameplay reward to duplicate.

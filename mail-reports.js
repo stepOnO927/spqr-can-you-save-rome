@@ -1,11 +1,12 @@
-import {sendLetter,initializeMail} from './epistulae.js?v=guardian-age-1';
-import {reportedArmies} from './character-system.js?v=guardian-age-1';
-import {CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
+import {sendLetter,initializeMail} from './epistulae.js?v=dossier-archive-1';
+import {peaceTermsText} from './peace-terms.js?v=territorial-peace-1';
+import {reportedArmies} from './character-system.js?v=dossier-archive-1';
+import {CHARACTER_CATALOG} from './characters.js?v=dossier-archive-1';
 import {MATERIALS} from './inventions.js?v=mission-discount-1';
 import {ROUTES} from './data.js?v=phase-x-1';
 import {FACTIONS} from './data.js?v=phase-x-1';
 import {campaignDate} from './campaign-date.js?v=calendar-1';
-import {storedCorrespondentName} from './person-knowledge.js?v=undated-name-1';
+import {storedCorrespondentName} from './person-knowledge.js?v=dossier-archive-1';
 
 const month=s=>s.year*12+s.month;
 const owned=s=>s.regions.filter(r=>r.owner===s.player);
@@ -45,7 +46,9 @@ export function advanceMailReports(s){
   const when=hasDate?[campaignDate(inquiry.responseMonth,inquiry.responseYear,'en'),campaignDate(inquiry.responseMonth,inquiry.responseYear,'zh')]:['an unrecorded date','日期未记录'];
   const claim=Array.isArray(inquiry.claim)&&inquiry.claim.length>=2&&inquiry.claim.slice(0,2).every(x=>typeof x==='string')?inquiry.claim:['The reply content was not recorded.','回信内容未记录。'];
   const subject=peace?(refused?['Peace offer declined','议和提议遭拒']:['Peace reply received','议和回信已送达']):(refused?['Inquiry declined','询问信遭拒']:['Court reply received','宫廷回信已送达']);
-  const body=refused?(peace?[`${court[0]} declined the peace offer.`,`${court[1]}回信拒绝议和。`]:[`${court[0]} declined to answer the inquiry.`,`${court[1]}回信表示不愿回答询问。`]):[`${court[0]} replied on ${when[0]}: ${claim[0]} ${peace?'':'This official statement is unverified and may be outdated.'}`,`${court[1]}于${when[1]}回信：${claim[1]}${peace?'':'此为未经独立核实的官方说法，可能已过时。'}`];
+  const settlement=inquiry.peaceSettlement==='not_concluded'?[' The reply arrived, but no new peace settlement took effect because circumstances changed.',' 回信已送达，但局势发生变化，新的和平协议未能生效。']:inquiry.peaceSettlement==='concluded'?[' The peace settlement took effect on delivery.',' 和平协议已在回信送达时生效。']:['',''];
+  const body=refused?(peace?[`${court[0]} declined the peace offer.`,`${court[1]}回信拒绝议和。`]:[`${court[0]} declined to answer the inquiry.`,`${court[1]}回信表示不愿回答询问。`]):[`${court[0]} replied on ${when[0]}: ${claim[0]}${peace?settlement[0]:' This official statement is unverified and may be outdated.'}`,`${court[1]}于${when[1]}回信：${claim[1]}${peace?settlement[1]:'此为未经独立核实的官方说法，可能已过时。'}`];
+  if(peace&&inquiry.peaceTerms){body[0]+=' '+peaceTermsText(inquiry,'en');body[1]+=' '+peaceTermsText(inquiry,'zh')}
   const result=sendLetter(s,{senderInstitution:inquiry.target,senderFaction:inquiry.target,recipient:s.player,category:'diplomatic',priority:'important',subject,body,options:['acknowledge'],confidence:!refused&&!peace?'unverified':null,context:{kind:'inquiry_result',subject:inquiry.subject,target:inquiry.target}});
   if(result.ok){inquiry.resultMailId=result.letter.id;if(hasDate)result.letter.created={year:inquiry.responseYear,month:inquiry.responseMonth};else result.letter.sentDateKnown=false;result.letter.arrival=now;result.letter.delivery='received'}
  }
@@ -121,3 +124,4 @@ export function advanceMailReports(s){
  }
  mail.reportSnapshot=after;
 }
+

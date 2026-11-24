@@ -18,6 +18,7 @@ try{
     await page.locator('#start-campaign').tap();
     console.log('Roman viewport',width,height,await page.evaluate(()=>{const ids=['.top','.shell','.shell main','.map-toolbar','#step','#map-svg'];return {portrait:matchMedia('(orientation:portrait)').matches,landscapeRule:matchMedia('(max-height:600px) and (orientation:landscape)').matches,inner:[innerWidth,innerHeight],scroll:document.documentElement.scrollHeight,rects:Object.fromEntries(ids.map(id=>{const e=document.querySelector(id),r=e?.getBoundingClientRect();return [id,r?{y:r.y,height:r.height,bottom:r.bottom}:null]}))}}));
     assert.equal(await visibleInFrame(page.locator('#step')),true,'Roman Advance outside '+width+'x'+height);
+    if(width<=1100){await page.locator('#tutorial-own-region').tap();assert.match(await page.locator('.experience-lesson').innerText(),/2\/8/)}
     await page.locator('#map-svg [data-army]').first().tap();
     assert.equal(await page.locator('.inspector:not(.closed)').count(),1,'Roman touch did not inspect an army');
     assert.deepEqual(errors,[],'Roman browser errors');
@@ -32,7 +33,7 @@ try{
     page.on('pageerror',e=>errors.push(e.message));
     await page.goto(origin+'/han/',{waitUntil:'domcontentloaded'});
     await page.locator('#begin').tap();
-    await page.locator('#map .seat-g[data-region="changan"] .seat').tap({timeout:5000});
+    await page.locator('#map path.territory[data-region="changan"]').tap({timeout:5000});
     assert.ok((await page.locator('#inspector').textContent()).trim().length>20,'Han touch did not inspect Chang’an');
     assert.deepEqual(errors,[],'Han browser errors');
     reports.push({entry:'han',touch:'changan'});
@@ -45,7 +46,7 @@ try{
     await page.goto(origin+'/map-lab/',{waitUntil:'domcontentloaded',timeout:30000});
     assert.equal(await visibleInFrame(page.locator('#start-game')),true,'Atlas Start outside 640x360');
     await page.locator('#start-game').tap();
-    await page.locator('.maplibregl-marker').first().tap({timeout:5000});
+    await page.locator('[data-city="RAVENNA"]').tap({timeout:5000});
     assert.equal(await page.locator('.selection:not(.collapsed)').count(),1,'Atlas touch did not inspect marker');
     assert.deepEqual(errors,[],'Atlas browser errors');
     reports.push({entry:'atlas',touch:'marker'});

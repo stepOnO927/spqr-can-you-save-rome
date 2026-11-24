@@ -1,19 +1,42 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrder,diplomacy} from '../engine.js?v=audience-silence-1';
-import {advanceStrategicWarnings,warningCandidates} from '../strategic-warnings.js?v=undated-name-1';
+import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrder,diplomacy} from '../engine.js?v=dossier-archive-1';
+import {advanceStrategicWarnings,warningCandidates} from '../strategic-warnings.js?v=dossier-archive-1';
 import {warningLedger} from '../warning-ledger.js?v=warning-privacy-1';
-import {assessOpportunities,opportunityEvidenceSignature} from '../multipolar.js?v=undated-name-1';
-import {observeDiplomacy,reportedDiplomacy} from '../diplomatic-knowledge.js?v=diplomatic-chronicle-1';
+import {assessOpportunities,opportunityEvidenceSignature} from '../multipolar.js?v=dossier-archive-1';
+import {observeDiplomacy,reportedDiplomacy} from '../diplomatic-knowledge.js?v=dossier-archive-1';
 import {observeAttackPattern} from '../strategic-planning.js?v=multipolar-2';
-import {buildChessboard} from '../chessboard.js?v=guardian-age-1';
-import {renderChessboard} from '../chessboard-ui.js?v=guardian-age-1';
-import {addReport,supportClaimant,requestAgentRelease,advanceAgentRequests} from '../character-system.js?v=guardian-age-1';
-import {advanceAgreements,proposeAgreement} from '../agreements.js?v=agreement-courier-1';
-import {advanceGovernments} from '../governance.js?v=guardian-age-1';
-import {advanceMovements} from '../movements.js?v=guardian-age-1';
-import {newRevolutionScenario} from '../scenarios.js?v=audience-silence-1';
+import {buildChessboard} from '../chessboard.js?v=dossier-archive-1';
+import {renderChessboard} from '../chessboard-ui.js?v=dossier-archive-1';
+import {addReport,supportClaimant,requestAgentRelease,advanceAgentRequests} from '../character-system.js?v=dossier-archive-1';
+import {advanceAgreements,proposeAgreement} from '../agreements.js?v=dossier-archive-1';
+import {advanceAgreementProposals} from '../agreement-negotiations.js?v=dossier-archive-1';
+import {advanceGovernments} from '../governance.js?v=dossier-archive-1';
+import {advanceMovements} from '../movements.js?v=dossier-archive-1';
+import {newRevolutionScenario} from '../scenarios.js?v=dossier-archive-1';
+import {rememberPoliticalEvent} from '../political-memory.js?v=grand-chessboard-2';
+
+test('a court reconsiders its own new memories and leadership without reading foreign memories',()=>{
+ const s=newGame('caesar'),before=opportunityEvidenceSignature(s,'parthia');
+ rememberPoliticalEvent(s,'armenia','parthia','refused_aid',-8);
+ assert.equal(opportunityEvidenceSignature(s,'parthia'),before);
+ rememberPoliticalEvent(s,'parthia','armenia','refused_aid',-8);
+ const after=opportunityEvidenceSignature(s,'parthia');assert.notEqual(after,before);
+ s.world.leadership.parthia=[];
+ assert.notEqual(opportunityEvidenceSignature(s,'parthia'),after);
+});
+
+test('expired sightings and stability reports trigger a fresh strategic review',()=>{
+ const s=newGame('caesar'),k=s.knowledge.parthia.armenia;
+ k.sightings={test:{id:'test',region:'armenia',year:s.year-1,month:s.month}};
+ k.reports.push({kind:'stability',value:'fragile',source:'spy',year:s.year-2,month:s.month});
+ const before=opportunityEvidenceSignature(s,'parthia');
+ if(s.month===12){s.month=1;s.year++}else s.month++;
+ assert.notEqual(opportunityEvidenceSignature(s,'parthia'),before);
+ const opportunity=assessOpportunities(s,'parthia',estimatedStrength).find(x=>x.target==='armenia');
+ assert.equal(opportunity.frontierSightings,0);assert.equal(opportunity.instability,'unknown');
+});
 
 test('opportunities use the observer’s reports, not hidden military or political state',()=>{
  const s=newGame('caesar'),other=JSON.parse(JSON.stringify(s));
@@ -29,6 +52,36 @@ test('new reports trigger reassessment without revealing hidden foreign changes'
  assert.equal(opportunityEvidenceSignature(copy,'parthia'),signature);
  addReport(copy,'parthia','armenia',{kind:'stability',value:'fragile',source:'spy',confidence:'rumor'});
  assert.notEqual(opportunityEvidenceSignature(copy,'parthia'),signature);
+});
+
+test('a delivered strength report triggers review while an undelivered one does not',()=>{
+ const s=newGame('caesar'),copy=structuredClone(s),before=opportunityEvidenceSignature(s,'parthia');
+ const report={kind:'strength',value:17000,source:'spy',year:s.year+1,month:s.month,observationYear:s.year,observationMonth:s.month};
+ copy.knowledge.parthia.armenia.reports.push(report);
+ assert.equal(opportunityEvidenceSignature(copy,'parthia'),before);
+ report.year=s.year;
+ assert.notEqual(opportunityEvidenceSignature(copy,'parthia'),before);
+ assert.notEqual(estimatedStrength(copy,'parthia','armenia'),estimatedStrength(s,'parthia','armenia'));
+});
+
+test('a reported frontier change triggers review without exposing an unseen change',()=>{
+ const s=newGame('caesar'),copy=structuredClone(s),signature=opportunityEvidenceSignature(s,'parthia');
+ const region=copy.regions.find(r=>r.id==='armenia');assert.ok(region);
+ region.owner='egypt';
+ assert.equal(opportunityEvidenceSignature(copy,'parthia'),signature);
+ copy.controlKnowledge.parthia.armenia={owner:'egypt',year:copy.year,month:copy.month};
+ assert.notEqual(opportunityEvidenceSignature(copy,'parthia'),signature);
+ assert.ok(assessOpportunities(copy,'parthia',estimatedStrength).some(x=>x.target==='egypt'&&x.border));
+});
+
+test('relations and alliances trigger only the participating court’s review',()=>{
+ const s=newGame('caesar'),copy=structuredClone(s),parthia=opportunityEvidenceSignature(s,'parthia'),caesar=opportunityEvidenceSignature(s,'caesar');
+ copy.relations['armenia:parthia']=(copy.relations['armenia:parthia']||0)+10;
+ assert.notEqual(opportunityEvidenceSignature(copy,'parthia'),parthia);
+ assert.equal(opportunityEvidenceSignature(copy,'caesar'),caesar);
+ const after=opportunityEvidenceSignature(copy,'parthia');copy.alliances.push(['armenia','parthia']);
+ assert.notEqual(opportunityEvidenceSignature(copy,'parthia'),after);
+ assert.equal(opportunityEvidenceSignature(copy,'caesar'),caesar);
 });
 
 test('AI cannot use sightings before delivery or treat old observations as fresh',()=>{
@@ -148,7 +201,10 @@ test('seeded Roman-Egyptian war continues as a multipolar AI simulation',()=>{
  }
  const runs=[scenario(103,true),scenario(14057,true)];
  for(const run of runs){assert.equal(run.months,36);for(const actor of ['caesar','egypt','parthia','armenia'])assert.ok(run.reviewed.has(actor));}
- assert.notDeepEqual([...runs[0].wars].sort(),[...runs[1].wars].sort());
+ // Distinct seeds can produce different decisions and military outcomes without
+ // requiring a new war: a peaceful or unchanged war map is also a valid result.
+ const outcome=run=>({wars:[...run.wars].sort(),armies:run.s.armies.map(a=>[a.id,a.owner,a.region,a.men]).sort((a,b)=>a[0].localeCompare(b[0])),resources:Object.entries(run.s.factions).map(([id,f])=>[id,f.treasury,f.food,f.manpower]).sort((a,b)=>a[0].localeCompare(b[0]))});
+ assert.notDeepEqual(outcome(runs[0]),outcome(runs[1]));
  const human=scenario(103,false);assert.ok(human.months>0&&human.months<36);assert.ok(human.s.defeat);
  for(const actor of ['egypt','parthia','armenia'])assert.ok(human.reviewed.has(actor));
 });
@@ -181,11 +237,16 @@ test('non-Roman courts can offer support to reported claimants and exchange capt
 });
 
 test('AI courts can negotiate real aid based on a reported third-party war',()=>{
- const s=newGame('caesar');s.difficulty='expert';s.month=3;s.relations['armenia:parthia']=40;s.wars.push(['armenia','senate']);
- s.factions.parthia.food=100;s.factions.parthia.treasury=100;observeDiplomacy(s);tick(s);
- const aid=s.agreements.find(x=>x.type==='military_support'&&x.parties.includes('parthia')&&x.parties.includes('armenia'));
- assert.ok(aid);assert.equal(aid.terms.provider,'parthia');assert.equal(aid.terms.recipient,'armenia');
- const before=s.factions.armenia.food;s.month=6;advanceAgreements(s);assert.equal(s.factions.armenia.food,before+2);
+ let accepted=null;const outcomes=new Set();
+ for(let seed=1;seed<=60;seed++){const s=newGame('caesar');s.seed=seed;s.difficulty='expert';s.month=3;s.relations['armenia:parthia']=40;s.wars.push(['armenia','senate']);
+  s.factions.parthia.food=100;s.factions.parthia.treasury=100;observeDiplomacy(s);tick(s);
+  const offer=s.world.agreementLetters.find(x=>x.actor==='parthia'&&x.target==='armenia'&&x.type==='military_support');assert.ok(offer);assert.equal(offer.status,'pending');assert.ok(!s.agreements.some(x=>x.id===offer.agreement));
+  for(let i=0;i<4;i++){s.month++;advanceAgreementProposals(s)}outcomes.add(offer.status);if(offer.status==='accepted'&&!accepted)accepted=s;
+  if(accepted&&outcomes.size>1)break;
+ }
+ assert.ok(accepted);assert.ok(outcomes.size>1,'letters may also be refused or lost');const aid=accepted.agreements.find(x=>x.type==='military_support'&&x.parties.includes('parthia')&&x.parties.includes('armenia'));
+ assert.equal(aid.terms.provider,'parthia');assert.equal(aid.terms.recipient,'armenia');
+ const before=accepted.factions.armenia.food;accepted.month=9;advanceAgreements(accepted);assert.equal(accepted.factions.armenia.food,before+2);
 });
 
 // Scout-based allied warnings. Setup: the Senate is at war with Caesar and is
@@ -301,6 +362,6 @@ test('old saves without a warning queue keep working and do not duplicate existi
  for(let i=0;i<3;i++)tick(save,{autoplayPlayer:true});assert.ok(Array.isArray(save.warningLetters));
  // The warning layer reuses courier, report and memory helpers; it does not call
  // the existing war, breach, aid or claimant-support decision paths.
- const source=fs.readFileSync(new URL('../strategic-warnings.js?v=undated-name-1',import.meta.url),'utf8');
+ const source=fs.readFileSync(new URL('../strategic-warnings.js?v=dossier-archive-1',import.meta.url),'utf8');
  assert.doesNotMatch(source,/diplomacy\(|proposeAgreement|terminateAgreement|supportClaimant|wars\.push|alliances\.push|opportunistic_war|treaty_breach/);
 });

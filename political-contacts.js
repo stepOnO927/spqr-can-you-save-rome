@@ -1,6 +1,6 @@
-import {isDeliveredReport} from './person-knowledge.js?v=undated-name-1';
-import {initializeWorld} from './characters.js?v=succession-ui-recovery-1';
-import {politicalAmbition} from './conspiracies.js?v=undated-name-1';
+import {reportedPeople,reportedPersonalContact} from './person-knowledge.js?v=dossier-archive-1';
+import {initializeWorld} from './characters.js?v=dossier-archive-1';
+import {politicalAmbition} from './conspiracies.js?v=dossier-archive-1';
 const random=s=>{s.world.intelSeed=(Math.imul(s.world.intelSeed,1664525)+1013904223)>>>0;return s.world.intelSeed/4294967296};
 const pair=(a,b)=>[a,b].sort().join(':');
 const current=s=>s.year*12+s.month;
@@ -10,10 +10,10 @@ const notify=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=
 // neither the current location nor the person's true loyalty is checked here.
 export function offerPoliticalContact(s,actor,target,person,representative){
  initializeWorld(s);s.world.politicalContacts||=[];
- const k=s.knowledge?.[actor]?.[target],known=[...(k?.reportedLeaders||[]),...Object.values(k?.sightings||{}).filter(x=>isDeliveredReport(s,x)).map(x=>x.commanderId),...(k?.commanderReports||[]).filter(x=>isDeliveredReport(s,x)).map(x=>x.commanderId),...(k?.reports||[]).filter(r=>isDeliveredReport(s,r)).flatMap(r=>[r.character,...(r.leaders||[])])];
+ const known=reportedPeople(s,actor,target);
  if(actor===target||target==='rebels'||!s.factions[actor]||!s.factions[target]||!known.includes(person))return {ok:false,reason:'unavailable'};
- const own=s.world.characters[representative],trust=s.world.personalRelations[pair(person,representative)]?.trust||0;
- if(!own?.alive||own.faction!==actor||own.missing||own.travel||trust<=0)return {ok:false,reason:'contact'};
+ const own=s.world.characters[representative],contact=reportedPersonalContact(s,actor,representative,person);
+ if(!own?.alive||own.faction!==actor||own.missing||own.travel||!contact||contact.credit<=0)return {ok:false,reason:'contact'};
  if(s.world.politicalContacts.some(x=>x.actor===actor&&x.person===person&&['pending','channel_open'].includes(x.status)))return {ok:false,reason:'pending'};
  if(s.factions[actor].treasury<12)return {ok:false,reason:'treasury'};
  s.factions[actor].treasury-=12;s.world.politicalContacts.push({actor,target,person,representative,remaining:4,status:'pending',year:s.year,month:s.month});return {ok:true,duration:4};
@@ -52,3 +52,4 @@ export function advancePoliticalContacts(s,addReport){
   addReport(s,agent.actor,agent.target,{kind:'conspiracy',character:suspect,value:suspect?'suspected':'unknown',source:'spy',confidence:'unverified',reliability:'low'});
  }
 }
+

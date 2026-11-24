@@ -1,5 +1,5 @@
-import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
-import {recordLifeEvent} from './dynasties.js?v=guardian-age-1';
+import {initializeWorld,CHARACTER_CATALOG,ageRange} from './characters.js?v=dossier-archive-1';
+import {recordLifeEvent} from './dynasties.js?v=dossier-archive-1';
 import {rememberPersonalEvent} from './political-memory.js?v=grand-chessboard-2';
 
 // These are simulated administrative assignments, not historical magistracies.
@@ -9,8 +9,8 @@ const roman=faction=>faction==='caesar'||faction==='senate';
 export function initializeOffices(s){initializeWorld(s);s.world.offices||={};s.world.localGovernors||={};for(const faction of ['caesar','senate'])s.world.offices[faction]||={};return s.world.offices}
 export function officeOf(s,faction,id){const national=Object.entries(initializeOffices(s)[faction]||{}).find(([,person])=>person===id)?.[0];if(national)return national;const local=Object.entries(s.world.localGovernors).find(([,post])=>post.faction===faction&&post.person===id);return local?'theater:'+local[0]:null}
 export function canHoldOffice(s,faction,id){
- initializeOffices(s);const c=s.world.characters[id];
- return !!(roman(faction)&&CHARACTER_CATALOG[id]&&s.regions.some(r=>r.owner===faction)&&c?.faction===faction&&(c.birthYear==null||s.year-c.birthYear>=25)&&c.alive&&!c.missing&&!c.travel&&c.loyalty>=40&&!['seriously_ill','dying','deceased'].includes(c.health)&&!(s.world.leadership[faction]||[]).includes(id)&&!s.armies.some(a=>a.characterId===id));
+ initializeOffices(s);const c=s.world.characters[id],catalog=CHARACTER_CATALOG[id],age=catalog?.fictional?(Number.isInteger(c?.birthYear)?s.year-c.birthYear:null):ageRange(id,s.year)?.[0];
+ return !!(Number.isFinite(age)&&age>=25&&roman(faction)&&CHARACTER_CATALOG[id]&&s.regions.some(r=>r.owner===faction)&&c?.faction===faction&&c.alive&&!c.missing&&!c.travel&&c.loyalty>=40&&!['seriously_ill','dying','deceased'].includes(c.health)&&!(s.world.leadership[faction]||[]).includes(id)&&!s.armies.some(a=>a.characterId===id));
 }
 export function officeCandidates(s,faction,office){
  initializeOffices(s);if(!OFFICE_TYPES.includes(office))return [];

@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick,diplomacy} from '../engine.js?v=audience-silence-1';
-import {previewPersonTravel,startPersonTravel,setJourneyHalt,requestPersonalMeeting,advancePersonalDiplomacy,personalDiplomaticCredit} from '../personal-diplomacy.js?v=audience-silence-1';
-import {addReport,contestLeadership} from '../character-system.js?v=guardian-age-1';
+import {newGame,upgradeSave,tick,diplomacy} from '../engine.js?v=dossier-archive-1';
+import {previewPersonTravel,startPersonTravel,setJourneyHalt,requestPersonalMeeting,advancePersonalDiplomacy,personalDiplomaticCredit} from '../personal-diplomacy.js?v=dossier-archive-1';
+import {addReport,contestLeadership} from '../character-system.js?v=dossier-archive-1';
 
 test('a claimant can be contacted only after a report, and the request does not reveal hidden court status',()=>{
  const s=newGame('senate');s.knowledge.senate.egypt.reportedLeaders=['ptolemy'];contestLeadership(s,'egypt','cleopatra');s.world.characters.cicero.location='egypt';
@@ -103,9 +103,19 @@ test('a recent personal meeting can help meet the alliance threshold without gua
 });
 test('contact credit uses only recorded meetings and expires without revealing hidden foreign state',()=>{
  const s=newGame('senate');s.world.personalRelations['cicero:cleopatra']={trust:100,meetings:1};assert.equal(personalDiplomaticCredit(s,'senate','egypt'),0);
- s.meetings.push({actor:'senate',targetFaction:'egypt',person:'cicero',target:'cleopatra',status:'met',year:s.year,month:s.month});assert.equal(personalDiplomaticCredit(s,'senate','egypt'),10);
- s.world.characters.cleopatra.faction='parthia';s.world.characters.cleopatra.health='dying';s.world.characters.cleopatra.location='parthia';assert.equal(personalDiplomaticCredit(s,'senate','egypt'),10);
- s.year+=3;assert.equal(personalDiplomaticCredit(s,'senate','egypt'),10);s.month++;assert.equal(personalDiplomaticCredit(s,'senate','egypt'),0);
+ s.meetings.push({actor:'senate',targetFaction:'egypt',person:'cicero',target:'cleopatra',status:'met',year:s.year,month:s.month});assert.equal(personalDiplomaticCredit(s,'senate','egypt'),1);
+ s.world.characters.cleopatra.faction='parthia';s.world.characters.cleopatra.health='dying';s.world.characters.cleopatra.location='parthia';s.world.personalRelations['cicero:cleopatra'].trust=-100;assert.equal(personalDiplomaticCredit(s,'senate','egypt'),1);
+ s.year+=3;assert.equal(personalDiplomaticCredit(s,'senate','egypt'),1);s.month++;assert.equal(personalDiplomaticCredit(s,'senate','egypt'),0);
+});
+
+test('personal diplomatic credit uses the latest meeting snapshot, not hidden subsequent trust',()=>{
+ let s=newGame('senate');s.world.characters.cicero.location='egypt';s.world.intelSeed=1000;assert.ok(requestPersonalMeeting(s,'cicero','cleopatra','egypt').ok);
+ advancePersonalDiplomacy(s);advancePersonalDiplomacy(s);assert.equal(s.meetings[0].status,'met');assert.equal(s.meetings[0].contactCredit,1);assert.equal(personalDiplomaticCredit(s,'egypt','senate'),1);
+ for(const trust of [-100,0,100]){s.world.personalRelations['cicero:cleopatra'].trust=trust;assert.equal(personalDiplomaticCredit(s,'senate','egypt'),1)}
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(personalDiplomaticCredit(s,'senate','egypt'),1);
+ // A new actual meeting may create a new observation, including a lower one.
+ s.month++;s.world.personalRelations['cicero:cleopatra'].trust=-30;s.world.intelSeed=1000;assert.ok(requestPersonalMeeting(s,'cicero','cleopatra','egypt').ok);advancePersonalDiplomacy(s);advancePersonalDiplomacy(s);
+ assert.equal(s.meetings[0].status,'met');assert.equal(s.meetings[0].contactCredit,0);assert.equal(personalDiplomaticCredit(s,'senate','egypt'),0);
 });
 
 test('missing participants cannot travel or complete a personal audience, even with a stale location',()=>{
@@ -136,4 +146,13 @@ test('journey planning uses reported control and only discovers a hidden enemy o
 });
 test('a stale reported court remains addressable after the real faction ceases to exist',()=>{
  const s=newGame('senate');s.knowledge.senate.egypt_claimant={reportedLeaders:['ptolemy'],reports:[],sightings:{}};assert.equal(s.factions.egypt_claimant,undefined);assert.equal(requestPersonalMeeting(s,'cicero','ptolemy','egypt_claimant').ok,true);assert.equal(s.meetings[0].status,'pending');advancePersonalDiplomacy(s);advancePersonalDiplomacy(s);assert.equal(s.meetings[0].status,'no_contact');
+});
+
+test('silence conceals missed meetings in new and legacy chronicles',()=>{
+ const logs=[];for(const [seed,away] of [[1972,false],[1000,true]]){
+  let s=newGame('senate');s.world.characters.cicero.location='egypt';s.world.characters.cleopatra.location=away?'parthia':'egypt';s.world.intelSeed=seed;assert.equal(requestPersonalMeeting(s,'cicero','cleopatra').ok,true);advancePersonalDiplomacy(s);advancePersonalDiplomacy(s);
+  assert.equal(s.meetings[0].status,away?'no_contact':'no_reply');logs.push([s.log[0].en,s.log[0].zh]);
+  s=upgradeSave(JSON.parse(JSON.stringify(s)));assert.deepEqual([s.log[0].en,s.log[0].zh],logs[logs.length-1]);
+ }assert.deepEqual(logs[0],logs[1]);
+ const legacy=newGame('senate');legacy.log.unshift({en:'Personal audience: no contact.',zh:'未能见到对方；对方可能不在、无法会面或局势有变。'});const loaded=upgradeSave(JSON.parse(JSON.stringify(legacy)));assert.deepEqual([loaded.log[0].en,loaded.log[0].zh],logs[0]);
 });

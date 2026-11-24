@@ -1,15 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,newDynastyScenario,upgradeSave,tick} from '../engine.js?v=audience-silence-1';
-import {CHARACTER_CATALOG} from '../characters.js?v=succession-ui-recovery-1';
-import {assignSuccession,successionModel} from '../characters.js?v=succession-ui-recovery-1';
-import {deriveGovernment,advanceGovernments,secureRegency,reformRomanGovernment,appointCoEmperor,planSuccession,validSuccessionPlan} from '../governance.js?v=guardian-age-1';
-import {initializeDynasties,createFictionalPerson,proposeMarriage,reportedDynasticContacts,offerForeignMarriage,offerFamilyAccord,requestClaimantAsylum,adoptHeir,makeWill,settleInheritance,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js?v=guardian-age-1';
-import {canHoldOffice} from '../office-system.js?v=guardian-age-1';
-import {renderGenealogy} from '../genealogy-ui.js?v=audience-silence-1';
-import {finalizeCampaign} from '../legacy.js?v=guardian-age-1';
-import {startDynasticWar} from '../civil-war.js?v=undated-name-1';
-import {fictionalPortraitKey} from '../portrait-registry.js?v=born-portraits-nine-1';
+import {newGame,newDynastyScenario,upgradeSave,tick} from '../engine.js?v=dossier-archive-1';
+import {CHARACTER_CATALOG,ageRange} from '../characters.js?v=dossier-archive-1';
+import {assignSuccession,successionModel} from '../characters.js?v=dossier-archive-1';
+import {deriveGovernment,advanceGovernments,secureRegency,reformRomanGovernment,appointCoEmperor,planSuccession,validSuccessionPlan} from '../governance.js?v=dossier-archive-1';
+import {initializeDynasties,createFictionalPerson,proposeMarriage,reportedDynasticContacts,offerForeignMarriage,offerFamilyAccord,requestClaimantAsylum,adoptHeir,makeWill,settleInheritance,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js?v=dossier-archive-1';
+import {canHoldOffice} from '../office-system.js?v=dossier-archive-1';
+import {renderGenealogy} from '../genealogy-ui.js?v=dossier-archive-1';
+import {finalizeCampaign} from '../legacy.js?v=dossier-archive-1';
+import {startDynasticWar} from '../civil-war.js?v=dossier-archive-1';
+import {fictionalPortraitKey} from '../portrait-registry.js?v=dossier-archive-1';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
 
@@ -30,6 +30,15 @@ test('marriage, adoption and wills change legal relationships and private assets
  s.world.characters[a].alive=false;settleInheritance(s,a);
  assert.equal(s.world.characters[child].wealth,40);assert.equal(s.factions.egypt.treasury,treasury);
  assert.equal(s.world.dynasties.lives[child].some(e=>e.en.includes('Inherited')),true);
+});
+
+test('adoption requires an age gap supported by the full historical range',()=>{
+ const s=newGame('caesar'),range=ageRange('caesar',s.year);assert.ok(range&&range[1]>range[0]);
+ const uncertainAge=range[1]-16,confirmedAge=range[0]-16;
+ const uncertain=createFictionalPerson(s,{name:['Uncertain gap','年龄差不确定'],faction:'caesar',birthYear:s.year-uncertainAge});
+ const confirmed=createFictionalPerson(s,{name:['Confirmed gap','年龄差明确'],faction:'caesar',birthYear:s.year-confirmedAge});
+ assert.equal(adoptHeir(s,'caesar',uncertain).reason,'age');
+ assert.equal(adoptHeir(s,'caesar',confirmed).ok,true);
 });
 
 test('foreign marriage requires a reported contact, a paid envoy and a delayed answer',()=>{
@@ -141,9 +150,9 @@ test('a foreign child may inherit private property through a negotiated court se
  const caseFile=s.world.dynasties.inheritanceDisputes.at(-1),before=s.relations['caesar:egypt']||0;
  assert.ok(caseFile.heirs.includes(domestic));
  assert.equal(resolveInheritanceDispute(s,caseFile.id,'compromise').ok,true);
- assert.equal(s.world.characters[foreign].wealth,15);
+ assert.equal(s.world.characters[foreign].wealth,0);assert.equal(s.world.dynasties.estateTransfers[0].amount,15);assert.equal(s.world.dynasties.estateTransfers[0].status,'pending');
  assert.equal(s.world.characters[domestic].wealth,15);
- assert.equal(s.relations['caesar:egypt'],before+2);
+ assert.equal(s.relations['caesar:egypt']||0,before);assert.equal(s.world.dynasties.estateRulingNotices.at(-1).status,'pending');
  assert.equal(s.world.leadership.egypt.includes(foreign),false);
 });
 
@@ -409,3 +418,7 @@ test('AI families can marry and have children in an extended seeded campaign',()
  assert.equal(s.year,-19);assert.ok(s.world.dynasties.marriages.some(m=>s.world.characters[m.a].faction==='senate'));
  assert.ok(Object.values(s.world.characters).some(c=>c.parents.length>0));
 });
+
+test('player cross-border marriage cannot bypass delayed correspondence',()=>{const s=newGame('caesar'),a=createFictionalPerson(s,{name:['A','甲'],faction:'caesar',birthYear:-80,sex:'male'}),b=createFictionalPerson(s,{name:['B','乙'],faction:'egypt',birthYear:-78,sex:'female'});for(const change of [()=>{},()=>{s.world.characters[b].alive=false},()=>{s.world.characters[b].spouse='cleopatra'}]){change();assert.equal(proposeMarriage(s,a,b).reason,'correspondence');assert.equal(s.world.characters[a].spouse,null)}});
+
+test('family finance respects zero loyalty, reputation and influence',()=>{const s=newGame('caesar'),leader=s.world.characters['fictional:1'],family=s.world.dynasties.families[leader.familyId];family.leader=leader.id;family.wealth=20;family.reputation=0;family.influence=0;leader.loyalty=0;const treasury=s.factions.caesar.treasury;assert.equal(requestFamilyResources(s,family.id,'loan').reason,'terms');assert.equal(s.factions.caesar.treasury,treasury);s.world.dynasties.seed=1;assert.ok(requestFamilyResources(s,family.id,'donation').ok);assert.equal(family.reputation,2);assert.equal(family.influence,3);assert.equal(leader.loyalty,2)});

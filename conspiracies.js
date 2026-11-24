@@ -1,5 +1,5 @@
-import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
-import {startPoliticalWar} from './civil-war.js?v=undated-name-1';
+import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=dossier-archive-1';
+import {startPoliticalWar} from './civil-war.js?v=dossier-archive-1';
 import {personalMemoryAdjustment} from './political-memory.js?v=grand-chessboard-2';
 import {hasNationalIdea} from './national-ideas.js?v=grand-chessboard-2';
 
@@ -9,7 +9,7 @@ const log=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.l
 // A game-only disposition derived from the stable id, not a historical character judgment.
 function ambitionOf(person){if(!Number.isFinite(person.ambition))person.ambition=35+([...person.id].reduce((v,c)=>(v*31+c.charCodeAt(0))%31,0));return person.ambition}
 export function politicalAmbition(s,id){initializeWorld(s);const person=s.world.characters[id];return person?ambitionOf(person):null}
-function currentLeader(s,id){const person=s.world.characters[id];return (s.world.leadership[person?.faction]||[]).find(leader=>leader!==id&&s.world.characters[leader]?.alive)||null}
+function currentLeader(s,id){const person=s.world.characters[id];return (s.world.leadership[person?.faction]||[]).find(leader=>leader!==id&&s.world.characters[leader]?.alive&&!s.world.characters[leader]?.missing)||null}
 export function improveLeaderTrust(s,id,amount=5){initializeWorld(s);const leader=currentLeader(s,id);if(!leader)return null;const key=[id,leader].sort().join(':'),relationship=s.world.personalRelations[key]||{trust:0,meetings:0};relationship.trust=Math.max(-100,Math.min(100,(relationship.trust||0)+amount));s.world.personalRelations[key]=relationship;return relationship.trust}
 export function plotFormationChance(s,id){const ambition=politicalAmbition(s,id);if(ambition===null)return 0;const leader=currentLeader(s,id),key=leader?[id,leader].sort().join(':'):null,trust=key?(s.world.personalRelations[key]?.trust||0):0,faction=s.world.characters[id].faction,oversight=!!s.world.constitutionalOversight?.[faction],memory=personalMemoryAdjustment(s,id,faction);return Math.max(.05,Math.min(.5,.20+ambition*.002-trust*.001-memory*.002-(oversight ? .05 : 0)-(hasNationalIdea(s,faction,'oversight')?.03:0)))}
 // A simulated conspiracy is not a claim about a historical person's intentions.

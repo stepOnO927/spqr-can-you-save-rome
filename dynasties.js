@@ -1,16 +1,19 @@
-import {visiblePersonName,storedCorrespondentName,isDeliveredReport} from './person-knowledge.js?v=undated-name-1';
-import {CHARACTER_CATALOG,ageRange} from './characters.js?v=succession-ui-recovery-1';
-import {startDynasticWar} from './civil-war.js?v=undated-name-1';
+import {visiblePersonName,storedCorrespondentName,isDeliveredReport,reportedPeople} from './person-knowledge.js?v=dossier-archive-1';
+import {CHARACTER_CATALOG,ageRange} from './characters.js?v=dossier-archive-1';
+import {startDynasticWar} from './civil-war.js?v=dossier-archive-1';
 import {ROUTES} from './data.js?v=phase-x-1';
-import {assignBornPortrait,assignCourtPortrait} from './portrait-registry.js?v=born-portraits-nine-1';
+import {assignBornPortrait,assignCourtPortrait,assignLegendPortrait} from './portrait-registry.js?v=dossier-archive-1';
+import {initializeLegend,recordLegendEvidence} from './legend.js?v=dossier-archive-1';
 
 // Family records are campaign facts. The encyclopedia remains an independent
 // account of documented history. In particular, names never establish kinship.
 const roll=s=>{const d=s.world.dynasties;d.seed=(Math.imul(d.seed,1664525)+1013904223)>>>0;return d.seed/4294967296};
 export const dynastyRoll=roll;
 const note=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.log.slice(0,80)};
-const born=(s,id)=>s.world.characters[id]?.birthYear??CHARACTER_CATALOG[id]?.birth?.[1]??null;
-export const personAge=(s,id)=>{const year=born(s,id);return year==null?null:s.year-year};
+// A fictional person's birth year is campaign state; a stale catalog entry
+// cannot fill a missing value in an older save. Historical estimates remain separate.
+const born=(s,id)=>CHARACTER_CATALOG[id]?.fictional?(s.world.characters[id]?.birthYear??null):(s.world.characters[id]?.birthYear??CHARACTER_CATALOG[id]?.birth?.[1]??null);
+export const personAge=(s,id)=>{const year=born(s,id);return Number.isFinite(year)&&Number.isFinite(s.year)&&s.year>=year?s.year-year:null};
 // Fictional birthdays are campaign facts; historical birth estimates are
 // ranges. Do not turn an unknown or ambiguous age into a child or adult.
 const eligibilityAgeRange=(s,id)=>{if(CHARACTER_CATALOG[id]?.fictional){const age=personAge(s,id);return Number.isFinite(age)&&age>=0?[age,age]:null}return ageRange(id,s.year)};
@@ -41,7 +44,7 @@ function ensureCatalog(s){
 
 export function initializeDynasties(s){
  const d=s.world.dynasties||= {families:{},lives:{},catalog:{},marriages:[],memories:[],rulers:[],seed:220049,nextPerson:1,nextFamily:1};
- d.families||={};d.lives||={};d.catalog||={};d.marriages||=[];d.memories||=[];d.rulers||=[];d.inheritanceDisputes||=[];d.familyLoans||=[];d.marriageOffers||=[];d.asylumRequests||=[];d.familyAccords||=[];d.seed??=220049;d.nextPerson||=1;d.nextFamily||=1;ensureCatalog(s);
+ d.families||={};d.lives||={};d.catalog||={};d.marriages||=[];d.memories||=[];d.rulers||=[];d.inheritanceDisputes||=[];d.estateTransfers||=[];d.estateRulingNotices||=[];d.familyLoans||=[];d.marriageOffers||=[];d.asylumRequests||=[];d.familyAccords||=[];d.seed??=220049;d.nextPerson||=1;d.nextFamily||=1;ensureCatalog(s);initializeLegend(s);
  for(const [id,c] of Object.entries(s.world.characters)){
   c.parents||=[];c.adoptiveParents||=[];c.children||=[];c.spouse||=null;c.wealth??=0;
   c.sex||=(['cleopatra','arsinoe'].includes(id)?'female':CHARACTER_CATALOG[id]?.fictional?'unknown':'male');
@@ -69,7 +72,7 @@ export function initializeDynasties(s){
  return d;
 }
 
-export function createFictionalPerson(s,{name,faction,birthYear=s.year,familyId,parents=[],adoptiveParents=[],wealth=0,location=null,sex='unknown',role=['Court member','宫廷成员'],origin='birth'}){
+export function createFictionalPerson(s,{name,faction,birthYear=s.year,familyId,parents=[],adoptiveParents=[],wealth=0,location=null,sex='unknown',role=['Court member','宫廷成员'],origin='birth',regnalName=null,homage=null,appearance=null}){
  const d=initializeDynasties(s);
  // Reserve identities mentioned anywhere in older saves, including reports
  // and relationships whose original person or family is no longer present.
@@ -78,13 +81,13 @@ export function createFictionalPerson(s,{name,faction,birthYear=s.year,familyId,
  const personNo=nextFree(d.nextPerson,people);d.nextPerson=personNo+1;const id=`fictional:${personNo}`;
  let family=familyId;if(!family){const familyNo=nextFree(d.nextFamily,families);d.nextFamily=familyNo+1;family=`family:fictional:${familyNo}`}
  if(!d.families[family])d.families[family]={id:family,name:Array.isArray(name)?name:[name,name],wealth:0,reputation:50,influence:20,leader:id,patrons:[]};
- d.catalog[id]={name:Array.isArray(name)?name:[name,name],birth:[birthYear,birthYear],faction,role,culture:['Simulated','模拟'],source:null,fictional:true};
+ d.catalog[id]={name:Array.isArray(name)?name:[name,name],birth:[birthYear,birthYear],faction,role,culture:['Simulated','模拟'],source:null,fictional:true,...(regnalName?{regnalName:[...regnalName]}:{}),...(homage?{homage:{...homage}}:{}),...(appearance?{appearance:{...appearance}}:{})};
  CHARACTER_CATALOG[id]=d.catalog[id];
  s.world.characters[id]={id,faction,health:'healthy',location,alive:true,loyalty:65,influence:20,wealth,parents:[...parents],adoptiveParents:[...adoptiveParents],children:[],spouse:null,familyId:family,birthYear,sex,education:0,ambition:Math.floor(20+roll(s)*60),personalitySeed:Math.floor(roll(s)*0xffffffff),wounds:0,illnessEpisodes:0};
  for(const parent of [...parents,...adoptiveParents])if(s.world.characters[parent])s.world.characters[parent].children.push(id);
  if(origin==='court_nominee')record(s,id,'Entered this campaign as a fictional court nominee; no historical identity or family relationship is asserted.','作为虚构宫廷人选进入本次战役；不代表历史人物或历史亲属关系。');
  else record(s,id,'Born in the simulated campaign.','出生于模拟战役。');
- if(origin==='birth'&&birthYear===s.year)assignBornPortrait(s,id);if(origin==='court_nominee')assignCourtPortrait(s,id);return id;
+ if(origin==='birth'&&birthYear===s.year)assignBornPortrait(s,id);if(origin==='court_nominee'){assignCourtPortrait(s,id);if(assignLegendPortrait(s,id)&&appearance?.redBeard)recordLegendEvidence(s,id,'appearance_redbeard',{reference:`portrait:${id}`,audiences:[faction],detail:['A verified portrait depicts a copper-red beard.','已核对的肖像描绘了红褐色胡须。']})}return id;
 }
 
 export function seedOpeningFictionalHouseholds(s){
@@ -98,8 +101,9 @@ export function seedOpeningFictionalHouseholds(s){
  d.openingFictionalSeeded=true;
 }
 
-export function proposeMarriage(s,aId,bId,{knownNames={}}={}){
+export function proposeMarriage(s,aId,bId,{knownNames={},delivered=false}={}){
  initializeDynasties(s);const a=s.world.characters[aId],b=s.world.characters[bId];
+ if(!delivered&&a&&b&&a.faction!==b.faction&&(a.faction===s.player||b.faction===s.player))return {ok:false,reason:'correspondence'};
  if(!eligibleAdult(s,aId)||!eligibleAdult(s,bId)||aId===bId||a.spouse||b.spouse)return {ok:false,reason:'eligibility'};
  if(a.sex!=='unknown'&&b.sex!=='unknown'&&a.sex===b.sex)return {ok:false,reason:'legal_status'};
  if(a.familyId===b.familyId||a.parents.includes(bId)||b.parents.includes(aId)||a.adoptiveParents.includes(bId)||b.adoptiveParents.includes(aId)||a.parents.some(id=>b.parents.includes(id))||a.adoptiveParents.some(id=>b.adoptiveParents.includes(id)))return {ok:false,reason:'kinship'};
@@ -111,6 +115,7 @@ export function proposeMarriage(s,aId,bId,{knownNames={}}={}){
  for(const id of [aId,bId])record(s,id,`Married ${display(id===aId?bId:aId)[0]}.`,`与${display(id===aId?bId:aId)[1]}结婚。`);
  familyOf(s,aId).influence=Math.min(100,familyOf(s,aId).influence+3);familyOf(s,bId).influence=Math.min(100,familyOf(s,bId).influence+3);
  if(a.faction!==b.faction){const key=pair(a.faction,b.faction);s.relations[key]=Math.min(100,(s.relations[key]||0)+4)}
+ if(a.faction!==b.faction){const ref=`marriage:${pair(aId,bId)}:${s.year}:${s.month}`;for(const id of [aId,bId])recordLegendEvidence(s,id,'maneuver',{reference:ref+':'+id,audiences:[a.faction,b.faction],detail:['Concluded a cross-court marriage.','达成跨宫廷婚姻。']})}
  if(a.faction===s.player||b.faction===s.player)note(s,`${display(aId)[0]} and ${display(bId)[0]} married in the simulation.`,`模拟战役中，${display(aId)[1]}与${display(bId)[1]}结婚。`);
  return {ok:true};
 }
@@ -121,7 +126,7 @@ export function reportedDynasticContacts(s,viewer=s.player){
  initializeDynasties(s);const contacts=[];
  for(const [faction,k] of Object.entries(s.knowledge?.[viewer]||{})){
   if(faction===viewer||faction==='rebels')continue;
-  const ids=[...(k.reportedLeaders||[]),...(k.reports||[]).filter(r=>isDeliveredReport(s,r)).flatMap(r=>['leaders','claimants'].includes(r.kind)?r.leaders||[]:['age','health','location'].includes(r.kind)&&r.character?[r.character]:[])];
+  const ids=reportedPeople(s,viewer,faction);
   for(const id of new Set(ids))if(CHARACTER_CATALOG[id])contacts.push({id,faction});
  }
  return contacts;
@@ -145,7 +150,7 @@ function advanceMarriageOffers(s){
   if(--offer.months>0)continue;
   const own=s.world.characters[offer.own],foreign=s.world.characters[offer.foreign];
   const host=offer.host??s.player,valid=familyCourierArrives(s,offer)&&own?.alive&&own.faction===host&&foreign?.alive&&!own.spouse&&!foreign.spouse&&foreign.faction===offer.reportedFaction&&!s.wars.some(w=>w.includes(host)&&w.includes(foreign.faction));
-  const result=valid?proposeMarriage(s,offer.own,offer.foreign,{knownNames:{[offer.foreign]:storedCorrespondentName(offer.foreign,offer.reportedName)}}):{ok:false,reason:'no_reply'};
+  const result=valid?proposeMarriage(s,offer.own,offer.foreign,{delivered:true,knownNames:{[offer.foreign]:storedCorrespondentName(offer.foreign,offer.reportedName)}}):{ok:false,reason:'no_reply'};
   offer.status=result.ok?'accepted':result.reason==='declined'?'declined':'no_reply';offer.resolvedYear=s.year;offer.resolvedMonth=s.month;
   if(host===s.player&&offer.status!=='accepted')note(s,offer.status==='declined'?'The foreign court declined the marriage proposal.':'No marriage reply arrived; the letter may have been lost or the original report may have been outdated.',offer.status==='declined'?'外国宫廷拒绝了婚事。':'未收到婚事回信；书信可能遗失，原情报也可能过时。');
  }
@@ -243,7 +248,8 @@ function advanceFamilyAccords(s){
 export function adoptHeir(s,parentId,childId){
  initializeDynasties(s);const parent=s.world.characters[parentId],child=s.world.characters[childId];
  if(!eligibleAdult(s,parentId)||!child?.alive||childId===parentId||parent.faction!==child.faction||parent.children.includes(childId)||child.parents.includes(parentId)||child.adoptiveParents.length)return {ok:false,reason:'eligibility'};
- const age=personAge(s,childId),senior=personAge(s,parentId);if(!Number.isFinite(age)||age<0||!Number.isFinite(senior)||senior-age<16)return {ok:false,reason:'age'};
+ const childAge=eligibilityAgeRange(s,childId),parentAge=eligibilityAgeRange(s,parentId);
+ if(!childAge||!parentAge||childAge[0]<0||parentAge[0]-childAge[1]<16)return {ok:false,reason:'age'};
  child.adoptiveParents.push(parentId);parent.children.push(childId);child.familyId=parent.familyId;
  record(s,childId,`Adopted by ${CHARACTER_CATALOG[parentId].name[0]}; this did not confer office.`,`由${CHARACTER_CATALOG[parentId].name[1]}收养；收养不授予官职。`);
  record(s,parentId,`Adopted ${CHARACTER_CATALOG[childId].name[0]}.`,`收养了${CHARACTER_CATALOG[childId].name[1]}。`);
@@ -254,11 +260,17 @@ export function makeWill(s,id,beneficiary,share=1){
  initializeDynasties(s);const c=s.world.characters[id],heir=s.world.characters[beneficiary];
  // The testator knows the condition of their own court, not whether a
  // relative abroad has died without a delivered report. A will is only a
- // nomination; actual survival is checked when the estate is settled.
- if(!eligibleAdult(s,id)||!heir||(!heir.alive&&heir.faction===c.faction)||id===beneficiary||share<=0||share>1)return {ok:false,reason:'eligibility'};
+ // nomination; a cross-border handover is resolved later by courier.
+ if(!eligibleAdult(s,id)||!heir||(!heir.alive&&heir.faction===c.faction)||id===beneficiary||!Number.isFinite(share)||share<=0||share>1)return {ok:false,reason:'eligibility'};
  if(c.faction!==heir.faction){if(c.spouse!==beneficiary&&!c.children.includes(beneficiary))return {ok:false,reason:'foreign_heir'};if(s.wars.some(w=>w.includes(c.faction)&&w.includes(heir.faction))||(s.relations[pair(c.faction,heir.faction)]??0)<0)return {ok:false,reason:'diplomacy'}}
  const beneficiaryName=visiblePersonName(s,c.faction,beneficiary)||['Unrecorded name','姓名未记录'];
- c.will={beneficiary,share};record(s,id,`Named ${beneficiaryName[0]} in a personal will.`,`在个人遗嘱中指定${beneficiaryName[1]}。`);return {ok:true};
+ c.will={beneficiary,share,beneficiaryName:[...beneficiaryName],year:s.year,month:s.month};record(s,id,`Named ${beneficiaryName[0]} in a personal will.`,`在个人遗嘱中指定${beneficiaryName[1]}。`);return {ok:true};
+}
+
+export function revokeWill(s,id){
+ initializeDynasties(s);const c=s.world.characters[id];
+ if(!eligibleAdult(s,id)||!c.will)return {ok:false,reason:'unavailable'};
+ delete c.will;record(s,id,'Revoked the personal will.','撤回了个人遗嘱。');return {ok:true};
 }
 
 export function nominateGuardian(s,parentId,childId,guardianId){
@@ -272,53 +284,110 @@ export function nominateGuardian(s,parentId,childId,guardianId){
 function activateGuardianships(s,id){
  const parent=s.world.characters[id];for(const childId of parent.children){
   const child=s.world.characters[childId],guardian=s.world.characters[child?.guardianNominee];
-  if(!child?.alive||!isKnownMinor(s,childId)||!guardian?.alive||guardian.missing||guardian.faction!==child.faction)continue;
+  if(!child?.alive||!isKnownMinor(s,childId)||!eligibleAdult(s,guardian?.id)||guardian.faction!==child.faction)continue;
   if([...child.parents,...child.adoptiveParents].some(pid=>pid!==id&&eligibleAdult(s,pid)))continue;
   child.guardian=guardian.id;record(s,childId,`${CHARACTER_CATALOG[guardian.id].name[0]} became guardian; no political office was inherited.`,`${CHARACTER_CATALOG[guardian.id].name[1]}成为监护人；没有继承政治职务。`);
+ }
+}
+
+// A foreign heir's current condition is not known to the sending court. Keep
+// the share in the estate until a courier completes the handover; silence may
+// mean a lost message, an unavailable recipient or changed circumstances.
+function transferEstateShare(s,deceased,recipientId,amount,recordedName=null){
+ if(amount<=0)return;const d=s.world.dynasties,recipient=s.world.characters[recipientId];
+ if(!recipient){d.families[deceased.familyId].wealth+=amount;return}
+ if(recipient.faction===deceased.faction){if(recipient.alive)recipient.wealth+=amount;else d.families[deceased.familyId].wealth+=amount;return}
+ let next=Number.isSafeInteger(d.nextEstateTransfer)&&d.nextEstateTransfer>0?d.nextEstateTransfer:1;while(d.estateTransfers.some(x=>x.id===`estate-transfer:${next}`))next++;d.nextEstateTransfer=next+1;
+ const name=recordedName||visiblePersonName(s,deceased.faction,recipientId)||['Unrecorded name','姓名未记录'];
+ d.estateTransfers.push({id:`estate-transfer:${next}`,faction:deceased.faction,familyId:deceased.familyId,deceased:deceased.id,recipient:recipientId,recipientFaction:recipient.faction,recipientName:[...name],amount,status:'pending',remaining:4,year:s.year,month:s.month,courierSeed:Math.floor(roll(s)*0x100000000)});
+}
+export function retryEstateTransfer(s,id){
+ const d=initializeDynasties(s),transfer=d.estateTransfers.find(x=>x.id===id&&x.faction===s.player&&x.status==='no_reply');if(!transfer)return {ok:false,reason:'unavailable'};
+ transfer.status='pending';transfer.remaining=4;transfer.year=s.year;transfer.month=s.month;transfer.courierSeed=Math.floor(roll(s)*0x100000000);delete transfer.noReplyYear;delete transfer.noReplyMonth;return {ok:true};
+}
+export function reclaimEstateTransfer(s,id){
+ const d=initializeDynasties(s),transfer=d.estateTransfers.find(x=>x.id===id&&x.faction===s.player&&x.status==='no_reply'),family=transfer&&d.families[transfer.familyId];if(!transfer||!family)return {ok:false,reason:'unavailable'};
+ family.wealth=(Number.isFinite(family.wealth)?family.wealth:0)+transfer.amount;transfer.status='reclaimed';transfer.resolvedYear=s.year;transfer.resolvedMonth=s.month;return {ok:true};
+}
+export function advanceEstateTransfers(s){
+ const d=s.world.dynasties;
+ for(const transfer of d.estateTransfers){
+  if(transfer.status==='no_reply'&&transfer.faction!==s.player){const age=(s.year-transfer.noReplyYear)*12+s.month-transfer.noReplyMonth,family=d.families[transfer.familyId];if(Number.isFinite(age)&&age>=6&&family){family.wealth=(Number.isFinite(family.wealth)?family.wealth:0)+transfer.amount;transfer.status='reclaimed';transfer.resolvedYear=s.year;transfer.resolvedMonth=s.month}continue}
+  // Transfers created by a death earlier in this same turn start travelling
+  // next month, just like one the player sends after the turn is complete.
+  if(transfer.status!=='pending'||transfer.year===s.year&&transfer.month===s.month||--transfer.remaining>0)continue;
+  const recipient=s.world.characters[transfer.recipient],war=s.wars.some(w=>w.includes(transfer.faction)&&w.includes(transfer.recipientFaction));
+  if(familyCourierArrives(s,transfer)&&recipient?.alive&&recipient.faction===transfer.recipientFaction&&s.factions[transfer.recipientFaction]&&!war){
+   recipient.wealth+=transfer.amount;transfer.status='delivered';transfer.resolvedYear=s.year;transfer.resolvedMonth=s.month;
+   const deceasedName=visiblePersonName(s,recipient.faction,transfer.deceased)||['Unrecorded name','姓名未记录'];record(s,recipient.id,`Received ${transfer.amount} private wealth from ${deceasedName[0]}.`,`收到来自${deceasedName[1]}的${transfer.amount}私人财富。`);
+   if(transfer.faction===s.player)note(s,'A cross-border estate handover was completed.','一笔跨境遗产已完成交接。');
+   if(recipient.faction===s.player)note(s,'A cross-border private inheritance was received.','已收到一笔跨境私人遗产。');
+  }else{transfer.status='no_reply';transfer.noReplyYear=s.year;transfer.noReplyMonth=s.month;if(transfer.faction===s.player)note(s,'No reply arrived about a cross-border estate handover; the share remains held.','跨境遗产交接未收到回信；份额仍在托管。')}
+ }
+}
+
+// A court cannot provoke a foreign reaction until the ruling is conveyed and acknowledged.
+function queueEstateRulingNotice(s,caseFile,person,loyaltyDelta,relationDelta,name){
+ const d=s.world.dynasties;let next=Number.isSafeInteger(d.nextEstateNotice)&&d.nextEstateNotice>0?d.nextEstateNotice:1;while(d.estateRulingNotices.some(x=>x.id===`estate-notice:${next}`))next++;d.nextEstateNotice=next+1;
+ d.estateRulingNotices.push({id:`estate-notice:${next}`,faction:caseFile.faction,recipient:person.id,recipientFaction:person.faction,recipientName:[...storedCorrespondentName(person.id,name)],loyaltyDelta,relationDelta,status:'pending',remaining:4,year:s.year,month:s.month,courierSeed:Math.floor(roll(s)*0x100000000)});
+}
+export function retryEstateRulingNotice(s,id){
+ const d=initializeDynasties(s),notice=d.estateRulingNotices.find(x=>x.id===id&&x.faction===s.player&&x.status==='no_reply');if(!notice)return {ok:false,reason:'unavailable'};notice.status='pending';notice.remaining=4;notice.year=s.year;notice.month=s.month;notice.courierSeed=Math.floor(roll(s)*0x100000000);return {ok:true};
+}
+export function advanceEstateRulingNotices(s){
+ for(const notice of s.world.dynasties.estateRulingNotices){
+  if(notice.status!=='pending'||notice.year===s.year&&notice.month===s.month||--notice.remaining>0)continue;
+  const person=s.world.characters[notice.recipient],war=s.wars.some(w=>w.includes(notice.faction)&&w.includes(notice.recipientFaction));
+  const refuses=((Math.imul((notice.courierSeed??s.seed??0)^0x72538a91,0x9e3779b1)>>>0)%100)<10;
+  if(familyCourierArrives(s,notice)&&!refuses&&person?.alive&&!person.missing&&person.faction===notice.recipientFaction&&s.factions[notice.recipientFaction]&&!war){
+   person.loyalty=Math.max(0,Math.min(100,person.loyalty+notice.loyaltyDelta));if(notice.relationDelta){const key=pair(notice.faction,notice.recipientFaction);s.relations[key]=Math.max(-100,Math.min(100,(s.relations[key]||0)+notice.relationDelta))}notice.status='delivered';notice.resolvedYear=s.year;notice.resolvedMonth=s.month;if(notice.faction===s.player)note(s,'A reply arrived about an inheritance ruling.','关于遗产裁决的回信已送达。');if(person.faction===s.player)note(s,'A foreign court sent a notice about an inheritance ruling.','外国宫廷送来了遗产裁决通知。');
+  }else{notice.status='no_reply';notice.resolvedYear=s.year;notice.resolvedMonth=s.month;if(notice.faction===s.player)note(s,'No reply arrived to an inheritance ruling notice.','遗产裁决通知未收到回信。')}
  }
 }
 
 export function settleInheritance(s,id){
  const d=initializeDynasties(s),c=s.world.characters[id];if(!c||c.inheritanceSettled)return;
  activateGuardianships(s,id);
- c.inheritanceSettled=true;const heirs=c.children.filter(x=>s.world.characters[x]?.alive),will=c.will?.beneficiary;
- const eligibleWill=will&&s.world.characters[will]?.alive?will:null,wealth=Math.max(0,Math.floor(c.wealth||0));
+ c.inheritanceSettled=true;const potentiallyAvailable=x=>{const person=s.world.characters[x];return !!person&&(person.faction!==c.faction||person.alive)},heirs=c.children.filter(potentiallyAvailable),will=c.will?.beneficiary;
+ const eligibleWill=will&&potentiallyAvailable(will)?will:null,wealth=Math.max(0,Math.floor(c.wealth||0));
  if(eligibleWill&&heirs.some(x=>x!==eligibleWill)&&(!heirs.includes(eligibleWill)||s.world.characters[eligibleWill].faction!==c.faction)&&wealth>0){
-  d.inheritanceDisputes.push({id:`estate:${id}`,deceased:id,faction:c.faction,beneficiary:eligibleWill,heirs:heirs.filter(x=>x!==eligibleWill),estate:wealth,share:c.will.share,status:'pending',year:s.year,month:s.month});
+  d.inheritanceDisputes.push({id:`estate:${id}`,deceased:id,faction:c.faction,beneficiary:eligibleWill,beneficiaryName:storedCorrespondentName(eligibleWill,c.will.beneficiaryName),heirs:heirs.filter(x=>x!==eligibleWill),heirNames:Object.fromEntries(heirs.filter(x=>x!==eligibleWill).map(heir=>[heir,[...(visiblePersonName(s,c.faction,heir)||['Unrecorded name','姓名未记录'])]])),estate:wealth,share:c.will.share,status:'pending',year:s.year,month:s.month});
   c.wealth=0;record(s,id,'Died; the contested private estate is held pending a ruling.','去世；有争议的私人遗产待裁决。');
   if(c.faction===s.player)note(s,`The private estate of ${CHARACTER_CATALOG[id].name[0]} is disputed; the court may uphold the will, divide it, or favor the children.`,` ${CHARACTER_CATALOG[id].name[1]}的私人遗产发生争议；宫廷可维持遗嘱、分割遗产或支持子女。`);
   return;
  }
- if(eligibleWill){const amount=Math.floor(wealth*c.will.share),heir=s.world.characters[eligibleWill],deceasedName=visiblePersonName(s,heir.faction,id)||['Unrecorded name','姓名未记录'];heir.wealth+=amount;c.wealth-=amount;record(s,eligibleWill,`Inherited ${amount} private wealth from ${deceasedName[0]}.`,`从${deceasedName[1]}继承${amount}私人财富。`)}
- const remaining=Math.max(0,Math.floor(c.wealth||0));if(heirs.length){for(const heir of heirs)s.world.characters[heir].wealth+=Math.floor(remaining/heirs.length);familyOf(s,id).wealth+=remaining%heirs.length}else familyOf(s,id).wealth+=remaining;c.wealth=0;
- record(s,id,'Died; private property was settled separately from the state treasury.','去世；私人财产与国库分别结算。');
+ if(eligibleWill){const amount=Math.floor(wealth*c.will.share),heir=s.world.characters[eligibleWill],deceasedName=visiblePersonName(s,heir.faction,id)||['Unrecorded name','姓名未记录'];transferEstateShare(s,c,eligibleWill,amount,storedCorrespondentName(eligibleWill,c.will.beneficiaryName));c.wealth-=amount;if(heir.faction===c.faction)record(s,eligibleWill,`Inherited ${amount} private wealth from ${deceasedName[0]}.`,`从${deceasedName[1]}继承${amount}私人财富。`)}
+ const remaining=Math.max(0,Math.floor(c.wealth||0));if(heirs.length){for(const heir of heirs)transferEstateShare(s,c,heir,Math.floor(remaining/heirs.length));familyOf(s,id).wealth+=remaining%heirs.length}else familyOf(s,id).wealth+=remaining;c.wealth=0;
+ if(d.estateTransfers.some(x=>x.deceased===id&&x.status==='pending'))record(s,id,'Died; estate shares were allocated, with a cross-border handover awaiting a reply.','去世；遗产份额已分配，跨境交接仍在等待回信。');
+ else record(s,id,'Died; private property was settled separately from the state treasury.','去世；私人财产与国库分别结算。');
 }
 
 export function resolveInheritanceDispute(s,disputeId,choice){
  const d=initializeDynasties(s),caseFile=d.inheritanceDisputes.find(x=>x.id===disputeId&&x.status==='pending');
  if(!caseFile)return {ok:false,reason:'unavailable'};
  if(!['will','compromise','heirs'].includes(choice))return {ok:false,reason:'choice'};
- const faction=s.factions[caseFile.faction],beneficiary=s.world.characters[caseFile.beneficiary],heirs=caseFile.heirs.map(id=>s.world.characters[id]).filter(c=>c?.alive);
- if(!beneficiary?.alive&&!heirs.length){
+ const deceased=s.world.characters[caseFile.deceased],faction=s.factions[caseFile.faction],beneficiary=s.world.characters[caseFile.beneficiary],available=c=>!!c&&(c.faction!==caseFile.faction||c.alive),beneficiaryAvailable=available(beneficiary),heirs=caseFile.heirs.map(id=>s.world.characters[id]).filter(available);
+ if(!beneficiaryAvailable&&!heirs.length){
   const family=d.families[s.world.characters[caseFile.deceased].familyId];family.wealth+=caseFile.estate;caseFile.status='resolved';caseFile.choice='family';caseFile.resolvedYear=s.year;caseFile.resolvedMonth=s.month;
   record(s,caseFile.deceased,'No claimant received the estate; it passed to the family estate.','无人领取的遗产已转入家族公产。');if(caseFile.faction===s.player)note(s,'The unclaimed private estate passed to the family estate.','无人领取的私人遗产已转入家族公产。');return {ok:true,outcome:'family'};
  }
- if(!beneficiary?.alive&&choice!=='heirs')return {ok:false,reason:'unavailable'};
- if(choice==='compromise'&&faction?.treasury<6)return {ok:false,reason:'treasury'};
- const willAmount=beneficiary?.alive?(choice==='will'?Math.floor(caseFile.estate*caseFile.share):choice==='compromise'?Math.floor(caseFile.estate*.5):0):0;
- if(beneficiary?.alive)beneficiary.wealth+=willAmount;
+ if(!beneficiaryAvailable&&choice!=='heirs')return {ok:false,reason:'unavailable'};
+ if(choice==='compromise'&&(!faction||faction.treasury<6))return {ok:false,reason:'treasury'};
+ const willAmount=beneficiaryAvailable?(choice==='will'?Math.floor(caseFile.estate*caseFile.share):choice==='compromise'?Math.floor(caseFile.estate*.5):0):0;
+ if(beneficiaryAvailable)transferEstateShare(s,deceased,beneficiary.id,willAmount,storedCorrespondentName(beneficiary.id,caseFile.beneficiaryName));
  const rest=caseFile.estate-willAmount;
- if(heirs.length){const portion=Math.floor(rest/heirs.length);for(const heir of heirs)heir.wealth+=portion;d.families[s.world.characters[caseFile.deceased].familyId].wealth+=rest-portion*heirs.length}
- else if(beneficiary?.alive)beneficiary.wealth+=rest;
+ if(heirs.length){const portion=Math.floor(rest/heirs.length);for(const heir of heirs){const recordedName=caseFile.heirNames?.[heir.id]||(heir.faction===caseFile.faction?visiblePersonName(s,caseFile.faction,heir.id):storedCorrespondentName(heir.id,null));transferEstateShare(s,deceased,heir.id,portion,recordedName)}d.families[s.world.characters[caseFile.deceased].familyId].wealth+=rest-portion*heirs.length}
+ else if(beneficiaryAvailable)transferEstateShare(s,deceased,beneficiary.id,rest,storedCorrespondentName(beneficiary.id,caseFile.beneficiaryName));
  else d.families[s.world.characters[caseFile.deceased].familyId].wealth+=rest;
  if(choice==='compromise'){faction.treasury-=6;faction.stability=Math.min(100,faction.stability+2)}
- if(choice==='will'){for(const heir of heirs)heir.loyalty=Math.max(0,heir.loyalty-8);if(faction)faction.stability=Math.max(0,faction.stability-2)}
- if(choice==='heirs'&&beneficiary?.alive){beneficiary.loyalty=Math.max(0,beneficiary.loyalty-10);if(faction)faction.stability=Math.max(0,faction.stability-1)}
- if(beneficiary?.alive&&beneficiary.faction!==caseFile.faction){const key=pair(beneficiary.faction,caseFile.faction);s.relations[key]=Math.max(-100,Math.min(100,(s.relations[key]||0)+(choice==='heirs'?-4:2)))}
+ if(choice==='will'){for(const heir of heirs){if(heir.faction===caseFile.faction)heir.loyalty=Math.max(0,heir.loyalty-8);else queueEstateRulingNotice(s,caseFile,heir,-8,0,caseFile.heirNames?.[heir.id])}if(faction)faction.stability=Math.max(0,faction.stability-2)}
+ if(choice==='heirs'&&beneficiaryAvailable){if(beneficiary.faction===caseFile.faction)beneficiary.loyalty=Math.max(0,beneficiary.loyalty-10);if(faction)faction.stability=Math.max(0,faction.stability-1)}
+ if(beneficiaryAvailable&&beneficiary.faction!==caseFile.faction)queueEstateRulingNotice(s,caseFile,beneficiary,choice==='heirs'?-10:0,choice==='heirs'?-4:2,caseFile.beneficiaryName);
  d.memories.push({familyId:s.world.characters[caseFile.deceased].familyId,targetFamilyId:beneficiary?.familyId,kind:`inheritance_${choice}`,year:s.year,month:s.month,weight:choice==='compromise'?2:-6});
  caseFile.status='resolved';caseFile.choice=choice;caseFile.resolvedYear=s.year;caseFile.resolvedMonth=s.month;
  const labels={will:['will upheld','维持遗嘱'],compromise:['estate divided','分割遗产'],heirs:['children favored','支持子女']};
  record(s,caseFile.deceased,`Inheritance ruling: ${labels[choice][0]}.`,`继承裁决：${labels[choice][1]}。`);
+ if(choice==='compromise'){const ruler=(s.world.leadership[caseFile.faction]||[]).find(id=>s.world.characters[id]?.alive);if(ruler)recordLegendEvidence(s,ruler,'fair_ruling',{reference:`inheritance:${caseFile.id}`,audiences:[caseFile.faction],detail:['Divided a contested private estate after a court ruling.','经宫廷裁决分割有争议的私人遗产。']})}
  if(caseFile.faction===s.player)note(s,`Inheritance ruling: ${labels[choice][0]}.`,`继承裁决：${labels[choice][1]}。`);
  return {ok:true};
 }
@@ -326,35 +395,45 @@ export function resolveInheritanceDispute(s,disputeId,choice){
 export function requestFamilyResources(s,familyId,choice){
  const d=initializeDynasties(s),family=d.families[familyId],faction=s.player,government=s.factions[faction];
  if(!family||!government||!['donation','loan','levy'].includes(choice))return {ok:false,reason:'unavailable'};
- const members=Object.values(s.world.characters).filter(c=>c.alive&&c.faction===faction&&c.familyId===familyId).sort((a,b)=>(b.wealth||0)-(a.wealth||0));
+ const members=Object.values(s.world.characters).filter(c=>c.alive&&!c.missing&&c.faction===faction&&c.familyId===familyId).sort((a,b)=>(b.wealth||0)-(a.wealth||0));
  if(!members.length)return {ok:false,reason:'unavailable'};
  const monthIndex=s.year*12+s.month;if((family.lastResourceRequest??-Infinity)+6>monthIndex)return {ok:false,reason:'cooldown'};
  const available=(family.wealth||0)+members.reduce((sum,c)=>sum+Math.max(0,Math.floor(c.wealth||0)),0);
  const amount=Math.min(choice==='loan'?12:8,available);if(amount<4)return {ok:false,reason:'wealth'};
- const leader=s.world.characters[family.leader]||members[0];
- if(choice==='donation'&&roll(s)>=Math.max(.2,Math.min(.85,.35+(leader.loyalty||50)/250+(family.reputation||50)/500))){family.lastResourceRequest=monthIndex;record(s,leader.id,'The family declined a request for a voluntary contribution.','家族拒绝了自愿捐助请求。');return {ok:false,reason:'declined'}}
- if(choice==='loan'&&((leader.loyalty||50)<25||d.familyLoans.some(x=>x.familyId===familyId&&x.remaining>0)))return {ok:false,reason:'terms'};
+ const leader=members.find(c=>c.id===family.leader)||members[0];
+ if(choice==='donation'&&roll(s)>=Math.max(.2,Math.min(.85,.35+(leader.loyalty??50)/250+(family.reputation??50)/500))){family.lastResourceRequest=monthIndex;record(s,leader.id,'The family declined a request for a voluntary contribution.','家族拒绝了自愿捐助请求。');return {ok:false,reason:'declined'}}
+ if(choice==='loan'&&((leader.loyalty??50)<25||d.familyLoans.some(x=>x.familyId===familyId&&x.remaining>0)))return {ok:false,reason:'terms'};
  let rest=amount,pooled=Math.min(rest,family.wealth||0);family.wealth-=pooled;rest-=pooled;
  for(const person of members){const taken=Math.min(rest,Math.max(0,Math.floor(person.wealth||0)));person.wealth-=taken;rest-=taken;if(!rest)break}
  government.treasury+=amount;family.lastResourceRequest=monthIndex;
- if(choice==='donation'){family.influence=Math.min(100,(family.influence||20)+3);family.reputation=Math.min(100,(family.reputation||50)+2);leader.loyalty=Math.min(100,(leader.loyalty||50)+2)}
- if(choice==='loan'){d.familyLoans.push({familyId,faction,principal:amount,remaining:amount+2,year:s.year,month:s.month});family.influence=Math.min(100,(family.influence||20)+2)}
- if(choice==='levy'){government.stability=Math.max(0,government.stability-4);family.reputation=Math.max(0,(family.reputation||50)-5);for(const member of members)member.loyalty=Math.max(0,(member.loyalty||50)-8);d.memories.push({familyId,kind:'forced_levy',year:s.year,month:s.month,weight:-10})}
+ if(choice==='donation'){family.influence=Math.min(100,(family.influence??20)+3);family.reputation=Math.min(100,(family.reputation??50)+2);leader.loyalty=Math.min(100,(leader.loyalty??50)+2);recordLegendEvidence(s,leader.id,'generosity',{reference:`donation:${familyId}:${monthIndex}`,audiences:[faction],detail:[`Contributed ${amount} private wealth to the treasury.`,`向国库捐出${amount}私人财富。`]});recordLegendEvidence(s,leader.id,'patronage',{reference:`patronage:${familyId}:${monthIndex}`,audiences:[faction]})}
+ if(choice==='loan'){d.familyLoans.push({familyId,faction,principal:amount,remaining:amount+2,year:s.year,month:s.month});family.influence=Math.min(100,(family.influence??20)+2)}
+ if(choice==='levy'){government.stability=Math.max(0,government.stability-4);family.reputation=Math.max(0,(family.reputation??50)-5);for(const member of members)member.loyalty=Math.max(0,(member.loyalty||50)-8);d.memories.push({familyId,kind:'forced_levy',year:s.year,month:s.month,weight:-10});const ruler=(s.world.leadership[faction]||[]).find(id=>s.world.characters[id]?.alive);if(ruler){const detail=[`Compelled ${amount} private wealth from a family.`,`向家族强制征收${amount}私人财富。`];recordLegendEvidence(s,ruler,'forced_levy',{reference:`levy:${familyId}:${monthIndex}`,audiences:[faction],detail});recordLegendEvidence(s,ruler,'severe_rule',{reference:`levy-rule:${familyId}:${monthIndex}`,audiences:[faction],detail})}}
  const labels={donation:['voluntary contribution','自愿捐助'],loan:['family loan','家族借款'],levy:['compulsory levy','强制征收']};
  record(s,leader.id,`The family provided ${amount} to the treasury as a ${labels[choice][0]}.`,`家族以${labels[choice][1]}形式向国库提供${amount}。`);
  note(s,`A ${labels[choice][0]} transferred ${amount} private wealth to the treasury.`,`一笔${labels[choice][1]}将${amount}私人财富转入国库。`);
  return {ok:true,amount};
 }
 
+// Unknown ages do not prove an existing ward has aged out.
+function reconcileGuardianships(s){
+ for(const child of Object.values(s.world.characters)){
+  if(!child.guardian&&!child.guardianNominee)continue;const age=eligibilityAgeRange(s,child.id),agedOut=!!age&&age[0]>=16;
+  if(!child.alive||agedOut){if(child.guardian&&child.alive)record(s,child.id,'The simulated guardianship ended when the ward reached the age threshold.','达到模拟年龄门槛，监护安排已结束。');delete child.guardian;delete child.guardianNominee;continue}
+  const guardian=s.world.characters[child.guardian],guardianAge=guardian&&eligibilityAgeRange(s,guardian.id);if(child.guardian&&(!guardian?.alive||guardian.missing||guardian.faction!==child.faction||(guardianAge&&guardianAge[0]<18))){delete child.guardian;record(s,child.id,'The simulated guardianship ended or is no longer available.','模拟监护安排已结束或不再可用。')}
+ }
+}
 export function advanceDynasties(s){
- const d=initializeDynasties(s);
+ const d=initializeDynasties(s);reconcileGuardianships(s);
  // Old saves keep their existing identities. Allocate only to identifiable
  // campaign-born children with a recorded birth and known parents, once.
- if((d.bornPortraitPoolVersion||0)<6){d.bornPortraitClaims||={};for(const id of Object.keys(s.world.characters).sort((a,b)=>(Number(a.split(':')[1])||0)-(Number(b.split(':')[1])||0)))if((d.lives[id]||[]).some(event=>event.simulated&&event.en==='Born in the simulated campaign.'))assignBornPortrait(s,id);d.bornPortraitPoolVersion=6}
+ if((d.bornPortraitPoolVersion||0)<9){d.bornPortraitClaims||={};for(const id of Object.keys(s.world.characters).sort((a,b)=>(Number(a.split(':')[1])||0)-(Number(b.split(':')[1])||0)))if((d.lives[id]||[]).some(event=>event.simulated&&event.en==='Born in the simulated campaign.'))assignBornPortrait(s,id);d.bornPortraitPoolVersion=9}
  if(!d.courtPortraitPoolVersion){for(const id of Object.keys(s.world.characters).sort((a,b)=>(Number(a.split(':')[1])||0)-(Number(b.split(':')[1])||0)))assignCourtPortrait(s,id);d.courtPortraitPoolVersion=1}
  advanceMarriageOffers(s);
  advanceAsylumRequests(s);
  advanceFamilyAccords(s);
+ advanceEstateTransfers(s);
+ advanceEstateRulingNotices(s);
  for(const loan of d.familyLoans.filter(x=>x.remaining>0)){
   const treasury=s.factions[loan.faction]?.treasury||0;if(treasury<1)continue;
   s.factions[loan.faction].treasury--;d.families[loan.familyId].wealth++;loan.remaining--;
@@ -362,8 +441,8 @@ export function advanceDynasties(s){
  }
  for(const dispute of d.inheritanceDisputes.filter(x=>x.status==='pending')){
   const age=(s.year-dispute.year)*12+s.month-dispute.month;
-  const beneficiaryAlive=!!s.world.characters[dispute.beneficiary]?.alive,anyHeir=dispute.heirs.some(id=>s.world.characters[id]?.alive);
-  if(!beneficiaryAlive&&!anyHeir||(dispute.faction!==s.player&&age>=3)||age>=12){const choice=beneficiaryAlive&&s.factions[dispute.faction]?.treasury>=6?'compromise':'heirs';resolveInheritanceDispute(s,dispute.id,choice)}
+  const available=id=>{const c=s.world.characters[id];return !!c&&(c.faction!==dispute.faction||c.alive)},beneficiaryAvailable=available(dispute.beneficiary),anyHeir=dispute.heirs.some(available);
+  if(!beneficiaryAvailable&&!anyHeir||(dispute.faction!==s.player&&age>=3)||age>=12){const choice=beneficiaryAvailable&&s.factions[dispute.faction]?.treasury>=6?'compromise':'heirs';resolveInheritanceDispute(s,dispute.id,choice)}
  }
  const crisis=d.scenario,months=crisis?(s.year-crisis.startedYear)*12+s.month-crisis.startedMonth:0;
  if(crisis?.concessionMonths>0&&s.factions.egypt&&s.factions.numidia){s.factions.egypt.treasury-=1;s.factions.numidia.treasury+=1;crisis.concessionMonths--}

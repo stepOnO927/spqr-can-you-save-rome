@@ -1,9 +1,9 @@
 import {ROUTES,FACTIONS,REGIONS} from './data.js?v=phase-x-1';
-import {reportedControl} from './control-intelligence.js?v=fort-intel-1';
-import {reportedDiplomacy} from './diplomatic-knowledge.js?v=diplomatic-chronicle-1';
-import {activeAgreement} from './agreements.js?v=agreement-courier-1';
+import {reportedControl} from './control-intelligence.js?v=dossier-archive-1';
+import {reportedDiplomacy} from './diplomatic-knowledge.js?v=dossier-archive-1';
+import {activeAgreement} from './agreements.js?v=dossier-archive-1';
 import {rememberPoliticalEvent,politicalMemoryAdjustment} from './political-memory.js?v=grand-chessboard-2';
-import {isDeliveredReport} from './person-knowledge.js?v=undated-name-1';
+import {isDeliveredReport} from './person-knowledge.js?v=dossier-archive-1';
 
 // Scout-based strategic warnings between friendly courts.
 // A sender may only forward a dated sighting from its own knowledge. The letter
@@ -103,10 +103,11 @@ function deliver(s,letter,{autoplayPlayer,issueOrder,log}){
  if(decision.kind==='heeded'){
   let ordered=0;for(const a of s.armies.filter(x=>x.owner===letter.to&&x.region===letter.near&&!x.move&&!x.siege&&!x.order&&x.men>0))if(issueOrder?.(s,a.id,'defend',null,letter.to)?.ok)ordered++;
   decision.ordered=ordered;rememberPoliticalEvent(s,letter.to,letter.from,'shared_warning',2);
-  const k=pair(letter.to,letter.from);s.relations[k]=Math.min(100,(s.relations[k]??0)+2);
+  // Gratitude stays in the recipient's private political memory. A shared
+  // relation change would give the sender an unacknowledged delivery signal.
   record(letter,'responded',s,{decision:'heeded'});
  }else record(letter,'unresponded',s,{decision:decision.kind,reason:decision.reason});
- if(letter.from===s.player)log(s,`Your warning reached ${short(letter.to)[0]}.`,`你的预警已送达${short(letter.to)[1]}。`,{kind:'ally_warning',warning:letter.id});
+ // No return courier exists: the sender receives no delivery or decision notice.
 }
 
 export function advanceStrategicWarnings(s,{autoplayPlayer=false,letterMonths={},issueOrder=null,log=()=>{}}={}){

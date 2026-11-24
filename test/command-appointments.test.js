@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,recruit,upgradeSave,tick,resolveBattle,region,adjacent} from '../engine.js?v=audience-silence-1';
-import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=guardian-age-1';
-import {commandFactor,advanceMissingCommanders,advanceCharacters} from '../character-system.js?v=guardian-age-1';
-import {deriveGovernment} from '../governance.js?v=guardian-age-1';
-import {successorFor} from '../characters.js?v=succession-ui-recovery-1';
+import {newGame,recruit,upgradeSave,tick,resolveBattle,region,adjacent} from '../engine.js?v=dossier-archive-1';
+import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=dossier-archive-1';
+import {commandFactor,advanceMissingCommanders,advanceCharacters} from '../character-system.js?v=dossier-archive-1';
+import {deriveGovernment} from '../governance.js?v=dossier-archive-1';
+import {successorFor} from '../characters.js?v=dossier-archive-1';
+import {createFictionalPerson} from '../dynasties.js?v=dossier-archive-1';
 
 test('a local friendly person may command a vacant army and the appointment survives saving',()=>{
  let s=newGame('senate');assert.equal(recruit(s,'roma'),true);const unit=s.armies.find(a=>a.id==='levy1');
@@ -30,23 +31,23 @@ test('a missing leader temporarily cannot govern, then may re-establish contact 
  let s=newGame('senate'),a=s.armies.find(x=>x.id==='xiii'),d=s.armies.find(x=>x.id==='pompey'),r=region(s,'roma');a.men=500000;
  for(const edge of adjacent('roma'))region(s,edge.to).owner='caesar';resolveBattle(s,a,d,r);
  assert.equal(s.world.characters.pompey.location,null);assert.equal(deriveGovernment(s,'senate').kind,'acting_command');assert.deepEqual(s.world.leadership.senate,['pompey']);
- s=upgradeSave(JSON.parse(JSON.stringify(s)));for(let i=0;i<2;i++){s.month++;advanceMissingCommanders(s);assert.equal(s.world.characters.pompey.location,null)}
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));s.world.characters.pompey.missing.searchSeed=0;for(let i=0;i<2;i++){s.month++;advanceMissingCommanders(s);assert.equal(s.world.characters.pompey.location,null)}
  s.month++;advanceMissingCommanders(s);assert.ok(s.world.characters.pompey.location);assert.equal(s.world.characters.pompey.missing,undefined);assert.equal(deriveGovernment(s,'senate').kind,'normal');
  assert.ok(s.log.some(x=>x.zh.includes('重新取得联系')));assert.equal(s.knowledge.caesar.senate.reports.length,0);
 });
 test('a missing person cannot return without controlled territory or be chosen for succession',()=>{
- const s=newGame('caesar');s.world.characters.antony.missing={origin:'cisalpine',remaining:1,year:s.year,month:s.month};s.world.characters.antony.location=null;
+ const s=newGame('caesar');s.world.characters.antony.missing={origin:'cisalpine',remaining:1,year:s.year,month:s.month,searchSeed:0};s.world.characters.antony.location=null;
  for(const r of s.regions)if(r.owner==='caesar')r.owner='senate';s.world.characters.caesar.alive=false;
  s.month++;advanceMissingCommanders(s);assert.equal(s.world.characters.antony.location,null);assert.equal(s.world.characters.antony.missing.remaining,0);
  assert.equal(deriveGovernment(s,'caesar').kind,'vacant');assert.ok(!successorFor(s,'caesar').includes('antony'));
  region(s,'gaul').owner='caesar';s.month++;advanceMissingCommanders(s);assert.equal(s.world.characters.antony.location,'gaul');
 });
-test('health events pause while a commander is missing',()=>{
- const s=newGame('senate'),c=s.world.characters.cicero;c.location=null;c.health='dying';c.missing={origin:'roma',remaining:1,year:-50,month:12};s.world.intelSeed=0;
- advanceCharacters(s);assert.equal(c.health,'dying');assert.equal(c.alive,true);assert.ok(!s.log.some(x=>x.en.includes('Cicero')&&x.en.includes('died')));
+test('a missing commander’s health can change without revealing the outcome',()=>{
+ const s=newGame('senate'),c=s.world.characters.cicero,threshold=1-Math.pow(1-.45,1/12),seed=Array.from({length:10000},(_,i)=>i).find(i=>((Math.imul(i,1664525)+1013904223)>>>0)/4294967296<threshold);c.location=null;c.health='dying';c.missing={origin:'roma',remaining:2,year:-50,month:12,healthSeed:seed};
+ advanceCharacters(s);assert.equal(c.health,'deceased');assert.equal(c.alive,false);assert.ok(c.missing);assert.ok(!s.log.some(x=>x.en.includes('Cicero')&&x.en.includes('died')));
 });
 test('normal campaign months advance loss of contact and restore the leader after the third month',()=>{
- const s=newGame('caesar'),person=s.world.characters.caesar,army=s.armies.find(x=>x.id==='xiii');army.characterId=null;army.commander=['Unnamed officer','未具名军官'];person.location=null;person.missing={origin:'cisalpine',remaining:3,year:s.year,month:s.month};
+ const s=newGame('caesar'),person=s.world.characters.caesar,army=s.armies.find(x=>x.id==='xiii');army.characterId=null;army.commander=['Unnamed officer','未具名军官'];person.location=null;person.missing={origin:'cisalpine',remaining:3,year:s.year,month:s.month,searchSeed:0};
  tick(s);assert.equal(person.location,null);assert.equal(s.world.governments.caesar.kind,'acting_command');tick(s);assert.equal(person.location,null);tick(s);assert.equal(person.missing,undefined);assert.ok(person.location);assert.equal(s.world.governments.caesar.kind,'normal');
 });
 test('appointments reject remote, occupied, travelling, incapacitated and foreign people without spending resources',()=>{
@@ -54,6 +55,14 @@ test('appointments reject remote, occupied, travelling, incapacitated and foreig
  s.world.characters.cato.travel={destination:'epirus'};s.world.characters.scipio.health='seriously_ill';s.world.characters.labienus.location='epirus';
  for(const id of ['cato','scipio','labienus','pompey','cleopatra'])assert.equal(appointCommander(s,unit.id,id).ok,false);
  unit.move={to:'italiaS',remaining:1};assert.deepEqual(availableCommanders(s,unit.id),[]);assert.equal(s.factions.senate.treasury,cash);
+});
+test('commander eligibility respects saved fictional ages and historical uncertainty',()=>{
+ let s=newGame('senate');const army=s.armies.find(a=>a.id==='pompey');
+ const young=createFictionalPerson(s,{name:['Young','年轻人物'],faction:'senate',birthYear:s.year-19,location:'roma'}),adult=createFictionalPerson(s,{name:['Adult','成年人物'],faction:'senate',birthYear:s.year-20,location:'roma'}),unknown=createFictionalPerson(s,{name:['Unknown age','未知年龄'],faction:'senate',birthYear:s.year-30,location:'roma'});
+ s.world.characters[unknown].birthYear=null;for(const id of ['ptolemy','cleopatra']){s.world.characters[id].faction='senate';s.world.characters[id].location='roma'}
+ let candidates=availableCommanders(s,army.id);for(const id of [young,unknown,'ptolemy','cleopatra'])assert.ok(!candidates.includes(id),id+' must not be eligible');assert.ok(candidates.includes(adult));assert.ok(candidates.includes('scipio'),'historical figure with no estimated age stays playable');
+ assert.equal(appointCommander(s,army.id,'ptolemy').ok,false);assert.equal(appointCommander(s,army.id,young).ok,false);s=upgradeSave(JSON.parse(JSON.stringify(s)));s.year++;
+ candidates=availableCommanders(s,army.id);assert.ok(candidates.includes(young));assert.ok(!candidates.includes(unknown));assert.equal(appointCommander(s,army.id,young).ok,true);
 });
 test('a seriously ill commander is relieved before the army moves or fights',()=>{
  const s=newGame('caesar'),unit=s.armies.find(a=>a.id==='xiii'),person=s.world.characters.caesar,skill=unit.skill;unit.move={to:'italiaN',remaining:1};person.health='seriously_ill';tick(s);

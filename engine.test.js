@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick,moveArmy,previewMarch,recruit,setTax,diplomacy,resolveBattle,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,sendInquiry,answerPeaceOffer} from './engine.js?v=audience-silence-1';
+import {newGame,upgradeSave,tick,moveArmy,previewMarch,recruit,setTax,diplomacy,resolveBattle,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,sendInquiry,answerPeaceOffer} from './engine.js?v=dossier-archive-1';
 import historical from './historical-territories.js';
 import {REGIONS} from './data.js';
 import {identity,factionMark} from './identity.js';
@@ -38,7 +38,7 @@ test('peace offers remain in transit across saves and only end war on delivery',
  const seed=Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=.8&&q<.9});
  s.seed=seed;tick(s);assert.equal(s.inquiries[0].status,'pending');assert.equal(s.inquiries[0].sealed.status,'answered');assert.equal(s.inquiries[0].claim,undefined);assert.ok(isWar(s,'caesar','senate'));
  s=upgradeSave(JSON.parse(JSON.stringify(s)));for(const a of s.armies){a.move=null;a.siege=null}s.seed=seed;tick(s);
- assert.equal(s.inquiries[0].status,'answered');assert.equal(isWar(s,'caesar','senate'),false);assert.match(s.inquiries[0].claim[0],/war has ended/);
+ assert.equal(s.inquiries[0].status,'answered');assert.equal(isWar(s,'caesar','senate'),false);assert.match(s.inquiries[0].claim[0],/offer is accepted/);assert.equal(s.inquiries[0].peaceSettlement,'concluded');
  assert.equal(sendInquiry(s,'caesar','senate','peace').ok,false);
 });
 
@@ -241,7 +241,10 @@ test('a lost or refused inquiry remains indistinguishable from a pending one unt
   const start=newGame('caesar');sendInquiry(start,'caesar','egypt');tick(start);let s;
   for(let i=1;i<200&&!s;i++){const trial=upgradeSave(JSON.parse(JSON.stringify(start)));trial.seed=(i*7000013)>>>0;tick(trial);if(trial.inquiries[0].sealed?.status===outcome)s=trial}
   assert.ok(s,'expected a simulation with the selected outcome');assert.equal(s.inquiries[0].status,'pending');assert.equal(s.inquiries[0].claim,undefined);assert.equal(s.knowledge.caesar.egypt.reports.length,0);
-  s=upgradeSave(JSON.parse(JSON.stringify(s)));tick(s);assert.equal(s.inquiries[0].status,'pending');tick(s);assert.equal(s.inquiries[0].status,outcome);assert.equal(s.knowledge.caesar.egypt.reports.length,0);
+  s=upgradeSave(JSON.parse(JSON.stringify(s)));tick(s);assert.equal(s.inquiries[0].status,'pending');tick(s);
+  // A sealed refusal may still be lost on the return journey; neither result
+  // reveals the court's response to the sender before delivery.
+  assert.ok(outcome==='refused'?['refused','no_reply'].includes(s.inquiries[0].status):s.inquiries[0].status==='no_reply');assert.equal(s.knowledge.caesar.egypt.reports.length,0);
  }
 });
 
@@ -265,8 +268,8 @@ test('letters are private, cost resources, and do not reveal a vanished court at
 test('succession letters can disclose an unverified plan or answer evasively after a delay',()=>{
  const seed=Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=.8&&q<.9});
  const friendly=legacyIsolated(newGame('caesar'));friendly.world.successionPlans.parthia='pacorus';friendly.relations['caesar:parthia']=50;assert.equal(sendInquiry(friendly,'caesar','parthia','successor').ok,true);
- const saved=upgradeSave(JSON.parse(JSON.stringify(friendly)));for(let i=0;i<4;i++)tick(saved);assert.equal(saved.inquiries[0].status,'pending');for(const army of saved.armies){army.move=null;army.siege=null}saved.seed=seed;tick(saved);
- assert.equal(saved.inquiries[0].status,'answered');assert.match(saved.inquiries[0].claim[0],/Pacorus/);assert.equal(saved.knowledge.caesar.parthia.reports[0].value,'pacorus');assert.equal(saved.knowledge.caesar.parthia.reports[0].verified,false);
+ const saved=upgradeSave(JSON.parse(JSON.stringify(friendly))),sent=saved.inquiries.find(x=>x.actor==='caesar'&&x.target==='parthia'&&x.subject==='successor');for(let i=0;i<4;i++)tick(saved);assert.equal(sent.status,'pending');for(const army of saved.armies){army.move=null;army.siege=null}saved.seed=seed;tick(saved);
+ assert.equal(sent.status,'answered');assert.match(sent.claim[0],/Pacorus/);assert.equal(saved.knowledge.caesar.parthia.reports[0].value,'pacorus');assert.equal(saved.knowledge.caesar.parthia.reports[0].verified,false);
  const hostile=legacyIsolated(newGame('caesar'));hostile.world.successionPlans.senate='cato';assert.equal(sendInquiry(hostile,'caesar','senate','successor').ok,true);hostile.inquiries[0].remaining=1;hostile.seed=seed;tick(hostile);
  assert.equal(hostile.inquiries[0].status,'answered');assert.match(hostile.inquiries[0].claim[0],/did not name/);assert.equal(hostile.knowledge.caesar.senate.reports[0].value,'unknown');assert.equal(hostile.world.successionPlans.senate,'cato');
 });
