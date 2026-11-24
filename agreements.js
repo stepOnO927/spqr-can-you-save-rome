@@ -85,24 +85,28 @@ function dispatchTradeCargo(s,t,from,to){
  const route=commercialCorridor(s,from,to);if(!route.ok||route.path.length<2)return;
  s.tradeCargo.push({id:`trade:${s.nextTradeCargoId++}`,agreementId:t.id,from,to,value:1,path:route.path,leg:0,remaining:tradeLegMonths(s,route.path[0],route.path[1]),blockedMonths:0,dispatched:{year:s.year,month:s.month},legStarted:{year:s.year,month:s.month},status:'transit'});
 }
-export function checkAgreement(s,actor,target,type,{evaluateRecipient=true,access=null}={}){
+export function agreementCredentials(s,actor){return {diplomacy:hasNationalIdea(s,actor,'diplomacy')?4:0,credibility:Math.max(0,Math.min(100,s.diplomaticCredibility?.[actor]??100))}}
+export function checkAgreement(s,actor,target,type,{evaluateRecipient=true,recipientReview=false,credentials=null,access=null}={}){
  initializeAgreements(s);const def=AGREEMENT_TYPES[type];
  if(!def||actor===target||actor==='rebels'||target==='rebels'||!s.factions[actor]||!s.factions[target])return {ok:false,reason:'invalid'};
- if(!s.regions.some(r=>r.owner===actor)||!s.regions.some(r=>r.owner===target)||atWar(s,actor,target))return {ok:false,reason:'unavailable'};
+ if((!recipientReview&&!s.regions.some(r=>r.owner===actor))||!s.regions.some(r=>r.owner===target)||atWar(s,actor,target))return {ok:false,reason:'unavailable'};
  if(activeAgreement(s,actor,target,type))return {ok:false,reason:'existing'};
- if(SUBJECT_TYPES.includes(type)&&!mayBecomeSubject(s,actor,target))return {ok:false,reason:'existing'};
- const actorSubject=subjectRelation(s,actor)?.terms.subject;
+ if(!recipientReview&&SUBJECT_TYPES.includes(type)&&!mayBecomeSubject(s,actor,target))return {ok:false,reason:'existing'};
+ const actorSubject=!recipientReview&&subjectRelation(s,actor)?.terms.subject;
  if(actorSubject?.diplomaticAutonomy==='limited'&&actorSubject.suzerain!==target&&['defensive','offensive','guarantee','military_support',...SUBJECT_TYPES].includes(type))return {ok:false,reason:'autonomy'};
- if(type==='military_access'&&access){
+ if(!recipientReview&&type==='military_access'&&access){
   if(access.permittedParty&&!['both',actor,target].includes(access.permittedParty))return {ok:false,reason:'invalid'};
   if(access.permittedTerritories&&(!Array.isArray(access.permittedTerritories)||!access.permittedTerritories.length||access.permittedTerritories.some(id=>!s.regions.some(r=>r.id===id&&[actor,target].includes(r.owner)))))return {ok:false,reason:'invalid'};
  }
- if(s.factions[actor].treasury<def.cost)return {ok:false,reason:'treasury'};
- const relation=s.relations[key(actor,target)]??0,credibility=s.diplomaticCredibility[actor]??100;
- // The recipient weighs the proposer's public reliability. No foreign hidden
- // attributes are read and declining an offer reveals no private information.
- if(evaluateRecipient&&relation-(100-credibility)*.4+politicalMemoryAdjustment(s,target,actor)+(hasNationalIdea(s,actor,'diplomacy')?4:0)<def.threshold)return {ok:false,reason:'declined'};
- if(evaluateRecipient&&SUBJECT_TYPES.includes(type)){
+ if(!recipientReview&&s.factions[actor].treasury<def.cost)return {ok:false,reason:'treasury'};
+ const relation=s.relations[key(actor,target)]??0,offer=recipientReview?(credentials||{}):agreementCredentials(s,actor);
+ const credibility=Number.isFinite(offer.credibility)?Math.max(0,Math.min(100,offer.credibility)):100,credit=offer.diplomacy===4?4:0;
+ // A received offer carries dated credentials. Missing legacy credentials
+ // give no diplomacy bonus; never reconstruct them from foreign live policy.
+ // Sender funding and existence are checked when its own court concludes,
+ // not used as remote intelligence while the recipient decides.
+ if(evaluateRecipient&&relation-(100-credibility)*.4+politicalMemoryAdjustment(s,target,actor)+credit<def.threshold)return {ok:false,reason:'declined'};
+ if(evaluateRecipient&&!recipientReview&&SUBJECT_TYPES.includes(type)){
   const protectorStrength=s.armies.filter(a=>a.owner===actor).reduce((sum,a)=>sum+Math.max(0,a.men),0);
   const subjectStrength=s.armies.filter(a=>a.owner===target).reduce((sum,a)=>sum+Math.max(0,a.men),0);
   if(protectorStrength<subjectStrength*.75||s.factions[actor].stability<35)return {ok:false,reason:'declined'};
