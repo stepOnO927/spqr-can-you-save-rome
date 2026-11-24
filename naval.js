@@ -1,7 +1,7 @@
 import {GRAND_SITES,GRAND_ROUTES} from './grand-map-data.js?v=2';
 import {activeEffects,localBuildingEffects,recordMerchantContact} from './development.js?v=66';
 import {officeOf} from './office-system.js';
-import {nationalBudget} from './national-budget.js?v=36';
+import {nationalBudget} from './national-budget.js?v=37';
 
 // Sea areas and costs are game-scale approximations of the 49 BCE Mediterranean.
 export const SEA_ZONES=[
@@ -1043,6 +1043,32 @@ function markTransportArrival(s,f,order){
  // The convoy may dock at a friendly harbor, but a hostile harbor remains closed.
  f.port=s.regions.find(r=>r.id===order.targetPort)?.owner===f.owner?order.targetPort:null;
 }
+function reviewPirateSponsorship(s,p,patrol,log){
+ const sponsor=p.backer;if(!sponsor||!s.factions[sponsor])return;
+ if(p.ships<=0){p.backer=null;return}
+ const now=s.year*12+s.month,observers=new Set(patrol.map(f=>f.owner));
+ for(const route of s.naval.routes){
+  const dispatched=route.lastDispatch,age=dispatched?now-(dispatched.year*12+dispatched.month):Infinity;
+  if(age<0||age>2||!routeZones(route).includes(p.zone))continue;
+  for(const id of [route.from,route.to])observers.add(s.regions.find(r=>r.id===id)?.owner);
+ }
+ for(const voyage of s.naval.voyages.filter(v=>v.zone===p.zone))for(const owner of [voyage.buyer,voyage.seller,voyage.vesselOwner])observers.add(owner);
+ for(const job of s.naval.jobs.filter(j=>j.kind==='intelligence'&&j.remaining===0)){
+  if(s.regions.some(r=>r.owner===job.owner&&r.port&&portZone(r.id)===p.zone))observers.add(job.owner);
+ }
+ observers.delete(sponsor);observers.delete('rebels');observers.delete(undefined);
+ const victims=[...observers].filter(owner=>s.factions[owner]).sort();if(!victims.length)return;
+ const patrolCount=patrol.filter(f=>f.owner!==sponsor).length;
+ const counterintelligence=Math.max(0,...victims.map(owner=>navalJobEffect(s,owner,'intelligence')));
+ const cover=navalJobEffect(s,sponsor,'intelligence');
+ const chance=Math.max(.01,Math.min(.28,.02+patrolCount*.04+counterintelligence*.02-cover*.015));
+ if(rng(s)>=chance)return;
+ p.backer=null;s.factions[sponsor].legitimacy=Math.max(0,s.factions[sponsor].legitimacy-3);
+ for(const victim of victims){const key=[sponsor,victim].sort().join(':');s.relations[key]=Math.max(-100,(s.relations[key]??0)-4)}
+ report(s,{kind:'scandal',zone:p.zone,owner:sponsor,victims,relationLoss:4,pirateId:p.id});
+ if(sponsor===s.player)log(s,'Secret pirate support was exposed; legitimacy and foreign relations fell.','秘密资助海盗曝光，合法性及对外关系下降。');
+ else if(victims.includes(s.player))log(s,'Evidence linked a foreign court to pirates in your waters; relations fell.','证据显示外国宫廷资助了本国海域的海盗；双方关系下降。');
+}
 export function advanceNaval(s,log=()=>{}){initializeNaval(s);if(!s.naval)return;const n=s.naval,avoidedNavalBattles=new Set();reportInterruptedGrainShortages(s,log);advanceWagons(s,log);consumeMaritimeProvisions(s);produceGoods(s);for(const j of [...n.jobs]){const p=s.world?.characters?.[j.characterId],budget=s.factions[j.owner];if(!p?.alive||p.faction!==j.owner||j.port&&s.regions.find(r=>r.id===j.port)?.owner!==j.owner){n.jobs.splice(n.jobs.indexOf(j),1);continue}if(j.remaining>0){j.remaining--;continue}budget.treasury=Math.max(-100,budget.treasury-1);if(budget.treasury<0)p.loyalty=Math.max(0,p.loyalty-1);j.experience=(j.experience||0)+1;if(j.experience%12===0){const skill=navalSkill(p,j.kind);p.navalSkills[j.kind]=Math.min(100,skill+2)}}
  for(const f of n.fleets)finalizeDestroyedFleet(s,f,log);
 for(const q of [...n.queues]){
@@ -1111,7 +1137,7 @@ for(const q of [...n.queues]){
    }else resolveBattle(s,a,b,a.zone,log);
   }
  finishMaritimeSupply(s,log);
- for(const p of n.pirates){const patrol=n.fleets.filter(f=>f.zone===p.zone&&!f.port&&!f.reserve&&!f.mobilizing&&f.hull>0&&f.sailors>0&&warshipCount(f)>0&&['patrol','escort','intercept'].includes(f.order?.kind));if(patrol.length){if(p.ships>0&&p.pressure>=24){for(const owner of new Set(patrol.map(f=>f.owner))){if(p.ships<=0||p.pressure<24)break;resolvePirateClash(s,p,patrol.filter(f=>f.owner===owner),log)}}else p.pressure=Math.max(0,p.pressure-patrol.length*5)}else p.pressure=p.ships>0?Math.min(70,p.pressure+1):Math.max(0,p.pressure-2);if(p.backer&&rng(s)<.05){const sponsor=p.backer;p.backer=null;s.factions[sponsor].legitimacy=Math.max(0,s.factions[sponsor].legitimacy-3);for(const r of n.routes.filter(r=>routeZones(r).includes(p.zone))){const victim=s.regions.find(x=>x.id===r.to)?.owner;if(victim&&victim!==sponsor){const key=[sponsor,victim].sort().join(':');s.relations[key]=Math.max(-100,(s.relations[key]??0)-4)}}report(s,{kind:'scandal',zone:p.zone,owner:sponsor});if(sponsor===s.player)log(s,'Secret pirate support was exposed; legitimacy fell.','秘密资助海盗曝光，合法性下降。')}}
+ for(const p of n.pirates){const patrol=n.fleets.filter(f=>f.zone===p.zone&&!f.port&&!f.reserve&&!f.mobilizing&&f.hull>0&&f.sailors>0&&warshipCount(f)>0&&['patrol','escort','intercept'].includes(f.order?.kind));if(patrol.length){if(p.ships>0&&p.pressure>=24){for(const owner of new Set(patrol.map(f=>f.owner))){if(p.ships<=0||p.pressure<24)break;resolvePirateClash(s,p,patrol.filter(f=>f.owner===owner),log)}}else p.pressure=Math.max(0,p.pressure-patrol.length*5)}else p.pressure=p.ships>0?Math.min(70,p.pressure+1):Math.max(0,p.pressure-2);reviewPirateSponsorship(s,p,patrol,log)}
  advanceTradeVoyages(s,log);for(const route of [...n.routes].sort((a,b)=>(a.lastDispatch?a.lastDispatch.year*12+a.lastDispatch.month:-Infinity)-(b.lastDispatch?b.lastDispatch.year*12+b.lastDispatch.month:-Infinity)))dispatchTradeVoyage(s,route,log);
  settleAIMerchantDisputes(s);
  for(const f of n.fleets)if(f.order?.kind==='blockade'&&!blockadePower(f)){f.order=null;if(f.owner===s.player)log(s,'The blockade ended: the fleet lacks fit, crewed warships.','封锁已结束：舰队缺少可用且有足够水手的战船。')}

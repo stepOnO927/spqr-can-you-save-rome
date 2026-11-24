@@ -1643,6 +1643,53 @@ test('merchant hulls limit simultaneous routes and hostile raids interrupt real 
 test('pirate suppression and covert sponsorship alter pressure and resources',()=>{
  const s=newGrandGame('senate'),p=s.naval.pirates.find(x=>x.id==='illyrian-raiders'),before=p.pressure,treasury=s.factions.senate.treasury;assert.equal(supportPirates(s,'senate',p.id).ok,true);assert.equal(s.factions.senate.treasury,treasury-12);assert.equal(p.pressure,before+8);assert.equal(orderFleet(s,'senate','senate-adriatic','patrol','adriatic').ok,true);advanceNaval(s);assert.ok(p.pressure<before+8)
 });
+test('a witnessed pirate sponsorship scandal exposes its sponsor and charges each victim once',()=>{
+ const s=newGrandGame('senate');s.seed=Math.imul(35,2654435761)>>>0;
+ s.regions.find(r=>r.id==='illyricum').owner='caesar';
+ const trade=s.naval.routes.find(r=>r.id==='adriatic-commerce');trade.lastDispatch={year:s.year,month:s.month};
+ s.naval.routes.push({...trade,id:'second-adriatic-contract'});
+ const relation=s.relations['caesar:senate']??0,legitimacy=s.factions.senate.legitimacy;
+ assert.equal(supportPirates(s,'senate','illyrian-raiders').ok,true);
+ assert.equal(s.naval.reports.some(r=>r.kind==='scandal'),false,'sponsorship stays private before exposure');
+ advanceNaval(s);
+ const scandal=s.naval.reports.find(r=>r.kind==='scandal');
+ assert.deepEqual(scandal.victims,['caesar']);
+ assert.equal(scandal.owner,'senate');assert.equal(scandal.pirateId,'illyrian-raiders');
+ assert.equal(s.relations['caesar:senate'],relation-4,'two contracts with one victim cause one relation loss');
+ assert.equal(s.factions.senate.legitimacy,legitimacy-3);
+ assert.equal(s.naval.pirates.find(p=>p.id==='illyrian-raiders').backer,null);
+ const restored=upgradeSave(structuredClone(s));
+ assert.deepEqual(restored.naval.reports.find(r=>r.id===scandal.id).victims,['caesar']);
+ advanceNaval(restored);
+ assert.equal(restored.naval.reports.filter(r=>r.kind==='scandal'&&r.pirateId==='illyrian-raiders').length,1);
+});
+test('naval intelligence changes exposure risk while unwitnessed funding stays secret',()=>{
+ const setup=(sample,officer)=>{
+  const s=newGrandGame('senate');s.seed=Math.imul(sample,2654435761)>>>0;
+  s.regions.find(r=>r.id==='illyricum').owner='caesar';
+  s.naval.routes.find(r=>r.id==='adriatic-commerce').lastDispatch={year:s.year,month:s.month};
+  if(officer)s.naval.jobs.push({kind:'intelligence',owner:officer,port:null,remaining:0,characterId:officer==='caesar'?'caesar':'pompey',experience:0});
+  supportPirates(s,'senate','illyrian-raiders');advanceNaval(s);
+  return s.naval.reports.some(r=>r.kind==='scandal');
+ };
+ assert.equal(setup(36,null),false);
+ assert.equal(setup(36,'caesar'),true,'a coastal foreign intelligence officer raises detection risk');
+ assert.equal(setup(173,null),true);
+ assert.equal(setup(173,'senate'),false,'the sponsor’s intelligence officer improves cover');
+ const quiet=newGrandGame('senate');quiet.seed=Math.imul(35,2654435761)>>>0;
+ assert.equal(supportPirates(quiet,'senate','illyrian-raiders').ok,true);
+ advanceNaval(quiet);
+ assert.equal(quiet.naval.reports.some(r=>r.kind==='scandal'),false,'no patrol, voyage, recent trade or coastal intelligence witness exists');
+});
+test('suppression ends an obsolete pirate sponsorship and permits a new paid choice',()=>{
+ const s=newGrandGame('senate'),p=s.naval.pirates.find(x=>x.id==='illyrian-raiders');
+ assert.equal(supportPirates(s,'senate',p.id).ok,true);
+ p.ships=0;advanceNaval(s);
+ assert.equal(p.backer,null);
+ const before=s.factions.senate.treasury;
+ assert.equal(supportPirates(s,'senate',p.id).ok,true);
+ assert.equal(p.ships,1);assert.equal(s.factions.senate.treasury,before-12);
+});
 test('pirate raids move cargo into persistent inventory and patrols can recover it',()=>{
  const s=newGrandGame('senate');s.seed=100004;s.factions.senate.food=0;s.naval.fleets.find(f=>f.owner==='caesar').zone='ligurian';
  const pirate=s.naval.pirates.find(p=>p.id==='cilician-raiders');pirate.zone='alexandrian';pirate.pressure=70;

@@ -1,5 +1,5 @@
 import {GRAND_ROUTES} from './grand-map-data.js?v=2';
-import {accessibleFleet,isPortBlockaded} from './naval.js?v=74';
+import {accessibleFleet,isPortBlockaded} from './naval.js?v=75';
 import {activeEffects,localBuildingEffects} from './development.js?v=66';
 
 const byId=s=>Object.fromEntries(s.regions.map(r=>[r.id,r]));
