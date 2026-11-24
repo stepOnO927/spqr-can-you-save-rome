@@ -8,16 +8,21 @@ try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
  await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});
  await page.evaluate(async()=>{
-  const {newGame}=await import('/engine.js?v=dossier-archive-1'),state=newGame('caesar');
+  const {newGame}=await import('/engine.js?v=dossier-archive-1'),{createFictionalPerson}=await import('/dynasties.js?v=dossier-archive-1'),state=newGame('caesar');
   state.wars=[];state.relations['caesar:senate']=80;state.factions.caesar.treasury=300;
   state.civilization.prestige.caesar=12;state.civilization.seed=0;
   state.knowledge.caesar.senate.reports.push({kind:'office_finance',value:'cicero',year:state.year,month:state.month,peopleNames:{cicero:['Marcus Tullius Cicero','马尔库斯·图利乌斯·西塞罗']}});
+  const scholar=createFictionalPerson(state,{name:['Private scholar','私密学者'],faction:'senate',birthYear:-80,location:'roma'});
+  state.world.characters[scholar].education=70;
+  state.knowledge.caesar.senate.reports.push({kind:'office_finance',value:scholar,year:state.year,month:state.month,peopleNames:{[scholar]:['Reported scholar','情报学者']}});
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state}));
  });
  await page.reload({waitUntil:'domcontentloaded'});
  await page.locator('#inventions').click();
  assert.match(await page.locator('#invention-screen').innerText(),/文化声望与人才/);
  assert.match(await page.locator('#invention-screen').innerText(),/文化声望: 12/);
+ assert.match(await page.locator('#culture-candidate').innerText(),/情报学者/);
+ assert.doesNotMatch(await page.locator('#culture-candidate').innerText(),/私密学者/);
  await page.locator('#culture-event').click();
  assert.match(await page.locator('#invention-screen').innerText(),/文化声望: 16/);
  await page.locator('#culture-education').click();
@@ -25,6 +30,7 @@ try{
  await page.locator('#culture-candidate').selectOption('cicero');
  await page.locator('#culture-invite').click();
  assert.match(await page.locator('#invention-screen').innerText(),/等候答复 · 3个月/);
+ assert.doesNotMatch(await page.locator('#invention-screen').innerText(),/fictional:\d+|cicero/);
  await page.locator('#invention-close').click();
  await page.locator('#save').click();
  await page.evaluate(()=>{const state=JSON.parse(localStorage.getItem('spqr-save-1'));sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state}))});
