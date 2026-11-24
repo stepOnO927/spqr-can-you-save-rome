@@ -233,3 +233,25 @@ jobs:
           path: |
             joint-operations-*-1920x1080.png
             joint-operations-server.log
+
+  neutrality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright@1.64.1
+      - run: npx playwright install chromium
+      - run: |
+          node server.mjs > neutrality-server.log 2>&1 &
+          for i in {1..30}; do curl -fsS http://127.0.0.1:5173/ >/dev/null && break; sleep 1; done
+          timeout 240s node tools/neutrality-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: neutrality-evidence
+          path: |
+            neutrality-*-1920x1080.png
+            neutrality-server.log
