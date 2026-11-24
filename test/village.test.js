@@ -2,7 +2,35 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame, tick, upgradeSave} from '../engine.js?v=dossier-archive-1';
 import {localEntity, localEntityRevenue, villageDevelopment} from '../local-polities.js';
-import {villageProjectQuote, startVillageProject, villageFoodQuote, takeVillageFood, advanceVillages} from '../local-villages.js';
+import {villageProjectQuote, startVillageProject, chooseAIVillageProject, villageFoodQuote, takeVillageFood, advanceVillages} from '../local-villages.js';
+
+test('AI village planner responds to local needs and spends through the player project rules', () => {
+  const state = newGame('senate'), site = localEntity(state, 'ravenna-farms'), v = site.village;
+  assert.deepEqual(chooseAIVillageProject(state, 'caesar'), {id: site.id, kind: 'granary', priority: 70});
+  v.foodProduction = 0;
+  assert.equal(chooseAIVillageProject(state, 'caesar').kind, 'agriculture');
+  v.foodProduction = 3;
+  v.localIssue = 'road_request';
+  assert.equal(chooseAIVillageProject(state, 'caesar').kind, 'road');
+  v.localIssue = null;
+  v.security = 40;
+  state.wars.push(['caesar', 'egypt']);
+  assert.equal(chooseAIVillageProject(state, 'caesar').kind, 'wall');
+  state.wars.pop();
+  v.security = 70;
+  state.factions.caesar.treasury = 19;
+  assert.equal(chooseAIVillageProject(state, 'caesar'), null);
+  state.factions.caesar.treasury = 30;
+  const choice = chooseAIVillageProject(state, 'caesar');
+  const quote = villageProjectQuote(state, choice.id, choice.kind, 'caesar');
+  assert.equal(startVillageProject(state, choice.id, choice.kind, 'caesar').ok, true);
+  assert.equal(state.factions.caesar.treasury, 30 - quote.treasury);
+  assert.equal(v.project.kind, choice.kind);
+  assert.equal(chooseAIVillageProject(state, 'caesar'), null);
+  v.project = null;
+  site.controller = 'senate';
+  assert.equal(chooseAIVillageProject(state, 'caesar'), null);
+});
 import {armyExpeditionSupply, advanceExpeditionSupply} from '../expedition-supply.js';
 import {inspectState} from '../inspector-diagnostics.js?v=dossier-archive-1';
 import {footholdQuote, footholdShipmentQuote, footholdStorageCapacity, startFoothold, stockFoothold, advanceFootholds, resupplyAtFoothold, abandonFoothold} from '../foothold.js';
@@ -135,6 +163,13 @@ test('nonplayer Caesar funds village construction through the player action rule
   tick(state);
   const village = localEntity(state, 'ravenna-farms').village;
   assert.deepEqual(village.project, {kind: 'granary', actor: 'caesar', remaining: 2});
+});
+
+test('a nonplayer court prioritizes fields when its controlled village cannot feed residents', () => {
+  const state = newGame('senate'), village = localEntity(state, 'ravenna-farms').village;
+  village.foodProduction = 0;
+  tick(state);
+  assert.deepEqual(village.project, {kind: 'agriculture', actor: 'caesar', remaining: 3});
 });
 
 test('village follows a conquered theater without silently changing legal title', () => {

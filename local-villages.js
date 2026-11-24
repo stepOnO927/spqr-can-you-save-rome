@@ -81,6 +81,33 @@ export function startVillageProject(state, id, kind, actor = state.player) {
   return quote;
 }
 
+// Each court considers its own controlled villages and pays the same project
+// quote as the player. A half-yearly decision selects at most one project.
+export function chooseAIVillageProject(state, actor) {
+  const faction = state.factions[actor];
+  if (!faction || faction.treasury < 20 || faction.food < 8) return null;
+  const atWar = state.wars.some(war => war.includes(actor));
+  const candidates = [];
+  for (const region of state.regions) for (const entity of region.localEntities || []) {
+    if (entity.type !== 'village' || entity.controller !== actor || region.owner !== actor || !entity.village) continue;
+    const v = entity.village;
+    const shortage = Math.max(0, v.foodNeed - v.foodProduction - v.irrigation - v.agriculture);
+    const plans = [
+      ['agriculture', shortage ? 100 + shortage * 10 : 0],
+      ['irrigation', shortage ? 95 + shortage * 10 : 0],
+      ['road', v.localIssue === 'road_request' ? 95 : !v.road && (v.marketAccess < 65 || v.market) ? 60 : 0],
+      ['wall', atWar && v.security < 60 ? 85 : 0],
+      ['well', v.satisfaction < 50 ? 80 : 0],
+      ['granary', !v.granary && v.population >= 600 ? 70 : 0],
+      ['market', !v.market && v.road && v.population >= 650 ? 55 : 0],
+      ['shrine', !v.shrine && v.satisfaction < 65 ? 50 : 0]
+    ];
+    for (const [kind, priority] of plans) if (priority && villageProjectQuote(state, entity.id, kind, actor).ok) candidates.push({id: entity.id, kind, priority});
+  }
+  candidates.sort((a, b) => b.priority - a.priority || a.id.localeCompare(b.id) || a.kind.localeCompare(b.kind));
+  return candidates[0] || null;
+}
+
 export function villageFoodQuote(state, id, actor = state.player, {emergency = false} = {}) {
   const entity = localEntity(state, id), village = entity?.village;
   if (entity?.type !== 'village' || !village) return {ok: false, reason: 'unavailable'};

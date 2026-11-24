@@ -57,7 +57,7 @@ import {initializeWheels,advanceWheels} from './history-wheels.js?v=dossier-arch
 import {initializeBorderPolicies,militaryAccessStatus,recordUnauthorizedCrossing,respondBorderIncident} from './border-access.js?v=dossier-archive-1';
 import {advanceFootholds,chooseAiFoothold,footholdShipmentQuote,startFoothold,stockFoothold} from './foothold.js';
 import {advanceExpeditionSupply,armyExpeditionSupply} from './expedition-supply.js';
-import {advanceVillages,migrateVillageRecords,villageProjectQuote,startVillageProject} from './local-villages.js';
+import {advanceVillages,migrateVillageRecords,chooseAIVillageProject,startVillageProject} from './local-villages.js';
 import {planRoutes} from './route-planner.js';
 import {titleAssetQuote,settleTitleByTreaty} from './peace-titles.js';
 import {advanceLocalResistance} from './local-resistance.js';
@@ -898,7 +898,7 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
   if(owner!=='rebels'&&s.month%6===3&&s.factions[owner]?.food<30&&s.factions[owner]?.treasury>=25){const market=autonomous.find(entity=>localContactQuote(s,entity.id,owner,'trade').ok);if(market)offerLocalContact(s,market.id,owner,'trade')}
   if(owner!=='rebels'&&s.month%6===4&&s.factions[owner]?.treasury>=20){const chief=autonomous.find(entity=>entity.type==='strongman'&&localContactQuote(s,entity.id,owner,'service').ok);if(chief)offerLocalContact(s,chief.id,owner,'service')}
   if(owner!=='rebels'&&['hard','expert'].includes(s.difficulty)&&s.month%6===4&&s.factions[owner]?.treasury>=20){const camp=autonomous.find(entity=>entity.type==='nomadic'&&localContactQuote(s,entity.id,owner,'pasture').ok);if(camp)offerLocalContact(s,camp.id,owner,'pasture')}
-  if(owner!=='rebels'&&s.month%6===2&&s.factions[owner]?.treasury>=16&&s.wars.filter(war=>war.includes(owner)).length<=1){const village=s.regions.flatMap(r=>r.localEntities||[]).find(entity=>entity.type==='village'&&villageProjectQuote(s,entity.id,entity.village?.granary<1?'granary':'irrigation',owner).ok);if(village)startVillageProject(s,village.id,village.village.granary<1?'granary':'irrigation',owner)}
+  if(owner!=='rebels'&&s.month%6===2&&s.wars.filter(war=>war.includes(owner)).length<=1){const project=chooseAIVillageProject(s,owner);if(project)startVillageProject(s,project.id,project.kind,owner)}
   if(owner!=='rebels'&&s.month%6===5){const refused=autonomous.find(entity=>entity.lastOutcome?.actor===owner&&entity.lastOutcome.proposal==='access'&&!entity.lastOutcome.accepted&&!entity.pending&&!entity.siege&&s.armies.some(a=>a.owner===owner&&a.region===entity.theater&&localSiegeQuote(s,entity.id,a.id,owner).ok));if(refused){const army=s.armies.find(a=>a.owner===owner&&a.region===refused.theater&&localSiegeQuote(s,refused.id,a.id,owner).ok);besiegeLocalEntity(s,refused.id,army.id,owner)}}
   if(s.factions[owner]?.treasury>=35){const occupied=autonomous.find(entity=>entity.controller===owner&&localAdministrationQuote(s,entity.id,owner).ok);if(occupied)startLocalAdministration(s,occupied.id,owner)}
   if(owner!=='rebels'&&s.month%6===3&&s.factions[owner]?.treasury>=35){const town=s.regions.flatMap(r=>r.localEntities||[]).find(entity=>entity.type==='roman_town'&&localSubmissionQuote(s,entity.id,owner).ok);if(town)offerLocalSubmission(s,town.id,owner)}

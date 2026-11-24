@@ -112,9 +112,9 @@ Cloudflare Pages 文档：[Git 集成](https://developers.cloudflare.com/pages/c
 ## 切换验收清单
 
 - [ ] 准备分支审查、CI 及 Cloudflare 分支预览通过；获得明确上线批准后才合并到 `main`，并核对旧 GitHub Pages 更新后的状态。
-- [ ] GitHub 仓库仍为 public，原 GitHub Pages 网站可访问。
-- [ ] Cloudflare Pages `main` / `dist` 部署成功；`/`、`/map-lab/`、`/han/` 均通过真实地址浏览器测试。
-- [ ] `dist/` 文件清单、单文件大小、分析 beacon 数量、资源请求和浏览器控制台复核通过。
+- [x] 2026-11-24 只读核对：GitHub 仓库仍为 public，原 GitHub Pages 主入口可访问；未触碰旧部署。
+- [x] Cloudflare Pages `main` / `dist` 部署成功；生产站和审查分支预览的 `/`、`/map-lab/`、`/han/` 均通过真实地址浏览器检查。审查分支仍未合入 `main`，因此生产站目前不是最终玩法版本。
+- [x] 审查分支 `dist/` 的公开文件清单、单文件大小、站内资源、三个入口的控制台及每页恰好一个 Web Analytics beacon 已复核；正式域名切换后须重做线上核对。
 - [x] 旧 GitHub Pages 到 Cloudflare 预览的临时罗马与汉朝存档成功导入和载入；重复导入保留已有栏位，未知键被拒绝。[线上证据](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45411656511)。切换正式域名后再做一次玩家迁移复核。
 - [ ] 正式域名与分析数据核对通过，且得到明确切换批准。
 - [ ] 切换后再次确认全部入口和旧站点状态；只有再次明确批准才把 GitHub 仓库改为 private。
