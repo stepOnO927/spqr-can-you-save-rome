@@ -33,12 +33,12 @@ try{
  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')));
  assert.equal(saved.armies.find(army=>army.id==='xiii').expedition.destination,'gaul');
  assert.deepEqual(saved.armies.find(army=>army.id==='xiii').expedition.stagingStops,['narbo']);
+ const monthsToStaging=saved.armies.find(army=>army.id==='xiii').move.remaining;
  await page.locator('#factions').click();
  await page.locator('[data-faction="caesar"]').click();
  await page.locator('[data-faction-army="xiii"]').click();
  assert.match(await page.locator('#command-detail').innerText(),/LEG-BY-LEG EXPEDITION/);
- await page.locator('#advance').click();
- await page.locator('#advance').click();
+ for(let month=0;month<monthsToStaging;month++)await page.locator('#advance').click();
  await page.locator('[data-army="xiii"]').first().dispatchEvent('click');
  assert.match(await page.locator('#command-detail').innerText(),/At staging point; awaiting resume order/);
  await page.locator('#advance').click();

@@ -6,6 +6,7 @@ import {advancePersonnel,reconcilePeacePersonnel} from './epistulae-personnel.js
 import {initializeMailReports,advanceMailReports} from './mail-reports.js?v=dossier-archive-1';
 import {initializeGovernments,advanceGovernments,deriveGovernment,validSuccessionPlan} from './governance.js?v=dossier-archive-1';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=dossier-archive-1';
+import {MARCH_CONFIG,estimateMarchEdge,findMarchPath} from './march-geography.js';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG,snapshotFictionalCatalog,restoreFictionalCatalog} from './characters.js?v=dossier-archive-1';
 import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,offerAgentHandover,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,snapshotReportedPeople,observeArmies,supportClaimant,refreshReportConfidence,reportedHealthSubjects,claimantRepresentatives} from './character-system.js?v=dossier-archive-1';
 import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=dossier-archive-1';
@@ -108,7 +109,7 @@ const strength = (s,id) => s.armies.filter(a=>a.owner===id).reduce((v,a)=>v+a.me
 export function newGame(player='caesar'){
   if(!PLAYABLE.includes(player))throw new Error('Invalid playable faction');
   const s=initializeWorld({version:3,chronicleVisibilityVersion:1,seed:49049,year:-49,month:1,mode:'historical',player,relations:{'caesar:numidia':-30,'caesar:mauretania':20,'caesar:parthia':-10,'numidia:senate':25,'galatia:senate':25},alliances:[],
-    regions:clone(REGIONS),armies:clone(INITIAL_ARMIES).map(a=>({...a,move:null,siege:null})),
+    regions:clone(REGIONS),armies:clone(INITIAL_ARMIES).map(a=>({...a,move:null,siege:null,provisions:Math.ceil(a.men/1000*MARCH_CONFIG.provisionCapacityPerThousand),fatigue:0,journeyHistory:[]})),
     factions:{
       caesar:{treasury:90,food:65,manpower:22000,stability:58,legitimacy:49,tax:'normal',research:0},
       senate:{treasury:135,food:100,manpower:34000,stability:57,legitimacy:68,tax:'normal',research:0},
@@ -164,11 +165,13 @@ export function upgradeSave(s){
  // Older audience entries distinguished hidden absence from unanswered mail.
  for(const event of s.log||[])if(event.en==='Personal audience: no contact.'&&event.zh==='未能见到对方；对方可能不在、无法会面或局势有变。'){event.en='Personal audience: no reply.';event.zh='个人会面请求没有收到答复。'}
  if(!s.chronicleVisibilityVersion){for(const event of s.log||[])event.legacyUnverified=true;s.chronicleVisibilityVersion=1}
- migrateRegionalPowers(s);migrateEasternTheaters(s);initializeTerritories(s);migrateVillageRecords(s);initializeLocalRulers(s);registerLocalCampaign(s);initializeBorderPolicies(s);initializeDynasties(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeControlKnowledge(s);initializeLocalDiscovery(s);initializeCoalitionCharters(s);initializeCommercialLeagues(s);initializeCommercialLeaguePolitics(s);initializeCoalitionAdmissions(s);initializeCoalitionMotions(s);initializeCoalitionAssistance(s);initializeChronicle(s);initializeAgreements(s);initializeInventions(s);migrateImperium(s);migrateBattleIds(s);upgradeHanWorld(s);initializeMail(s);initializeWheels(s);syncAgentReleaseLetters(s);syncPeaceLetters(s);syncOfficialInquiryLetters(s);syncStrategicOfferLetters(s);syncCoalitionLetters(s);syncCommercialLeagueLetters(s);syncCommercialLeagueAdmissionLetters(s);syncCommercialLeagueMotionLetters(s);syncCoalitionDefenseLetters(s);syncCoalitionAdmissionLetters(s);syncCoalitionMotionLetters(s);syncCoalitionAidLetters(s);if(s.world?.cursus)initializeCursus(s);return refreshReportConfidence(initializeGovernments(s));
+  migrateRegionalPowers(s);migrateEasternTheaters(s);initializeTerritories(s);migrateVillageRecords(s);initializeLocalRulers(s);registerLocalCampaign(s);initializeBorderPolicies(s);initializeDynasties(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeControlKnowledge(s);initializeLocalDiscovery(s);initializeCoalitionCharters(s);initializeCommercialLeagues(s);initializeCommercialLeaguePolitics(s);initializeCoalitionAdmissions(s);initializeCoalitionMotions(s);initializeCoalitionAssistance(s);initializeChronicle(s);initializeAgreements(s);initializeInventions(s);migrateImperium(s);migrateBattleIds(s);upgradeHanWorld(s);initializeMail(s);initializeWheels(s);syncAgentReleaseLetters(s);syncPeaceLetters(s);syncOfficialInquiryLetters(s);syncStrategicOfferLetters(s);syncCoalitionLetters(s);syncCommercialLeagueLetters(s);syncCommercialLeagueAdmissionLetters(s);syncCommercialLeagueMotionLetters(s);syncCoalitionDefenseLetters(s);syncCoalitionAdmissionLetters(s);syncCoalitionMotionLetters(s);syncCoalitionAidLetters(s);if(s.world?.cursus)initializeCursus(s);
+  for(const a of s.armies){a.provisions??=Math.ceil(a.men/1000*MARCH_CONFIG.provisionCapacityPerThousand);a.fatigue??=0;a.journeyHistory||=[];if(a.move){a.move.elapsed??=0;a.move.pace||='normal';a.move.totalMonths??=a.move.remaining+a.move.elapsed;a.move.provisionCost??=Math.max(1,Math.ceil(a.men/1000*MARCH_CONFIG.provisionPerThousand*a.move.totalMonths));a.move.progress??=a.move.elapsed/Math.max(1,a.move.totalMonths)}}
+  return refreshReportConfidence(initializeGovernments(s));
  }catch(error){restoreFictionalCatalog(priorCatalog);throw error}
 }
 
-export function previewMarch(s,armyId,destination,{unauthorized=false}={}){
+export function previewMarch(s,armyId,destination,{unauthorized=false,pace='normal'}={}){
   const a=army(s,armyId); const target=region(s,destination);
   if(!a||!target||a.men<=0||a.move||a.siege)return {ok:false,reason:'unavailable'};
   if(a.reorg)return {ok:false,reason:'reorganizing'};
@@ -184,18 +187,40 @@ export function previewMarch(s,armyId,destination,{unauthorized=false}={}){
   const routeWorks=buildingModifiers(region(s,a.region)).march||0,doctrine=activeModifiers(s,a.owner).march||0;
   const supplyStatus=armyExpeditionSupply(s,a).status;
   const supplyDelay=supplyStatus==='cut_off'?2:supplyStatus==='partial'?1:0;
-  const months=Math.max(1,(link.sea?3:1)+(target.terrain==='hills'?1:0)+(target.terrain==='desert'?1:0)-routeWorks-doctrine+formationMarchDelta(s,a,link,target.terrain)+supplyDelay);
-  return {ok:true,months,supplyDelay,seaCost,sea:!!link.sea,terrain:target.terrain,hostile:!!reportedOwner&&isWar(s,a.owner,reportedOwner),unauthorized:!access.allowed,reportedOwner:reportedOwner||null,controlReport:report,food:faction.food,supply:report?.own?target.supply:null};
+   const estimate=estimateMarchEdge(s,a,a.region,destination,{pace,roadBonus:routeWorks,doctrine,formation:formationMarchDelta(s,a,link,target.terrain)});
+   if(estimate?.blocked)return {ok:false,reason:estimate.blocked};
+   if(!estimate)return {ok:false,reason:'adjacent'};
+   const months=estimate.months+supplyDelay;
+   return {ok:true,months,km:estimate.km,provisionCost:estimate.food+Math.ceil(a.men/1000*MARCH_CONFIG.provisionPerThousand*supplyDelay),risk:estimate.risk,season:estimate.season.warning,road:estimate.road,pass:estimate.pass,supplyDelay,seaCost,sea:!!link.sea,terrain:estimate.terrain,hostile:!!reportedOwner&&isWar(s,a.owner,reportedOwner),unauthorized:!access.allowed,reportedOwner:reportedOwner||null,controlReport:report,food:faction.food,supply:report?.own?target.supply:null};
 }
 
-export function moveArmy(s,armyId,destination,{unauthorized=false,expedition=false}={}){
-  const estimate=previewMarch(s,armyId,destination,{unauthorized});
+export function previewRoute(s,armyId,waypoints,{priority='balanced',pace='normal'}={}){
+ const a=army(s,armyId),start=a?.move?.to||a?.region,stops=Array.isArray(waypoints)?waypoints:[waypoints];
+ if(!a||a.men<=0||a.siege||a.reorg||!stops.length||stops.length>12||!['normal','forced','cautious'].includes(pace))return {ok:false,reason:'unavailable'};
+ let at=start;const segments=[];const seaCost=Math.max(2,8+(activeModifiers(s,a.owner).seaCost||0));
+ for(const stop of stops){if(stop===at)continue;const path=findMarchPath(s,a,at,stop,{priority,pace,canEnter:id=>{const reported=reportedControl(s,a.owner,id)?.owner,access=militaryAccessStatus(s,a.owner,id,reported??null);return access.allowed?true:'peace'},estimateOptions:(from,edge)=>({roadBonus:buildingModifiers(region(s,from)).march||0,doctrine:activeModifiers(s,a.owner).march||0,formation:formationMarchDelta(s,a,edge,region(s,edge.to)?.terrain)})});if(!path.ok)return {...path,invalidFrom:at,invalidTo:stop};segments.push(...path.segments);at=stop}
+ if(!segments.length)return {ok:false,reason:'no_route'};
+ const cost=segments.filter(e=>e.sea).length*seaCost;if(s.factions[a.owner]?.treasury<cost)return {ok:false,reason:'transport'};
+ return {ok:true,army:armyId,start,destination:at,segments,nodes:[start,...segments.map(e=>e.to)],km:segments.reduce((n,e)=>n+e.km,0),months:segments.reduce((n,e)=>n+e.months,0),provisionCost:segments.reduce((n,e)=>n+e.food,0),risk:Math.min(1,segments.reduce((n,e)=>n+e.risk,0)),seaCost:cost,priority,pace,waypoints:stops};
+}
+
+export function issueRouteOrder(s,armyId,waypoints,options={}){
+ const plan=previewRoute(s,armyId,waypoints,options);if(!plan.ok)return plan;
+ const a=army(s,armyId);if(a.move){a.move.pendingRoute={waypoints:plan.waypoints,priority:plan.priority,pace:plan.pace};return {ok:true,pending:true,plan}}
+ const first=plan.segments[0],result=moveArmy(s,armyId,first.to,{pace:plan.pace});if(!result.ok)return result;
+ a.move.route=plan.nodes;a.move.legIndex=0;a.move.priority=plan.priority;a.move.waypoints=plan.waypoints;a.order={kind:'route',target:plan.destination};return {ok:true,plan};
+}
+
+export function moveArmy(s,armyId,destination,{unauthorized=false,expedition=false,pace='normal'}={}){
+   const estimate=previewMarch(s,armyId,destination,{unauthorized,pace});
   if(!estimate.ok)return estimate;
   const a=army(s,armyId),target=region(s,destination),link=adjacent(a.region).find(e=>e.to===destination);
   if(!expedition&&['active','paused'].includes(a.expedition?.status))cancelExpedition(s,armyId,a.owner);
   if(link.sea)s.factions[a.owner].treasury-=estimate.seaCost;
   const months=estimate.months;
-  a.move={to:destination,remaining:months,sea:link.sea,...(estimate.unauthorized?{intent:'unauthorized_entry'}:{})};
+   a.provisions??=Math.ceil(a.men/1000*MARCH_CONFIG.provisionCapacityPerThousand);a.fatigue??=0;a.journeyHistory||=[];
+   a.move={to:destination,remaining:months,totalMonths:months,elapsed:0,sea:link.sea,pace,km:estimate.km,provisionCost:estimate.provisionCost,risk:estimate.risk,...(estimate.unauthorized?{intent:'unauthorized_entry'}:{})};
+   a.journeyHistory.push({year:s.year,month:s.month,from:a.region,to:destination,kind:'departure',km:estimate.km,pace});a.journeyHistory=a.journeyHistory.slice(-80);
   a.order={kind:estimate.unauthorized?'unauthorized_entry':'move',target:destination};
   if(a.owner===s.player)log(s,`${a.name[0]} ${estimate.unauthorized?'was ordered to cross the border into':'marched toward'} ${target.name[0]} (${months} month${months>1?'s':''}).`,`${a.name[1]}${estimate.unauthorized?'接到非法越境命令，前往':'向'}${target.name[1]}${estimate.unauthorized?'':'行军'}（${months}个月）。`);
   return {ok:true};
@@ -209,28 +234,34 @@ export function issueMilitaryOrder(s,armyId,kind,targetId=null,owner=s.player,{e
   if(!a||a.owner!==owner||a.men<=0||!f||!place)return {ok:false,reason:'unavailable'};
   if(kind==='cancel'){
     if(!a.move&&!a.siege&&!a.order)return {ok:false,reason:'unavailable'};
-    a.move=null;a.siege=null;a.order=null;
+    if(a.move?.elapsed>0){a.move.cancelAfterLeg=true;a.move.pendingRoute=null}
+    else {a.move=null;a.siege=null;a.order=null}
     if(!expedition&&['active','paused'].includes(a.expedition?.status))cancelExpedition(s,armyId,owner);
     if(owner===s.player)log(s,`${a.name[0]} cancelled its field order.`,`${a.name[1]}取消了野战命令。`);
     return {ok:true};
   }
-  if(kind==='move'||kind==='attack'||kind==='unauthorized_entry'){
+  if(kind==='halt'||kind==='resume'){
+    if(!a.move)return {ok:false,reason:'unavailable'};
+    a.move.paused=kind==='halt';if(owner===s.player)log(s,`${a.name[0]} ${kind==='halt'?'halted':'resumed'} its march.`,`${a.name[1]}${kind==='halt'?'暂停':'恢复'}行军。`);return {ok:true};
+  }
+  if(['move','attack','unauthorized_entry','forced','cautious'].includes(kind)){
     if(a.move||a.siege)return {ok:false,reason:'unavailable'};
-    const plan=previewMarch(s,armyId,targetId,{unauthorized:kind==='unauthorized_entry'});
+    const pace=kind==='forced'?'forced':kind==='cautious'?'cautious':'normal',plan=previewMarch(s,armyId,targetId,{unauthorized:kind==='unauthorized_entry',pace});
     if(!plan.ok)return plan;
     if(kind==='attack'&&!plan.hostile)return {ok:false,reason:'target'};
     if(kind==='unauthorized_entry'&&!plan.unauthorized)return {ok:false,reason:'target'};
-    const result=moveArmy(s,armyId,targetId,{unauthorized:kind==='unauthorized_entry',expedition});
+    const result=moveArmy(s,armyId,targetId,{unauthorized:kind==='unauthorized_entry',expedition,pace});
     if(result.ok){a.move.intent=kind;a.order={kind,target:targetId}}
     return result;
   }
   if(kind==='retreat'){
     const link=adjacent(a.region).find(x=>x.to===targetId),dest=region(s,targetId);
     if(!link||!dest||dest.owner!==owner||a.move)return {ok:false,reason:'target'};
-    if(link.sea&&f.treasury<8)return {ok:false,reason:'transport'};
-    if(link.sea)f.treasury-=8;
+    const seaCost=Math.max(2,8+(activeModifiers(s,owner).seaCost||0));if(link.sea&&f.treasury<seaCost)return {ok:false,reason:'transport'};
+    const estimate=estimateMarchEdge(s,a,a.region,targetId,{roadBonus:buildingModifiers(place).march||0,doctrine:activeModifiers(s,owner).march||0,formation:formationMarchDelta(s,a,link,dest.terrain)});if(!estimate||estimate.blocked)return {ok:false,reason:estimate?.blocked||'adjacent'};
+    if(link.sea)f.treasury-=seaCost;
     if(!expedition&&['active','paused'].includes(a.expedition?.status))cancelExpedition(s,armyId,owner);
-    a.siege=null;a.order={kind,target:targetId};a.move={to:targetId,remaining:link.sea?3:1,sea:link.sea,intent:'retreat'};
+    a.siege=null;a.order={kind,target:targetId};a.move={to:targetId,remaining:estimate.months,totalMonths:estimate.months,elapsed:0,progress:0,sea:link.sea,intent:'retreat',pace:'normal',km:estimate.km,provisionCost:estimate.food,risk:estimate.risk};
     a.morale=Math.max(20,a.morale-3);
     if(owner===s.player)log(s,`${a.name[0]} withdrew toward ${dest.name[0]}.`,`${a.name[1]}向${dest.name[1]}撤退。`);
     return {ok:true};
@@ -668,6 +699,7 @@ export function resolveBattle(s,attacker,defender,target){
 }
 
 function arrive(s,a){
+  const journey=a.move;
   const target=region(s,a.move.to);
   observeArrival(s,a.owner,target.id);
   if(!militaryAccessStatus(s,a.owner,target.id,target.owner).allowed){
@@ -678,6 +710,7 @@ function arrive(s,a){
   }
   const enemy=s.armies.find(other=>other.id!==a.id&&other.region===target.id&&other.owner!==a.owner&&isWar(s,a.owner,other.owner)&&!other.move);
   if(enemy){resolveBattle(s,a,enemy,target);return}
+  a.journeyHistory||=[];a.journeyHistory.push({year:s.year,month:s.month,from:a.region,to:target.id,kind:'arrival',km:journey.km||null});a.journeyHistory=a.journeyHistory.slice(-80);
   const siegeWorks=(buildingModifiers(region(s,a.region)).siege||0)+formationSiegeReduction(s,a)+(a.planSiegeWorks||0);
   a.region=target.id;a.move=null;a.order=null;
   if(target.owner!==a.owner&&isWar(s,a.owner,target.owner)){
@@ -688,6 +721,29 @@ function arrive(s,a){
       body:[`An enemy force has begun a siege at ${target.name[0]}. This report records the situation when dispatched.`,`敌军已开始围攻${target.name[1]}。本报告记载发信时的局势。`],
       source:target.id,options:['view_location','war_council','acknowledge'],context:{kind:'siege',region:target.id}});
   }
+  if(!a.siege&&journey&&!journey.cancelAfterLeg){
+    if(journey.pendingRoute){const requested=journey.pendingRoute;const result=issueRouteOrder(s,a.id,requested.waypoints,requested);if(!result.ok&&a.owner===s.player)log(s,`${a.name[0]} halted: its revised route is unavailable.`,`${a.name[1]}停止行军：修订路线目前不可通行。`)}
+    else if(journey.route&&journey.legIndex<journey.route.length-2){const next=journey.route[journey.legIndex+2],plan=previewMarch(s,a.id,next,{pace:journey.pace});if(plan.ok){moveArmy(s,a.id,next,{pace:journey.pace});a.move.route=journey.route;a.move.legIndex=journey.legIndex+1;a.move.waypoints=journey.waypoints;a.move.priority=journey.priority;a.order={kind:'route',target:journey.route.at(-1)}}else if(a.owner===s.player)log(s,`${a.name[0]} halted at ${target.name[0]}: the next route segment is blocked.`,`${a.name[1]}在${target.name[1]}停止：下一段路线受阻。`)}
+  }
+}
+
+function advanceMarchConditions(s,a){
+ const move=a.move;if(!move)return;const cfg=MARCH_CONFIG,place=region(s,a.region),f=s.factions[a.owner],cap=Math.ceil(a.men/1000*cfg.provisionCapacityPerThousand);
+ a.provisions??=cap;a.fatigue??=0;a.journeyHistory||=[];
+ if(move.elapsed===0&&place?.owner===a.owner&&f?.food>0&&a.provisions<cap){const gathered=Math.min(cap-a.provisions,Math.max(0,Math.floor(f.food)),Math.max(1,place.supply||1));a.provisions+=gathered;f.food-=gathered}
+ const needed=Math.max(1,Math.ceil((move.provisionCost||a.men/1000*cfg.provisionPerThousand)/(move.totalMonths||move.remaining||1)));
+ const consumed=Math.min(a.provisions,needed);a.provisions-=consumed;const shortage=needed-consumed;
+ a.fatigue=Math.min(100,Math.max(0,a.fatigue+(move.pace==='forced'?12:move.pace==='cautious'?3:6)+(shortage?8:0)));
+ const losses=[];if(shortage&&strategicRoll(s,a.id,1101)<.65)losses.push({kind:'desertion',men:Math.min(a.men-1,Math.max(1,Math.round(a.men*cfg.shortageLossRate*shortage/needed)))});
+ if((move.risk||0)>0&&strategicRoll(s,a.id,1102)<move.risk*3)losses.push({kind:'environment',men:Math.min(a.men-1,Math.max(1,Math.round(a.men*cfg.exposureLossRate)))});
+ if(a.fatigue>70&&strategicRoll(s,a.id,1103)<.08)losses.push({kind:'disease',men:Math.min(a.men-1,Math.max(1,Math.round(a.men*.0015)))});
+ for(const loss of losses){const count=Math.max(0,Math.min(loss.men,a.men-1));if(!count)continue;a.men-=count;a.morale=Math.max(15,a.morale-(loss.kind==='desertion'?3:1));const event={year:s.year,month:s.month,from:a.region,to:move.to,kind:loss.kind,men:count};a.journeyHistory.push(event);a.journeyHistory=a.journeyHistory.slice(-80);if(a.owner===s.player)log(s,`${a.name[0]} lost ${count} during the march (${loss.kind}).`,`${a.name[1]}行军途中因${{desertion:'逃亡',environment:'环境暴露',disease:'疾病'}[loss.kind]}减员${count}人。`,{armyId:a.id,kind:'march_attrition',cause:loss.kind,casualties:count,chronicleRecorded:true})}
+ if(shortage&&a.owner===s.player)log(s,`${a.name[0]} lacks ${shortage} provisions on the march.`,`${a.name[1]}行军补给短缺${shortage}份。`,{armyId:a.id,kind:'supply_shortage'});
+ if(move.paused)return;
+ const edge=estimateMarchEdge(s,a,a.region,move.to,{pace:move.pace});if(edge?.blocked){if(move.blocked!==edge.blocked&&a.owner===s.player)log(s,`${a.name[0]} halted: the pass is closed by snow.`,`${a.name[1]}暂停行军：山口因积雪封闭。`,{armyId:a.id,kind:'march_blocked'});move.blocked=edge.blocked;return}
+  const target=region(s,move.to);if(target&&!militaryAccessStatus(s,a.owner,target.id,target.owner).allowed&&move.intent!=='unauthorized_entry'){a.move=null;a.order=null;if(a.owner===s.player)log(s,`${a.name[0]} stopped: entry into ${target.name[0]} is no longer permitted.`,`${a.name[1]}停止行军：当前不能进入${target.name[1]}。`,{armyId:a.id,kind:'march_blocked'});return}
+ delete move.blocked;
+ move.elapsed=(move.elapsed||0)+1;move.remaining--;move.progress=Math.min(1,move.elapsed/(move.totalMonths||move.elapsed));
 }
 
 export function forecastEconomy(s,id=s.player){const base=baseForecastEconomy(s,id),fu=formationUpkeepDelta(s,id),f=s.factions[id],food=f.food+base.food-Math.round(fu.food),treasury=f.treasury+base.treasury-Math.round(fu.treasury);return {...base,treasury:base.treasury-Math.round(fu.treasury),food:base.food-Math.round(fu.food),manpower:food<0?-Math.min(f.manpower,Math.max(170,Math.ceil(Math.abs(food)*3))):treasury<=-50?Math.floor(base.manpower*.25):base.manpower}}
@@ -727,11 +783,10 @@ function economy(s){
   }
 }
 
-function shortestStep(s,start,goal,owner){
-  const queue=[[start,null]],seen=new Set([start]);
-  while(queue.length){const [id,first]=queue.shift();if(id===goal)return first;
-    for(const e of adjacent(id)){if(seen.has(e.to))continue;const controller=reportedControl(s,owner,e.to)?.owner;if(!militaryAccessStatus(s,owner,e.to,controller??null).allowed)continue;seen.add(e.to);queue.push([e.to,first||e.to])}}
-  return null;
+function shortestStep(s,start,goal,owner,force){
+ const a=force||s.armies.find(x=>x.owner===owner&&x.region===start)||{men:4000};
+ const result=findMarchPath(s,a,start,goal,{priority:s.factions[owner]?.food<20?'safest':'balanced',canEnter:(id,edge)=>{const controller=reportedControl(s,owner,id)?.owner;if(!militaryAccessStatus(s,owner,id,controller??null).allowed)return 'peace';if(edge.sea&&s.factions[owner]?.treasury<Math.max(2,8+(activeModifiers(s,owner).seaCost||0)))return 'transport';return true},estimateOptions:(from,edge)=>({roadBonus:buildingModifiers(region(s,from)).march||0,doctrine:activeModifiers(s,owner).march||0,formation:formationMarchDelta(s,a,edge,region(s,edge.to)?.terrain)})});
+ return result.ok?result.nodes[1]||null:null;
 }
 
 // A cautious AI may consider one explicitly unauthorized transit through a
@@ -902,7 +957,7 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
     }
     if(feint?.army===a.id){
       if(a.region===feint.destination&&now>=feint.returnAt&&region(s,feint.origin)?.owner===owner){delete s.world.aiFeints[owner];if(issueMilitaryOrder(s,a.id,'move',feint.origin,owner).ok)continue}
-      else if(a.region!==feint.origin&&a.region!==feint.destination||now>feint.returnAt+3)delete s.world.aiFeints[owner];
+      else if(a.region!==feint.origin&&a.region!==feint.destination||now>feint.returnAt+Math.max(3,a.move?.totalMonths||0))delete s.world.aiFeints[owner];
     }
     const threatened=neighbors.filter(r=>isWar(s,owner,reportedControl(s,owner,r.id)?.owner));
     const estimate=r=>{const rival=reportedControl(s,owner,r.id)?.owner;return rival&&isWar(s,owner,rival)?estimatedStrength(s,owner,rival)/Math.max(1,s.regions.filter(x=>reportedControl(s,owner,x.id)?.owner===rival).length):0};
@@ -923,12 +978,12 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
     // the force returns on a later turn if its original position is still safe.
     if(strongPlanning&&strategy&&s.month===10&&here.owner===owner&&threatened.length&&!s.world.aiFeints?.[owner]&&(s.world.lastFeint?.[owner]??-Infinity)+24<=now&&s.armies.some(b=>b!==a&&b.owner===owner&&b.region===a.region&&!b.move&&!b.siege&&b.men>=a.men)){
       const alternate=neighbors.find(r=>r.owner===owner&&r.supply*1000>=a.men&&adjacent(r.id).some(e=>e.to!==a.region&&isWar(s,owner,reportedControl(s,owner,e.to)?.owner)));
-      if(alternate&&issueMilitaryOrder(s,a.id,'move',alternate.id,owner).ok){s.world.aiFeints||={};s.world.lastFeint||={};s.world.aiFeints[owner]={army:a.id,origin:here.id,destination:alternate.id,returnAt:now+1};s.world.lastFeint[owner]=now;continue}
+      if(alternate&&issueMilitaryOrder(s,a.id,'move',alternate.id,owner).ok){s.world.aiFeints||={};s.world.lastFeint||={};s.world.aiFeints[owner]={army:a.id,origin:here.id,destination:alternate.id,returnAt:now+(a.move?.totalMonths||1)};s.world.lastFeint[owner]=now;continue}
     }
     const sharedTarget=coalitionMilitaryObjective(s,owner);
     const targets=enemies.map(r=>({r,d:Math.hypot(r.x-region(s,a.region).x,r.y-region(s,a.region).y),shared:sharedTarget&&reportedControl(s,owner,r.id)?.owner===sharedTarget})).sort((x,y)=>Number(!!y.shared)-Number(!!x.shared)||x.d-y.d);
     let heldForPreparation=false;
-    for(const {r} of targets){let step=shortestStep(s,a.region,r.id,owner);if(!step&&strongPlanning&&strategy?.goal==='campaign'&&here.owner===owner&&f.food>=30&&f.treasury>=45&&a.morale>=70&&a.men>=5000&&(s.world.lastUnauthorizedAttempt?.[owner]??-Infinity)+12<=now){const proposed=oneBreachStep(s,a.region,r.id,owner),reported=proposed&&reportedControl(s,owner,proposed.step)?.owner,access=proposed&&militaryAccessStatus(s,owner,proposed.step,reported);if(proposed&&reported&&access.allowed&&['own','treaty','limited_treaty'].includes(access.basis)){if(issueMilitaryOrder(s,a.id,'move',proposed.step,owner).ok)break}else if(proposed&&reported&&!access.allowed&&!(s.borderIncidents||[]).some(incident=>incident.attacker===owner&&incident.defender===reported&&['open','protested'].includes(incident.status))){if(issueMilitaryOrder(s,a.id,'unauthorized_entry',proposed.step,owner).ok){s.world.lastUnauthorizedAttempt||={};s.world.lastUnauthorizedAttempt[owner]=now;break}}}if(step&&step!==a.region){const defenderOwner=reportedControl(s,owner,step)?.owner;const hostile=isWar(s,owner,defenderOwner),theaters=s.regions.filter(x=>reportedControl(s,owner,x.id)?.owner===defenderOwner).length,estimate=hostile?estimatedStrength(s,owner,defenderOwner):0;const defenders=hostile?estimate/Math.max(1,theaters):0;
+    for(const {r} of targets){let step=shortestStep(s,a.region,r.id,owner,a);if(!step&&strongPlanning&&strategy?.goal==='campaign'&&here.owner===owner&&f.food>=30&&f.treasury>=45&&a.morale>=70&&a.men>=5000&&(s.world.lastUnauthorizedAttempt?.[owner]??-Infinity)+12<=now){const proposed=oneBreachStep(s,a.region,r.id,owner),reported=proposed&&reportedControl(s,owner,proposed.step)?.owner,access=proposed&&militaryAccessStatus(s,owner,proposed.step,reported);if(proposed&&reported&&access.allowed&&['own','treaty','limited_treaty'].includes(access.basis)){if(issueMilitaryOrder(s,a.id,'move',proposed.step,owner).ok)break}else if(proposed&&reported&&!access.allowed&&!(s.borderIncidents||[]).some(incident=>incident.attacker===owner&&incident.defender===reported&&['open','protested'].includes(incident.status))){if(issueMilitaryOrder(s,a.id,'unauthorized_entry',proposed.step,owner).ok){s.world.lastUnauthorizedAttempt||={};s.world.lastUnauthorizedAttempt[owner]=now;break}}}if(step&&step!==a.region){const defenderOwner=reportedControl(s,owner,step)?.owner;const hostile=isWar(s,owner,defenderOwner),theaters=s.regions.filter(x=>reportedControl(s,owner,x.id)?.owner===defenderOwner).length,estimate=hostile?estimatedStrength(s,owner,defenderOwner):0;const defenders=hostile?estimate/Math.max(1,theaters):0;
       const next=region(s,step),nextThreatened=adjacent(step).some(e=>isWar(s,owner,reportedControl(s,owner,e.to)?.owner));
       if(strongPlanning&&strategy&&!hostile&&next.owner===owner&&nextThreatened&&next.supply*1000<a.men*.75&&here.supply>next.supply)continue;
       if(defenders>a.men*(internalOpponent(defenderOwner)?2:({hard:1.15,expert:1.05}[s.difficulty]||1.35))||f.food<0){if(hostile&&(strongPlanning||level==='standard'&&(owner==='caesar'||owner==='senate'&&imperiumOn(s)))){heldForPreparation=true;if(here.owner===owner)break}continue}
@@ -1106,7 +1161,7 @@ export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
   // Travel and sieges resolve before new AI orders.
   for(const a of [...s.armies]){
     if(!s.armies.includes(a))continue;
-    if(a.move){a.move.remaining--;if(a.move.remaining<=0)arrive(s,a)}
+    if(a.move){advanceMarchConditions(s,a);if(a.move?.remaining<=0&&!a.move.paused)arrive(s,a)}
     else if(a.siege){a.siege.remaining--;if(a.siege.remaining<=0){const r=region(s,a.siege.region),witnessed=a.owner===s.player||r.owner===s.player;transferTerritory(s,r.id,a.owner);r.loyalty=36;a.siege=null;if(witnessed)log(s,`${r.name[0]} surrendered after a siege.`,`${r.name[1]}在围攻后投降。`)}}
   }
   advanceTerritories(s);

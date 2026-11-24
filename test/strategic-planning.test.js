@@ -30,11 +30,12 @@ test('private personality biases bounded planning without overriding an acute cr
 test('a cautious army concentrates real troops at the frontier instead of marching back and forth',()=>{
  const s=legacyIsolated(newGame('senate'));s.difficulty='expert';tick(s);const unit=s.armies.find(a=>a.id==='xiii');
  tick(s);assert.equal(unit.region,'italiaN');assert.equal(unit.move,null);const men=unit.men+s.armies.find(a=>a.id==='viii').men;
- tick(s);assert.equal(unit.region,'italiaN');assert.equal(unit.move.to,'roma');assert.equal(unit.men,men);assert.deepEqual(unit.mergedFrom,['viii']);assert.ok(!s.armies.some(a=>a.id==='viii'));
+ for(let month=0;month<6&&!unit.mergedFrom;month++)tick(s);
+ assert.equal(unit.region,'italiaN');assert.equal(unit.move.to,'roma');assert.ok(unit.men<=men&&unit.men>0);assert.deepEqual(unit.mergedFrom,['viii']);assert.ok(!s.armies.some(a=>a.id==='viii'));
 });
 test('a limited feint moves a real army between visible frontiers and returns it',()=>{
  const s=legacyIsolated(newGame('senate'));s.difficulty='expert';s.month=9;const unit=s.armies.find(a=>a.id==='viii'),reserve=s.armies.find(a=>a.id==='xiii');unit.region='cisalpine';s.armies=[unit,reserve,...s.armies.filter(a=>a!==unit&&a!==reserve)];const men=unit.men;
- tick(s);assert.equal(unit.move.to,'narbo');assert.equal(s.world.aiFeints.caesar.army,unit.id);tick(s);tick(s);
+ tick(s);assert.equal(unit.move.to,'narbo');assert.equal(s.world.aiFeints.caesar.army,unit.id);const monthsToNarbo=unit.move.remaining;for(let month=0;month<monthsToNarbo;month++)tick(s);
  assert.equal(unit.region,'narbo');assert.equal(unit.move.to,'cisalpine');assert.equal(unit.men,men);assert.equal(s.knowledge.senate.caesar.sightings[unit.id].region,'narbo');assert.equal(s.world.aiFeints.caesar,undefined);
 });
 test('a feint is abandoned if its real army no longer exists',()=>{

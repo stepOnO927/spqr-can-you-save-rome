@@ -29,10 +29,11 @@ test('a confirmed multi-theater expedition advances one validated leg at a time 
   const state = newGame('caesar'), legion = state.armies.find(unit => unit.id === 'xiii');
   assert.equal(startExpedition(state, legion.id, routeTo(state, 'gaul')).ok, true);
   assert.equal(legion.move.to, 'narbo');
+  const firstLegMonths = legion.move.remaining;
   tick(state);
   assert.equal(legion.region, 'cisalpine');
-  assert.equal(legion.move.remaining, 1);
-  tick(state);
+  assert.equal(legion.move.remaining, firstLegMonths - 1);
+  for (let month = 1; month < firstLegMonths; month++) tick(state);
   assert.equal(legion.region, 'narbo');
   assert.equal(legion.move.to, 'gaul');
   assert.equal(legion.expedition.nextIndex, 2);
@@ -53,7 +54,8 @@ test('a selected known staging point pauses the march until the player resumes i
   assert.equal(startExpedition(state, legion.id, nodes, state.player, {stagingStops: ['narbo', 'narbo']}).reason, 'invalid_staging');
   assert.equal(legion.move, null);
   assert.equal(startExpedition(state, legion.id, nodes, state.player, {stagingStops: ['narbo']}).ok, true);
-  tick(state); tick(state);
+  const monthsToStaging = legion.move.remaining;
+  for (let month = 0; month < monthsToStaging; month++) tick(state);
   assert.equal(legion.region, 'narbo');
   assert.equal(legion.move, null);
   assert.equal(legion.expedition.status, 'paused');
@@ -115,7 +117,8 @@ test('player cancellation stops future legs; an unsafe route is never started au
   assert.equal(startExpedition(state, legion.id, unsafe.nodes).reason, 'route_unconfirmed');
   assert.equal(startExpedition(state, legion.id, routeTo(state, 'gaul')).ok, true);
   assert.equal(cancelExpedition(state, legion.id).ok, true);
-  tick(state); tick(state);
+  const monthsToNarbo = legion.move.remaining;
+  for (let month = 0; month < monthsToNarbo; month++) tick(state);
   assert.equal(legion.region, 'narbo');
   assert.equal(legion.move, null);
   assert.equal(legion.expedition.status, 'cancelled');

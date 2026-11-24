@@ -28,7 +28,8 @@ test('a selected staging order appears on the map until the army resumes its nex
  assert.ok(planned.entries.some(entry=>entry.kind==='staging'&&entry.id==='xiii'&&entry.theaterId==='narbo'&&entry.status==='planned'));
  assert.ok(planned.points.features.some(item=>item.properties.kind==='staging'&&item.properties.theaterId==='narbo'));
  assert.deepEqual(expeditionSupportMap(upgradeSave(structuredClone(state)),coordinates).entries,planned.entries);
- tick(state);tick(state);
+ const monthsToStaging=state.armies.find(army=>army.id==='xiii').move.remaining;
+ for(let month=0;month<monthsToStaging;month++)tick(state);
  assert.ok(expeditionSupportMap(state,coordinates).entries.some(entry=>entry.kind==='staging'&&entry.status==='arrived'));
  assert.equal(resumeExpedition(state,'xiii').ok,true);
  assert.equal(expeditionSupportMap(state,coordinates).entries.some(entry=>entry.kind==='staging'),false);
