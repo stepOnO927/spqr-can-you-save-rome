@@ -65,4 +65,12 @@ for(const [lang,label] of [['en',/A blockade needs crewed, supplied and seaworth
  await page.locator('[data-order="caesar-adriatic"]').click();
  assert.match(await page.locator('#naval-feedback').innerText(),label);
 }
+for(const [lang,label] of [['en',/Patrol, escort and raid need crewed, supplied and seaworthy warships/],['zh',/巡逻、护航和袭扰需要有足够水手、补给和船况的战船/]]){
+ const state=newGrandGame('caesar'),fleet=state.naval.fleets.find(f=>f.id==='caesar-adriatic');fleet.port=null;fleet.zone='alexandrian';fleet.sailors=0;
+ await page.evaluate(async({state,language})=>{const {renderNavalPanel}=await import('/map-lab/naval-ui.js'),{orderFleet}=await import('/naval.js');renderNavalPanel({state,lang:language,root:document.querySelector('#root'),section:'fleets',onAction:(action,id,kind,target)=>action==='order'?orderFleet(state,state.player,id,kind,target):{ok:true},onZone:()=>{},onPort:()=>{}})},{state,language:lang});
+ await page.locator('[data-order-kind="caesar-adriatic"]').selectOption('raid');
+ await page.locator('[data-order-target="caesar-adriatic"]').selectOption('egypt-italy');
+ await page.locator('[data-order="caesar-adriatic"]').click();
+ assert.match(await page.locator('#naval-feedback').innerText(),label);
+}
 assert.deepEqual(errors,[]);await browser.close();console.log('Naval battle, interrupted troop transport, pirate defeat, and dated fleet pursuit passed in English and Chinese; older saves remain readable.');

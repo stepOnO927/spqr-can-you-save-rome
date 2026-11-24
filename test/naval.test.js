@@ -1760,6 +1760,48 @@ test('AI can reassign a released escort to a newly raided route',()=>{
  assert.equal(escort.order?.kind,'escort');
  assert.equal(escort.order?.target,'levant-luxury');
 });
+
+test('an uncrewed patrol cannot improve merchant security',()=>{
+ const setup=()=>{const s=newGrandGame('senate');s.wars=[];s.factions.senate.food=0;s.factions.senate.treasury=500;for(const route of s.naval.routes)if(route.id!=='egypt-italy')route.pausedBy=[s.regions.find(r=>r.id===route.from)?.owner].filter(Boolean);for(const pirate of s.naval.pirates){pirate.ships=0;pirate.pressure=0}return s};
+ const baseline=setup();Object.assign(baseline.naval.pirates[0],{zone:'alexandrian',ships:1,pressure:40});advanceNaval(baseline);
+ const s=setup();Object.assign(s.naval.pirates[0],{zone:'alexandrian',ships:1,pressure:40});
+ const empty=s.naval.fleets.find(f=>f.id==='caesar-adriatic');empty.port=null;empty.zone='alexandrian';empty.sailors=0;empty.order={kind:'patrol',target:'alexandrian',path:[]};
+ assert.deepEqual(orderFleet(s,'caesar',empty.id,'patrol','alexandrian'),{ok:false,reason:'operational-warships'});
+ assert.deepEqual(orderFleet(s,'caesar',empty.id,'escort','egypt-italy'),{ok:false,reason:'operational-warships'});
+ advanceNaval(s);
+ const route=state=>state.naval.routes.find(r=>r.id==='egypt-italy');
+ assert.equal(route(s).last.security,route(baseline).last.security,'an empty warship cannot give a convoy a security bonus');
+});
+
+test('an uncrewed raiding fleet cannot seize merchant cargo',()=>{
+ const s=newGrandGame('caesar'),raider=s.naval.fleets.find(f=>f.id==='caesar-adriatic');
+ s.factions.senate.food=0;s.factions.senate.treasury=500;
+ for(const route of s.naval.routes)if(route.id!=='egypt-italy')route.pausedBy=[s.regions.find(r=>r.id===route.from)?.owner].filter(Boolean);
+ for(const pirate of s.naval.pirates){pirate.ships=0;pirate.pressure=0}
+ raider.port=null;raider.zone='alexandrian';raider.sailors=0;raider.order={kind:'raid',target:'egypt-italy',path:[]};
+ assert.deepEqual(orderFleet(s,'caesar',raider.id,'raid','egypt-italy'),{ok:false,reason:'operational-warships'});
+ advanceNaval(s);
+ const route=s.naval.routes.find(r=>r.id==='egypt-italy');
+ assert.notEqual(route.last.reason,'raid');
+ assert.equal(s.naval.reports.some(r=>r.kind==='trade-raid'&&r.raider==='caesar'),false);
+});
+
+test('an enemy patrol does not protect its opponent’s grain trade',()=>{
+ const setup=()=>{const s=newGrandGame('senate');s.factions.senate.food=0;s.factions.senate.treasury=500;for(const route of s.naval.routes)if(route.id!=='egypt-italy')route.pausedBy=[s.regions.find(r=>r.id===route.from)?.owner].filter(Boolean);for(const pirate of s.naval.pirates){pirate.ships=0;pirate.pressure=0}Object.assign(s.naval.pirates[0],{zone:'alexandrian',ships:1,pressure:10});return s};
+ const baseline=setup();advanceNaval(baseline);
+ const s=setup(),enemy=s.naval.fleets.find(f=>f.id==='caesar-adriatic');enemy.port=null;enemy.zone='alexandrian';enemy.order={kind:'patrol',target:'alexandrian',path:[]};
+ advanceNaval(s);
+ const security=state=>state.naval.routes.find(r=>r.id==='egypt-italy').last.security;
+ assert.equal(security(s),100-s.naval.pirates[0].pressure,'the hostile fleet may suppress pirates but grants no escort bonus');
+ assert.ok(security(s)>security(baseline),'actual pirate suppression still improves general sea safety');
+});
+
+test('merchant-only patrol cannot suppress pirates',()=>{
+ const s=newGrandGame('senate'),merchant=s.naval.fleets.find(f=>f.id==='senate-adriatic'),pirate=s.naval.pirates.find(p=>p.zone==='adriatic');
+ merchant.port=null;merchant.ships={merchant:1};merchant.sailors=45;merchant.order={kind:'patrol',target:'adriatic',path:[]};pirate.pressure=15;
+ advanceNaval(s);
+ assert.equal(pirate.pressure,16);
+});
 test('AI patrols return before stores run out and release a quiet route for troop staging',()=>{
  const tired=newGrandGame('egypt'),watch=tired.naval.fleets.find(f=>f.id==='senate-adriatic');
  watch.port=null;watch.zone='adriatic';watch.order={kind:'patrol',target:'adriatic',path:[]};watch.supply=42;
