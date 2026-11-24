@@ -5,10 +5,12 @@ style.textContent=[
   '.spqr-version:focus-visible,.spqr-release-close:focus-visible,.spqr-release-privacy:focus-visible{outline:2px solid #f3cf7b;outline-offset:2px}',
   '.spqr-release-dialog{max-width:min(560px,calc(100vw - 32px));max-height:calc(100vh - 32px);overflow:auto;border:1px solid #a68e60;background:#192322;color:#efe2c6;padding:24px;box-shadow:0 8px 32px #0009;font:15px/1.5 Georgia,"SPQR CJK",serif}',
   '.spqr-release-dialog::backdrop{background:#080d0dc9}',
-  '.spqr-release-dialog h2{margin:0 0 12px;color:#f0cf86}',
+  '.spqr-release-dialog h2{margin:0 0 12px;padding-right:90px;color:#f0cf86}',
   '.spqr-release-dialog p{margin:7px 0;overflow-wrap:anywhere}',
   '.spqr-release-dialog ul{padding-left:22px}',
-  '.spqr-release-close,.spqr-release-privacy{float:right;border:1px solid #a68e60;background:#2b3734;color:#efe2c6;padding:4px 9px;cursor:pointer}'
+  '.spqr-release-close,.spqr-release-privacy{border:1px solid #a68e60;background:#2b3734;color:#efe2c6;padding:4px 9px;cursor:pointer}',
+  '.spqr-release-close{position:absolute;top:12px;right:12px;z-index:10}',
+  '.spqr-release-privacy{float:right}'
 ].join('\n');
 document.head.append(style);
 const badge=document.createElement('button');

@@ -23,7 +23,8 @@ for(const p of ['index.html','map-lab/index.html','han/index.html']){
  html=html.replace(/https:\/\/unpkg\.com\/maplibre-gl@5\.9\.0\/dist\/maplibre-gl\.(js|css)/g,(_,ext)=>'../vendor/maplibre-gl.'+ext);
  const bridge='<script type="module" src="'+(p==='index.html'?'./':'../')+'poki-bridge.js"></script>';
  if(html.includes('</head>'))html=html.replace('</head>',sdk+bridge+'</head>');
- else html=html.replace('<body>',sdk+bridge+'<body>');
+ else if(/<body\b[^>]*>/i.test(html))html=html.replace(/<body\b[^>]*>/i,match=>sdk+bridge+match);
+ else throw Error('No head or body insertion point in '+p);
  if(p==='map-lab/index.html')html=html.replace('MODERN LAND COVER &amp; ELEVATION · HISTORICAL OVERLAYS APPROXIMATE','LOCAL COASTLINE · HISTORICAL OVERLAYS APPROXIMATE');
  await writeFile(join(out,p),html);
 }
