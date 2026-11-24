@@ -17,14 +17,13 @@ export function createMarchPlanner({map,maplibregl,getState,getLanguage,previewR
  if(map.loaded())install();else map.on('load',install);
  function resetMarkers(){markers.forEach(m=>m.remove());markers=[]}
  function drawOverlay(){
-  if(!map.getSource('planner-route'))return;
   const a=state().armies.find(x=>x.id===armyId),start=a?.move?.to||a?.region;
   const intent=[start,...waypoints].map(id=>MARCH_POINTS[id]).filter(Boolean),features=[];
   if(intent.length>1)features.push(line(intent,'intent'));
   if(lastPlan?.ok)for(const segment of lastPlan.segments){const points=[MARCH_POINTS[segment.from],MARCH_POINTS[segment.to]];if(points.every(Boolean))features.push(line(points,'valid'))}
   if(invalidPoint){const from=intent.at(-1);if(from)features.push(line([from,invalidPoint],'blocked'))}
   else if(lastPlan&&!lastPlan.ok&&intent.length>1)features.push(line(intent.slice(-2),'blocked'));
-  map.getSource('planner-route').setData({type:'FeatureCollection',features});resetMarkers();
+  map.getSource('planner-route')?.setData({type:'FeatureCollection',features});resetMarkers();
   waypoints.forEach((id,i)=>{const el=document.createElement('button');el.className='march-waypoint';el.type='button';el.title=(getLanguage()==='zh'?'拖动改变途经点；点击删除':'Drag to move waypoint; click to remove')+' · '+name(id);el.setAttribute('aria-label',`${t('waypoints')} ${i+1}: ${name(id)}`);el.textContent=String(i+1);let dragging=false;const m=new maplibregl.Marker({element:el,draggable:true,anchor:'center'}).setLngLat(MARCH_POINTS[id]).addTo(map);m.on('dragstart',()=>{dragging=true});m.on('dragend',()=>{const candidate=snap(m.getLngLat());if(candidate){waypoints[i]=candidate;invalidPoint=null}else invalidPoint=[m.getLngLat().lng,m.getLngLat().lat];refresh();setTimeout(()=>{dragging=false},0)});el.onclick=e=>{e.stopPropagation();if(dragging)return;waypoints.splice(i,1);refresh()};markers.push(m)})
  }
  function snap(lngLat){const point=[lngLat.lng,lngLat.lat];const rendered=map.queryRenderedFeatures(map.project(lngLat),{layers:['control']});const choices=[];for(const item of rendered){let ids=item.properties?.regions;try{ids=Array.isArray(ids)?ids:JSON.parse(ids||'[]')}catch{ids=[]}for(const id of ids)if(MARCH_POINTS[id])choices.push(id)}const pool=choices.length?[...new Set(choices)]:Object.keys(MARCH_POINTS);let best=null,distance=Infinity;for(const id of pool){const p=MARCH_POINTS[id],km=distanceKmFrom(point,p);if(km<distance){best=id;distance=km}}return distance<=(choices.length?350:105)?best:null}

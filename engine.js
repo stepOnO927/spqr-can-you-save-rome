@@ -600,14 +600,14 @@ function advanceMarchConditions(s,a){
  const needed=Math.max(1,Math.ceil((move.provisionCost||a.men/1000*cfg.provisionPerThousand)/(move.totalMonths||move.remaining||1)));
  const consumed=Math.min(a.provisions,needed);a.provisions-=consumed;const shortage=needed-consumed;
  a.fatigue=Math.min(100,Math.max(0,a.fatigue+(move.pace==='forced'?12:move.pace==='cautious'?3:6)+(shortage?8:0)));
- const losses=[];if(shortage&&rnd(s)<.65)losses.push({kind:'desertion',men:Math.min(a.men-1,Math.max(1,Math.round(a.men*cfg.shortageLossRate*shortage/needed)))});
- if((move.risk||0)>0&&rnd(s)<move.risk*3)losses.push({kind:'environment',men:Math.min(a.men-1,Math.max(1,Math.round(a.men*cfg.exposureLossRate)))});
- if(a.fatigue>70&&rnd(s)<.08)losses.push({kind:'disease',men:Math.min(a.men-1,Math.max(1,Math.round(a.men*.0015)))});
+ const losses=[];if(shortage&&strategicRoll(s,a.id,1101)<.65)losses.push({kind:'desertion',men:Math.min(a.men-1,Math.max(1,Math.round(a.men*cfg.shortageLossRate*shortage/needed)))});
+ if((move.risk||0)>0&&strategicRoll(s,a.id,1102)<move.risk*3)losses.push({kind:'environment',men:Math.min(a.men-1,Math.max(1,Math.round(a.men*cfg.exposureLossRate)))});
+ if(a.fatigue>70&&strategicRoll(s,a.id,1103)<.08)losses.push({kind:'disease',men:Math.min(a.men-1,Math.max(1,Math.round(a.men*.0015)))});
  for(const loss of losses){const count=Math.max(0,Math.min(loss.men,a.men-1));if(!count)continue;a.men-=count;a.morale=Math.max(15,a.morale-(loss.kind==='desertion'?3:1));const event={year:s.year,month:s.month,from:a.region,to:move.to,kind:loss.kind,men:count};a.journeyHistory.push(event);a.journeyHistory=a.journeyHistory.slice(-80);if(a.owner===s.player)log(s,`${a.name[0]} lost ${count} during the march (${loss.kind}).`,`${a.name[1]}行军途中因${{desertion:'逃亡',environment:'环境暴露',disease:'疾病'}[loss.kind]}减员${count}人。`,{armyId:a.id,kind:'march_attrition',cause:loss.kind,casualties:count,chronicleRecorded:true})}
  if(shortage&&a.owner===s.player)log(s,`${a.name[0]} lacks ${shortage} provisions on the march.`,`${a.name[1]}行军补给短缺${shortage}份。`,{armyId:a.id,kind:'supply_shortage'});
  if(move.paused)return;
  const edge=estimateMarchEdge(s,a,a.region,move.to,{pace:move.pace});if(edge?.blocked){if(move.blocked!==edge.blocked&&a.owner===s.player)log(s,`${a.name[0]} halted: the pass is closed by snow.`,`${a.name[1]}暂停行军：山口因积雪封闭。`,{armyId:a.id,kind:'march_blocked'});move.blocked=edge.blocked;return}
- const target=region(s,move.to);if(target&&target.owner!==a.owner&&!isWar(s,a.owner,target.owner)&&!activeAgreement(s,a.owner,target.owner,'military_access')){if(move.blocked!=='access'&&a.owner===s.player)log(s,`${a.name[0]} halted: military access is no longer valid.`,`${a.name[1]}暂停行军：通行权已失效。`,{armyId:a.id,kind:'march_blocked'});move.blocked='access';return}
+ const target=region(s,move.to);if(target&&target.owner!==a.owner&&!isWar(s,a.owner,target.owner)&&!activeAgreement(s,a.owner,target.owner,'military_access')){a.move=null;a.order=null;if(a.owner===s.player)log(s,`${a.name[0]} stopped: entry into ${target.name[0]} is no longer permitted.`,`${a.name[1]}停止行军：当前不能进入${target.name[1]}。`,{armyId:a.id,kind:'march_blocked'});return}
  delete move.blocked;
  move.elapsed=(move.elapsed||0)+1;move.remaining--;move.progress=Math.min(1,move.elapsed/(move.totalMonths||move.elapsed));
 }
@@ -749,7 +749,7 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
     const now=s.year*12+s.month,feint=s.world.aiFeints?.[owner];
     if(feint?.army===a.id){
       if(a.region===feint.destination&&now>=feint.returnAt&&region(s,feint.origin)?.owner===owner){delete s.world.aiFeints[owner];if(issueMilitaryOrder(s,a.id,'move',feint.origin,owner).ok)continue}
-      else if(a.region!==feint.origin&&a.region!==feint.destination||now>feint.returnAt+3)delete s.world.aiFeints[owner];
+      else if(a.region!==feint.origin&&a.region!==feint.destination||now>feint.returnAt+Math.max(3,a.move?.totalMonths||0))delete s.world.aiFeints[owner];
     }
     const threatened=neighbors.filter(r=>isWar(s,owner,reportedControl(s,owner,r.id)?.owner));
     const estimate=r=>{const rival=reportedControl(s,owner,r.id)?.owner;return rival&&isWar(s,owner,rival)?estimatedStrength(s,owner,rival)/Math.max(1,s.regions.filter(x=>reportedControl(s,owner,x.id)?.owner===rival).length):0};
@@ -770,7 +770,7 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
     // the force returns on a later turn if its original position is still safe.
     if(strongPlanning&&strategy&&s.month===10&&here.owner===owner&&threatened.length&&!s.world.aiFeints?.[owner]&&(s.world.lastFeint?.[owner]??-Infinity)+24<=now&&s.armies.some(b=>b!==a&&b.owner===owner&&b.region===a.region&&!b.move&&!b.siege&&b.men>=a.men)){
       const alternate=neighbors.find(r=>r.owner===owner&&r.supply*1000>=a.men&&adjacent(r.id).some(e=>e.to!==a.region&&isWar(s,owner,reportedControl(s,owner,e.to)?.owner)));
-      if(alternate&&issueMilitaryOrder(s,a.id,'move',alternate.id,owner).ok){s.world.aiFeints||={};s.world.lastFeint||={};s.world.aiFeints[owner]={army:a.id,origin:here.id,destination:alternate.id,returnAt:now+1};s.world.lastFeint[owner]=now;continue}
+      if(alternate&&issueMilitaryOrder(s,a.id,'move',alternate.id,owner).ok){s.world.aiFeints||={};s.world.lastFeint||={};s.world.aiFeints[owner]={army:a.id,origin:here.id,destination:alternate.id,returnAt:now+(a.move?.totalMonths||1)};s.world.lastFeint[owner]=now;continue}
     }
     const sharedTarget=coalitionMilitaryObjective(s,owner);
     const targets=enemies.map(r=>({r,d:Math.hypot(r.x-region(s,a.region).x,r.y-region(s,a.region).y),shared:sharedTarget&&reportedControl(s,owner,r.id)?.owner===sharedTarget})).sort((x,y)=>Number(!!y.shared)-Number(!!x.shared)||x.d-y.d);
