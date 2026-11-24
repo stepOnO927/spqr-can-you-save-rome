@@ -17,7 +17,7 @@ const alesiaSource='https://alesia.com/en/archaeology/';
 const numantiaSource='https://numanciasoria.es/en/divulgacion/the-archaeological-hall-of-garray';
 const siegeSource='https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/2A%2A.html';
 const massiliaSource='https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/1B%2A.html';
-const militaryTransportSource='https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/3A%2A.html';
+const militaryTransportSource='https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/1A%2A.html';
 const librarySource='https://www.persee.fr/doc/mefr_0223-5102_2006_num_118_2_10261';
 const cloacaSource='https://www.sovraintendenzaroma.it/i_luoghi/roma_antica/monumenti/cloaca_massima';
 const marciaSource='https://www.sovraintendenzaroma.it/i_luoghi/roma_antica/monumenti/acquedotto_marcio';
@@ -172,7 +172,7 @@ MATERIALS.push(
  {id:'naval-equipment',name:['Heavy Naval Equipment','重型海军装备'],cost:32,months:5,prerequisites:['shipyard-craft','metalworking'],context:['Caesar describes grappling equipment prepared for the Massilia fleet; larger hulls are a separate game abstraction.','凯撒记载马赛战役舰队准备了钩爪等装备；大型船体是另行抽象的游戏设定。'],source:source(massiliaSource,'Caesar, Civil Wars 1.57')},
  {id:'repair-facilities',name:['Naval Repair Facilities','海军修理设施'],cost:25,months:4,prerequisites:['shipyard-craft'],context:['Massilia repaired and fitted out old ships after a naval defeat; the game models dockside repair crews.','马赛海战失利后修理并重新装备旧船；游戏据此模拟港边修船人员。'],source:source(siegeSource,'Caesar, Civil Wars 2.4')},
  {id:'maritime-warehousing',name:['Maritime Warehousing','海运仓储'],cost:23,months:3,prerequisites:['port-facilities'],context:['Massilia stored grain for an emergency during the siege; cargo throughput bonuses are game values.','马赛围城期间储备谷物以应急；货物吞吐加成属于游戏数值。'],source:source(siegeSource,'Caesar, Civil Wars 2.22')},
- {id:'military-transport-organization',name:['Military Transport Organization','军事海运组织'],cost:26,months:4,prerequisites:['shipyard-craft'],context:['Caesar describes scarce transport capacity and ships sent back for another crossing; the game abstracts improved loading capacity.','凯撒记载运兵船不足，以及舰船返航接运后续部队；游戏将改进装载能力作抽象处理。'],source:source(militaryTransportSource,'Caesar, Civil Wars 3.2, 3.29')}
+ {id:'military-transport-organization',name:['Military Transport Organization','军事海运组织'],cost:26,months:4,prerequisites:['shipyard-craft'],context:['In 49 BCE, Caesar says ships returned from Dyrrachium to carry the rest of Pompey’s army, while he lacked vessels to pursue promptly. Extra carrying capacity is a game abstraction.','前49年，凯撒记载舰船从狄拉基乌姆返航接运庞培余部，而自己缺船，无法迅速追击。额外运载量属于游戏抽象。'],source:source(militaryTransportSource,'Caesar, Civil Wars 1.27–29')}
 );
 BUILDINGS.push(
  {id:'naval-depot',name:['Naval Supply Depot','海军补给站'],tech:'port-facilities',cost:23,months:3,materials:{timber:2,stone:1},upkeep:1,effects:{navalSupply:12},terrain:['plain','hills','urban'],site:'coast'},

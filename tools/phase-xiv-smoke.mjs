@@ -49,6 +49,7 @@ try{
   assert.match(await page.locator('#tech-road-milestones a[target="_blank"]').getAttribute('href'),/Caius_Gracchus/);
   assert.match(await page.locator('#tech-improved-shipbuilding').innerText(),/Ship construction −1 month/);
   assert.match(await page.locator('#tech-maritime-warehousing').innerText(),/limited by hull capacity/);
+  assert.match(await page.locator('#tech-military-transport-organization').innerText(),/49 BCE[\s\S]*Pompey’s army[\s\S]*game abstraction[\s\S]*Civil Wars 1\.27–29/);
   await page.locator('[data-dev-branch="idea"]').click();
   console.log('Phase XIV: idea tree open');
   await page.locator('.dev-tree-links path[data-from="legion-training"][data-to="reserve-mobilization"]').waitFor();
@@ -137,6 +138,7 @@ try{
   assert.match(await page.locator('#tech-port-facilities').innerText(),/港口[\s\S]*海军补给站[\s\S]*基础建造费 23¤[\s\S]*海岸/);
   assert.match(await page.locator('#tech-road-milestones').innerText(),/道路里程碑[\s\S]*当地已建道路/);
   assert.match(await page.locator('#tech-military-transport-organization').innerText(),/每艘军用运输船增载 600 名士兵/);
+  assert.match(await page.locator('#tech-military-transport-organization').innerText(),/前49年[\s\S]*庞培余部[\s\S]*游戏抽象[\s\S]*Civil Wars 1\.27–29/);
   await page.locator('[data-dev-branch="idea"]').click();
   assert.match(await page.locator('#tech-sanctuary-protection').innerText(),/行省圣所保护/);
   assert.match(await page.locator('#tech-ancestral-rites').innerText(),/传统祭仪扶持/);
