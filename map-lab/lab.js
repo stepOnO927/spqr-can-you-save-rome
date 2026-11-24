@@ -468,7 +468,7 @@ function renderLocalHud(){
 function italianTownObjectiveHtml(state,language){
  if(!['caesar','senate'].includes(state.player))return '';
  const zh=language==='zh',verb=state.player==='caesar'?(zh?'争取':'Secure'):(zh?'守住':'Hold');
- return ['ariminum','iguvium','corfinium','capua','brundisium'].map(id=>{
+ return ['ariminum','iguvium','auximum','corfinium','capua','brundisium'].map(id=>{
   const town=localEntity(state,id);if(!town)return '';
   const done=town.controller===state.player;
   return `<button data-town-objective="${id}" class="objective ${done?'complete':''}"><span>${done?'✓':'○'}</span>${verb} ${esc(town.name[zh?1:0])}</button>`;
