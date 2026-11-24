@@ -6,9 +6,10 @@ import {TRADITIONS,dominantTradition,startingTraditions} from '../religious-demo
 import {renderTerritoryFacts} from '../map-lab/territory-facts.js?v=calendar-1';
 
 test('all campaign theaters have plausible game tradition weights and keep them in saves',()=>{
- const state=newGame('caesar');
- assert.ok(state.regions.length>=24);
- for(const theater of state.regions){
+ const state=newGame('caesar'),han=newGame('han');
+ assert.equal(state.regions.length,24);
+ assert.equal(han.regions.length,29);
+ for(const theater of han.regions){
   const shares=theater.population.traditions;
   assert.ok(shares, theater.id);
   assert.equal(Object.values(shares).reduce((sum,share)=>sum+share,0),100,theater.id);
