@@ -106,7 +106,7 @@ function deliver(s,letter,{autoplayPlayer,issueOrder,log}){
   const k=pair(letter.to,letter.from);s.relations[k]=Math.min(100,(s.relations[k]??0)+2);
   record(letter,'responded',s,{decision:'heeded'});
  }else record(letter,'unresponded',s,{decision:decision.kind,reason:decision.reason});
- if(letter.from===s.player)log(s,`Your warning reached ${short(letter.to)[0]}.`,`你的预警已送达${short(letter.to)[1]}。`,{kind:'ally_warning',warning:letter.id});
+ // No return courier exists: the sender receives no delivery or decision notice.
 }
 
 export function advanceStrategicWarnings(s,{autoplayPlayer=false,letterMonths={},issueOrder=null,log=()=>{}}={}){

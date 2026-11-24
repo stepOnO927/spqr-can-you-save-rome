@@ -241,7 +241,10 @@ test('a lost or refused inquiry remains indistinguishable from a pending one unt
   const start=newGame('caesar');sendInquiry(start,'caesar','egypt');tick(start);let s;
   for(let i=1;i<200&&!s;i++){const trial=upgradeSave(JSON.parse(JSON.stringify(start)));trial.seed=(i*7000013)>>>0;tick(trial);if(trial.inquiries[0].sealed?.status===outcome)s=trial}
   assert.ok(s,'expected a simulation with the selected outcome');assert.equal(s.inquiries[0].status,'pending');assert.equal(s.inquiries[0].claim,undefined);assert.equal(s.knowledge.caesar.egypt.reports.length,0);
-  s=upgradeSave(JSON.parse(JSON.stringify(s)));tick(s);assert.equal(s.inquiries[0].status,'pending');tick(s);assert.equal(s.inquiries[0].status,outcome);assert.equal(s.knowledge.caesar.egypt.reports.length,0);
+  s=upgradeSave(JSON.parse(JSON.stringify(s)));tick(s);assert.equal(s.inquiries[0].status,'pending');tick(s);
+  // A sealed refusal may still be lost on the return journey; neither result
+  // reveals the court's response to the sender before delivery.
+  assert.ok(outcome==='refused'?['refused','no_reply'].includes(s.inquiries[0].status):s.inquiries[0].status==='no_reply');assert.equal(s.knowledge.caesar.egypt.reports.length,0);
  }
 });
 

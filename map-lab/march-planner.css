@@ -1,0 +1,33 @@
+#march-planner{position:absolute;z-index:35;left:50%;bottom:1rem;transform:translateX(-50%);width:min(45rem,calc(100vw - 2rem));max-height:min(70vh,44rem);overflow:auto;background:rgba(25,33,32,.96);border:1px solid #a48b5c;box-shadow:0 10px 30px #0009;color:#f0e4c7;padding:1rem 1.25rem;font:14px/1.45 Georgia,serif}
+#march-planner[hidden]{display:none}
+#march-planner button,#march-planner select{font:inherit;color:#f3e3bd;background:#263333;border:1px solid #9b8155;padding:.45rem .6rem;min-height:2.55rem;cursor:pointer}
+#march-planner button:hover,#march-planner button:focus-visible{border-color:#f0c976;background:#394742}
+#march-planner button:disabled{opacity:.43;cursor:not-allowed}
+#march-planner button[data-plan="confirm"]{background:#806039;color:#fff4d1;font-weight:bold}
+#march-planner .march-head{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #715d3e;padding-bottom:.35rem;letter-spacing:.12em}
+#march-planner .march-head button{padding:0 .55rem;min-height:2rem}
+#march-planner .march-hint{margin:.55rem 0;color:#e1d3b4}
+#march-planner .march-tools,#march-planner .march-actions,#march-planner .march-options{display:flex;gap:.4rem;flex-wrap:wrap;margin:.5rem 0}
+#march-planner .march-options label{display:flex;flex:1 1 11rem;align-items:center;gap:.5rem}
+#march-planner .march-options select{flex:1;min-width:6rem}
+#march-planner .march-report{border-top:1px solid #715d3e;border-bottom:1px solid #715d3e;padding:.5rem 0}
+#march-planner .march-report b{display:block;color:#f1c76d;letter-spacing:.1em}
+#march-planner .march-report p{margin:.35rem 0}
+#march-planner .march-report dl{display:grid;grid-template-columns:auto 1fr;column-gap:1rem;row-gap:.1rem;margin:.45rem 0}
+#march-planner .march-report dt{color:#c5b898}
+#march-planner .march-report dd{margin:0}
+#march-planner .march-error{color:#ffc2a9;border-left:3px solid #c85642;padding-left:.5rem}
+#march-planner .march-caution{color:#f1c76d}
+#march-planner .march-report small{display:block;color:#c7b99b}
+.march-waypoint{width:1.8rem;height:1.8rem;border-radius:50%;background:#f1c76d;color:#29261f;font:bold 13px sans-serif;border:2px solid #3d3527;box-shadow:0 1px 5px #000b;cursor:grab}
+.march-waypoint:active{cursor:grabbing}
+.terrain-map-marker,.terrain-crossing-marker{display:none}
+.terrain-map .terrain-map-marker{display:block;width:1.15rem;height:1.15rem;border:1px solid #f1dfb6;border-radius:2px;color:#f8e8bd;background:#566b58;font-size:.6rem;box-shadow:0 1px 5px #0009;cursor:pointer}
+.terrain-map .terrain-forest,.terrain-map .terrain-dense_forest{background:#3e664d}
+.terrain-map .terrain-hills,.terrain-map .terrain-mountains,.terrain-map .terrain-high_mountains{background:#9c8b6b}
+.terrain-map .terrain-desert{background:#c29d5c}
+.terrain-map .terrain-urban{background:#7b6150}
+.terrain-map .terrain-coast{background:#54868b}
+.terrain-map .terrain-crossing-marker{display:block;color:#ffe1a0;font:bold 18px serif;text-shadow:0 1px 3px #000;pointer-events:none}
+.low-zoom.terrain-map .terrain-map-marker{display:none}
+@media(max-width:700px){#march-planner{bottom:4.7rem;left:.45rem;transform:none;width:calc(100vw - .9rem);max-height:44vh;padding:.65rem;font-size:12px}#march-planner .march-hint{display:none}#march-planner .march-options label{flex:1 1 8rem}#march-planner button,#march-planner select{min-height:2.4rem}}

@@ -5,6 +5,7 @@ import {politicalAmbition} from './conspiracies.js?v=faces-name-disagreement-1';
 import {focusModifiers} from './national-focus.js?v=faces-name-disagreement-1';
 import {armyStats,commanderSpecialty,commandConcentration} from './legion-designer.js?v=faces-name-disagreement-1';
 import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=faces-name-disagreement-1';
+import {reportedOperationObjectives} from './operation-intelligence.js?v=operation-notices-1';
 
 // OPERATIONAL BATTLE PLANNER. Plans are an order layer over the existing War
 // Council orders: every movement goes through issueMilitaryOrder/moveArmy, so
@@ -97,7 +98,7 @@ const EVENT_TEXT={
  reserve:[(p,d)=>`“${p.name}”: the reserve moves to support ${rn(d.region,0)}.`,(p,d)=>`“${p.name}”：预备队前往支援${rn(d.region,1)}。`],
  completed:[(p)=>`Operation “${p.name}” achieved its objectives.`,(p)=>`作战计划“${p.name}”已完成目标。`],
  failed:[(p)=>`Operation “${p.name}” failed: no assigned armies remain.`,(p)=>`作战计划“${p.name}”失败：已无所属军队。`],
- coordinated:[(p,d)=>`“${p.name}” is coordinated with an allied operation.`,(p)=>`“${p.name}”已与盟军行动协调。`]
+ coordinated:[(p,d)=>`“${p.name}”: a delivered allied notice proposes the same objective; coordination remains unconfirmed.`,(p)=>`“${p.name}”：收到盟军同一目标的作战通报；协同尚未确认。`]
 };
 export function approvePlan(s,owner,planId,{log=()=>{}}={}){
  const plan=planById(s,planId);if(!plan||plan.owner!==owner||!['draft','paused','needs_attention'].includes(plan.status))return {ok:false,reason:'plan'};
@@ -276,8 +277,7 @@ export function aiBattlePlans(s,owner,{estimatedStrength,log=()=>{}}={}){
  if(mine.some(p=>p.roles.some(r=>['offensive','siege'].includes(r.role))))return null;
  // Candidate objectives: reported enemy theaters adjacent to own territory.
  const perRegion=e=>estimatedStrength?estimatedStrength(s,owner,e)/Math.max(1,s.regions.filter(r=>reportedControl(s,owner,r.id)?.owner===e).length):4000;
- const allies=Object.keys(s.factions).filter(o=>o!==owner&&((s.alliances||[]).some(a=>a.includes(owner)&&a.includes(o))||activeAgreement(s,owner,o,'defensive')||activeAgreement(s,owner,o,'offensive')));
- const allied=new Set(plansState(s).filter(p=>allies.includes(p.owner)&&LIVE.includes(p.status)).flatMap(p=>p.roles.filter(r=>['offensive','siege'].includes(r.role)).map(r=>r.target)));
+ const allied=new Set(reportedOperationObjectives(s,owner).map(o=>o.region));
  const candidates=[];
  for(const id of new Set(own.flatMap(r=>adjacentIds(r.id)))){const rep=reportedControl(s,owner,id)?.owner;if(!enemies.includes(rep)||ownIds.has(id))continue;const seen=sightings.filter(x=>x.region===id&&x.owner===rep&&Array.isArray(x.strengthBand)&&x.strengthBand.length===2&&x.strengthBand.every(Number.isFinite));const est=seen.length?seen.reduce((n,x)=>n+(x.strengthBand[0]+x.strengthBand[1])/2,0):perRegion(rep);const reg=region(s,id),baseline=REGIONS.find(r=>r.id===id),observation=reportedFortification(s,owner,id),fort=observation&&!observation.stale?(observation.band[0]+observation.band[1])/2:1;candidates.push({id,rep,est:est*(1+fort*.25),value:(baseline?.tax||0)+(baseline?.food||0)+(reg.terrain==='urban'?4:0)+(allied.has(id)?6:0),coordinated:allied.has(id)})}
  candidates.sort((a,b)=>(b.value/Math.max(1,b.est/1000))-(a.value/Math.max(1,a.est/1000))||a.id.localeCompare(b.id));

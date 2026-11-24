@@ -33,7 +33,7 @@ export function createTutorial({language,onReset,onMode,getState,getRoutes=()=>[
   ['认清你的战区','点击地图上属于你的城市，查看战区归属。','城市点不到？按“指给我看”，地图会移动到它。'],
   ['选择军队','点击地图上的己方军旗，查看人数、指挥官和位置。','军旗被遮挡？按“指给我看”。'],
   ['查看补给','在军队详情中点“查看补给”，了解粮食和当地承载上限。','详情不见了？按“指给我看”重新打开军队。'],
-  ['下第一道命令',phase==='defend'?'当前没有安全的己方行军路线。点“防御”先守住阵地。':phase==='preview'?'先选一个可到达的目的地，只看行程和风险；预览免费。':'看过路线后，点“确认命令”。也可以选别的路线。','不必攻击强敌；可选己方战区。若路线变了，重新选择。'],
+  ['下第一道命令',phase==='defend'?'当前没有安全的己方行军路线。点“防御”先守住阵地。':phase==='preview'?'选相邻战区预览，或点“行军规划”在地图上绘制途经点，再看地形与口粮。预览免费。':'看过路线后确认命令；规划器中的路线也要确认才会执行。','不必攻击强敌；可选己方战区。命令确认后仍要推进月份。'],
   ['推进一个月','命令需要时间。点击“推进一月”，观察真实结算。','若命令已取消，请重新下令；也可以先防守再推进。'],
   ['阅读结果','打开“编年史”，查看刚才这一月真正发生了什么。','没有战斗也正常；编年史仍会记录本月变化。'],
   ['做一个政策决定','查看资源后，选择与当前不同的税率；它会改变今后的收支和忠诚。','资源入口在窄屏菜单里。按“指给我看”可定位。'],
@@ -42,7 +42,7 @@ export function createTutorial({language,onReset,onMode,getState,getRoutes=()=>[
   ['Find your territory','Select a city under your control to inspect its theater.','Cannot see the city? Show me will move the map to it.'],
   ['Select an army','Select one of your standards to see its soldiers, commander and location.','If a marker is obscured, use Show me.'],
   ['Inspect supply','In the army details, open Supply to check food and local capacity.','If the panel is closed, Show me will reopen the army.'],
-  ['Give your first order',phase==='defend'?'No safe friendly march is available. Choose Defend to hold your position.':phase==='preview'?'Choose a reachable destination to preview its time and risk. Previewing is free.':'After reading the route, select Confirm order. You may choose a different route.','You need not attack a stronger enemy. Choose a friendly route when available.'],
+  ['Give your first order',phase==='defend'?'No safe friendly march is available. Choose Defend to hold your position.':phase==='preview'?'Preview a neighboring theater, or open March Planner and draw waypoints to review terrain and provisions. Previewing is free.':'Confirm the order after reviewing the route. Planned routes also need confirmation.','You need not attack a stronger enemy. You can march to friendly territory and advance time.'],
   ['Advance one month','Orders take time. Advance one month to resolve real events.','If the order was cancelled, issue another; defense is also possible.'],
   ['Read the outcome','Open the Chronicle to see what actually happened this month.','A quiet month still has a real report.'],
   ['Make a policy choice','Open Resources and choose a different tax rate. It changes future income and loyalty.','On narrow screens Resources is in the menu. Show me will locate it.'],
@@ -144,7 +144,7 @@ export function createTutorial({language,onReset,onMode,getState,getRoutes=()=>[
   if(step===0&&action.type==='territory'&&s.regions.some(r=>r.id===action.id&&r.owner===faction)){setStep(1);return}
   if(step===1&&action.type==='army'&&action.own&&liveArmy(s,action.id,faction)){armyId=action.id;setStep(2);return}
   if(step===2&&action.type==='supply'&&action.id===armyId&&unit){setStep(3);return}
-  if(step===3&&phase==='preview'&&action.type==='preview'&&routes().some(route=>route.to===action.id)){
+  if(step===3&&phase==='preview'&&action.type==='preview'&&(action.routePreview&&action.id===armyId||routes().some(route=>route.to===action.id))){
    phase='confirm';persist();render();return
   }
   if(step===3&&action.type==='order'&&action.id===armyId&&unit&&(unit.move||unit.order?.kind==='defend')){
