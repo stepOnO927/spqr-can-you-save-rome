@@ -2,6 +2,7 @@ import {receivedMail,unreadCount,gatheringPlan} from './epistulae.js?v=dossier-a
 import {wartimePolicy} from './epistulae-personnel.js?v=dossier-archive-1';
 import {CHARACTER_CATALOG} from './characters.js?v=dossier-archive-1';
 import {campaignDate} from './campaign-date.js?v=calendar-1';
+import {peaceWarIsCurrent} from './peace-terms.js?v=territorial-peace-1';
 
 const safe=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const local=(value,zh)=>Array.isArray(value)?value[zh?1:0]:value;
@@ -23,7 +24,8 @@ export function mailboxHtml(s,{lang='en',filter='inbox',query='',sort='newest',s
  const thread=current?all.filter(m=>m.threadId===current.threadId&&m.id!==current.id&&(m.recipient===s.player&&m.delivery==='received'||m.senderFaction===s.player&&m.recipient!==s.player)).sort((a,b)=>a.created.year-b.created.year||a.created.month-b.created.month):[];
  const response=current?(current.recipient===s.player?current.responses.find(r=>!r.ai):current.responses.find(r=>r.ai&&r.resolved&&r.outcome!=='lost'&&Number.isFinite(r.arrival)&&r.arrival<=now)):null;
  const peaceInquiry=current?.context?.kind==='peace'?(s.inquiries||[]).find(x=>x.mailId===current.id):null;
- const peaceClosed=current?.context?.kind==='peace'&&peaceInquiry?.status!=='awaiting_decision';
+ const stalePeace=!!peaceInquiry&&peaceInquiry.peaceSettlement!=='concluded'&&!peaceWarIsCurrent(s,peaceInquiry);
+ const peaceClosed=current?.context?.kind==='peace'&&(peaceInquiry?.status!=='awaiting_decision'||stalePeace);
  const agentRequest=current?.context?.kind==='agent_release_request'?(s.releaseRequests||[]).find(r=>r.mailId===current.id):null;
  const agentClosed=current?.context?.kind==='agent_release_request'&&agentRequest?.status!=='awaiting_decision';
  const officialInquiry=current?.context?.kind==='official_inquiry'?(s.inquiries||[]).find(x=>x.mailId===current.id):null;
@@ -33,7 +35,7 @@ export function mailboxHtml(s,{lang='en',filter='inbox',query='',sort='newest',s
  const event=current&&(s.mail?.events||[]).find(e=>e.letterId===current.id&&e.id==='invitation:'+current.id);
  const dateAt=index=>{const year=Math.floor((index-1)/12);return campaignDate(index-year*12,year,lang)};
  const deliveryDate=current?.recipient===s.player&&current.delivery==='received'&&Number.isFinite(current.arrival)?` · ${zh?'收到':'Received'} ${safe(dateAt(current.arrival))}`:'';
- const peaceNote=peaceClosed&&!response?`<p class="mail-expired">${peaceInquiry?.status==='pending'&&peaceInquiry.phase==='return'?(zh?'已在外交界面答复；回信正在途中。':'Answered in diplomacy; the reply is in transit.'):(zh?'此议和提议已不能答复。':'This peace offer can no longer be answered.')}</p>`:'';
+ const peaceNote=stalePeace?`<p class="mail-expired">${zh?'此议和提议属于已结束的战争，不能用于当前冲突。':'This peace offer belongs to an ended war and cannot settle the current conflict.'}</p>`:peaceClosed&&!response?`<p class="mail-expired">${peaceInquiry?.status==='pending'&&peaceInquiry.phase==='return'?(zh?'已在外交界面答复；回信正在途中。':'Answered in diplomacy; the reply is in transit.'):(zh?'此议和提议已不能答复。':'This peace offer can no longer be answered.')}</p>`:'';
  const agentNote=agentClosed&&!response?`<p class="mail-expired">${agentRequest?.answeredYear!=null?(zh?'已在安全界面答复；回信送达情况未知。':'Answered in the security panel; reply delivery is unknown.'):(zh?'此释放请求已不能答复。':'This release request can no longer be answered.')}</p>`:'';
  const officialNote=officialClosed&&!response?`<p class="mail-expired">${zh?'此询问信已不能答复。':'This inquiry can no longer be answered.'}</p>`:'';
  const place=id=>local(s.regions?.find(r=>r.id===id)?.name,zh)||(zh?'未知战区':'Unknown theater');

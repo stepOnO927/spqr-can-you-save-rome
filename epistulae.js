@@ -8,6 +8,7 @@ import {fictionalPortraitKey,observedFictionalPortrait} from './portrait-registr
 import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
 import {canMediate,requestMediation} from './civil-war.js?v=dossier-archive-1';
 import {storedCorrespondentName} from './person-knowledge.js?v=dossier-archive-1';
+import {peaceTermsText,peaceWarIsCurrent} from './peace-terms.js?v=territorial-peace-1';
 
 const monthIndex = (year, month) => year * 12 + month;
 const pair = (a, b) => [a, b].sort().join(':');
@@ -95,7 +96,7 @@ export function sendLetter(s, spec) {
   if (senderId && (!s.world?.characters?.[senderId]||!s.world.characters[senderId].alive||s.world.characters[senderId].faction!==senderFaction)) return {ok:false, reason:'sender'};
   if (!senderId && senderInstitution !== senderFaction) return {ok:false, reason:'sender'};
   const source = spec.source || (senderId ? s.world.characters[senderId].location : null) || home(s, senderFaction);
-  const destination = spec.destination || home(s, recipient);
+  const destination = spec.destinationKnown===false ? null : spec.destination || home(s, recipient);
   const sent = monthIndex(s.year, s.month);
   const travel = courierMonths(s, source, destination, spec.priority === 'critical');
   const id = 'mail:' + mail.nextId++;
@@ -190,6 +191,8 @@ export function replyToLetter(s, id, choice, actions, details={}) {
     if(!request)return {ok:false,reason:'unavailable'};
     if(choice!=='ignore')ok=actions.answerOfficialInquiry?.(s,request.actor,request.subject,choice).ok===true;
   } else if (m.context?.kind === 'peace') {
+    const request=(s.inquiries||[]).find(x=>x.mailId===m.id&&x.actor===m.senderFaction&&x.target===s.player&&x.subject==='peace'&&x.status==='awaiting_decision'&&peaceWarIsCurrent(s,x));
+    if(!request)return {ok:false,reason:'unavailable'};
     ok = actions.answerPeaceOffer?.(s,m.senderFaction,choice).ok === true;
   } else if (m.context?.kind === 'war' && choice === 'negotiate') {
     ok = actions.sendInquiry(s, s.player, m.senderFaction, 'peace').ok;
@@ -467,7 +470,7 @@ export function syncPeaceLetters(s) {
     const result=sendLetter(s,{senderInstitution:inquiry.actor,senderFaction:inquiry.actor,
       recipient:s.player,category:'diplomatic',priority:'important',
       subject:['Peace proposal','议和提议'],
-      body:[`${sender[0]} requests an end to the present war. The war continues until an acceptance reaches the sender.`,`${sender[1]}请求结束当前战争。接受书送达发信方之前，战争仍将继续。`],
+      body:[`${sender[0]} requests an end to the present war. The war continues until an acceptance reaches the sender. ${peaceTermsText(inquiry,'en')}`,`${sender[1]}请求结束当前战争。接受书送达发信方之前，战争仍将继续。${peaceTermsText(inquiry,'zh')}`],
       options:['accept','refuse','war_council'],expires:monthIndex(s.year,s.month)+Math.max(0,(inquiry.remaining||1)-1),context:{kind:'peace'}});
     if (result.ok) {
       result.letter.senderName=[...sender];
