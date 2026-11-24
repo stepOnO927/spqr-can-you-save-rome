@@ -9,4 +9,3 @@ try{
  }
  assert.deepEqual(errors,[]);console.log('Only discovered rival governments enter campaign diplomacy and accept a delayed contact proposal.');
 }finally{await browser.close()}
-

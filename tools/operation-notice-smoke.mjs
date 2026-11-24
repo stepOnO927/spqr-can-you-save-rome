@@ -34,4 +34,3 @@ try{
  await page.locator('[data-mail-select]').filter({hasText:'盟军作战通报'}).click();assert.match(await page.locator('.mail-letter').innerText(),/发信时的意向/);assert.match(await page.locator('.mail-letter').innerText(),/独立决定/);assert.deepEqual(errors,[]);
  console.log('Player shares an approved operation through paid confirmation, persists it, and can read a delivered allied notice in the atlas.');
 }finally{await browser.close()}
-

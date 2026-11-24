@@ -13,6 +13,15 @@ import {fictionalPortraitKey} from '../portrait-registry.js?v=dossier-archive-1'
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
 
+test('adoption requires an age gap supported by the full historical range',()=>{
+ const s=newGame('caesar'),range=ageRange('caesar',s.year);assert.ok(range&&range[1]>range[0]);
+ const uncertainAge=range[1]-16,confirmedAge=range[0]-16;
+ const uncertain=createFictionalPerson(s,{name:['Uncertain gap','年龄差不确定'],faction:'caesar',birthYear:s.year-uncertainAge});
+ const confirmed=createFictionalPerson(s,{name:['Confirmed gap','年龄差明确'],faction:'caesar',birthYear:s.year-confirmedAge});
+ assert.equal(adoptHeir(s,'caesar',uncertain).reason,'age');
+ assert.equal(adoptHeir(s,'caesar',confirmed).ok,true);
+});
+
 test('historical relationships do not invent missing parents or spouses',()=>{
  const s=newGame();assert.equal(s.world.characters.cleopatra.familyId,s.world.characters.arsinoe.familyId);
  assert.deepEqual(s.world.characters.caesar.parents,[]);assert.equal(s.world.characters.pompey.spouse,null);
@@ -30,15 +39,6 @@ test('marriage, adoption and wills change legal relationships and private assets
  s.world.characters[a].alive=false;settleInheritance(s,a);
  assert.equal(s.world.characters[child].wealth,40);assert.equal(s.factions.egypt.treasury,treasury);
  assert.equal(s.world.dynasties.lives[child].some(e=>e.en.includes('Inherited')),true);
-});
-
-test('adoption requires an age gap supported by the full historical range',()=>{
- const s=newGame('caesar'),range=ageRange('caesar',s.year);assert.ok(range&&range[1]>range[0]);
- const uncertainAge=range[1]-16,confirmedAge=range[0]-16;
- const uncertain=createFictionalPerson(s,{name:['Uncertain gap','年龄差不确定'],faction:'caesar',birthYear:s.year-uncertainAge});
- const confirmed=createFictionalPerson(s,{name:['Confirmed gap','年龄差明确'],faction:'caesar',birthYear:s.year-confirmedAge});
- assert.equal(adoptHeir(s,'caesar',uncertain).reason,'age');
- assert.equal(adoptHeir(s,'caesar',confirmed).ok,true);
 });
 
 test('foreign marriage requires a reported contact, a paid envoy and a delayed answer',()=>{

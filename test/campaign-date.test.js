@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {campaignYear,campaignDate} from '../campaign-date.js?v=calendar-1';
+import {campaignYear,campaignDate} from '../campaign-date.js?v=dossier-archive-1';
 import {newGame,sendInquiry,tick,upgradeSave} from '../engine.js?v=dossier-archive-1';
 import {formatChronicleEntry} from '../chronicle.js?v=dossier-archive-1';
 

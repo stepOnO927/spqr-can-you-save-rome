@@ -4,13 +4,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {newGame,tick as romanTick,upgradeSave,PLAYABLE as ROMAN_PLAYABLE} from '../engine.js?v=dossier-archive-1';
-import {REGIONS as ROMAN_REGIONS} from '../data.js?v=phase-x-1';
+import {REGIONS as ROMAN_REGIONS} from '../data.js?v=dossier-archive-1';
 import {finalizeCampaign} from '../legacy.js?v=dossier-archive-1';
-import {REGIONS} from '../han/data.js?v=han-1';
+import {REGIONS} from '../han/data.js?v=dossier-archive-1';
 import {drawMap} from '../han/map.js?v=dossier-archive-1';
-import {validateTrees} from '../han/focus.js?v=han-1';
-import {EDICTS} from '../han/court.js?v=han-1';
-import {isLiuClan} from '../han/dynasty.js?v=han-1';
+import {validateTrees} from '../han/focus.js?v=dossier-archive-1';
+import {EDICTS} from '../han/court.js?v=dossier-archive-1';
+import {isLiuClan} from '../han/dynasty.js?v=dossier-archive-1';
 import {attachHanWorld,hanWorld,romanView,sendEmbassyToSeres,embassyConditions,RELAY_MONTHS} from '../han/world.js?v=dossier-archive-1';
 import {eastPanel,eastMap} from '../han/east-ui.js?v=dossier-archive-1';
 

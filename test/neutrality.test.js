@@ -29,7 +29,8 @@ test('the neutral party cannot open either named front, signatories cannot attac
 
 test('trade survives neutrality and the fixed term does not secretly expire when the original war ends',()=>{
  const s=fixture(),t=pact(s),trade=proposeAgreement(s,'egypt','caesar','trade');assert.ok(trade.ok);
- const a=s.factions.caesar.treasury,b=s.factions.egypt.treasury;advanceAgreements(s);assert.equal(s.factions.caesar.treasury,a+1);assert.equal(s.factions.egypt.treasury,b+1);
+ const a=s.factions.caesar.treasury,b=s.factions.egypt.treasury;advanceAgreements(s);assert.equal(s.factions.caesar.treasury,a);assert.equal(s.factions.egypt.treasury,b);assert.ok(s.tradeCargo.some(cargo=>cargo.status==='transit'));
+ assert.equal(trade.agreement.status,'active');
  s.wars=s.wars.filter(w=>!(w.includes('caesar')&&w.includes('senate')));assert.equal(neutralityBlocksWar(s,'egypt','senate'),true);
  while(date(s)<t.expiresAt){if(++s.month>12){s.month=1;s.year++}}advanceAgreements(s);assert.equal(t.status,'expired');assert.equal(neutralityBlocksWar(s,'egypt','senate'),false);
 });

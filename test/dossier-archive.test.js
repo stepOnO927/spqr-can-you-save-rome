@@ -16,4 +16,3 @@ test('dossier selection prefers recent dated observations and remains limited to
  const s=newGame('caesar'),k=s.knowledge.caesar.egypt;k.reportArchive=[];for(let i=0;i<6;i++)k.reportArchive.push({kind:'health',character:'ptolemy',value:i,year:s.year-i,month:s.month});k.reportArchive.push({kind:'health',character:'ptolemy',value:'undated'});k.reports.unshift({kind:'health',character:'ptolemy',value:'future',year:s.year,month:s.month,receivedYear:s.year+1,receivedMonth:s.month});
  assert.deepEqual(dossierReports(s,'ptolemy','health').map(r=>r.value),[0,1,2,3]);
 });
-

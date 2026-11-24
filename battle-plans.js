@@ -1,4 +1,4 @@
-import {ROUTES,REGIONS} from './data.js?v=phase-x-1';
+import {ROUTES,REGIONS} from './data.js?v=dossier-archive-1';
 import {reportedControl,reportedFortification,observeFortification} from './control-intelligence.js?v=dossier-archive-1';
 import {activeAgreement} from './agreements.js?v=dossier-archive-1';
 import {politicalAmbition} from './conspiracies.js?v=dossier-archive-1';

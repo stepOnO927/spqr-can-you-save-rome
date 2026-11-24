@@ -10,4 +10,3 @@ try{
  async function check(){await page.locator('#factions').click();await page.locator('[data-faction="egypt"]').click();await page.locator('[data-character="ptolemy"]').first().click();const panel=page.locator('#command-detail'),text=await panel.innerText();for(const expected of ['患病','19–25','谨慎戒备','情报过期','不计当前核实'])assert.ok(text.includes(expected),`missing archived report: ${expected}`);assert.equal(await panel.locator('[data-focus-theater="parthia"]').count(),1);assert.doesNotMatch(text,/垂危|77–88|受伤/)}
  await check();await page.locator('#save').click();await page.locator('#load').click();await check();assert.deepEqual(errors,[]);console.log('Foreign dossiers display delivered archived reports and hide future or other-faction information after save/load.');
 }finally{await browser.close()}
-

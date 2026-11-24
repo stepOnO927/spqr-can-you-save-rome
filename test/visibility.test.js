@@ -58,4 +58,3 @@ test('diplomacy involving the player and wars entered through alliances remain v
  const direct=newGame('caesar');direct.log=[];assert.equal(diplomacy(direct,'caesar','egypt','improve'),true);assert.match(direct.log[0].en,/improved relations/);
  for(const side of ['egypt','parthia']){const s=newGame('caesar');s.log=[];s.alliances.push(['caesar',side]);assert.equal(diplomacy(s,'egypt','parthia','war'),true);const enemy=side==='egypt'?'parthia':'egypt';assert.equal(isWar(s,'caesar',enemy),true);assert.equal(s.log.length,1);assert.match(s.log[0].en,/Treaty obligations have brought your faction into war/);assert.equal(s.log[0].other,enemy);assert.match(s.log[0].en,new RegExp(enemy==='egypt'?'Egypt':'Parthia'));}
 });
-

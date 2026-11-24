@@ -15,4 +15,3 @@ export function identityKnowledge(s,id){
  const reported=targets.some(k=>(k.reportedLeaders||[]).includes(id)||(k.commanderReports||[]).some(r=>isDeliveredReport(s,r)&&r.commanderId===id)||Object.values(k.sightings||{}).some(r=>isDeliveredReport(s,r)&&r.commanderId===id)||(k.reports||[]).some(mentions)||(k.reportArchive||[]).some(mentions));
  return {kind:reported?'reported':'unknown'};
 }
-

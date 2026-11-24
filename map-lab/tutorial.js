@@ -175,6 +175,8 @@ export function createTutorial({language,onReset,onMode,getState,getRoutes=()=>[
   $('#economic-handicap-label').textContent=zh?'可选经济惩罚：困难 −10%，棋手 −20%':'Optional economic handicap: Hard −10%, Grandmaster −20%';
   $('#start-guide-label').textContent=zh?'开启八步互动教学':'Start eight hands-on lessons';
   $('#start-note').textContent=zh?'教学使用真实战役规则。可暂停、跳过或重新开始。':'The guide uses real campaign rules. You can pause, skip or restart.';
+  $('#start-save-slot-label').textContent=zh?'读取存档栏':'Load save slot';
+  $('#start-load').textContent=zh?'读取已有战役':'Load saved campaign';
   $('#start-game').textContent=zh?'开始战役':'Start campaign';
   $('#start-training').textContent=zh?'独立训练战役（不覆盖正式存档）':'Training campaign (separate saves)';
   $('#start-free').textContent=zh?'自由开始':'Play freely';
@@ -186,6 +188,7 @@ export function createTutorial({language,onReset,onMode,getState,getRoutes=()=>[
  $('#start-game').onclick=()=>{const mode=$('#difficulty').value,side=$('#roman-faction').value;onReset(mode,side,$('#economic-handicap').checked);onMode(mode);initialStart=false;start.hidden=true;localStorage.setItem('spqr-onboarded','1');if($('#start-guide').checked)begin(side);else stop()};
  $('#start-training').onclick=()=>{const side=$('#roman-faction').value;onReset('beginner',side,false,true);onMode('beginner');initialStart=false;start.hidden=true;begin(side)};
  $('#start-free').onclick=()=>{const mode=$('#difficulty').value;onReset(mode,$('#roman-faction').value,$('#economic-handicap').checked);onMode(mode);start.hidden=true;localStorage.setItem('spqr-onboarded','1');stop()};
+ $('#start-load').onclick=()=>{$('#save-slot').value=$('#start-save-slot').value;start.hidden=true;initialStart=false;$('#load').click()};
  $('#guide-restart').onclick=openStart;if(!skipInitial)openStart();
  function restore(saved){stop('load');if(!saved?.running)return;faction=saved.faction==='senate'?'senate':'caesar';running=true;paused=!!saved.paused;step=saved.version===2?Math.max(0,Math.min(8,saved.step|0)):0;phase=saved.version===2?saved.phase||'preview':'preview';armyId=saved.armyId||'';turnBefore=Number.isFinite(saved.turnBefore)?saved.turnBefore:null;direction=saved.direction||'';result=saved.result||'';persist();timer=setInterval(place,450);render()}
  return {refresh(){renderStart();if(running)render()},stop,restore,isRunning:()=>running,focus:showMe};

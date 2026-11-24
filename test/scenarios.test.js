@@ -5,7 +5,7 @@ import {tick,upgradeSave} from '../engine.js?v=dossier-archive-1';
 import {potentialConspirators} from '../conspiracies.js?v=dossier-archive-1';
 import {leaveCoalition} from '../coalitions.js?v=dossier-archive-1';
 import {fictionalPortraitKey,observedFictionalPortrait} from '../portrait-registry.js?v=dossier-archive-1';
-import {advancePersonalPlans} from '../personal-plans.js?v=multipolar-2';
+import {advancePersonalPlans} from '../personal-plans.js?v=dossier-archive-1';
 
 test('both Roman sides can start and reload each required scenario',()=>{
  for(const player of ['caesar','senate'])for(const kind of ['historical','ambitious_general','three_state_coalition','civic_movement','revolution']){

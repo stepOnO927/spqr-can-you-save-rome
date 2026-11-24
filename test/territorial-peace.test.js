@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,tick,sendInquiry,inquiryCost,upgradeSave,diplomacy,isWar,answerPeaceOffer,previewMarch,forecastEconomy} from '../engine.js?v=dossier-archive-1';
-import {peaceOfferRegions,makePeaceTerms,peaceConcessionCredit,canSettlePeaceTerms,peaceTermsText} from '../peace-terms.js?v=territorial-peace-1';
+import {peaceOfferRegions,makePeaceTerms,peaceConcessionCredit,canSettlePeaceTerms,peaceTermsText,applyPeaceTransfer} from '../peace-terms.js?v=territorial-peace-1';
 import {syncPeaceLetters,receivedMail} from '../epistulae.js?v=dossier-archive-1';
 import {addReport} from '../character-system.js?v=dossier-archive-1';
 
@@ -30,11 +30,18 @@ test('accepted, refused and lost replies produce different actual territorial ou
  const outcomes=new Set();
  for(let seed=1;seed<=100;seed++){
   const s=setup(seed*100003),letter=offer(s);tick(s);assert.equal(s.regions.find(r=>r.id==='narbo').owner,'caesar');tick(s);outcomes.add(letter.status);
-  if(letter.status==='answered'){assert.equal(letter.peaceSettlement,'concluded');assert.equal(s.regions.find(r=>r.id==='narbo').owner,'senate');assert.equal(isWar(s,'caesar','senate'),false);assert.equal(letter.peaceTransfer.region,'narbo');assert.equal(s.armies.find(a=>a.id==='viii').owner,'caesar');assert.equal(s.armies.find(a=>a.id==='viii').region,'narbo');assert.ok(previewMarch(s,'viii','gaul').ok);const restored=structuredClone(s);restored.regions.find(r=>r.id==='narbo').owner='caesar';assert.ok(forecastEconomy(restored,'caesar').treasury>forecastEconomy(s,'caesar').treasury)}
+  if(letter.status==='answered'){assert.equal(letter.peaceSettlement,'concluded');const transferred=s.regions.find(r=>r.id==='narbo');assert.equal(transferred.owner,'senate');assert.equal(transferred.legalSovereign,'senate');assert.equal(transferred.administrativeStatus,'integrated');assert.equal(transferred.titleTreaty.to,'senate');assert.equal(isWar(s,'caesar','senate'),false);assert.equal(letter.peaceTransfer.region,'narbo');assert.equal(letter.peaceTransfer.titleTransferred,true);assert.equal(s.armies.find(a=>a.id==='viii').owner,'caesar');assert.equal(s.armies.find(a=>a.id==='viii').region,'narbo');assert.ok(previewMarch(s,'viii','gaul').ok);const restored=structuredClone(s);restored.regions.find(r=>r.id==='narbo').owner='caesar';assert.ok(forecastEconomy(restored,'caesar').treasury>forecastEconomy(s,'caesar').treasury)}
   else{assert.ok(['refused','no_reply'].includes(letter.status));assert.equal(s.regions.find(r=>r.id==='narbo').owner,'caesar');assert.equal(isWar(s,'caesar','senate'),true);assert.equal(letter.peaceTransfer,undefined)}
   if(outcomes.size===3)break;
  }
  assert.deepEqual([...outcomes].sort(),['answered','no_reply','refused']);
+});
+test('a bilateral peace transfer leaves a third party legal claim intact',()=>{
+ const s=setup(),r=s.regions.find(r=>r.id==='syria');r.owner='egypt';r.legalSovereign='senate';
+ const letter={peaceTerms:{region:'syria',from:'egypt',to:'parthia'}};
+ assert.equal(applyPeaceTransfer(s,letter),r);
+ assert.equal(r.owner,'parthia');assert.equal(r.legalSovereign,'senate');assert.equal(r.administrativeStatus,'disputed');
+ assert.equal(letter.peaceTransfer.titleTransferred,false);assert.equal(r.titleTreaty,undefined);
 });
 test('recipient assessment does not inspect undisclosed foreign ownership or forces',()=>{
  const s=setup(),letter=offer(s),copy=structuredClone(s),other=copy.inquiries[0];
@@ -69,4 +76,3 @@ test('a threatened AI can itself offer a frontier while the Roman player is pass
   assert.ok(s.inquiries.some(l=>l.actor==='egypt'&&l.target==='parthia'&&l.peaceTerms?.region==='syria'));
  }
 });
-

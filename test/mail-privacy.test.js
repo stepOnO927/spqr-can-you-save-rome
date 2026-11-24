@@ -27,3 +27,11 @@ test('a faction and a person with the same ID remain distinct mailbox senders',(
 test('institutional agreement and coalition letters name factions rather than a hidden person',()=>{
  const s=newGame('senate');s.world.leadership.caesar=['antony'];s.world.characters.caesar.alive=false;s.world.agreementLetters=[{id:1,actor:'caesar',target:'senate',type:'trade',status:'pending',phase:'awaiting_player',remaining:6,sent:{year:s.year,month:s.month}}];s.world.coalitionInvitations=[{id:1,leader:'caesar',target:'egypt',members:['caesar','senate','parthia'],humanRecipient:'senate',status:'pending',phase:'awaiting_player',remaining:6,sent:{year:s.year,month:s.month}}];syncAgreementLetters(s);syncCoalitionLetters(s);for(const m of receivedMail(s).filter(x=>['agreement_offer','coalition_offer'].includes(x.context?.kind))){assert.equal(m.senderId,null);assert.deepEqual(m.senderName,['Caesarian command','凯撒派军队']);assert.match(m.body[1],/凯撒派军队/);assert.doesNotMatch(m.body[1],/盖乌斯|安东尼/)}assert.equal(receivedMail(s).filter(x=>['agreement_offer','coalition_offer'].includes(x.context?.kind)).length,2);
 });
+test('local petition correspondents retain a separate sender filter',()=>{
+ const s=newGame('caesar');
+ const local=sendLetter(s,{senderInstitution:'senate',senderFaction:'senate',recipient:'caesar',category:'government',subject:['Village petition','村社请愿'],body:['petition','请愿'],context:{kind:'local_trade_petition',polityId:'massilia'}}).letter;
+ const court=sendLetter(s,{senderInstitution:'senate',senderFaction:'senate',recipient:'caesar',category:'government',subject:['Court notice','宫廷来信'],body:['notice','通知']}).letter;
+ local.delivery=court.delivery='received';
+ const all=mailboxHtml(s);assert.match(all,/value="polity:massilia"/);assert.match(all,/value="faction:senate"/);
+ const filtered=mailboxHtml(s,{sender:'polity:massilia'});assert.match(filtered,/Village petition/);assert.doesNotMatch(filtered,/Court notice/);
+});

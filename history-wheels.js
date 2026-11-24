@@ -5,7 +5,7 @@ import {CHARACTER_CATALOG,successionModel} from './characters.js?v=dossier-archi
 import {reassurePerson} from './conspiracies.js?v=dossier-archive-1';
 import {focusById,treeFor} from './national-focus.js?v=dossier-archive-1';
 import {successionCandidates,validSuccessionPlan} from './governance.js?v=dossier-archive-1';
-import {FACTIONS} from './data.js?v=phase-x-1';
+import {FACTIONS} from './data.js?v=dossier-archive-1';
 
 const L=(en,zh)=>[en,zh];
 const date=s=>s.year*12+s.month;

@@ -23,7 +23,7 @@ try{
  await page.locator(`#map [data-army="${target.army}"]`).click();
  await page.locator('#lab-orders select').selectOption(target.destination);
  assert.match(await page.locator('.preview-detail').innerText(),/Reported enemy|已报告敌军/);
- await page.locator('#lab-orders button').click();
+ await page.locator('#lab-orders').getByRole('button',{name:/^(?:CONFIRM ORDER|确认命令)$/}).click();
  await page.locator('#save').click();
  let saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-training-save-1')));
  assert.ok(saved.trainingCheckpoint,'Training attack has no recovery checkpoint');

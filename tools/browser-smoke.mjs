@@ -19,7 +19,7 @@ try{
  await page.locator('#language').click();assert.match(await page.locator('#guide-body').innerText(),/Supply/);await page.locator('#language').click();
  await page.locator('#inspect-army-supply').click();assert.equal(await page.locator('#guide-title').innerText(),'下第一道命令');
  await page.locator('#lab-orders select').selectOption('roma');assert.match(await page.locator('.preview-detail').innerText(),/报告控制方（可能过时）/);
- await page.locator('#lab-orders button').click();assert.equal(await page.locator('#guide-title').innerText(),'推进一个月');
+ await page.locator('#lab-orders').getByRole('button',{name:/^(?:CONFIRM ORDER|确认命令)$/}).click();assert.equal(await page.locator('#guide-title').innerText(),'推进一个月');
  await page.locator('#save').click();await page.locator('#load').click();assert.equal(await page.locator('#guide-title').innerText(),'推进一个月');
  await page.locator('#advance').click();assert.equal(await page.locator('#guide-title').innerText(),'阅读结果');
  await page.locator('#chronicle').click();assert.equal(await page.locator('#guide-title').innerText(),'做一个政策决定');
@@ -30,7 +30,8 @@ try{
  await page.locator('#guide-restart').click();await page.locator('#roman-faction').selectOption('senate');await page.locator('#start-free').click();
  await page.locator('[data-army="xiii"]').click({force:true});assert.match(await page.locator('#command-detail').innerText(),/上次报告的指挥官：盖乌斯·尤利乌斯·凯撒（可能过时）/);
  await page.locator('#command-detail button').click();assert.match(await page.locator('#command-detail').innerText(),/指挥官目击记录/);assert.match(await page.locator('#command-detail').innerText(),/不证明目前的职务或位置/);await page.locator('.historical-entry summary').click();assert.match(await page.locator('.historical-entry').innerText(),/公元前100年较常用/);assert.match(await page.locator('.historical-entry').innerText(),/公元前102年/);assert.match(await page.locator('.historical-entry').innerText(),/庞培于前59年迎娶凯撒之女朱莉娅/);assert.match(await page.locator('.historical-entry').innerText(),/前54年去世/);
- const road=roads.features.find(f=>f.properties.id===1550).geometry.coordinates[0][85],mercY=lat=>.5-Math.log((1+Math.sin(lat*Math.PI/180))/(1-Math.sin(lat*Math.PI/180)))/(4*Math.PI);
+ // Use an open stretch of the road; the attested Iguvium town marker occupies the northern bend.
+ const road=roads.features.find(f=>f.properties.id===1550).geometry.coordinates[0][50],mercY=lat=>.5-Math.log((1+Math.sin(lat*Math.PI/180))/(1-Math.sin(lat*Math.PI/180)))/(4*Math.PI);
  const romeBox=await page.locator('[data-city="ROMA"]').boundingBox(),narboBox=await page.locator('[data-city="NARBO"]').boundingBox(),world=(romeBox.x-narboBox.x)*360/(12.4964-3.003);
  const roadPoint={x:romeBox.x+world*(road[0]-12.4964)/360,y:romeBox.y+romeBox.height/2+world*(mercY(road[1])-mercY(41.9028))};
  console.log('Road click calibration',JSON.stringify({romeBox,narboBox,roadPoint,world}));
@@ -62,7 +63,7 @@ try{
  assert.match(await page.locator('#succession-feedback').innerText(),/可能增强人选的影响力/);assert.doesNotMatch(await page.locator('#succession-feedback').innerText(),/野心|忠诚最多/);await page.locator('#succession-feedback button').click();
  await page.locator('[data-character="cicero"]').click();
  assert.match(await page.locator('#command-detail').innerText(),/个人信任 · 格奈乌斯·庞培: 5/);assert.match(await page.locator('#command-detail').innerText(),/游戏战伤次数/);assert.match(await page.locator('#command-detail').innerText(),/65 \/ 100/);
- await page.locator('#person-destination').selectOption('epirus');assert.match(await page.locator('#command-detail').innerText(),/路线根据已有控制报告规划/);await page.locator('#person-travel').click();
+ await page.locator('#person-destination').selectOption('epirus');assert.match(await page.locator('#command-detail').innerText(),/路线根据已有控制报告与公开边境政策规划/);await page.locator('#person-travel').click();
  await page.locator('#person-travel-feedback button').click();
  assert.match(await page.locator('#command-detail').innerText(),/正在旅行/);assert.match(await page.locator('#command-detail').innerText(),/旅途中；最后记录战区：拉丁姆/);
  await page.locator('#person-halt').click();assert.match(await page.locator('#command-detail').innerText(),/已下令抵达下一战区后停下/);assert.match(await page.locator('#command-detail').innerText(),/已付旅费不退还/);await page.locator('#person-halt').click();assert.match(await page.locator('#command-detail').innerText(),/行程按原计划继续/);
@@ -130,10 +131,11 @@ try{
  await page.locator('[data-army="xiii"]').click({force:true});
  assert.match(await page.locator('.selected-army').innerText(),/第十三军团/);
  assert.match(await page.locator('.selected-army').innerText(),/上次报告.*当前位置、兵力和状态未知/);
- // Only Roman commands are playable; old foreign saves remain intact but cannot be loaded.
+ // Roman commands and seeded local city-states are offered here. Existing
+ // foreign-major saves remain intact but cannot be loaded through this menu.
  await page.evaluate(async()=>{const {newDynastyScenario}=await import('/engine.js?v=dossier-archive-1');localStorage.setItem('spqr-save-3',JSON.stringify(newDynastyScenario()))});
  const foreignSave=await page.evaluate(()=>localStorage.getItem('spqr-save-3'));
- await page.locator('#new').click();assert.deepEqual(await page.locator('#faction-choice option').evaluateAll(options=>options.map(o=>o.value)),['caesar','senate']);assert.equal(await page.locator('#dynasty-scenario, #start-dynasty').count(),0);
+ await page.locator('#new').click();const choices=await page.locator('#faction-choice option').evaluateAll(options=>options.map(o=>o.value));assert.deepEqual(choices.slice(0,2),['caesar','senate']);assert.ok(choices.some(id=>id.startsWith('generated:')));assert.ok(!choices.includes('egypt'));assert.equal(await page.locator('#dynasty-scenario, #start-dynasty').count(),0);
  await page.locator('#slot-choice').selectOption('3');await page.locator('[data-slot="load"]').click();assert.match(await page.locator('.toast').innerText(),/非罗马势力/);assert.equal(await page.evaluate(()=>localStorage.getItem('spqr-save-3')),foreignSave);
  await page.locator('#close-setup').click();await page.locator('#new').click();await page.locator('.setup-advanced').evaluate(el=>el.open=true);await page.locator('#faction-choice').selectOption('caesar');await page.locator('.setup-advanced').evaluate(el=>el.open=true);await page.locator('#campaign-guide').uncheck();await page.locator('#start-campaign').click();
  assert.equal(await page.locator('[data-army="italy"]').count(),1,'frontier armies can be reported');

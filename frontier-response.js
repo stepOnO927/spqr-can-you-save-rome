@@ -1,4 +1,4 @@
-import {ROUTES} from './data.js?v=phase-x-1';
+import {ROUTES} from './data.js?v=dossier-archive-1';
 import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=dossier-archive-1';
 
 const now=s=>s.year*12+s.month;

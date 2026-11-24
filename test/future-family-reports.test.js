@@ -41,12 +41,12 @@ test('future sightings cannot expose identities or open a political contact',asy
  const {identityKnowledge}=await import('../map-lab/identity-knowledge.js?v=dossier-archive-1'),{reportedArmies}=await import('../character-system.js?v=dossier-archive-1'),{offerPoliticalContact}=await import('../political-contacts.js?v=dossier-archive-1');const s=newGame('caesar'),id=createFictionalPerson(s,{name:['Unseen','未见人物'],faction:'egypt',birthYear:-75}),k=s.knowledge.caesar.egypt;k.sightings['future']={commanderId:id,year:s.year+1,month:s.month};s.world.personalRelations[[id,'caesar'].sort().join(':')]={trust:10,meetings:1};s.meetings.push({actor:'caesar',targetFaction:'egypt',person:'caesar',target:id,status:'met',year:s.year+1,month:s.month,contactCredit:2});assert.equal(identityKnowledge(s,id).kind,'unknown');assert.ok(!reportedArmies(s,'caesar').some(x=>x.commanderId===id));assert.ok(!reportedHealthSubjects(s,'caesar','egypt').includes(id));assert.equal(offerPoliticalContact(s,'caesar','egypt',id,'caesar').reason,'unavailable');s.year++;assert.equal(identityKnowledge(s,id).kind,'met');assert.ok(reportedArmies(s,'caesar').some(x=>x.commanderId===id));assert.equal(offerPoliticalContact(s,'caesar','egypt',id,'caesar').ok,true);
 });
 
+test('a partner cannot forward an intelligence report before receiving it',async()=>{
+ const {queueMission,advanceOperations}=await import('../character-system.js?v=dossier-archive-1');const s=newGame('caesar');s.alliances.push(['caesar','egypt']);s.knowledge.egypt.parthia.reports.unshift({kind:'strength',value:99999,source:'spy',year:s.year+1,month:s.month,observationYear:s.year,observationMonth:s.month});const result=queueMission(s,'caesar','parthia','exchange','strength','egypt');assert.equal(result.ok,true);const op=s.operations[0];while(!op.exchangeSealed){s.month++;advanceOperations(s)}assert.equal(op.exchangeSealed.available,false);
+});
+
 test('pending and future meetings cannot reveal a fictional person’s name',()=>{
  let s=newGame('caesar');const id=createFictionalPerson(s,{name:['Hidden','秘密姓名'],faction:'egypt',birthYear:-75});const meeting={actor:'caesar',target:id,person:'caesar',status:'pending',year:s.year,month:s.month,reportedName:['Meeting name','会面姓名']};s.meetings.push(meeting);
  assert.deepEqual(visiblePersonName(s,'caesar',id),['Unrecorded name','姓名未记录']);meeting.status='met';meeting.resolvedYear=s.year+1;meeting.resolvedMonth=s.month;assert.deepEqual(visiblePersonName(s,'caesar',id),['Unrecorded name','姓名未记录']);
  s=upgradeSave(structuredClone(s));assert.deepEqual(visiblePersonName(s,'caesar',id),['Unrecorded name','姓名未记录']);s.year++;assert.deepEqual(visiblePersonName(s,'caesar',id),['Meeting name','会面姓名']);
-});
-
-test('a partner cannot forward an intelligence report before receiving it',async()=>{
- const {queueMission,advanceOperations}=await import('../character-system.js?v=dossier-archive-1');const s=newGame('caesar');s.alliances.push(['caesar','egypt']);s.knowledge.egypt.parthia.reports.unshift({kind:'strength',value:99999,source:'spy',year:s.year+1,month:s.month,observationYear:s.year,observationMonth:s.month});const result=queueMission(s,'caesar','parthia','exchange','strength','egypt');assert.equal(result.ok,true);const op=s.operations[0];while(!op.exchangeSealed){s.month++;advanceOperations(s)}assert.equal(op.exchangeSealed.available,false);
 });

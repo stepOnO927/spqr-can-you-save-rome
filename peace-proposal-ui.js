@@ -1,7 +1,7 @@
 import {sendInquiry,inquiryCost,inquiryDuration,supportsCourtInquiry,hasPendingInquiry} from './engine.js?v=dossier-archive-1';
 import {peaceOfferRegions,peaceTermsText,peaceWarIsCurrent} from './peace-terms.js?v=territorial-peace-1';
-import {FACTIONS} from './data.js?v=phase-x-1';
-import {campaignDate} from './campaign-date.js?v=calendar-1';
+import {FACTIONS} from './data.js?v=dossier-archive-1';
+import {campaignDate} from './campaign-date.js?v=dossier-archive-1';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function renderPeaceProposal({panel,state,language,target=null,refresh}){
  const actor=state.player,zh=language==='zh',enemies=[...new Set(state.wars.filter(w=>w.includes(actor)).flatMap(w=>w.filter(id=>id!==actor&&supportsCourtInquiry(id)&&(!target||id===target))))];
@@ -27,4 +27,3 @@ export function renderPeaceProposal({panel,state,language,target=null,refresh}){
   if(result.ok)refresh();else{quote();feedback.textContent=zh?'无法寄出：请检查战区控制、已知边界、资金和待回复信件。':'Cannot send: check control, reported frontier, treasury and pending letters.'}
  };
 }
-

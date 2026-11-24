@@ -172,4 +172,3 @@ export function grantLegendHonor(s,id,kind){
  const zh=kind==='military'?'因有记录的战役服役获授正式军功荣誉。':'因有记录的公共服务获授正式纪念荣誉。';
  (s.world.dynasties.lives[id]||=[]).push({year:s.year,month:s.month,en,zh,simulated:true,legendHonor:h});return {ok:true,honor:h};
 }
-

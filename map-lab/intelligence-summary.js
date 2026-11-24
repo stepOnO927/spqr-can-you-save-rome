@@ -15,4 +15,3 @@ export function leadershipIntelligence(state,viewer,target){
   lastVerified:verified?{year:verified.observationYear??verified.year,month:verified.observationMonth??verified.month}:null
  };
 }
-

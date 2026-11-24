@@ -1,5 +1,5 @@
 import {isDeliveredReport,reportedPersonalContact} from './person-knowledge.js?v=dossier-archive-1';
-import {FACTIONS,ROUTES} from './data.js?v=phase-x-1';
+import {FACTIONS,ROUTES} from './data.js?v=dossier-archive-1';
 import {reportedDiplomacy} from './diplomatic-knowledge.js?v=dossier-archive-1';
 import {reportedMovements,movementReportLeaderName} from './movements.js?v=dossier-archive-1';
 import {visiblePersonName} from './character-system.js?v=dossier-archive-1';

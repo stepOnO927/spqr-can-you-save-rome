@@ -59,4 +59,3 @@ test('a contact can change sides over time without announcing its true allegianc
  advancePoliticalContacts(s,addReport);assert.equal(s.world.doubleAgents[0].allegiance,'sponsor');assert.ok(!s.log.some(e=>/changed sides|改变立场/.test(e.en+e.zh)));
  s=upgradeSave(JSON.parse(JSON.stringify(s)));const agent=s.world.doubleAgents[0];s.world.characters.cato.loyalty=90;s.year++;agent.nextReport=s.year*12+s.month;agent.reassessAt=agent.nextReport;s.world.intelSeed=0;advancePoliticalContacts(s,addReport);assert.equal(agent.allegiance,'home');assert.equal(agent.history.length,2);
 });
-

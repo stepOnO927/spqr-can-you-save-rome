@@ -52,4 +52,3 @@ export function advancePoliticalContacts(s,addReport){
   addReport(s,agent.actor,agent.target,{kind:'conspiracy',character:suspect,value:suspect?'suspected':'unknown',source:'spy',confidence:'unverified',reliability:'low'});
  }
 }
-

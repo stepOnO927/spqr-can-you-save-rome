@@ -2,14 +2,14 @@ import {recordLegendEvidence} from './legend.js?v=dossier-archive-1';
 import {namedReportSubjects,reportedPersonName,visiblePersonName,isDeliveredReport,isCompletedMeeting,reportedPersonalContacts,reportedPeople} from './person-knowledge.js?v=dossier-archive-1';
 import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange,characterAgeRange} from './characters.js?v=dossier-archive-1';
 import {settleInheritance,dynastyRoll} from './dynasties.js?v=dossier-archive-1';
-import {FACTIONS,ROUTES} from './data.js?v=phase-x-1';
+import {FACTIONS,ROUTES} from './data.js?v=dossier-archive-1';
 import {deriveGovernment,validSuccessionPlan} from './governance.js?v=dossier-archive-1';
 import {potentialConspirators} from './conspiracies.js?v=dossier-archive-1';
 import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=dossier-archive-1';
 import {reportedControl} from './control-intelligence.js?v=dossier-archive-1';
 import {canHoldOffice,localGovernor} from './office-system.js?v=dossier-archive-1';
 import {activeAgreement} from './agreements.js?v=dossier-archive-1';
-import {activeModifiers} from './inventions.js?v=mission-discount-1';
+import {activeModifiers} from './inventions.js?v=dossier-archive-1';
 import {registerMissionPersonnel} from './epistulae-personnel.js?v=dossier-archive-1';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 // A visual impression is less precise than the historical birth estimate.
@@ -125,9 +125,8 @@ export function addReport(s,actor,target,report){
  // An older forwarded message may be useful evidence but must not replace a newer report.
  const newerLeader=r.kind==='leaders'&&k.reports.some(x=>isDeliveredReport(s,x)&&x.kind==='leaders'&&knownReport(x)&&reportAge(s,x)<reportAge(s,r));
  k.reports.unshift(r);
- // Preserve delivered history separately from the bounded active evidence set.
- // A future-dated record stays active until delivery, even when older reports
- // are archived; moving it early would prevent its eventual use by the AI.
+ // Keep active evidence bounded while retaining delivered reports as history.
+ // Undelivered records remain active until their scheduled receipt.
  let delivered=0;const kept=[],archived=[];for(const item of k.reports){if(isDeliveredReport(s,item)&&++delivered>30)archived.push(item);else kept.push(item)}
  k.reports=kept;if(archived.length){if(!Array.isArray(k.reportArchive))k.reportArchive=[];k.reportArchive.push(...archived.reverse())}
  // Recalculate after trimming so a source that is no longer retained cannot
@@ -222,9 +221,8 @@ function prepareExchange(s,op){
  // Undated legacy reports remain usable, but cannot outrank dated evidence.
  const observedAt=r=>{const year=r.observationYear??r.year,month=r.observationMonth??r.month;return Number.isFinite(year)&&Number.isInteger(month)?year*12+month:-Infinity};
  const knowledge=s.knowledge[partner]?.[op.target];let prior=null;
- // Old delivered reports remain part of the partner's records even after the
- // bounded active evidence window moves them into its archive. Search both
- // stores without promoting undelivered or undated material into fresh facts.
+ // Delivered reports remain in the partner's records when the active window
+ // moves them to the archive. Neither undelivered nor undated reports gain freshness.
  for(const reports of [knowledge?.reports||[],knowledge?.reportArchive||[]])for(const r of reports){
   if(!isDeliveredReport(s,r)||r.kind!==op.subject||op.subjectCharacter&&r.character!==op.subjectCharacter)continue;
   if(!prior||observedAt(r)>observedAt(prior))prior=r;
@@ -296,8 +294,7 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
   const office=op.subject.slice('office_'.length),theater=office.startsWith('theater:')?office.slice('theater:'.length):null,post=theater?s.world.localGovernors?.[theater]:null,personId=theater?(post?.faction===op.target?localGovernor(s,theater):null):s.world.offices?.[op.target]?.[office],prior=(s.knowledge[op.actor]?.[op.target]?.reports||[]).find(r=>isDeliveredReport(s,r)&&r.kind===op.subject&&CHARACTER_CATALOG[r.value]);
   const value=falsehood?(prior?.value||'unknown'):q>=.55&&CHARACTER_CATALOG[personId]&&canHoldOffice(s,op.target,personId)?personId:'unknown';
   // Repeating an old lead does not observe that person's current identity.
-  // Retain only the name actually recorded on that lead, including an empty
-  // snapshot for older saves; never fill it from today's hidden catalog.
+  // Keep the name recorded on that lead, including an empty legacy snapshot.
   report={kind:op.subject,value,source,confidence:'unverified',reliability:'moderate',...(falsehood&&prior?{peopleNames:structuredClone(prior.peopleNames||{})}:{})};
  }
  else if(op.subject==='clashes'){
@@ -307,8 +304,7 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
   report={kind:'clashes',value:reported?'reported':'unknown',source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};
  }
  else if(op.subject==='secret_treaty'){
-  // This is a dated lead, not proof of a current treaty or its terms. No
-  // finding never establishes that the investigated court has no secrets.
+  // A dated lead does not reveal treaty terms or prove that no treaty exists.
   const agreement=(s.agreements||[]).find(t=>t.secret&&t.status==='active'&&t.parties?.includes(op.target)&&!t.parties.includes(op.actor)&&t.expiresAt>s.year*12+s.month&&!s.wars.some(w=>t.parties.every(id=>w.includes(id)))&&t.parties.some(id=>id!==op.target&&FACTIONS[id]));
   const partner=q>=.6?agreement?.parties.find(id=>id!==op.target):null;
   report={kind:'secret_treaty',value:partner||'unknown',source,confidence:'unverified',reliability:'moderate'};
@@ -481,8 +477,7 @@ export function considerDefection(s,id){
 }
 // Convert competing annual probabilities into a monthly chance while preserving their relative likelihood.
 function monthlyOutcome(r,choices){const annual=choices.reduce((sum,choice)=>sum+choice[1],0);if(!annual)return null;const monthly=1-Math.pow(1-annual,1/12);if(r>=monthly)return null;let threshold=0;for(const [outcome,probability] of choices){threshold+=monthly*probability/annual;if(r<threshold)return outcome}return choices.at(-1)[0]}
-// Lost contact hides health, but does not suspend the simulated person's life.
-// Use a per-person stream so unseen events do not perturb unrelated outcomes.
+// Private health uses a per-person stream, leaving unrelated campaign events unchanged.
 function missingHealthRoll(s,c){
  const missing=c.missing;if(!Number.isInteger(missing.healthSeed)){let h=(s.seed??1)>>>0;for(const ch of `${c.id}:${missing.year??0}:${missing.month??0}`)h=Math.imul(h^ch.charCodeAt(0),16777619)>>>0;missing.healthSeed=h}
  missing.healthSeed=(Math.imul(missing.healthSeed,1664525)+1013904223)>>>0;return missing.healthSeed/4294967296;
@@ -504,18 +499,16 @@ export function relieveIncapacitatedCommanders(s){
  initializeWorld(s);for(const unit of s.armies){const person=s.world.characters[unit.characterId];if(!person)continue;const personName=CHARACTER_CATALOG[person.id]?.name||['Unidentified person','身份未记录的人物'];const lost=!person.alive||person.health==='deceased'||!!person.missing,ill=['seriously_ill','dying'].includes(person.health);if(!lost&&!ill)continue;if(!lost)person.location=unit.region;unit.characterId=null;unit.commander=['Unnamed officer','未具名军官'];if(!lost&&unit.owner===s.player)notify(s,`${personName[0]} cannot command because of simulated illness; an unnamed officer takes over.`,`${personName[1]}因游戏中的重病无法指挥，暂由未具名军官接替。`)}
 }
 
-// Searches have the same chance of failure for living and deceased people.
-// An independent stream prevents the unseen outcome from perturbing other events.
+// Searches can fail for living and deceased people alike. A separate stream
+// prevents hidden results from changing unrelated random events.
 function missingSearchRoll(s,person){
  const missing=person.missing;if(!Number.isInteger(missing.searchSeed)){let h=((s.seed??1)^0x5d167a3b)>>>0;for(const ch of `${person.id}:${missing.year??0}:${missing.month??0}`)h=Math.imul(h^ch.charCodeAt(0),16777619)>>>0;missing.searchSeed=h}
  missing.searchSeed=(Math.imul(missing.searchSeed,1664525)+1013904223)>>>0;return missing.searchSeed/4294967296;
 }
-// Search routes use the public theater graph, not hidden enemy control.
 function missingSearchDestination(s,person){
  const queue=[person?.missing?.origin],seen=new Set(queue);for(let i=0;i<queue.length;i++){const id=queue[i],r=s.regions.find(x=>x.id===id);if(r?.owner===person.faction)return r;for(const edge of ROUTES){const next=edge[0]===id?edge[1]:edge[1]===id?edge[0]:null;if(next&&!seen.has(next)){seen.add(next);queue.push(next)}}}return null;
 }
 export function hasMissingSearchDestination(s,id){const person=s.world?.characters?.[id];return !!person?.missing&&!!missingSearchDestination(s,person)}
-// The same action is offered regardless of the person's hidden condition.
 export function fundMissingSearch(s,id){
  initializeWorld(s);const person=s.world.characters[id],missing=person?.missing,f=s.factions[s.player];
  if(!missing||person.faction!==s.player||!f)return {ok:false,reason:'unavailable'};
@@ -531,10 +524,10 @@ export function advanceMissingCommanders(s){
   if(s.year===missing.year&&s.month===missing.month)continue;
   missing.remaining=Math.max(0,(Number.isFinite(missing.remaining)?missing.remaining:3)-1);if(missing.remaining)continue;
   const destination=missingSearchDestination(s,person);if(!destination)continue;
-  const searchChance=missing.searchFunded ? .6 : .3;delete missing.searchFunded;
+  const searchChance=missing.searchFunded?.6:.3;delete missing.searchFunded;
   if(missingSearchRoll(s,person)>=searchChance){missing.remaining=3;if(person.faction===s.player)notify(s,`The search for ${personName[0]} produced no conclusive news; it will continue.`,`对${personName[1]}的搜寻暂无线索；搜寻将继续。`,{characterId:person.id});continue}
   if(!person.alive){
-   // A successful search confirms the death; only then do its public effects occur.
+   // A successful search confirms death before public effects occur.
    delete person.missing;const unprocessed=!person.inheritanceSettled;settleInheritance(s,person.id);if(unprocessed&&s.factions[person.faction])s.factions[person.faction].stability=Math.max(0,s.factions[person.faction].stability-3);if((s.world.leadership[person.faction]||[]).includes(person.id))assignSuccession(s,person.faction);
    if(person.faction===s.player)notify(s,`${personName[0]} was confirmed dead after a search; succession was updated.`,`${personName[1]}经搜寻确认在游戏中去世；继任局势已更新。`,{characterId:person.id});continue;
   }

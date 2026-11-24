@@ -2,10 +2,9 @@ import {sendLetter,initializeMail} from './epistulae.js?v=dossier-archive-1';
 import {peaceTermsText} from './peace-terms.js?v=territorial-peace-1';
 import {reportedArmies} from './character-system.js?v=dossier-archive-1';
 import {CHARACTER_CATALOG} from './characters.js?v=dossier-archive-1';
-import {MATERIALS} from './inventions.js?v=mission-discount-1';
-import {ROUTES} from './data.js?v=phase-x-1';
-import {FACTIONS} from './data.js?v=phase-x-1';
-import {campaignDate} from './campaign-date.js?v=calendar-1';
+import {MATERIALS} from './inventions.js?v=dossier-archive-1';
+import {ROUTES,FACTIONS} from './data.js?v=dossier-archive-1';
+import {campaignDate} from './campaign-date.js?v=dossier-archive-1';
 import {storedCorrespondentName} from './person-knowledge.js?v=dossier-archive-1';
 
 const month=s=>s.year*12+s.month;
@@ -124,4 +123,3 @@ export function advanceMailReports(s){
  }
  mail.reportSnapshot=after;
 }
-

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave} from '../engine.js?v=dossier-archive-1';
 import {advanceFocuses,focusState} from '../national-focus.js?v=dossier-archive-1';
-import {advanceAgreementProposals,answerAgreementProposal} from '../agreement-negotiations.js?v=dossier-archive-1';
+import {advanceAgreementProposals,answerAgreementProposal,sendAgreementProposal} from '../agreement-negotiations.js?v=dossier-archive-1';
 import {syncAgreementLetters,receivedMail,replyToLetter} from '../epistulae.js?v=dossier-archive-1';
 
 function start(seed){const s=newGame('caesar');s.seed=seed;s.wars=[];s.factions.egypt.treasury=100;s.relations['caesar:egypt']=60;const f=focusState(s,'egypt');f.active={id:'egy_back_caesar',progress:4,months:5,paid:{}};advanceFocuses(s);return s}
@@ -29,4 +29,19 @@ test('refusal, silence and lost letters never impose a treaty',()=>{
 });
 test('AI-only mode still evaluates a proposal to the normally human faction',()=>{
  let finished=false;for(let seed=1;seed<100&&!finished;seed++){const s=start(seed*1000003),x=s.world.agreementLetters[0];for(let i=0;i<4;i++)step(s,{autoplayPlayer:true});assert.notEqual(x.phase,'awaiting_player');if(x.status==='accepted')finished=true}assert.ok(finished);
+});
+
+test('a player-approved limited passage treaty keeps its exact territories through confirmation',()=>{
+ let agreement=null;
+ for(let seed=1;seed<200&&!agreement;seed++){
+  const s=newGame('caesar');s.seed=seed*1000003;s.wars=[];s.relations['caesar:egypt']=60;s.factions.egypt.treasury=100;
+  const access={permittedParty:'caesar',permittedTerritories:['egypt'],restrictions:[]};
+  assert.equal(sendAgreementProposal(s,'egypt','caesar','military_access',{access}).ok,true);
+  step(s);step(s);const offer=s.world.agreementLetters[0];if(offer.phase!=='awaiting_player')continue;
+  assert.equal(answerAgreementProposal(s,offer.id,'accept_agreement').ok,true);
+  for(let i=0;i<4;i++)step(s);
+  agreement=s.agreements.find(item=>item.type==='military_access'&&item.status==='active')||null;
+ }
+ assert.ok(agreement,'a delivered approval and confirmation should be possible');
+ assert.deepEqual(agreement.terms.access,{permittedParty:'caesar',permittedTerritories:['egypt'],restrictions:[]});
 });

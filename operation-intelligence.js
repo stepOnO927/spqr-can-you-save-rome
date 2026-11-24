@@ -60,4 +60,3 @@ export function shareAiOperation(s,owner,{sendLetter,autoplayPlayer=false}={}){
  }
  return last;
 }
-

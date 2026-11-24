@@ -1,4 +1,4 @@
-import {REGIONS,ROUTES} from './data.js?v=phase-x-1';
+import {REGIONS,ROUTES} from './data.js?v=dossier-archive-1';
 
 // Strategic anchors are historical places, not claims about precise theater borders.
 // ROUTES remains the authoritative connectivity graph. The map's decorative

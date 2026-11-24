@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave,diplomacy} from '../engine.js?v=dossier-archive-1';
 import {proposeAgreement,terminateAgreement,advanceAgreements} from '../agreements.js?v=dossier-archive-1';
-import {politicalMemoryAdjustment,personalMemoryAdjustment} from '../political-memory.js?v=grand-chessboard-2';
+import {politicalMemoryAdjustment,personalMemoryAdjustment} from '../political-memory.js?v=dossier-archive-1';
 import {appointOffice,dismissOffice} from '../office-system.js?v=dossier-archive-1';
 import {plotFormationChance} from '../conspiracies.js?v=dossier-archive-1';
 

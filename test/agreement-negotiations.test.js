@@ -22,7 +22,7 @@ test('old saves without proposal queues remain playable and the real monthly tic
 
 test('every agreement type can be concluded by a delivered proposal with its original terms',async()=>{
  const {AGREEMENT_TYPES,visibleAgreements}=await import('../agreements.js?v=dossier-archive-1');const seed=outcomes().get('accepted').seed;
- for(const [type,def] of Object.entries(AGREEMENT_TYPES)){const s=fixture(seed),cash=s.factions.caesar.treasury;assert.ok(sendAgreementProposal(s,'caesar','egypt',type,{secret:true,...(type==='neutrality'?{enemy:'senate'}:{})}).ok,type);for(let i=0;i<4;i++)step(s);const letter=s.world.agreementLetters[0];assert.equal(letter.status,'accepted',type);const agreement=s.agreements.find(x=>x.id===letter.agreement);assert.equal(agreement.type,type);assert.equal(agreement.diplomaticCost,def.cost);assert.equal(agreement.duration,def.duration);assert.equal(s.factions.caesar.treasury,cash-2-def.cost);assert.equal(visibleAgreements(s,'parthia').some(x=>x.id===agreement.id),false);assert.equal(receivedMail(s).find(x=>x.context?.kind==='agreement_result')?.confidentiality,'secret')}
+ for(const [type,def] of Object.entries(AGREEMENT_TYPES)){const s=fixture(seed),cash=s.factions.caesar.treasury,subjectType=['protectorate','client_kingdom'].includes(type);assert.ok(sendAgreementProposal(s,'caesar','egypt',type,{secret:!subjectType,...(type==='neutrality'?{enemy:'senate'}:{})}).ok,type);for(let i=0;i<4;i++)step(s);const letter=s.world.agreementLetters[0];assert.equal(letter.status,'accepted',type);const agreement=s.agreements.find(x=>x.id===letter.agreement);assert.equal(agreement.type,type);assert.equal(agreement.diplomaticCost,def.cost);assert.equal(agreement.duration,def.duration);assert.equal(s.factions.caesar.treasury,cash-2-def.cost);assert.equal(visibleAgreements(s,'parthia').some(x=>x.id===agreement.id),subjectType);assert.equal(receivedMail(s).find(x=>x.context?.kind==='agreement_result')?.confidentiality,subjectType?'ordinary':'secret')}
 });
 
 test('a sealed acceptance does not re-evaluate the recipient’s private opinion during its return journey',()=>{
@@ -39,4 +39,17 @@ test('full alliances require a delivered response and preserve sealed consent',(
  assert.ok(s.alliances.some(a=>a.includes('caesar')&&a.includes('egypt')));
  assert.equal(s.factions.caesar.treasury,cash-2);
  assert.equal(receivedMail(s).filter(x=>x.context?.kind==='agreement_result').length,1);
+});
+
+test('a courier preserves limited military-access terms until a valid reply concludes them',()=>{
+ const seed=outcomes().get('accepted').seed,s=fixture(seed);
+ const access={permittedParty:'caesar',permittedTerritories:['egypt'],restrictions:[]};
+ assert.equal(sendAgreementProposal(s,'caesar','egypt','military_access',{access:{permittedParty:'caesar',permittedTerritories:['syria']}}).reason,'invalid');
+ assert.equal(sendAgreementProposal(s,'caesar','egypt','military_access',{access}).ok,true);
+ access.permittedTerritories[0]='syria';
+ assert.equal(s.world.agreementLetters[0].access.permittedTerritories[0],'egypt');
+ for(let i=0;i<4;i++)step(s);
+ assert.equal(s.world.agreementLetters[0].status,'accepted');
+ const agreement=s.agreements.find(x=>x.type==='military_access');
+ assert.deepEqual(agreement.terms.access,{permittedParty:'caesar',permittedTerritories:['egypt'],restrictions:[]});
 });

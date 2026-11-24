@@ -2,11 +2,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newHanGame,tick,serialize,loadHanSave} from '../han/engine.js?v=dossier-archive-1';
-import {appoint,adminCapacity,recomputeInfluence,advanceAmbitions,ambitionOptions,issueEdict,startAudit,knownAttributes,answerDebate,respondToDisaster,emperorAuthority,onUsurpation} from '../han/court.js?v=han-1';
-import {seizeThrone,statusOf,isLiuClan} from '../han/dynasty.js?v=han-1';
-import {startFocus,focusState,advanceFocus,aiChooseFocus,TREES} from '../han/focus.js?v=han-1';
-import {protectorateAction} from '../han/frontier.js?v=han-1';
-import {PERSON,LATER_HISTORY} from '../han/people.js?v=han-1';
+import {appoint,adminCapacity,recomputeInfluence,advanceAmbitions,ambitionOptions,issueEdict,startAudit,knownAttributes,answerDebate,respondToDisaster,emperorAuthority,onUsurpation} from '../han/court.js?v=dossier-archive-1';
+import {seizeThrone,statusOf,isLiuClan} from '../han/dynasty.js?v=dossier-archive-1';
+import {startFocus,focusState,advanceFocus,aiChooseFocus,TREES} from '../han/focus.js?v=dossier-archive-1';
+import {protectorateAction} from '../han/frontier.js?v=dossier-archive-1';
+import {PERSON,LATER_HISTORY} from '../han/people.js?v=dossier-archive-1';
 
 const game=(o={})=>newHanGame('han',{seed:21,start:'accession',...o});
 

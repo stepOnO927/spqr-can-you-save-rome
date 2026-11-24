@@ -1,0 +1,34 @@
+name: Cloudflare live preview check
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/pages-live-preview.yml'
+      - 'tools/pages-live-browser.mjs'
+  workflow_dispatch:
+    inputs:
+      source_url:
+        description: Existing public save origin
+        required: true
+        default: https://stepono927.github.io/spqr-can-you-save-rome/
+      target_url:
+        description: Tested review preview origin
+        required: true
+        default: https://codex-world-kings-clean-revi.spqr-can-you-save-rome.pages.dev/
+permissions:
+  contents: read
+jobs:
+  live:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'codex/world-kings-clean-review-20261122'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SPQR_SOURCE_URL: ${{ inputs.source_url || 'https://stepono927.github.io/spqr-can-you-save-rome/' }}
+      SPQR_TARGET_URL: ${{ inputs.target_url || 'https://codex-world-kings-clean-revi.spqr-can-you-save-rome.pages.dev/' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright@1.64.1
+      - run: npx playwright install chromium
+      - run: node tools/pages-live-browser.mjs

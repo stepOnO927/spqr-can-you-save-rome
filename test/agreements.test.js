@@ -13,7 +13,6 @@ test('a player declaration discloses every additional treaty enemy without dupli
  const notices=s.log.filter(e=>e.en.startsWith('Treaty obligations have brought'));
  assert.equal(notices.length,1);assert.equal(notices[0].other,'parthia');
  assert.match(notices[0].zh,/条约义务/);
- // Actual belligerency is known to the player; the secret treaty terms remain hidden.
  assert.equal(visibleAgreements(s,'caesar').length,0);
  assert.equal(s.log.filter(e=>e.en.includes('declared war on')).length,1);
 });
@@ -31,7 +30,7 @@ test('treaties cost resources, expire, survive saves and breaches affect credibi
  assert.equal(visibleAgreements(s,'caesar').length,0);assert.equal(diplomacy(s,'egypt','parthia','war'),false);
  s=upgradeSave(JSON.parse(JSON.stringify(s)));assert.ok(activeAgreement(s,'parthia','egypt','non_aggression'));
  assert.ok(terminateAgreement(s,result.agreement.id,'egypt').ok);assert.equal(s.diplomaticCredibility.egypt,80);assert.equal(s.relations['egypt:parthia'],40);assert.ok(diplomacy(s,'egypt','parthia','war'));
- const t=newGame('egypt');friendly(t,'egypt','parthia');const trade=proposeAgreement(t,'egypt','parthia','trade').agreement;const before=t.factions.egypt.treasury;advanceAgreements(t);assert.equal(t.factions.egypt.treasury,before+1);t.year+=3;advanceAgreements(t);assert.equal(trade.status,'expired');assert.equal(t.factions.egypt.treasury,before+1);
+ const t=newGame('egypt');friendly(t,'egypt','parthia');const trade=proposeAgreement(t,'egypt','parthia','trade').agreement;const before=t.factions.egypt.treasury;advanceAgreements(t);assert.equal(t.factions.egypt.treasury,before);assert.equal(t.tradeCargo.length,2);t.year+=3;advanceAgreements(t);assert.equal(trade.status,'expired');assert.equal(t.factions.egypt.treasury,before);
 });
 test('older treaties receive structured terms on save migration without changing the deal',()=>{
  const s=newGame('egypt');friendly(s,'egypt','parthia');const t=proposeAgreement(s,'egypt','parthia','trade').agreement;delete t.terms;const restored=upgradeSave(JSON.parse(JSON.stringify(s))),saved=restored.agreements.find(x=>x.id===t.id);
@@ -91,4 +90,3 @@ test('military aid transfers actual reserves and civic cooperation has a shared 
  assert.equal(s.factions.egypt.treasury,a.cash-2);assert.equal(s.factions.egypt.food,a.food-2);assert.equal(s.factions.armenia.treasury,b.cash+2);assert.equal(s.factions.armenia.food,b.food+2);
  const q=newGame('egypt');friendly(q,'egypt','armenia');assert.ok(proposeAgreement(q,'egypt','armenia','political').ok);q.month=6;const before=q.factions.egypt.stability,cash=q.factions.egypt.treasury;advanceAgreements(q);assert.equal(q.factions.egypt.stability,before+1);assert.equal(q.factions.egypt.treasury,cash-1);
 });
-

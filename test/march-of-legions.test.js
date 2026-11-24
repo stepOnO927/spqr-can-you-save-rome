@@ -46,6 +46,17 @@ test('marching consumes provisions and advances by months rather than teleportin
  tick(s);assert.equal(a.region,'cisalpine');assert.ok(a.move.elapsed>=1);assert.ok(a.provisions<before);assert.ok(a.move.progress>0&&a.move.progress<1);
 });
 
+test('a hidden border change is checked at arrival, not leaked during a long march',()=>{
+ const s=newGame('caesar'),a=s.armies.find(x=>x.id==='xiii');
+ const months=previewMarch(s,a.id,'narbo').months;assert.ok(months>1);
+ assert.equal(issueMilitaryOrder(s,a.id,'move','narbo').ok,true);
+ region(s,'narbo').owner='parthia';const departureLogCount=s.log.length;
+ tick(s);assert.equal(a.region,'cisalpine');assert.equal(a.move?.to,'narbo');assert.equal(a.move.remaining,months-1);
+ assert.equal(s.log.slice(departureLogCount).some(entry=>entry.kind==='march_blocked'),false);
+ for(let month=1;month<months;month++)tick(s);
+ assert.equal(a.region,'cisalpine');assert.equal(a.move,null);
+});
+
 test('food shortage is visible and can cause contextual nonbattle losses',()=>{
  const s=newGame('caesar'),a=s.armies.find(x=>x.id==='xiii');a.provisions=0;s.factions.caesar.food=-100;
  assert.equal(issueRouteOrder(s,a.id,['narbo']).ok,true);tick(s);
@@ -56,7 +67,11 @@ test('food shortage is visible and can cause contextual nonbattle losses',()=>{
 test('halt, resume, cancellation and a midjourney change preserve physical position',()=>{
  const s=newGame('caesar'),a=s.armies.find(x=>x.id==='xiii');
  assert.equal(issueRouteOrder(s,a.id,['gaul']).ok,true);tick(s);const firstTarget=a.move.to,elapsed=a.move.elapsed;
- assert.equal(issueMilitaryOrder(s,a.id,'halt').ok,true);tick(s);assert.equal(a.move.elapsed,elapsed);
+ assert.equal(issueMilitaryOrder(s,a.id,'halt').ok,true);
+ const paused={provisions:a.provisions,fatigue:a.fatigue,men:a.men,history:a.journeyHistory.length};
+ tick(s);assert.equal(a.move.elapsed,elapsed);
+ assert.equal(a.provisions,paused.provisions);assert.equal(a.fatigue,paused.fatigue);
+ assert.equal(a.men,paused.men);assert.equal(a.journeyHistory.length,paused.history);
  assert.equal(issueMilitaryOrder(s,a.id,'resume').ok,true);
  const revised=issueRouteOrder(s,a.id,['italiaN']);assert.equal(revised.ok,true);assert.equal(revised.pending,true);assert.equal(a.move.to,firstTarget);assert.equal(a.region,'cisalpine');
  assert.equal(issueMilitaryOrder(s,a.id,'cancel').ok,true);assert.equal(a.move.cancelAfterLeg,true);assert.equal(a.region,'cisalpine');

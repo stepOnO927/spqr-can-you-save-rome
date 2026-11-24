@@ -1,4 +1,4 @@
-import {ROUTES} from './data.js?v=phase-x-1';
+import {ROUTES} from './data.js?v=dossier-archive-1';
 import {unlockedComponents,focusModifiers} from './national-focus.js?v=dossier-archive-1';
 import {politicalAmbition} from './conspiracies.js?v=dossier-archive-1';
 import {reportedControl} from './control-intelligence.js?v=dossier-archive-1';

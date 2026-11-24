@@ -1,6 +1,6 @@
 // The East as Rome knows it: a map coloured from the latest merchant report
 // and a panel of dispatches. Nothing here reads the live Han simulation.
-import {REGIONS,FACTIONS,ZHOU,THEATERS} from './data.js?v=han-1';
+import {REGIONS,FACTIONS,ZHOU,THEATERS} from './data.js?v=dossier-archive-1';
 import {drawMap,CAMERAS,MODES} from './map.js?v=dossier-archive-1';
 import {romanView,EMBASSY_COST,EMBASSY_MONTHS} from './world.js?v=dossier-archive-1';
 

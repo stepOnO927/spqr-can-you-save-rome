@@ -1,5 +1,5 @@
-import {campaignYear,campaignDate} from './campaign-date.js?v=calendar-1';
-import {ROUTES,FACTIONS} from './data.js?v=phase-x-1';
+import {campaignYear,campaignDate} from './campaign-date.js?v=dossier-archive-1';
+import {ROUTES,FACTIONS} from './data.js?v=dossier-archive-1';
 import {CHARACTER_CATALOG} from './characters.js?v=dossier-archive-1';
 import {reportedControl} from './control-intelligence.js?v=dossier-archive-1';
 

@@ -1,4 +1,4 @@
-import {FACTIONS} from './data.js?v=phase-x-1';
+import {FACTIONS} from './data.js?v=dossier-archive-1';
 import {operationNoticeRoute} from './operation-intelligence.js?v=operation-notices-1';
 import {jointPartners,jointInvitations,jointAcceptancePlans,jointCampaignDate,proposeJointOperation,answerJointOperation,releaseJointOperation} from './joint-operations.js?v=joint-operations-1';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

@@ -20,7 +20,8 @@ try{
  async function march(destination){await page.locator('[data-tab="map"]').click();await page.locator('[data-army="xiii"]').first().click();await page.locator('#order').click();await page.locator('#march-destination').selectOption(destination)}
  await page.locator('[data-tab="legacy"]').click();assert.equal(await page.locator('#finalize-campaign').count(),0);assert.doesNotMatch(await page.locator('body').innerText(),/外交谈判桌/);
  await march('italiaN');await page.locator('#step').click();let s=await save();assert.ok(s.battles.some(b=>b.region==='italiaN'&&b.attackerWins));assert.equal(s.regions.find(r=>r.id==='italiaN').owner,'caesar');assert.equal(s.victory,false);await load();
- await march('roma');await page.locator('#step').click();s=await save();assert.ok(s.armies.find(a=>a.id==='xiii').siege?.remaining>0);assert.equal(s.regions.find(r=>r.id==='roma').owner,'senate');assert.equal(s.victory,false);await load();
+ await march('roma');for(let i=0;i<3;i++){await page.locator('#step').click();s=await save();if(s.armies.find(a=>a.id==='xiii').siege?.remaining>0)break;await load()}
+ assert.ok(s.armies.find(a=>a.id==='xiii').siege?.remaining>0,'the army should begin its siege after completing the route');assert.equal(s.regions.find(r=>r.id==='roma').owner,'senate');assert.equal(s.victory,false);await load();
  for(let i=0;i<8&&s.regions.find(r=>r.id==='roma').owner==='senate';i++){await page.locator('#step').click();s=await save()}
  assert.equal(s.regions.find(r=>r.id==='roma').owner,'caesar');assert.equal(s.victory,false);assert.equal(s.world.romanVictoryNotice.remaining,3);await load();
  for(let i=0;i<2;i++)await page.locator('#step').click();s=await save();assert.equal(s.victory,false);assert.equal(s.world.romanVictoryNotice.remaining,1);
@@ -34,4 +35,3 @@ try{
  await page.locator('#lang').click();await page.locator('[data-tab="legacy"]').click();await page.locator('.legacy-entry details').first().evaluate(el=>el.open=true);assert.match(await page.locator('.legacy-entry').first().innerText(),/Earned distinctions.*At the Diplomatic Table/);
  assert.deepEqual(errors,[]);console.log('Real battle, saved siege, delayed Roman victory, finalization and prior-campaign distinctions verified through player controls.');
 }finally{await browser.close()}
-

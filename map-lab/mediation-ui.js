@@ -1,4 +1,4 @@
-import {campaignYear,campaignDate} from '../campaign-date.js?v=calendar-1';
+import {campaignYear,campaignDate} from '../campaign-date.js?v=dossier-archive-1';
 import {canMediate,requestMediation} from '../civil-war.js?v=dossier-archive-1';
 
 export function renderMediation({panel,state,target,language,refresh}){

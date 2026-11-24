@@ -1,7 +1,7 @@
 import {localStore as localStorage} from '../safe-storage.js';
-import {campaignYear,campaignDate} from '../campaign-date.js?v=calendar-1';
+import {campaignYear,campaignDate} from '../campaign-date.js?v=dossier-archive-1';
 import {filterChronicle,formatChronicleEntry,chronicleDate,syncChronicleDispatches} from '../chronicle.js?v=dossier-archive-1';
-import {FACTIONS} from '../data.js?v=phase-x-1';
+import {FACTIONS} from '../data.js?v=dossier-archive-1';
 import {visiblePersonName} from '../character-system.js?v=dossier-archive-1';
 
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

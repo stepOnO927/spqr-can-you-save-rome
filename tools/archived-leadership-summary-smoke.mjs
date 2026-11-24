@@ -9,4 +9,3 @@ try{
  async function check(){await page.locator('#factions').click();await page.locator('[data-faction="egypt"]').click();const text=await page.locator('#leader-intelligence-summary').innerText();assert.match(text,/未经核实/);assert.match(text,/上次领袖报告获独立佐证/);assert.doesNotMatch(text,/未知/);assert.ok((text.match(/49/g)||[]).length>=2)}
  await check();await page.locator('#save').click();await page.locator('#load').click();await check();assert.deepEqual(errors,[]);console.log('Archived leadership observation and historical verification dates remain visible after save/load.');
 }finally{await browser.close()}
-

@@ -1,7 +1,7 @@
 import {visiblePersonName,storedCorrespondentName,isDeliveredReport,reportedPeople} from './person-knowledge.js?v=dossier-archive-1';
 import {CHARACTER_CATALOG,ageRange} from './characters.js?v=dossier-archive-1';
 import {startDynasticWar} from './civil-war.js?v=dossier-archive-1';
-import {ROUTES} from './data.js?v=phase-x-1';
+import {ROUTES} from './data.js?v=dossier-archive-1';
 import {assignBornPortrait,assignCourtPortrait,assignLegendPortrait} from './portrait-registry.js?v=dossier-archive-1';
 import {initializeLegend,recordLegendEvidence} from './legend.js?v=dossier-archive-1';
 
@@ -415,7 +415,7 @@ export function requestFamilyResources(s,familyId,choice){
  return {ok:true,amount};
 }
 
-// Unknown ages do not prove an existing ward has aged out.
+// An uncertain age does not by itself prove that a ward has grown up.
 function reconcileGuardianships(s){
  for(const child of Object.values(s.world.characters)){
   if(!child.guardian&&!child.guardianNominee)continue;const age=eligibilityAgeRange(s,child.id),agedOut=!!age&&age[0]>=16;

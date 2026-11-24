@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {newGame,tick,upgradeSave,issueMilitaryOrder,estimatedStrength} from '../engine.js?v=dossier-archive-1';
 import {createPlan,assignRole,approvePlan,pausePlan,cancelPlan,editPlan,planById,plansFor,validatePath,findRoute,assessPlan,adviserCounsel,planControlled,approveRecommendation,aiBattlePlans} from '../battle-plans.js?v=dossier-archive-1';
 import {templatesFor,recruitFormation} from '../legion-designer.js?v=dossier-archive-1';
-import {ROUTES} from '../data.js?v=phase-x-1';
+import {ROUTES} from '../data.js?v=dossier-archive-1';
 
 const roundTrip=s=>upgradeSave(JSON.parse(JSON.stringify(s)));
 const adjacent=(a,b)=>ROUTES.some(r=>(r[0]===a&&r[1]===b)||(r[0]===b&&r[1]===a));
@@ -136,4 +136,3 @@ test('an AI ally considers a delivered operational notice rather than a hidden a
  for(const a of t.armies.filter(a=>a.owner==='numidia'))a.men=15000;
  const other=planById(t,aiBattlePlans(t,'numidia',{estimatedStrength}));assert.ok(!other||!other.events.some(e=>e.kind==='coordinated'));
 });
-

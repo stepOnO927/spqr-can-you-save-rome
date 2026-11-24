@@ -18,4 +18,3 @@ test('archived identities remain reported without acquiring current corroboratio
  assert.equal(identityKnowledge(s,'pacorus').kind,'reported');s.world.characters.pacorus.alive=false;s.world.characters.pacorus.location=null;s=upgradeSave(structuredClone(s));assert.equal(identityKnowledge(s,'pacorus').kind,'reported');assert.equal(identityKnowledge({...s,player:'caesar'},'pacorus').kind,'unknown');
  const future=newGame('caesar');future.knowledge.caesar.parthia.reportArchive=[{kind:'claimants',leaders:['pacorus'],source:'spy',verified:true,confidence:'confirmed',year:future.year+1,month:future.month}];assert.equal(identityKnowledge(future,'pacorus').kind,'unknown');future.year++;assert.equal(identityKnowledge(future,'pacorus').kind,'reported');
 });
-

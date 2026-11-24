@@ -1,7 +1,7 @@
 import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=dossier-archive-1';
 import {initializeWorld,successorFor,CHARACTER_CATALOG,characterAgeRange,successionModel,assignSuccession,mauretanianSeatHolders} from './characters.js?v=dossier-archive-1';
 import {recordLifeEvent,dynastyRoll,personAge,isKnownAdult,createFictionalPerson} from './dynasties.js?v=dossier-archive-1';
-import {FACTIONS} from './data.js?v=phase-x-1';
+import {FACTIONS} from './data.js?v=dossier-archive-1';
 import {startDynasticWar} from './civil-war.js?v=dossier-archive-1';
 import {courtNomineeName,recordLegendEvidence} from './legend.js?v=dossier-archive-1';
 

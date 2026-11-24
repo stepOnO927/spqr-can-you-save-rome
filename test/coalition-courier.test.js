@@ -28,3 +28,22 @@ test('lost invitations return no reply and never create a coalition',()=>{
  const s=setup();assert.ok(sendCoalitionInvitation(s,'caesar',['egypt','numidia'],'senate').ok);
  step(s,()=>0);step(s,()=>0);step(s);step(s);assert.equal(s.world.coalitionInvitations[0].status,'no_reply');assert.equal((s.coalitions?.length||0),0);
 });
+
+test('a proposed coalition keeps its chosen name through courier, save and formation',()=>{
+ let s=setup();const before=s.factions.caesar.treasury;
+ assert.equal(sendCoalitionInvitation(s,'caesar',['egypt','numidia'],'senate',{name:'  League   of the Eagle  '}).ok,true);
+ assert.equal(s.world.coalitionInvitations[0].name,'League of the Eagle');
+ s=upgradeSave(structuredClone(s));for(let i=0;i<4;i++)step(s);
+ assert.equal(s.coalitions[0].name,'League of the Eagle');
+ assert.equal(s.factions.caesar.treasury,before-8);
+ const bad=setup(),cash=bad.factions.caesar.treasury;
+ assert.equal(sendCoalitionInvitation(bad,'caesar',['egypt','numidia'],'senate',{name:'<unsafe>'}).reason,'name');
+ assert.equal(bad.factions.caesar.treasury,cash);
+ assert.equal((bad.world.coalitionInvitations||[]).length,0);
+});
+
+test('AI coalition names vary by campaign seed and remain fictional suggestions',()=>{
+ const names=new Set();
+ for(let seed=1;seed<=32;seed++){const s=setup();s.seed=seed;assert.ok(sendCoalitionInvitation(s,'caesar',['egypt','numidia'],'senate',{autoplayPlayer:true}).ok);names.add(s.world.coalitionInvitations[0].name)}
+ assert.ok(names.size>=6);
+});

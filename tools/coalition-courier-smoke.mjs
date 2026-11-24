@@ -32,9 +32,10 @@ try{
  assert.equal(new Set(await selection()).size,3);
  await page.locator('#coalition-first').selectOption('numidia');assert.deepEqual(await selection(),['numidia','egypt','senate']);
  await page.locator('#coalition-first').selectOption('egypt');assert.deepEqual(await selection(),defaults);
+ await page.locator('#coalition-name').fill('League of the Eagle');
  await page.locator('#coalition-propose').scrollIntoViewIfNeeded();await page.evaluate(()=>document.fonts.ready);await page.screenshot({path:'coalition-preparation-1920x1080.png'});
- assert.match(await page.locator('#coalition-propose').locator('..').innerText(),/花费3国库.*4个月/);await page.locator('#coalition-propose').click();assert.match(await page.locator('#coalition-propose').locator('..').innerText(),/等待回信/);
- let saved=await save();assert.equal(saved.world.coalitionInvitations[0].status,'pending');assert.equal(saved.factions.caesar.treasury,initial.treasury-3);assert.deepEqual(saved.world.coalitionInvitations[0].members,['egypt','numidia']);assert.equal((saved.coalitions||[]).length,0);
+ assert.match(await page.locator('#coalition-propose').locator('..').innerText(),/花费3国库.*4个月/);await page.locator('#coalition-propose').click();assert.match(await page.locator('#coalition-propose').locator('..').innerText(),/League of the Eagle.*等待回信/);
+ let saved=await save();assert.equal(saved.world.coalitionInvitations[0].status,'pending');assert.equal(saved.world.coalitionInvitations[0].name,'League of the Eagle');assert.equal(saved.factions.caesar.treasury,initial.treasury-3);assert.deepEqual(saved.world.coalitionInvitations[0].members,['egypt','numidia']);assert.equal((saved.coalitions||[]).length,0);
  await page.locator('#new').click();await page.locator('[data-slot="load"]').click();await page.locator('[data-tab="government"]').click();assert.equal(await page.locator('#coalition-propose').isDisabled(),true);assert.match(await page.locator('#coalition-guide').innerText(),/等待回信/);
  await stage('hidden');assert.deepEqual(await selection(),defaults);assert.equal(await page.locator('#coalition-propose').isEnabled(),true);
  await stage('poor');assert.equal(await page.locator('#coalition-propose').isDisabled(),true);assert.match(await page.locator('#coalition-guide').innerText(),/至少需要8国库/);saved=await save();assert.equal(saved.factions.caesar.treasury,7);assert.equal((saved.world.coalitionInvitations||[]).length,0);

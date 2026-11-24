@@ -22,6 +22,7 @@ test('a forwarded old report does not masquerade as the date of a newer belief',
  assert.deepEqual(leadershipIntelligence(s,'caesar','egypt').observed,{year:-49,month:6});
  assert.equal(leadershipIntelligence(s,'caesar','egypt').confidence,'unverified');
 });
+
 test('archival preserves the historical verification date without retaining current corroboration',()=>{
  let s=newGame('caesar');for(const source of ['spy','envoy','travelers'])addReport(s,'caesar','egypt',{kind:'leaders',leaders:['ptolemy'],source});
  for(let i=0;i<35;i++)addReport(s,'caesar','egypt',{kind:'stability',value:'stable',source:'spy'});
@@ -32,4 +33,3 @@ test('archival preserves the historical verification date without retaining curr
 test('undated legacy records cannot invent an observation or verification date',()=>{
  const s=newGame('caesar');s.knowledge.caesar.egypt.reportArchive=[{kind:'leaders',leaders:['cleopatra','ptolemy'],verified:true,confidence:'confirmed'}];assert.deepEqual(leadershipIntelligence(s,'caesar','egypt'),{confidence:'unverified',observed:null,lastVerified:null});
 });
-
