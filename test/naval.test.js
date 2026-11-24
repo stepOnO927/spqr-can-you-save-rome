@@ -1355,7 +1355,7 @@ test('AI takes an available land route instead of stalling at a sea link without
 
 test('new Adriatic harbor crossing requires transports and carries an army through a saved campaign',()=>{
  let s=newGrandGame('senate'),unit=s.armies.find(a=>a.id==='italy'),fleet=s.naval.fleets.find(f=>f.id==='senate-adriatic');
- assert.equal(GRAND_ROUTES.filter(route=>route[2]==='sea').length,20);
+ assert.equal(GRAND_ROUTES.filter(route=>route[2]==='sea').length,27);
  const crossing=GRAND_ROUTES.find(route=>route.slice(0,2).includes('t013')&&route.slice(0,2).includes('t072'));
  assert.equal(crossing?.[2],'sea');assert.ok(crossing[3].distance>=150);
  assert.equal(crossing[3].mountain,false,'hilly ports do not make the water corridor a mountain pass');
@@ -1373,6 +1373,23 @@ test('new Adriatic harbor crossing requires transports and carries an army throu
  unit=s.armies.find(a=>a.id==='italy');fleet=s.naval.fleets.find(f=>f.id==='senate-adriatic');
  assert.equal(unit.region,'t072');assert.equal(unit.move,null);
  assert.equal(fleet.port,'t072');assert.equal(fleet.order,null);
+});
+test('Ostia to Utica has a transport-gated sea crossing that survives a voyage save',()=>{
+ let s=newGrandGame('senate'),unit=s.armies.find(a=>a.id==='italy'),fleet=s.naval.fleets.find(f=>f.id==='senate-adriatic');
+ const crossing=GRAND_ROUTES.find(route=>route[2]==='sea'&&route.slice(0,2).includes('t016')&&route.slice(0,2).includes('africa'));
+ assert.ok(crossing?.[3].distance>=500);
+ unit.region='t016';unit.men=5200;
+ s.regions.find(r=>r.id==='t016').owner='senate';
+ fleet.port='t016';fleet.zone=portZone('t016');fleet.ships.transport=0;
+ assert.deepEqual(previewMarch(s,unit.id,'africa'),{ok:false,reason:'route'});
+ fleet.ships.transport=2;
+ assert.equal(previewMarch(s,unit.id,'africa').sea,true);
+ assert.equal(moveArmy(s,unit.id,'africa').ok,true);
+ assert.equal(fleet.order?.kind,'transport');
+ s=upgradeSave(structuredClone(s));
+ for(let month=0;month<10&&s.armies.find(a=>a.id==='italy').move;month++)tick(s);
+ assert.equal(s.armies.find(a=>a.id==='italy').region,'africa');
+ assert.equal(s.armies.find(a=>a.id==='italy').move,null);
 });
 test('a hostile naval blockade cuts port army supply until the blockade ends',()=>{
  const s=newGrandGame('senate'),unit=s.armies.find(a=>a.id==='italy'),enemy=s.naval.fleets.find(f=>f.owner==='caesar');unit.region='italiaS';enemy.zone=portZone('italiaS');enemy.port=null;

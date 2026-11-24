@@ -15,10 +15,13 @@ for(const [a,b,kind,meta] of GRAND_ROUTES.filter(route=>route[2]==='sea')){
   for(let i=0;i<steps;i++){const t=(i+.5)/steps,x=x1+(x2-x1)*t,y=y1+(y2-y1)*t,sample=length/steps;if(onLand(x,y)){inland+=sample;segmentInland+=sample;run+=sample;maximum=Math.max(maximum,run)}else run=0}
   segments.push({from:path[segment],to:path[segment+1],inlandKm:Number(segmentInland.toFixed(1))});
  }
- const approachLimit=a==='africa'||b==='africa'?12:9;
+ // The source-backed Utica site is inland under the modern Mejerda delta.
+ // Our modern mask and grid require up to 20 km on its final port approach;
+ // this exception never applies to an open-water or other harbor segment.
  const interior=segments.slice(1,-1).filter(item=>item.inlandKm>2);
  const approaches=path.length>2?[segments[0],segments.at(-1)]:segments;
- if(interior.length||approaches.some(item=>item.inlandKm>approachLimit))result.push({a,b,from:sites[a].site[0],to:sites[b].site[0],inlandKm:Math.round(inland),longestRunKm:Math.round(maximum),distance:meta.distance,interior,approaches});
+ const limits=path.length>2?[a==='africa'?21:9,b==='africa'?21:9]:[a==='africa'||b==='africa'?21:9];
+ if(interior.length||approaches.some((item,i)=>item.inlandKm>limits[i]))result.push({a,b,from:sites[a].site[0],to:sites[b].site[0],inlandKm:Math.round(inland),longestRunKm:Math.round(maximum),distance:meta.distance,interior,approaches});
 }
 console.log(JSON.stringify({seaRoutes:GRAND_ROUTES.filter(route=>route[2]==='sea').length,invalidRoutes:result.length,result},null,2));
 if(result.length)throw new Error('One or more sea routes cross modern land outside a short port approach.');

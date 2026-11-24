@@ -45,14 +45,17 @@ test('mediation can fail and cannot be repeated or funded by a foreign command',
  assert.equal(courtMediationPlan(s,'egypt').reason,'treasury');
 });
 
-test('a funded court decision can stabilize a ten-year player-like Egypt route',()=>{
+test('funded mediation improves a ten-year Egyptian succession route against an untreated dispute',()=>{
  const s=newGrandGame('egypt');let attempts=0;
+ assert.equal(contestLeadership(s,'egypt','cleopatra'),true,'the player starts a genuine royal dispute');
+ const untreated=structuredClone(s);
  for(let month=0;month<120;month++){
   if(courtMediationPlan(s,'egypt').ok){assert.equal(mediateCourtDispute(s,'egypt').ok,true);attempts++}
   tick(s);
+  tick(untreated);
  }
  assert.ok(attempts>0);
- assert.ok(s.factions.egypt.stability>=35);
+ assert.ok(s.factions.egypt.stability>untreated.factions.egypt.stability);
  assert.ok(s.factions.egypt.food>=0);
  assert.ok(s.world.disputeHistory.some(x=>x.faction==='egypt'&&x.mediated));
 });

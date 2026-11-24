@@ -1,4 +1,4 @@
-import {publicSettlementTerms} from './campaign-outcome.js?v=6';
+import {publicSettlementTerms} from './campaign-outcome.js?v=7';
 
 // Explain only the player's own government and ownership visible on the map.
 // The opponent's true field strength remains a private acceptance condition.

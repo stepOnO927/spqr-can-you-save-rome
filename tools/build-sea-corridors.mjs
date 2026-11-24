@@ -57,8 +57,8 @@ class Heap{
  get length(){return this.items.length}
 }
 const key=(x,y)=>y*(XMAX+1)+x;
-function pathFind(a,b,margin,startLimit=8){
- const start=nearSea(a,startLimit)[0],endOptions=nearSea(b);if(!start||!endOptions.length)return null;
+function pathFind(a,b,margin,startLimit=8,endLimit=8){
+ const start=nearSea(a,startLimit)[0],endOptions=nearSea(b,endLimit);if(!start||!endOptions.length)return null;
  const targetX=Math.round((b[0]-WEST)/STEP),targetY=Math.round((b[1]-SOUTH)/STEP);
  const minX=Math.max(0,Math.min(start.x,targetX)-margin),maxX=Math.min(XMAX,Math.max(start.x,targetX)+margin),minY=Math.max(0,Math.min(start.y,targetY)-margin),maxY=Math.min(YMAX,Math.max(start.y,targetY)+margin);
  const scale=Math.cos((a[1]+b[1])/2*Math.PI/180),distance=(x,y)=>Math.hypot((targetX-x)*scale,targetY-y);
@@ -92,8 +92,8 @@ for(const [a,b] of GRAND_ROUTES.filter(route=>route[2]==='sea')){
  // Ancient Utica's harbor is buried under the modern Mejerda delta; the
  // archaeological site is roughly 10 km from today's sea. Preserve its
  // settlement anchor and allow a longer first approach through modern land.
- const startLimit=a==='africa'?20:8;
- let path=pathFind(first,last,80,startLimit);if(!path)path=pathFind(first,last,160,startLimit);
+ const startLimit=a==='africa'?20:8,endLimit=b==='africa'?20:8;
+ let path=pathFind(first,last,80,startLimit,endLimit);if(!path)path=pathFind(first,last,160,startLimit,endLimit);
  if(!path){failures.push({a,b,directInland:Math.round(directInland),start:nearSea(first,startLimit)[0],end:nearSea(last)[0]});continue}
  path=simplify(path);
  const points=[first,...path,last],sorted=[a,b].sort(),waypoints=a===sorted[0]?path:[...path].reverse();
