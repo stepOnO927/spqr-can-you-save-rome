@@ -1,9 +1,9 @@
 import {knownAgreement as activeAgreement,knownAlliance,knownRelation} from './treaty-observation.js?v=treaty-observation-1';
-import {coalitionInterest,formCoalition} from './coalitions.js?v=dossier-archive-1';
-import {reportedDiplomacy} from './diplomatic-knowledge.js?v=dossier-archive-1';
-import {reportedControl} from './control-intelligence.js?v=dossier-archive-1';
+import {coalitionInterest,formCoalition} from './coalitions.js?v=faces-name-disagreement-1';
+import {reportedDiplomacy} from './diplomatic-knowledge.js?v=control-delivery-1';
+import {reportedControl} from './control-intelligence.js?v=control-delivery-1';
 import {ROUTES,FACTIONS} from './data.js?v=phase-x-1';
-import {agreementCredentials,neutralityBlocksWar} from './agreements.js?v=dossier-archive-1';
+import {agreementCredentials,neutralityBlocksWar} from './agreements.js?v=focus-agreement-consent-1';
 import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
 
 const relation=(s,a,b)=>knownRelation(s,a,b);
@@ -91,3 +91,5 @@ export function advanceCoalitionInvitations(s,estimateStrength,roll,{autoplayPla
   if(x.leader===s.player){s.log.unshift({year:s.year,month:s.month,en:x.status==='accepted'?'The defensive alliance was agreed.':x.status==='refused'?'A court declined the coalition invitation.':x.status==='lapsed'?'The proposed coalition could not be concluded.':'No coalition reply arrived; a letter may have been lost.',zh:x.status==='accepted'?'各方同意结盟。':x.status==='refused'?'一国拒绝了联盟邀请。':x.status==='lapsed'?'拟议中的联盟未能最终成立。':'未收到联盟回信；书信可能遗失。'});s.log=s.log.slice(0,80)}
  }
 }
+
+

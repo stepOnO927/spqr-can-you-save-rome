@@ -1,5 +1,5 @@
 import {knownAgreement,knownAlliance} from './treaty-observation.js?v=treaty-observation-1';
-import {AGREEMENT_TYPES,neutralityOfferProblem,neutralityConflicts,agreementCredentials,activeAgreement,checkAgreement,proposeAgreement} from './agreements.js?v=dossier-archive-1';
+import {AGREEMENT_TYPES,neutralityOfferProblem,neutralityConflicts,agreementCredentials,activeAgreement,checkAgreement,proposeAgreement} from './agreements.js?v=focus-agreement-consent-1';
 
 const COURIER_COST=2;
 const proposalDefinition=type=>type==='full_alliance'?{cost:0}:AGREEMENT_TYPES[type];
@@ -58,3 +58,5 @@ export function advanceAgreementProposals(s,{checkAlliance=()=>false,concludeAll
   if(letter.actor===s.player){const texts={accepted:['A diplomatic agreement was concluded.','外交条约已达成。'],refused:['The other court declined the proposed agreement.','对方拒绝了条约提议。'],lapsed:['The proposed agreement could not be concluded under current conditions.','当前条件下无法最终达成条约。'],no_reply:['No agreement reply arrived; a letter may have been lost.','未收到条约回信；书信可能遗失。']};const [en,zh]=texts[letter.status];s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.log.slice(0,80)}
  }
 }
+
+

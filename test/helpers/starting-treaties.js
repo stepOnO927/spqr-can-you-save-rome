@@ -1,4 +1,4 @@
-import {initializeAgreements} from '../../agreements.js?v=dossier-archive-1';
+import {initializeAgreements} from '../../agreements.js?v=focus-agreement-consent-1';
 import {rememberTreatyCopy,treatyDocument} from '../../treaty-observation.js?v=treaty-observation-1';
 // Scenario setup only. Explicitly establish what each signing court already
 // knows before the test starts. Never call after a hidden-state comparison.

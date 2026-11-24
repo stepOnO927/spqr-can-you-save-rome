@@ -1,9 +1,9 @@
 import {startingTreaties} from './helpers/starting-treaties.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave,issueMilitaryOrder,estimatedStrength} from '../engine.js?v=dossier-archive-1';
-import {createPlan,assignRole,approvePlan,pausePlan,cancelPlan,editPlan,planById,plansFor,validatePath,findRoute,assessPlan,adviserCounsel,planControlled,approveRecommendation,aiBattlePlans} from '../battle-plans.js?v=dossier-archive-1';
-import {templatesFor,recruitFormation} from '../legion-designer.js?v=dossier-archive-1';
+import {newGame,tick,upgradeSave,issueMilitaryOrder,estimatedStrength} from '../engine.js?v=faces-name-disagreement-1';
+import {createPlan,assignRole,approvePlan,pausePlan,cancelPlan,editPlan,planById,plansFor,validatePath,findRoute,assessPlan,adviserCounsel,planControlled,approveRecommendation,aiBattlePlans} from '../battle-plans.js?v=faces-name-disagreement-1';
+import {templatesFor,recruitFormation} from '../legion-designer.js?v=faces-name-disagreement-1';
 import {ROUTES} from '../data.js?v=phase-x-1';
 
 const roundTrip=s=>upgradeSave(JSON.parse(JSON.stringify(s)));
@@ -121,8 +121,8 @@ test('with spare forces and stale intelligence, expert AI adds reconnaissance an
 });
 
 test('an AI ally considers a delivered operational notice rather than a hidden allied plan',async()=>{
- const {observeControl}=await import('../control-intelligence.js?v=dossier-archive-1');
- const {shareOperation}=await import('../operation-intelligence.js?v=operation-notices-1'),{sendLetter}=await import('../epistulae.js?v=dossier-archive-1');
+ const {observeControl}=await import('../control-intelligence.js?v=control-delivery-1');
+ const {shareOperation}=await import('../operation-intelligence.js?v=operation-notices-1'),{sendLetter}=await import('../epistulae.js?v=faces-name-disagreement-1');
  const s=newGame('senate');s.difficulty='expert';
  s.regions.find(r=>r.id==='africa').owner='caesar';s.wars.push(['caesar','numidia']);s.alliances.push(['numidia','senate']);startingTreaties(s);observeControl(s);
  for(const a of s.armies.filter(a=>a.owner==='numidia'))a.men=15000;
@@ -137,4 +137,5 @@ test('an AI ally considers a delivered operational notice rather than a hidden a
  for(const a of t.armies.filter(a=>a.owner==='numidia'))a.men=15000;
  const other=planById(t,aiBattlePlans(t,'numidia',{estimatedStrength}));assert.ok(!other||!other.events.some(e=>e.kind==='coordinated'));
 });
+
 

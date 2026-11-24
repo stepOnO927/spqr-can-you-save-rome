@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=dossier-archive-1';
-import {assignSuccession,knownLeaders,CHARACTER_CATALOG} from '../characters.js?v=dossier-archive-1';
-import {advanceGovernments,deriveGovernment} from '../governance.js?v=dossier-archive-1';
-import {queueMission,advanceOperations,reportedHealthSubjects} from '../character-system.js?v=dossier-archive-1';
-import {createFictionalPerson} from '../dynasties.js?v=dossier-archive-1';
+import {newGame,upgradeSave} from '../engine.js?v=faces-name-disagreement-1';
+import {assignSuccession,knownLeaders,leadershipTitle,CHARACTER_CATALOG} from '../characters.js?v=faces-name-disagreement-1';
+import {advanceGovernments,deriveGovernment} from '../governance.js?v=faces-name-disagreement-1';
+import {queueMission,advanceOperations,reportedHealthSubjects} from '../character-system.js?v=faces-name-disagreement-1';
+import {createFictionalPerson} from '../dynasties.js?v=faces-name-disagreement-1';
+import {proceduralPortraitSvg} from '../portrait-registry.js?v=missing-fate-privacy-1';
 const states={armenia:'artavasdes',numidia:'juba',galatia:'deiotarus',bosporus:'pharnaces'};
 const high=Array.from({length:100000},(_,i)=>i).find(i=>((Math.imul(i,1664525)+1013904223)>>>0)/4294967296>.98);
 function setup(faction){const s=newGame('caesar'),id=states[faction];s.wars=[];s.world.characters[id].alive=false;s.world.characters[id].health='deceased';assignSuccession(s,faction);s.factions[faction].treasury=100;s.factions[faction].stability=60;s.world.dynasties.seed=1;return s}
@@ -12,9 +13,34 @@ function step(s,n=1){for(let i=0;i<n;i++){s.month++;if(s.month>12){s.month=1;s.y
 test('regional courts may recover after a delay using explicitly fictional nominees and real funds',()=>{
  for(const [faction,original] of Object.entries(states)){
   const s=setup(faction);assert.equal(deriveGovernment(s,faction).kind,'vacant');const balance=s.factions[faction].treasury;step(s,6);assert.deepEqual(s.world.leadership[faction],[]);assert.equal(s.factions[faction].treasury,balance);
-  step(s);const id=s.world.leadership[faction][0],person=s.world.characters[id];assert.match(id,/^fictional:/);assert.equal(CHARACTER_CATALOG[id].fictional,true);assert.ok(CHARACTER_CATALOG[id].regnalName?.[0]);assert.deepEqual(person.parents,[]);assert.deepEqual(person.adoptiveParents,[]);assert.equal(s.factions[faction].treasury,balance-5);assert.equal(deriveGovernment(s,faction).kind,'normal');
+  step(s);const id=s.world.leadership[faction][0],person=s.world.characters[id];assert.match(id,/^fictional:/);assert.equal(CHARACTER_CATALOG[id].fictional,true);assert.match(CHARACTER_CATALOG[id].name[0],/ of /);assert.ok(CHARACTER_CATALOG[id].regnalName?.[0]);assert.notDeepEqual(CHARACTER_CATALOG[id].culture,['Simulated','模拟']);assert.deepEqual(person.parents,[]);assert.deepEqual(person.adoptiveParents,[]);assert.equal(s.factions[faction].treasury,balance-5);assert.equal(deriveGovernment(s,faction).kind,'normal');
   const life=s.world.dynasties.lives[id];assert.ok(life.some(x=>/fictional court nominee/.test(x.en)));assert.ok(!life.some(x=>x.en==='Born in the simulated campaign.'));
   assert.deepEqual(knownLeaders(s,'caesar',faction),[original]);assert.ok(!reportedHealthSubjects(s,'caesar',faction).includes(id));assert.ok(!s.log.some(x=>x.en.includes(CHARACTER_CATALOG[id].name[0])));
+ }
+});
+test('extinct Egyptian and Parthian courts can found recorded new houses without announcing them abroad',()=>{
+ for(const faction of ['egypt','parthia']){
+  let s=newGame('caesar');s.wars=[];
+  for(const person of Object.values(s.world.characters))if(person.faction===faction){person.alive=false;person.health='deceased'}
+  assignSuccession(s,faction);s.world.claimants[faction]=[];
+  s.world.disputes[faction]={months:2,support:{}}; // An old dispute with no living claimant cannot bar recovery forever.
+  const before={house:s.world.dynasties.rulingHouses[faction],reports:[...knownLeaders(s,'caesar',faction)]};
+  s.factions[faction].treasury=100;s.factions[faction].stability=60;s.world.dynasties.seed=1;
+  step(s,6);assert.deepEqual(s.world.leadership[faction],[]);
+  step(s);const id=s.world.leadership[faction][0],person=s.world.characters[id],name=CHARACTER_CATALOG[id]?.name;
+  assert.ok(id?.startsWith('fictional:'));assert.ok(s.world.dynasties.lives[id].some(event=>/fictional court nominee/.test(event.en)));assert.match(name[0],/ of /);
+  assert.match(proceduralPortraitSvg(s,id),/<svg/);assert.equal(deriveGovernment(s,faction).kind,'normal');
+  assert.equal(s.factions[faction].treasury,95);assert.notEqual(s.world.dynasties.rulingHouses[faction],before.house);
+  assert.deepEqual(s.world.dynasties.houseTransitions.at(-1),{faction,from:before.house,to:person.familyId,founder:id,year:s.year,month:s.month,kind:'new_house',simulated:true});
+  assert.deepEqual(knownLeaders(s,'caesar',faction),before.reports);
+  assert.ok(!s.log.some(entry=>entry.en?.includes(name[0])));
+  if(faction==='egypt'){
+   assert.deepEqual(leadershipTitle(faction,[id],s),['Egyptian ruler of a new house','埃及新王朝统治者']);
+   assert.deepEqual(leadershipTitle(faction,[id]),['Egyptian ruler','埃及统治者']);
+  }
+  s=upgradeSave(structuredClone(s));assert.deepEqual(s.world.leadership[faction],[id]);
+  assert.deepEqual(s.world.dynasties.catalog[id].name,name);
+  assert.equal(s.world.dynasties.rulingHouses[faction],person.familyId);
  }
 });
 test('a saved vacancy continues without paying twice and a report is required to learn of the nominee',()=>{
@@ -37,4 +63,25 @@ test('existing legitimate candidates are preferred and lost territory cancels th
 test('a human-controlled court is never assigned an unrequested nominee',()=>{
  const s=newGame('armenia');s.world.characters.artavasdes.alive=false;s.world.characters.artavasdes.health='deceased';assignSuccession(s,'armenia');s.factions.armenia.treasury=100;s.world.dynasties.seed=1;
  step(s,18);assert.deepEqual(s.world.leadership.armenia,[]);assert.equal(s.factions.armenia.treasury,100);assert.equal(s.world.courtVacancies?.armenia,undefined);
+});
+
+test('an empty Shanshan court can restore a distinct local ruler without notifying Han immediately',()=>{
+ let s=newGame('han'),former=s.world.leadership.shanshan[0];
+ s.world.characters[former].alive=false;s.world.characters[former].health='deceased';
+ assignSuccession(s,'shanshan');
+ assert.deepEqual(s.world.leadership.shanshan,[],'the surviving guard does not inherit by default');
+ s.factions.shanshan.treasury=100;s.world.dynasties.seed=1;
+ const known=[...knownLeaders(s,'han','shanshan')];
+ step(s,7);
+ const id=s.world.leadership.shanshan[0];
+ assert.ok(id?.startsWith('fictional:'));
+ assert.notEqual(id,former);
+ assert.match(CHARACTER_CATALOG[id].name[0],/ of Shanshan/);
+ assert.deepEqual(CHARACTER_CATALOG[id].culture,['Shanshan oasis (game reconstruction)','鄯善绿洲（游戏复原）']);
+ assert.match(proceduralPortraitSvg(s,id),/<svg/);
+ assert.equal(s.factions.shanshan.treasury,95);
+ assert.deepEqual(knownLeaders(s,'han','shanshan'),known);
+ s=upgradeSave(structuredClone(s));
+ assert.deepEqual(s.world.leadership.shanshan,[id]);
+ assert.equal(deriveGovernment(s,'shanshan').kind,'normal');
 });

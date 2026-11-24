@@ -1,13 +1,13 @@
 import {knownRelation} from './treaty-observation.js?v=treaty-observation-1';
 import {REGIONS} from './data.js?v=phase-x-1';
 import {campaignDate} from './campaign-date.js?v=calendar-1';
-import {courierMonths as mailTravelMonths} from './epistulae.js?v=dossier-archive-1';
-import {isDeliveredReport} from './person-knowledge.js?v=dossier-archive-1';
-import {reportedControl} from './control-intelligence.js?v=dossier-archive-1';
-import {reportedDiplomacy} from './diplomatic-knowledge.js?v=dossier-archive-1';
+import {courierMonths as mailTravelMonths} from './epistulae.js?v=faces-name-disagreement-1';
+import {isDeliveredReport} from './person-knowledge.js?v=faces-name-disagreement-1';
+import {reportedControl} from './control-intelligence.js?v=control-delivery-1';
+import {reportedDiplomacy} from './diplomatic-knowledge.js?v=control-delivery-1';
 import {politicalMemoryAdjustment,rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
 import {operationPartners,operationNoticeRoute} from './operation-intelligence.js?v=operation-notices-1';
-import {createPlan,assignRole,approvePlan,cancelPlan,findRoute,operationFingerprint,coordinationProblem} from './battle-plans.js?v=dossier-archive-1';
+import {createPlan,assignRole,approvePlan,cancelPlan,findRoute,operationFingerprint,coordinationProblem} from './battle-plans.js?v=faces-name-disagreement-1';
 
 // The existing mailbox is the correspondence ledger. Each court reserves only
 // its OWN plan; a foreign plan is never dereferenced to discover its intentions.
@@ -179,3 +179,5 @@ export function proposeAiJointOperation(s,owner,{sendLetter,courierMonths,autopl
   }
  }
 }
+
+

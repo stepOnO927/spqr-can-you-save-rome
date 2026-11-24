@@ -1,10 +1,10 @@
 import {knownTreatyDocuments,knownAlliance,knownRelation,rememberTreatyCopy,treatyDocument,announceTreatyChange} from './treaty-observation.js?v=treaty-observation-1';
-import {isDeliveredReport} from './person-knowledge.js?v=dossier-archive-1';
+import {isDeliveredReport} from './person-knowledge.js?v=faces-name-disagreement-1';
 import {ROUTES} from './data.js?v=phase-x-1';
-import {reportedControl} from './control-intelligence.js?v=dossier-archive-1';
-import {activeAgreement,neutralityBlocksWar} from './agreements.js?v=dossier-archive-1';
+import {reportedControl} from './control-intelligence.js?v=control-delivery-1';
+import {activeAgreement,neutralityBlocksWar} from './agreements.js?v=focus-agreement-consent-1';
 import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
-import {reportedDiplomacy} from './diplomatic-knowledge.js?v=dossier-archive-1';
+import {reportedDiplomacy} from './diplomatic-knowledge.js?v=control-delivery-1';
 
 const pair=(a,b)=>[a,b].sort().join(':');
 const rel=(s,a,b)=>knownRelation(s,a,b);
@@ -90,3 +90,5 @@ export function coalitionMilitaryObjective(s,actor){
  const c=knownTreatyDocuments(s,actor,'coalition').find(c=>((s.coalitions||[]).find(t=>t.id===c.id)?.contributions?.[actor]?.policy||c.contributions?.[actor]?.policy)==='military'&&war(s,actor,c.target));
  return c?.target||null;
 }
+
+

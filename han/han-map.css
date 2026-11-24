@@ -38,6 +38,18 @@
 .han-map .r-steppe{stroke:#5f6a2e;stroke-dasharray:7 4}
 .han-map .r-oasis{stroke:#3f7f5a}
 .han-map .route.silk-leg{stroke:#b8862e;stroke-width:3;opacity:.95;stroke-dasharray:none}
+.han-map.mode-trade .route.trade-corridor{stroke:#806744;stroke-width:1.8;opacity:.65}
+.han-map.mode-trade .route.trade-active{stroke:#1f6770;stroke-width:3.1;opacity:.95;stroke-dasharray:none}
+.han-map.mode-trade .route.trade-blocked{stroke:#a2311f;stroke-width:3.1;opacity:.95;stroke-dasharray:5 3}
+.han-map .trade-market circle{fill:#e3d5b3;stroke:#68573d;stroke-width:1.5}
+.han-map .trade-market.own circle{fill:#b8862e;stroke:#352820;stroke-width:2}
+.han-map .trade-market.port circle{fill:#3d5560;stroke:#e7cf91;stroke-width:2.5}
+.han-map .trade-market.restricted circle{stroke:#a2311f;stroke-width:2.5}
+.han-map .trade-market.own{cursor:pointer}
+.han-map .trade-market.own:focus-visible circle,.han-map .trade-caravan:focus-visible path{stroke:#fff8e6;stroke-width:3}
+.han-map .trade-caravan{cursor:pointer}
+.han-map .trade-caravan path{fill:#1f6770;stroke:#f6e4b7;stroke-width:1.7}
+.han-map .trade-caravan.blocked path{fill:#a2311f}
 .han-map.mode-theaters .route,.han-map.mode-circuits .route{opacity:.2}
 .han-map .seat-g{cursor:pointer}
 .han-map .seat{fill:#2a1d18;stroke:#f3ead4;stroke-width:1}
@@ -49,10 +61,11 @@
 .han-map .region-label.steppe{font-style:italic}
 .han-map .target-ring{fill:none;stroke:var(--cinnabar);stroke-width:2.5;animation:han-pulse 1.2s infinite}
 .han-map .army{cursor:pointer}
-.han-map .army rect{stroke:#1c1411;stroke-width:1}
+.han-map .army > g > rect{stroke:#1c1411;stroke-width:1}
 .han-map .army .glyph{font-size:10px;fill:#fff8e6;text-anchor:middle;font-family:var(--serif),'SPQR CJK';pointer-events:none}
 .han-map .army .count{font-size:9.5px;fill:#fff8e6;text-anchor:middle;pointer-events:none;font-weight:600}
-.han-map .army.selected rect:first-of-type{stroke:#fff8e6;stroke-width:2.2}
+#map .han-map .army .faction-standard{width:15px;height:16px;pointer-events:none}
+.han-map .army.selected > g > rect:first-of-type{stroke:#fff8e6;stroke-width:2.2}
 .han-map .march{stroke:#fff8e6;stroke-width:1.6;stroke-dasharray:5 3;fill:none}
 .east-wrap{display:flex;flex-direction:column}.east-wrap .han-map{flex:1;min-height:0}
 .east-tools{position:absolute;z-index:3;top:62px;left:50%;transform:translateX(-50%);display:flex;flex-wrap:wrap;gap:4px;padding:5px 8px;background:#1b211fd9;border-radius:3px}.east-tools .map-mode{font-size:11px;padding:3px 8px;cursor:pointer}.east-tools .map-mode.active{outline:2px solid #a2311f}.east-sep{width:12px}

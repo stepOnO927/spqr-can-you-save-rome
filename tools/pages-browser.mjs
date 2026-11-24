@@ -33,6 +33,8 @@ try{
   assert.match(await license.text(),/SIL OPEN FONT LICENSE Version 1.1/);
   assert.match(await license.text(),/Copyright 2014-2021 Adobe/);
   assert.equal(await main.locator('#save-transfer-open').evaluate(button=>button.parentElement.classList.contains('setup-saves')),true);
+  await main.locator('.setup-advanced').evaluate(el=>el.open=true);
+  await main.locator('#campaign-guide').uncheck();
   await main.locator('#start-campaign').click();
   assert.equal(await main.locator('#save-transfer-open').evaluate(button=>button.parentElement.classList.contains('controls')),true);
   await main.locator('#step').click();
@@ -67,11 +69,12 @@ try{
   const migrated=await open(other+'/');
   await migrated.locator('#save-transfer-open').click();
   await migrated.locator('#save-transfer-file').setInputFiles({name:'spqr-saves.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(exported))});
-  await migrated.waitForFunction(()=>localStorage.getItem('spqr-save-1')!==null,undefined,{timeout:10000});
+  await migrated.locator('#save-transfer-status').filter({hasText:/Imported 1/}).waitFor();
   assert.equal(await migrated.evaluate(()=>localStorage.getItem('spqr-save-1')),campaign);
   assert.match(await migrated.locator('#save-transfer-status').innerText(),/Imported 1/);
   const bad={format:'spqr-save-transfer',version:1,saves:{'evil-key':'value'}};
   await migrated.locator('#save-transfer-file').setInputFiles({name:'bad.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(bad))});
+  await migrated.locator('#save-transfer-status').filter({hasText:/Imported 0/}).waitFor();
   assert.equal(await migrated.evaluate(()=>localStorage.getItem('evil-key')),null);
   await migrated.close();
   assert.deepEqual(failures,[]);

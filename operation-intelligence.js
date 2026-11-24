@@ -1,5 +1,5 @@
 import {knownAgreement as activeAgreement,knownAlliance} from './treaty-observation.js?v=treaty-observation-1';
-import {reportedControl} from './control-intelligence.js?v=dossier-archive-1';
+import {reportedControl} from './control-intelligence.js?v=control-delivery-1';
 
 const now=s=>s.year*12+s.month;
 const live=['preparing','active'];
@@ -60,4 +60,5 @@ export function shareAiOperation(s,owner,{sendLetter,autoplayPlayer=false}={}){
  }
  return last;
 }
+
 

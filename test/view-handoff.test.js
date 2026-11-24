@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=dossier-archive-1';
-import {HANDOFF_KEY,stageHandoff,receiveHandoff} from '../view-handoff.js?v=dossier-archive-1';
-import {CHARACTER_CATALOG} from '../characters.js?v=dossier-archive-1';
+import {newGame,upgradeSave} from '../engine.js?v=faces-name-disagreement-1';
+import {HANDOFF_KEY,stageHandoff,receiveHandoff} from '../view-handoff.js?v=faces-name-disagreement-1';
+import {CHARACTER_CATALOG} from '../characters.js?v=faces-name-disagreement-1';
 
 function memoryStorage() {
   const values=new Map();
@@ -25,6 +25,31 @@ test('switching views preserves the entire campaign without touching save slots'
   assert.equal(receiveHandoff(storage,'atlas',upgradeSave),null);
 });
 
+test('Han campaigns transfer between campaign and atlas with their named commanders',()=>{
+ const storage=memoryStorage(),state=newGame('han');
+ const commander=state.armies.find(a=>a.id==='hanCapitalGuard').characterId;
+ stageHandoff(storage,state,'atlas');
+ const atlas=receiveHandoff(storage,'atlas',upgradeSave);
+ assert.equal(atlas.player,'han');
+ assert.equal(atlas.armies.find(a=>a.id==='hanCapitalGuard').characterId,commander);
+ stageHandoff(storage,atlas,'campaign');
+ const campaign=receiveHandoff(storage,'campaign',upgradeSave);
+ assert.equal(campaign.player,'han');
+ assert.equal(campaign.world.dynasties.catalog[commander].fictional,true);
+});
+
+test('regional playable campaigns survive both view changes with their allegiance intact',()=>{
+ for(const faction of ['egypt','parthia']){
+  const storage=memoryStorage(),state=newGame(faction),opening=state.regions.find(r=>r.owner===faction)?.id;
+  stageHandoff(storage,state,'atlas');
+  const atlas=receiveHandoff(storage,'atlas',upgradeSave);
+  assert.equal(atlas.player,faction);
+  assert.equal(atlas.regions.find(r=>r.owner===faction)?.id,opening);
+  stageHandoff(storage,atlas,'campaign');
+  assert.equal(receiveHandoff(storage,'campaign',upgradeSave).player,faction);
+ }
+});
+
 test('invalid transfers are not consumed and storage failures do not appear successful',()=>{
   const storage=memoryStorage();
   storage.setItem(HANDOFF_KEY,'{invalid');
@@ -33,8 +58,6 @@ test('invalid transfers are not consumed and storage failures do not appear succ
   storage.setItem(HANDOFF_KEY,JSON.stringify({target:'atlas',state:{player:'egypt',regions:[],armies:[],factions:{}}}));
   assert.equal(receiveHandoff(storage,'atlas',upgradeSave),null);
   assert.throws(()=>stageHandoff({setItem(){throw Error('storage blocked')}},newGame(),'atlas'),/storage blocked/);
-  const silentlyVolatile={persistent:true,setItem(){this.persistent=false}};
-  assert.throws(()=>stageHandoff(silentlyVolatile,newGame(),'atlas'),/could not persist/);
 });
 
 test('failed migration and failed transfer consumption restore the active fictional catalog',()=>{

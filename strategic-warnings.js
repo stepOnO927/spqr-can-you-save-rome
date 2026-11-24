@@ -1,10 +1,9 @@
 import {knownAgreement as activeAgreement,knownAlliance,knownRelation} from './treaty-observation.js?v=treaty-observation-1';
 import {ROUTES,FACTIONS,REGIONS} from './data.js?v=phase-x-1';
-import {reportedControl} from './control-intelligence.js?v=dossier-archive-1';
-import {reportedDiplomacy} from './diplomatic-knowledge.js?v=dossier-archive-1';
-
+import {reportedControl} from './control-intelligence.js?v=control-delivery-1';
+import {reportedDiplomacy} from './diplomatic-knowledge.js?v=control-delivery-1';
+import {isDeliveredReport} from './person-knowledge.js?v=faces-name-disagreement-1';
 import {rememberPoliticalEvent,politicalMemoryAdjustment} from './political-memory.js?v=grand-chessboard-2';
-import {isDeliveredReport} from './person-knowledge.js?v=dossier-archive-1';
 
 // Scout-based strategic warnings between friendly courts.
 // A sender may only forward a dated sighting from its own knowledge. The letter
@@ -124,4 +123,5 @@ export function advanceStrategicWarnings(s,{autoplayPlayer=false,letterMonths={}
  for(const actor of Object.keys(s.factions).filter(id=>id!=='rebels'&&(autoplayPlayer||id!==s.player)&&holds(s,id)))composeWarnings(s,actor,letterMonths);
  return s;
 }
+
 

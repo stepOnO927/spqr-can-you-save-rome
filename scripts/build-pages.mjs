@@ -47,7 +47,7 @@ for(const doc of publicDocs)add(doc);
 // Portrait keys are chosen at runtime from saved characters, so publish every
 // display-sized portrait. The source masters and unused 512px files stay private.
 for(const name of fs.readdirSync(path.join(root,'assets/portraits'))){
-  if(/-128\.jpg$/i.test(name))add(`assets/portraits/${name}`);
+  if(/-(?:64|128)\.jpg$/i.test(name))add(`assets/portraits/${name}`);
 }
 for(const name of vendor.keys())selected.add(name);
 if(selected.size>20000)throw Error('Cloudflare Pages Free plan file count exceeded');

@@ -1,5 +1,6 @@
 name: Browser smoke
 on:
+  workflow_dispatch:
   pull_request:
     paths-ignore:
       - '**.md'
@@ -12,7 +13,7 @@ jobs:
       matrix:
         part: [1, 2, 3]
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -72,8 +73,6 @@ jobs:
               node tools/family-letter-name-privacy-smoke.mjs
               node tools/future-family-reports-smoke.mjs
               node tools/future-dossier-smoke.mjs
-              node tools/archived-dossier-smoke.mjs
-              node tools/archived-leadership-summary-smoke.mjs
               node tools/mission-inbox-smoke.mjs
               node tools/agent-release-mail-smoke.mjs
               node tools/conspiracy-name-smoke.mjs
@@ -84,10 +83,17 @@ jobs:
               node tools/personal-audience-mail-smoke.mjs
               node tools/player-request-aid-smoke.mjs
               node tools/official-name-snapshots-smoke.mjs
+              node tools/procedural-portrait-smoke.mjs
               ;;
             2)
+              node tools/office-misdirection-privacy-smoke.mjs
+              node tools/peace-changed-circumstances-smoke.mjs
+              node tools/han-regional-administrator-smoke.mjs
+              node tools/commander-age-uncertainty-smoke.mjs
               node tools/cursus-applicant-smoke.mjs
               node tools/han-court-smoke.mjs
+              node tools/han-court-alliance-smoke.mjs
+              node tools/han-court-autonomy-smoke.mjs
               node tools/genealogy-dossier-smoke.mjs
               node tools/legend-smoke.mjs
               node tools/genealogy-personal-actions-smoke.mjs
@@ -98,22 +104,21 @@ jobs:
               node tools/archived-political-contact-smoke.mjs
               node tools/claimant-diplomatic-directory-smoke.mjs
               node tools/mission-history-smoke.mjs
-              node tools/missing-leadership-smoke.mjs
-              node tools/commander-age-uncertainty-smoke.mjs
               node tools/claimant-aid-forces-smoke.mjs
               node tools/cross-border-estate-smoke.mjs
               node tools/foreign-name-privacy-smoke.mjs
-              node tools/office-misdirection-privacy-smoke.mjs
               node tools/campaign-intelligence-privacy-smoke.mjs
               node tools/strategy-board-name-privacy-smoke.mjs
               node tools/authority-name-privacy-smoke.mjs
               node tools/leader-layout-smoke.mjs
+              node tools/missing-leadership-smoke.mjs
+              node tools/missing-search-smoke.mjs
               node tools/attack-preview-privacy-smoke.mjs
               node scripts/multipolar-sim.mjs > multipolar-simulation.json
+              node scripts/market-120-sim.mjs > market-120-simulation.json
               node tools/multipolar-smoke.mjs
               node tools/player-strategic-offer-smoke.mjs
               node tools/peace-mail-courier-smoke.mjs
-              node tools/peace-changed-circumstances-smoke.mjs
               node tools/imperium-smoke.mjs
               node tools/fort-intelligence-smoke.mjs
               node tools/control-delivery-smoke.mjs
@@ -125,7 +130,25 @@ jobs:
               node tools/regional-court-vacancy-smoke.mjs
               node tools/court-portrait-smoke.mjs
               node tools/senator-portraits-smoke.mjs
+              node tools/varro-profile-smoke.mjs
               node tools/senate-record-privacy-smoke.mjs
+              node tools/roman-market-sales-smoke.mjs
+              node tools/roman-supply-contract-smoke.mjs
+              node tools/roman-economy-forecast-smoke.mjs
+              node tools/roman-rations-smoke.mjs
+              node tools/market-smoke.mjs
+              node tools/stone-construction-smoke.mjs
+              node tools/han-smoke.mjs
+              node tools/eastern-identity-smoke.mjs
+              node tools/han-market-smoke.mjs
+              node tools/han-merchant-venture-smoke.mjs
+              node tools/roman-eastern-import-smoke.mjs
+              node tools/roman-eastern-export-smoke.mjs
+              node tools/han-supply-contract-smoke.mjs
+              node tools/han-ruler-smoke.mjs
+              node tools/han-defeat-smoke.mjs
+              node tools/han-field-smoke.mjs
+              node tools/mailbox-smoke.mjs
               node tools/mail-privacy-smoke.mjs
               node tools/mail-sender-identity-smoke.mjs
               node tools/gathering-presence-smoke.mjs
@@ -134,10 +157,14 @@ jobs:
               ;;
             3)
               node tools/onboarding-smoke.mjs
+              node tools/territory-alert-smoke.mjs
+              node tools/roman-vacancy-smoke.mjs
               node tools/march-planner-smoke.mjs
               node scripts/imperium-sim.mjs > imperium-simulation.json
               node tools/systems-smoke.mjs
               node tools/intelligence-partners-smoke.mjs
+              node tools/archived-dossier-smoke.mjs
+              node tools/archived-leadership-summary-smoke.mjs
               node tools/archived-exchange-smoke.mjs
               node tools/trade-intelligence-smoke.mjs
               node tools/portrait-institutions-smoke.mjs
@@ -145,7 +172,6 @@ jobs:
               node tools/safe-save-smoke.mjs
               node tools/health-succession-smoke.mjs
               node tools/succession-ui-recovery-smoke.mjs
-              node tools/roman-vacancy-smoke.mjs
               node tools/newborn-age-smoke.mjs
               node tools/born-portraits-smoke.mjs
               node tools/born-portraits-six-smoke.mjs
@@ -169,9 +195,16 @@ jobs:
               node tools/office-age-uncertainty-smoke.mjs
               node tools/merge-map-switch-smoke.mjs
               node tools/scenario-systems-smoke.mjs
+              node tools/faction-save-transfer-smoke.mjs
+              node tools/breakaway-identity-smoke.mjs
               node tools/construction-smoke.mjs
+              node tools/civic-construction-smoke.mjs
+              node tools/ritual-precinct-smoke.mjs
+              node tools/population-migration-smoke.mjs
+              node tools/civilization-smoke.mjs
               command timeout 900s node tools/browser-smoke.mjs
               node tools/phase-v-smoke.mjs
+              node tools/roman-defeat-smoke.mjs
               node tools/capture-check.mjs
               node tools/map-benchmark.mjs
               ;;
@@ -188,6 +221,7 @@ jobs:
             leader-overview-1920x1080.png
             map-benchmark.json
             multipolar-simulation.json
+            market-120-simulation.json
             server.log
 
   typography:
@@ -299,3 +333,5 @@ jobs:
           path: |
             treaty-observation-*-1920x1080.png
             treaty-observation-server.log
+
+

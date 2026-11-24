@@ -2,11 +2,11 @@ import {advanceMail} from '../epistulae.js?v=dossier-archive-1';
 import {receiveTreatyNotice} from '../treaty-observation.js?v=treaty-observation-1';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,diplomacy} from '../engine.js?v=dossier-archive-1';
-import {proposeAgreement,terminateAgreement,advanceAgreements} from '../agreements.js?v=dossier-archive-1';
+import {newGame,upgradeSave,diplomacy} from '../engine.js?v=faces-name-disagreement-1';
+import {proposeAgreement,terminateAgreement,advanceAgreements} from '../agreements.js?v=agreement-courier-1';
 import {politicalMemoryAdjustment,personalMemoryAdjustment} from '../political-memory.js?v=grand-chessboard-2';
-import {appointOffice,dismissOffice} from '../office-system.js?v=dossier-archive-1';
-import {plotFormationChance} from '../conspiracies.js?v=dossier-archive-1';
+import {appointOffice,dismissOffice} from '../office-system.js?v=faces-name-disagreement-1';
+import {plotFormationChance} from '../conspiracies.js?v=faces-name-disagreement-1';
 
 test('a leader remembers a broken treaty, affecting negotiations but fading over time',()=>{
  let s;
@@ -32,3 +32,5 @@ test('the recipient remembers genuine aid and a successor does not inherit a pri
  assert.ok(s.world.politicalMemories.some(m=>m.observer==='armenia'&&m.subject==='egypt'&&m.kind==='military_aid'));
  const before=politicalMemoryAdjustment(s,'armenia','egypt');assert.ok(before>0);s.world.leadership.armenia=[];assert.equal(politicalMemoryAdjustment(s,'armenia','egypt'),0);
 });
+
+

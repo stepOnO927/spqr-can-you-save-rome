@@ -8,6 +8,7 @@ import {propose,shiftRelation} from './frontier.js?v=han-1';
 import {addClaimant,isLiuClan} from './dynasty.js?v=han-1';
 import {OASIS} from './data.js?v=han-1';
 import {clamp,log} from './util.js?v=han-1';
+import {ensureRegionalAdministrators} from './field-identities.js';
 
 const F=(id,branch,en,zh,months,cost,prereq,effects,{exclusive=[],desc=null}={})=>({id,branch,name:[en,zh],months,cost,prereq,effects,exclusive,desc});
 export const BRANCHES={A:['Imperial Authority','皇权'],B:['Government & Scholarship','朝政与经学'],C:['Agriculture & State Finance','农政与国计'],D:['The Western Regions','西域经营'],E:['The Northern Frontier','北疆'],F:['Alternate History','架空天命'],X:['Steppe Confederation','草原联盟'],W:['Kunmi Politics','昆弥政治'],O:['Oasis Statecraft','城郭之道'],K:['Kangju Statecraft','康居之道']};
@@ -114,9 +115,9 @@ const EFFECTS={
  reveal:(s,f,v)=>{if(v==='offices'&&s.court)for(const id of Object.values(s.court.offices).filter(Boolean))s.persons[id].historicalReputation=true;
   if(v==='zhizhi'){for(const r of s.regions.filter(x=>x.owner==='zhizhi'))s.intel[f][r.id]={month:s.year*12+s.month,owner:'zhizhi',armies:s.armies.filter(a=>a.region===r.id).map(a=>({owner:a.owner,men:Math.round(a.men/1000)*1000}))}}
   if(v==='regions')s.reportingImproved=true},
- audit:(s,f,v)=>{if(!s.court)return;const cands=Object.values(s.persons).filter(p=>p.alive&&p.faction===f&&p.office&&p.id!==s.throne.orthodox);
-  const target=v==='most_powerful'?cands.sort((a,b)=>(s.court.control[b.id]||0)-(s.court.control[a.id]||0))[0]:cands[Math.floor((s.year*7+s.month)%Math.max(1,cands.length))];
-  if(target){s.factions[f].treasury+=15;startAudit(s,target.id,{owner:f})}},
+ audit:(s,f,v)=>{if(!s.court)return;const cands=Object.values(s.persons).filter(p=>p.alive&&p.faction===f&&(v==='random_governor'?p.regionalOffice:p.office)&&p.id!==s.throne.orthodox);
+  const target=v==='most_powerful'?cands.sort((a,b)=>(s.court.control[b.id]||0)-(s.court.control[a.id]||0))[0]:cands.length?cands[((s.year*7+s.month)%cands.length+cands.length)%cands.length]:null;
+  if(target){s.factions[f].treasury+=15;if(!startAudit(s,target.id,{owner:f}).ok)s.factions[f].treasury-=15}},
  reform:(s,f,v)=>{if(s.court)s.court.reformLevel=(s.court.reformLevel||0)+v},
  edict:(s,f,v)=>{if(s.court){const cost=0;issueEdict(s,v,{owner:f})}},
  enmityFaction:(s,f,v)=>{for(const p of Object.values(s.persons).filter(p=>p.alive&&p.courtFaction===v))s.court.enmity[p.id]=(s.court.enmity[p.id]||0)+10},
@@ -125,7 +126,6 @@ const EFFECTS={
  mandate:(s,f,v)=>{s.mandateRitual=(s.mandateRitual||0)+v},
  debate:(s,f,v)=>{if(s.court)s.court.debates.push({id:s.court.nextId++,kind:v,options:v==='court_reform'?['enact','shelve']:v==='steppe_policy'?['accommodation','pressure']:['reform','suppress'],deadline:3,region:s.regions.find(r=>r.id==='changan').id})},
  regions:(s,f,v)=>{for(const r of hanRegions(s,f,v.filter))for(const [k,d] of Object.entries(v))if(k!=='filter')r[k]=k==='loyalty'?clamp(r[k]+d):Math.min(k==='fort'?5:12,(r[k]||0)+d)},
- audit_governor:()=>{},
  competence:(s,f,v)=>{for(const id of Object.values(s.court?.offices||{}).filter(Boolean))s.persons[id].competence=clamp((s.persons[id].competence||40)+v)},
  res:(s,f,v)=>{const fac=s.factions[f];for(const [k,d] of Object.entries(v))fac[k]=(fac[k]||0)+d},
  stability:(s,f,v)=>{s.factions[f].stability=clamp(s.factions[f].stability+v)},
@@ -137,7 +137,7 @@ const EFFECTS={
  tuntian:(s,f)=>{const r=s.regions.find(x=>x.id==='wulei');if(r&&r.owner===f){r.grain+=1;r.supply+=1}},
  intelMod:(s,f,v)=>{focusState(s,f).mod.intel=(focusState(s,f).mod.intel||0)+v},
  cavalrySupply:(s,f,v)=>{focusState(s,f).mod.cavalrySupply=(focusState(s,f).mod.cavalrySupply||0)+v},
- kingdomsToCommanderies:(s,f)=>{const k=s.regions.find(r=>r.owner===f&&r.kind==='kingdom'&&r.loyalty>=60);if(k){k.kind='commandery';k.tax+=1;k.loyalty=clamp(k.loyalty-10);log(s,['%REGION% is placed under a commandery administrator.','%REGION%改置郡守。'],{region:k.id,kind:'court'})}},
+ kingdomsToCommanderies:(s,f)=>{const k=s.regions.find(r=>r.owner===f&&r.kind==='kingdom'&&r.loyalty>=60);if(k){k.kind='commandery';k.tax+=1;k.loyalty=clamp(k.loyalty-10);ensureRegionalAdministrators(s);const administrator=k.administratorId;log(s,administrator?['%REGION% becomes a commandery under %NAME%.','%REGION%改郡，由%NAME%出任郡守。']:['%REGION% becomes a commandery.','%REGION%改置为郡。'],{region:k.id,who:administrator,kind:'court'})}},
  dynasticCrisis:(s,f)=>{const c=s.persons['fictional-liu-shang'];if(c?.alive&&isLiuClan(s,c.id)){addClaimant(s,c.id);log(s,['%NAME% presses a claim as a son of the deposed Liu He.','%NAME%以废帝刘贺之子身份争位。'],{who:c.id,kind:'throne'})}},
  tribalLoyalty:(s,f,v)=>{focusState(s,f).mod.tribal=(focusState(s,f).mod.tribal||0)+v},
  war:(s,f,v)=>{if(s.regions.some(r=>r.owner===v)&&!s.wars.some(w=>w.includes(f)&&w.includes(v)))s.wars.push([f,v])},
@@ -158,7 +158,10 @@ const avgOasis=s=>OASIS.reduce((a,o)=>a+(s.protectorate.oasis[o]?.han||0),0)/OAS
 const emperorAuth=s=>s.throne.orthodox?50:0;
 export function aiChooseFocus(s,f){
  const st=focusState(s,f);if(st.current)return null;
- const avail=treeFor(f).filter(x=>focusStatus(s,f,x.id)==='available').sort((a,b)=>score(s,f,b)-score(s,f,a));
+ // A small court cannot spend its last caravan and garrison funds on a
+ // nonessential programme. Reconsider the focus when revenue recovers.
+ const reserve=OASIS.includes(f)?10:0;
+ const avail=treeFor(f).filter(x=>focusStatus(s,f,x.id)==='available'&&s.factions[f].treasury-(x.cost.treasury||0)>=reserve).sort((a,b)=>score(s,f,b)-score(s,f,a));
  const pick=avail[0];if(pick&&startFocus(s,f,pick.id).ok)return pick.id;return null;
 }
 export function advanceFocus(s){

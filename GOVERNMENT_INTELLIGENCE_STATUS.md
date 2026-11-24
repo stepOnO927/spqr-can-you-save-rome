@@ -10,4 +10,3 @@ Contacts remain associated with the court where they were established. An employ
 # Roman Senate public records
 
 Opening simulated senators retain their recorded public names; foreign entries are explicitly presented as potentially outdated. An unobserved death, disappearance or rename does not remove a rival's row or replace its name with hidden current data. Older saves recover an opening name only from an unambiguous saved identity claim; otherwise the name remains unrecorded. Requests for a rival senator's endorsement can be dispatched against a stale record and only resolve after two months. The result can lapse without disclosing a hidden cause. The government panel displays the modeled public influence indicator, and inquiry eligibility uses the same value as the action. Actual internal Senate votes continue to depend on simulated conditions; other intelligence surfaces still need separate review.
-

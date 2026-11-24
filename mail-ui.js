@@ -1,6 +1,6 @@
-import {receivedMail,unreadCount,gatheringPlan} from './epistulae.js?v=dossier-archive-1';
-import {wartimePolicy} from './epistulae-personnel.js?v=dossier-archive-1';
-import {CHARACTER_CATALOG} from './characters.js?v=dossier-archive-1';
+import {receivedMail,unreadCount,gatheringPlan} from './epistulae.js?v=faces-name-disagreement-1';
+import {wartimePolicy} from './epistulae-personnel.js?v=faces-name-disagreement-1';
+import {CHARACTER_CATALOG} from './characters.js?v=faces-name-disagreement-1';
 import {campaignDate} from './campaign-date.js?v=calendar-1';
 import {peaceWarIsCurrent} from './peace-terms.js?v=territorial-peace-1';
 
@@ -54,4 +54,3 @@ export function mailboxHtml(s,{lang='en',filter='inbox',query='',sort='newest',s
  <div class="mail-settings"><label><input id="mail-mute" type="checkbox" ${s.mail?.preferences?.muteRoutine?'checked':''}> ${zh?'静音常规来信':'Mute routine letters'}</label><label><input id="mail-pause" type="checkbox" ${s.mail?.preferences?.pauseCritical?'checked':''}> ${zh?'关键来信暂停战役':'Pause on critical letters'}</label><label><input id="mail-auto-archive" type="checkbox" ${s.mail?.preferences?.autoArchiveRoutine?'checked':''}> ${zh?'自动归档常规来信':'Auto-archive routine letters'}</label><label>${zh?'战时使者政策':'Wartime envoys'} <select id="mail-envoy-policy">${option('envoys','safe_departure',['Safe departure','安全离境'])}${option('envoys','detain',['Temporary detention','暂时扣留'])}${option('envoys','execute',['Extreme policy','极端政策'])}</select></label><label>${zh?'战时商旅政策':'Wartime merchants'} <select id="mail-merchant-policy">${option('merchants','restrict',['Restrict commerce','限制贸易'])}${option('merchants','depart',['Order departure','令其离境'])}${option('merchants','freeze',['Freeze assets','冻结资产'])}</select></label></div>
  </section></div>`;
 }
-

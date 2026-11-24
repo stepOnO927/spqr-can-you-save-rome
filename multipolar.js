@@ -1,9 +1,9 @@
 import {knownTreatyDocuments,knownAlliance,knownRelation,knownAgreement as activeAgreement} from './treaty-observation.js?v=treaty-observation-1';
-import {isDeliveredReport} from './person-knowledge.js?v=dossier-archive-1';
+import {isDeliveredReport} from './person-knowledge.js?v=faces-name-disagreement-1';
 import {ROUTES} from './data.js?v=phase-x-1';
-import {reportedControl} from './control-intelligence.js?v=dossier-archive-1';
-import {reportedDiplomacy} from './diplomatic-knowledge.js?v=dossier-archive-1';
-import {neutralityBlocksWar} from './agreements.js?v=dossier-archive-1';
+import {reportedControl} from './control-intelligence.js?v=control-delivery-1';
+import {reportedDiplomacy} from './diplomatic-knowledge.js?v=control-delivery-1';
+import {neutralityBlocksWar} from './agreements.js?v=focus-agreement-consent-1';
 import {politicalMemoryAdjustment} from './political-memory.js?v=grand-chessboard-2';
 
 const pair=(a,b)=>[a,b].sort().join(':'),now=s=>s.year*12+s.month;
@@ -56,3 +56,5 @@ export function assessOpportunities(s,actor,estimateStrength){
   return {target,border,score,readiness,estimate,ownStrength,relation,allied,treaty,commitments,reportedSupport,suspectedSupport,knownWars,distantSightings:distant,frontierSightings,instability,instabilityConfidence:reports.length?confidence:'unknown',personality,observedYear:s.year,observedMonth:s.month};
  }).sort((a,b)=>b.score-a.score||a.target.localeCompare(b.target)).slice(0,8);
 }
+
+

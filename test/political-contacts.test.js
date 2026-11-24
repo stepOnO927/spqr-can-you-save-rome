@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=dossier-archive-1';
-import {addReport,claimantRepresentatives} from '../character-system.js?v=dossier-archive-1';
-import {offerPoliticalContact,advancePoliticalContacts} from '../political-contacts.js?v=dossier-archive-1';
+import {newGame,upgradeSave} from '../engine.js?v=faces-name-disagreement-1';
+import {addReport,claimantRepresentatives} from '../character-system.js?v=faces-name-disagreement-1';
+import {offerPoliticalContact,advancePoliticalContacts} from '../political-contacts.js?v=faces-name-disagreement-1';
 
 const seedFor=(f)=>Array.from({length:10000},(_,i)=>i).find(i=>{const a=(Math.imul(i,1664525)+1013904223)>>>0,b=(Math.imul(a,1664525)+1013904223)>>>0;return f(a/4294967296,b/4294967296)});
 function setup(player='caesar'){
@@ -59,4 +59,3 @@ test('a contact can change sides over time without announcing its true allegianc
  advancePoliticalContacts(s,addReport);assert.equal(s.world.doubleAgents[0].allegiance,'sponsor');assert.ok(!s.log.some(e=>/changed sides|改变立场/.test(e.en+e.zh)));
  s=upgradeSave(JSON.parse(JSON.stringify(s)));const agent=s.world.doubleAgents[0];s.world.characters.cato.loyalty=90;s.year++;agent.nextReport=s.year*12+s.month;agent.reassessAt=agent.nextReport;s.world.intelSeed=0;advancePoliticalContacts(s,addReport);assert.equal(agent.allegiance,'home');assert.equal(agent.history.length,2);
 });
-

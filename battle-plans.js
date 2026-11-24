@@ -1,10 +1,10 @@
 import {ROUTES,REGIONS} from './data.js?v=phase-x-1';
-import {reportedControl,reportedFortification,observeFortification} from './control-intelligence.js?v=dossier-archive-1';
 import {knownAgreement as activeAgreement,knownAlliance} from './treaty-observation.js?v=treaty-observation-1';
-import {politicalAmbition} from './conspiracies.js?v=dossier-archive-1';
-import {focusModifiers} from './national-focus.js?v=dossier-archive-1';
-import {armyStats,commanderSpecialty,commandConcentration} from './legion-designer.js?v=dossier-archive-1';
-import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=dossier-archive-1';
+import {reportedControl,reportedFortification,observeFortification} from './control-intelligence.js?v=control-delivery-1';
+import {politicalAmbition} from './conspiracies.js?v=faces-name-disagreement-1';
+import {focusModifiers} from './national-focus.js?v=faces-name-disagreement-1';
+import {armyStats,commanderSpecialty,commandConcentration} from './legion-designer.js?v=faces-name-disagreement-1';
+import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=faces-name-disagreement-1';
 import {reportedOperationObjectives} from './operation-intelligence.js?v=operation-notices-1';
 
 // OPERATIONAL BATTLE PLANNER. Plans are an order layer over the existing War
@@ -256,10 +256,10 @@ export function advanceBattlePlans(s,{autoplayPlayer=false,issueOrder,estimatedS
    // Fallback for battered offensive armies.
    if(['offensive','siege'].includes(r.role)&&plan.fallback&&(a.morale<40||a.men<r.state.startMen*.4)&&a.region!==plan.fallback){const route=findRoute(s,plan.owner,a.region,plan.fallback);if(route){const own=region(s,route[0])?.owner===plan.owner;const order={kind:own?'retreat':'move',target:route[0]};if(plan.mode==='automatic'&&issueOrder(s,a.id,order.kind,order.target,plan.owner).ok){event(s,plan,'fallback',{region:plan.fallback},log);r.state.done=true;continue}if(plan.mode==='assisted')plan.recommendations.push({armyId:a.id,...order,why:'fallback'})}}
    // Stronger enemy reported at the next objective.
-   if(['offensive','siege'].includes(r.role)){const goal=(r.role==='siege'?[r.target]:r.path).find(id=>region(s,id)?.owner!==plan.owner);const seen=goal&&freshSightings(s,plan.owner).filter(x=>x.region===goal&&isWar(s,plan.owner,x.owner)&&date(s)-(x.year*12+x.month)<=2);const est=seen?.reduce((n,x)=>n+x.strengthBand[0],0)||0;
+   if(['offensive','siege'].includes(r.role)){const goal=(r.role==='siege'?[r.target]:r.path).find(id=>region(s,id)?.owner!==plan.owner);const seen=goal&&freshSightings(s,plan.owner).filter(x=>x.region===goal&&isWar(s,plan.owner,x.owner)&&sightingAge(s,x)<=2);const est=seen?.reduce((n,x)=>n+(Number.isFinite(x.strengthBand?.[0])?x.strengthBand[0]:0),0)||0;
     if(goal&&est>a.men*1.2&&!r.state.reinforcedWarned){r.state.reinforcedWarned=true;event(s,plan,'enemy_reinforced',{region:goal,estimate:est},log);if(!automatedOwner){plan.status='needs_attention';plan.attention='enemy_reinforced';break}
      // AI: switch to another reported objective or abandon this line.
-     const alt=adjacentIds(a.region).filter(id=>isWar(s,plan.owner,reportedControl(s,plan.owner,id)?.owner)&&id!==goal&&!freshSightings(s,plan.owner).some(x=>x.region===id&&x.strengthBand[0]>a.men));
+     const alt=adjacentIds(a.region).filter(id=>isWar(s,plan.owner,reportedControl(s,plan.owner,id)?.owner)&&id!==goal&&!freshSightings(s,plan.owner).some(x=>x.region===id&&x.strengthBand?.[0]>a.men));
      if(alt.length){r.path=[alt[0]];r.target=alt[0];r.state.reinforcedWarned=false}else{r.state.done=true;continue}}}
    const order=nextOrder(s,plan,r,a,{estimatedStrength});
    if(!order){if(['offensive','siege'].includes(r.role)&&!r.state.done&&a.region===r.state.lastRegion)r.state.stuck++;r.state.lastRegion=a.region;continue}
@@ -291,7 +291,7 @@ export function aiBattlePlans(s,owner,{estimatedStrength,log=()=>{}}={}){
  const enemies=s.wars.filter(w=>w.includes(owner)).map(w=>w.find(x=>x!==owner));if(!enemies.length)return null;
  const own=s.regions.filter(r=>r.owner===owner),ownIds=new Set(own.map(r=>r.id)),sightings=freshSightings(s,owner);
  const busy=new Set(plansFor(s,owner).filter(p=>LIVE.includes(p.status)).flatMap(p=>p.roles.map(r=>r.armyId)));
- const free=s.armies.filter(a=>a.owner===owner&&a.men>1200&&!a.move&&!a.siege&&!a.reorg&&!busy.has(a.id)&&ownIds.has(a.region)).sort((a,b)=>b.men-a.men||a.id.localeCompare(b.id));
+ const free=s.armies.filter(a=>a.owner===owner&&a.men>1200&&!a.move&&!a.siege&&!a.reorg&&!busy.has(a.id)&&ownIds.has(a.region)&&!(owner==='han'&&a.id==='hanCapitalGuard'&&s.regions.find(r=>r.id==='hanHexi')?.owner==='han')).sort((a,b)=>b.men-a.men||a.id.localeCompare(b.id));
  if(!free.length)return null;
  const threatened=own.filter(r=>adjacentIds(r.id).some(id=>sightings.some(x=>x.region===id&&enemies.includes(x.owner)))).map(r=>r.id);
  if(level==='standard'){
@@ -330,3 +330,5 @@ export function aiBattlePlans(s,owner,{estimatedStrength,log=()=>{}}={}){
  if(threatened.length&&!mine.length){const r=createPlan(s,owner,{name:'Defensive line',mode:'automatic',ai:true});for(const a of free.filter(a=>threatened.includes(a.region)).slice(0,3))assignRole(s,owner,r.plan.id,{armyId:a.id,role:'defensive',target:a.region});if(r.plan.roles.length){approvePlan(s,owner,r.plan.id,{log});return r.plan.id}cancelPlan(s,owner,r.plan.id)}
  return null;
 }
+
+

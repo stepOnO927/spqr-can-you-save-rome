@@ -1,6 +1,6 @@
 import {knownAlliance,knownRelation} from './treaty-observation.js?v=treaty-observation-1';
 import {ROUTES} from './data.js?v=phase-x-1';
-import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=dossier-archive-1';
+import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=faces-name-disagreement-1';
 
 const now=s=>s.year*12+s.month;
 const pair=(a,b)=>[a,b].sort().join(':');
@@ -39,3 +39,5 @@ export function respondToFrontierReports(s,actor,{issueOrder,canCommand=()=>true
  }
  return {reports,ordered};
 }
+
+

@@ -16,8 +16,8 @@ try{
   await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
   await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
   await page.evaluate(async({type,provider,recipient})=>{
-   const {newGame}=await import('/engine.js?v=dossier-archive-1');
-   const {proposeAgreement}=await import('/agreements.js?v=dossier-archive-1');
+   const {newGame}=await import('/engine.js?v=faces-name-disagreement-1');
+   const {proposeAgreement}=await import('/agreements.js?v=focus-agreement-consent-1');
    const s=newGame('caesar');s.wars=[];s.alliances=[];
    s.relations[[provider,recipient].sort().join(':')]=60;
    assertTreaty(proposeAgreement(s,provider,recipient,type,{secret:provider!=='caesar'}));
@@ -46,4 +46,3 @@ try{
  }
  assert.deepEqual(errors,[]);
 }finally{await browser.close()}
-

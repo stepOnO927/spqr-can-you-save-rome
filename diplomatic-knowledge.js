@@ -1,6 +1,6 @@
 import {observeOwnBilateralWar} from './treaty-observation.js?v=treaty-observation-1';
 import {ROUTES,FACTIONS} from './data.js?v=phase-x-1';
-import {reportedControl} from './control-intelligence.js?v=dossier-archive-1';
+import {reportedControl} from './control-intelligence.js?v=control-delivery-1';
 
 // Public announcements are learned by participants and adjacent observers.
 // Snapshots are not live links: an observer who loses contact keeps old news.
@@ -47,3 +47,5 @@ export function observeDiplomacy(s){
  }
 }
 export function reportedDiplomacy(s,viewer){return Object.values(s.world?.diplomaticKnowledge?.[viewer]||{}).filter(r=>r.kind!=='private_standing'&&Array.isArray(r.parties)).map(r=>({...r,parties:[...r.parties]}))}
+
+

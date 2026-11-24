@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=dossier-archive-1';
-import {addReport} from '../character-system.js?v=dossier-archive-1';
-import {leadershipIntelligence} from '../map-lab/intelligence-summary.js';
+import {newGame,upgradeSave} from '../engine.js?v=faces-name-disagreement-1';
+import {addReport} from '../character-system.js?v=faces-name-disagreement-1';
+import {leadershipIntelligence} from '../map-lab/intelligence-summary.js?v=faces-name-disagreement-1';
 
 test('leadership summary uses only the viewer’s reports, including their observation dates',()=>{
  const s=newGame('caesar');
@@ -32,4 +32,3 @@ test('archival preserves the historical verification date without retaining curr
 test('undated legacy records cannot invent an observation or verification date',()=>{
  const s=newGame('caesar');s.knowledge.caesar.egypt.reportArchive=[{kind:'leaders',leaders:['cleopatra','ptolemy'],verified:true,confidence:'confirmed'}];assert.deepEqual(leadershipIntelligence(s,'caesar','egypt'),{confidence:'unverified',observed:null,lastVerified:null});
 });
-

@@ -5,7 +5,8 @@ import {MARCH_CONFIG,MARCH_POINTS,estimateMarchEdge,findMarchPath,marchEdge,terr
 
 test('the route graph uses playable theaters and preserves real geography',()=>{
  const s=newGame('caesar'),a=s.armies.find(x=>x.id==='xiii');
- assert.equal(Object.keys(MARCH_POINTS).length,s.regions.length);
+ assert.ok(s.regions.every(r=>MARCH_POINTS[r.id]));
+ assert.equal(Object.keys(MARCH_POINTS).length,newGame('han').regions.length);
  assert.equal(marchEdge('cisalpine','italiaN').bridge,true);
  assert.equal(marchEdge('roma','sicilia'),null);
  assert.ok(terrainFor('gaul').includes('dense_forest'));
@@ -28,6 +29,20 @@ test('winter blocks a high pass without applying Egyptian winter conditions',()=
  assert.equal(estimateMarchEdge(s,a,'galatia','armenia').blocked,'snow');
  assert.equal(estimateMarchEdge(s,a,'egypt','egyptUpper').blocked,undefined);
  s.month=5;assert.equal(estimateMarchEdge(s,a,'galatia','armenia').blocked,undefined);
+});
+
+test('Han frontier routes use the same measured march and survive a save',()=>{
+ const s=newGame('han'),a=s.armies.find(x=>x.id==='hanHexiGarrison');
+ s.wars.push(['han','shanshan']);
+ const edge=estimateMarchEdge(s,a,'hanHexi','shanshanOasis');
+ assert.equal(edge.frontier,true);assert.ok(edge.km>0);assert.ok(edge.months>=3);
+ const route=previewRoute(s,a.id,['shanshanOasis']);
+ assert.equal(route.ok,true);assert.equal(route.segments[0].frontier,true);
+ assert.deepEqual(route.frontierCost,{treasury:6,food:8});
+ assert.equal(issueRouteOrder(s,a.id,['shanshanOasis']).ok,true);
+ assert.equal(a.move.frontier,true);assert.equal(a.move.totalMonths,edge.months);
+ tick(s);const restored=upgradeSave(structuredClone(s)).armies.find(x=>x.id===a.id);
+ assert.equal(restored.move?.frontier,true);assert.equal(restored.move?.elapsed,a.move.elapsed);
 });
 
 test('route previews reject reported foreign access, sea cost and impossible points',()=>{

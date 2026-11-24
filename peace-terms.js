@@ -1,5 +1,5 @@
 import {REGIONS,ROUTES} from './data.js?v=phase-x-1';
-import {reportedControl} from './control-intelligence.js?v=dossier-archive-1';
+import {reportedControl} from './control-intelligence.js?v=control-delivery-1';
 
 const pair=(a,b)=>[a,b].sort().join(':');
 const neighbors=id=>ROUTES.filter(r=>r[0]===id||r[1]===id).map(r=>r[0]===id?r[1]:r[0]);
@@ -58,4 +58,3 @@ export function applyPeaceTransfer(s,letter){
  letter.peaceTransfer={region:r.id,from:t.from,to:t.to,year:s.year,month:s.month};
  return r;
 }
-

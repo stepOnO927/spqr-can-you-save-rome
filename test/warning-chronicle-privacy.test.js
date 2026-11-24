@@ -44,4 +44,3 @@ test('save migration retains private warning state without turning it into sende
   assert.equal(restored.warningLetters[0].status,status);assert.deepEqual(warningLedger(restored,'caesar'),initial);
  }
 });
-

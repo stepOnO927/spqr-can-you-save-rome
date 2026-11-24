@@ -1,6 +1,6 @@
 import {campaignDate} from './campaign-date.js?v=calendar-1';
 import {FACTIONS} from './data.js?v=phase-x-1';
-import {reportedControl} from './control-intelligence.js?v=dossier-archive-1';
+import {reportedControl} from './control-intelligence.js?v=control-delivery-1';
 import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
 
 const now=s=>s.year*12+s.month;
@@ -32,7 +32,7 @@ export function initializeTreatyObservations(s){
  s.world.treatyObservationVersion=1;return s;
 }
 export function knownTreatyDocuments(s,viewer,kind=null){
- return Object.values(s.world?.diplomaticKnowledge?.[viewer]||{}).filter(d=>d.participantCopy&&kinds.has(d.kind)&&(!kind||d.kind===kind)&&d.parties?.includes(viewer)&&d.status==='active'&&(!Number.isFinite(d.expiresAt)||now(s)<d.expiresAt)&&!(d.parties.length===2&&(s.wars||[]).some(w=>w.includes(viewer)&&d.parties.every(p=>w.includes(p))))).map(copy);
+ return Object.values(s.world?.diplomaticKnowledge?.[viewer]||{}).filter(d=>d.participantCopy&&(!Number.isFinite(d.receivedYear*12+d.receivedMonth)||d.receivedYear*12+d.receivedMonth<=now(s))&&(!Number.isFinite(d.year*12+d.month)||d.year*12+d.month<=now(s))&&kinds.has(d.kind)&&(!kind||d.kind===kind)&&d.parties?.includes(viewer)&&d.status==='active'&&(!Number.isFinite(d.expiresAt)||now(s)<d.expiresAt)&&!(d.parties.length===2&&(s.wars||[]).some(w=>w.includes(viewer)&&d.parties.every(p=>w.includes(p))))).map(copy);
 }
 export function knownAgreement(s,viewer,partner,type){return knownTreatyDocuments(s,viewer,'agreement').find(t=>t.type===type&&t.parties.includes(partner))}
 export function knownAlliance(s,viewer,partner){return knownTreatyDocuments(s,viewer,'alliance').some(t=>t.parties.includes(partner))}
@@ -62,11 +62,11 @@ export function announceTreatyChange(s,document,actor,{relationPenalty=0,memoryK
  return {ok:true,noticeId:id};
 }
 export function receiveTreatyNotice(s,m){
- const x=m.context,d=x?.document;if(x?.kind!=='treaty_notice'||m.delivery!=='received'||!d?.id||!x.signatories?.includes(m.recipient)||!x.signatories.includes(m.senderFaction))return false;
+ const x=m.context,d=x?.document;if(x?.kind!=='treaty_notice'||m.delivery!=='received'||Number.isFinite(m.arrival)&&m.arrival>now(s)||!d?.id||!x.signatories?.includes(m.recipient)||!x.signatories.includes(m.senderFaction))return false;
  const r=records(s,m.recipient),old=r[d.id];if(!old?.participantCopy||!old.parties?.includes(m.senderFaction))return false;
  // A late notice cannot revive an observer's own withdrawal or overwrite a
  // newer received document. Its original date and receipt date stay separate.
- const stamp=d.ended?.year*12+d.ended?.month,previous=old.ended?.year*12+old.ended?.month;
+ const stamp=d.ended?.year*12+d.ended?.month;if(Number.isFinite(stamp)&&stamp>now(s))return false;const previous=old.ended?.year*12+old.ended?.month;
  if((!old.reference||!d.reference||old.reference===d.reference)&&old.source!=='own_decision'&&old.source!=='own_hostilities'&&(!Number.isFinite(previous)||!Number.isFinite(stamp)||stamp>=previous)){
   const next=copy(d);if(d.kind==='coalition'&&x.memoryKind==='coalition_departure'){next.parties=old.parties.filter(p=>p!==m.senderFaction);next.status=next.parties.length<3?'dissolved':'active';next.leader=old.leader===m.senderFaction?next.parties[0]:old.leader}
   rememberTreatyCopy(s,next,[m.recipient],{source:'received_notice'});

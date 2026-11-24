@@ -5,7 +5,7 @@ page.on('pageerror',e=>errors.push(e.message));
 try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
  await page.evaluate(async()=>{
-  const {newGame}=await import('/engine.js?v=dossier-archive-1'),{proposeAgreement}=await import('/agreements.js?v=dossier-archive-1'),s=newGame('caesar');s.seed=1000003;s.difficulty='beginner';
+  const {newGame}=await import('/engine.js?v=faces-name-disagreement-1'),{proposeAgreement}=await import('/agreements.js?v=focus-agreement-consent-1'),s=newGame('caesar');s.seed=1000003;s.difficulty='beginner';
   for(const r of s.regions)if(r.owner==='senate'&&!['italiaN','roma'].includes(r.id))r.owner='caesar';
   const attacker=s.armies.find(a=>a.id==='xiii'),defender=s.armies.find(a=>a.owner==='senate');
   s.armies=[attacker,defender];Object.assign(attacker,{region:'cisalpine',men:18000,morale:90,move:null,siege:null});Object.assign(defender,{region:'italiaN',men:300,morale:30,move:null,siege:null});
@@ -34,4 +34,3 @@ try{
  await page.locator('#lang').click();await page.locator('[data-tab="legacy"]').click();await page.locator('.legacy-entry details').first().evaluate(el=>el.open=true);assert.match(await page.locator('.legacy-entry').first().innerText(),/Earned distinctions.*At the Diplomatic Table/);
  assert.deepEqual(errors,[]);console.log('Real battle, saved siege, delayed Roman victory, finalization and prior-campaign distinctions verified through player controls.');
 }finally{await browser.close()}
-

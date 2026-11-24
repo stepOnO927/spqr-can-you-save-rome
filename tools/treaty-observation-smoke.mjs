@@ -1,7 +1,7 @@
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 async function installEndingFixture({kind,outcome}){
- const e=await import('/engine.js?v=dossier-archive-1'),a=await import('/agreements.js?v=dossier-archive-1');
+ const e=await import('/engine.js?v=faces-name-disagreement-1'),a=await import('/agreements.js?v=focus-agreement-consent-1');
  for(let n=1;n<=80;n++){
   const s=e.newGame('caesar');s.difficulty='beginner';s.seed=n*1000003;s.relations['caesar:egypt']=60;
   for(const id of ['caesar','egypt'])Object.assign(s.factions[id],{treasury:300,food:300,stability:80});for(const unit of s.armies.filter(x=>x.owner==='caesar'))unit.men=12000;

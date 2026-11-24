@@ -1,13 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {newGame,upgradeSave} from '../engine.js?v=dossier-archive-1';
-import {assignSuccession} from '../characters.js?v=dossier-archive-1';
-import {advanceGovernments} from '../governance.js?v=dossier-archive-1';
-import {advanceDynasties,createFictionalPerson} from '../dynasties.js?v=dossier-archive-1';
-import {fictionalPortraitKey,observedFictionalPortrait,assignCourtPortrait} from '../portrait-registry.js?v=dossier-archive-1';
-import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=dossier-archive-1';
-import {addReport} from '../character-system.js?v=dossier-archive-1';
+import {newGame,upgradeSave} from '../engine.js?v=faces-name-disagreement-1';
+import {assignSuccession} from '../characters.js?v=faces-name-disagreement-1';
+import {advanceGovernments} from '../governance.js?v=faces-name-disagreement-1';
+import {advanceDynasties,createFictionalPerson} from '../dynasties.js?v=faces-name-disagreement-1';
+import {fictionalPortraitKey,observedFictionalPortrait,assignCourtPortrait} from '../portrait-registry.js?v=missing-fate-privacy-1';
+import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=faces-name-disagreement-1';
+import {addReport} from '../character-system.js?v=faces-name-disagreement-1';
 
 const rulers={armenia:'artavasdes',numidia:'juba',galatia:'deiotarus',bosporus:'pharnaces'};
 function nominee(faction){const s=newGame('caesar');s.world.characters[rulers[faction]].alive=false;s.world.characters[rulers[faction]].health='deceased';assignSuccession(s,faction);s.wars=[];s.factions[faction].treasury=100;s.factions[faction].stability=60;s.world.dynasties.seed=1;for(let i=0;i<7;i++){s.month++;advanceGovernments(s)}return [s,s.world.leadership[faction][0]]}
@@ -32,6 +32,15 @@ test('legacy migration requires documented origin, and artwork is never reused',
  s.world.characters[id].alive=false;const saved=s.world.dynasties.catalog[id];const duplicate=createFictionalPerson(s,{name:[...saved.name],faction:'armenia',birthYear:s.year-35,origin:'court_nominee'});
  assert.equal(assignCourtPortrait(s,duplicate),null);assert.equal(fictionalPortraitKey(s,duplicate),null);
  let [other,unknown]=nominee('numidia');delete other.world.dynasties.courtPortraitClaims;delete other.world.dynasties.courtPortraitPoolVersion;delete other.world.dynasties.lives[unknown];advanceDynasties(other);assert.equal(fictionalPortraitKey(other,unknown),null);
+});
+
+test('older saved court nominee names retain their assigned artwork',()=>{
+ let s=newGame('caesar');
+ const id=createFictionalPerson(s,{name:['Fictional Armenian court nominee 1','虚构亚美尼亚宫廷人选1'],faction:'armenia',birthYear:-84,location:'armenia',origin:'court_nominee'});
+ assert.equal(fictionalPortraitKey(s,id),'fictional-court-armenia');
+ s=upgradeSave(structuredClone(s));
+ assert.equal(fictionalPortraitKey(s,id),'fictional-court-armenia');
+ assert.deepEqual(s.world.dynasties.catalog[id].name,['Fictional Armenian court nominee 1','虚构亚美尼亚宫廷人选1']);
 });
 
 test('a real accepted personal meeting records the portrait only after resolution',()=>{

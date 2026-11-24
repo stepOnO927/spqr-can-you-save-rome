@@ -1,13 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,diplomacy,estimatedStrength} from '../engine.js?v=dossier-archive-1';
-import {proposeAgreement,terminateAgreement} from '../agreements.js?v=dossier-archive-1';
-import {formCoalition,leaveCoalition} from '../coalitions.js?v=dossier-archive-1';
-import {advanceMail} from '../epistulae.js?v=dossier-archive-1';
+import {newGame,upgradeSave,diplomacy,estimatedStrength} from '../engine.js?v=faces-name-disagreement-1';
+import {proposeAgreement,terminateAgreement} from '../agreements.js?v=focus-agreement-consent-1';
+import {formCoalition,leaveCoalition} from '../coalitions.js?v=faces-name-disagreement-1';
+import {advanceMail} from '../epistulae.js?v=faces-name-disagreement-1';
 import {knownTreatyDocuments,knownAgreement,knownAlliance,knownRelation,receiveTreatyNotice,initializeTreatyObservations} from '../treaty-observation.js?v=treaty-observation-1';
-import {observeDiplomacy,reportedDiplomacy} from '../diplomatic-knowledge.js?v=dossier-archive-1';
-import {assessOpportunities,opportunityEvidenceSignature} from '../multipolar.js?v=dossier-archive-1';
-import {buildChessboard} from '../chessboard.js?v=dossier-archive-1';
+import {observeDiplomacy,reportedDiplomacy} from '../diplomatic-knowledge.js?v=control-delivery-1';
+import {assessOpportunities,opportunityEvidenceSignature} from '../multipolar.js?v=faces-name-disagreement-1';
+import {buildChessboard} from '../chessboard.js?v=faces-name-disagreement-1';
 
 function setup(type='non_aggression',seed=1000003){
  const s=newGame('caesar');s.seed=seed;s.relations['caesar:egypt']=60;const result=proposeAgreement(s,'egypt','caesar',type);assert.ok(result.ok);observeDiplomacy(s);return {s,id:result.agreement.id};
@@ -65,4 +65,10 @@ test('an old notice cannot end a renewed full alliance with the same parties and
   for(let i=0;i<18&&!notice(s,'egypt')?.delivery?.match(/received|lost/);i++)advance(s);
   if(notice(s,'egypt')?.delivery!=='received')continue;assert.ok(knownAlliance(s,'caesar','egypt'));assert.equal(knownTreatyDocuments(s,'caesar','alliance')[0].reference,reference);checked=true;break;
  }assert.ok(checked);
+});
+
+test('future-dated copies and an unarrived notice never become current knowledge',()=>{
+ const {s,id}=setup();const old=knownRelation(s,'caesar','egypt');s.world.diplomaticKnowledge.caesar[id].receivedYear++;assert.equal(knownAgreement(s,'caesar','egypt','non_aggression'),undefined);s.world.diplomaticKnowledge.caesar[id].receivedYear--;
+ terminateAgreement(s,id,'egypt');advanceMail(s,{receiveTreatyNotice});const letter=notice(s,'egypt');assert.ok(letter);assert.equal(letter.delivery,'traveling');
+ const forged=structuredClone(letter);forged.delivery='received';forged.arrival=s.year*12+s.month+1;assert.equal(receiveTreatyNotice(s,forged),false);assert.ok(knownAgreement(s,'caesar','egypt','non_aggression'));assert.equal(knownRelation(s,'caesar','egypt'),old);
 });

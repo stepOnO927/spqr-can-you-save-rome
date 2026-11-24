@@ -2,9 +2,10 @@ import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 
 async function installFixture({view,incoming}){
- const {newGame}=await import('/engine.js?v=dossier-archive-1'),{createPlan,assignRole,approvePlan}=await import('/battle-plans.js?v=dossier-archive-1'),{observeControl}=await import('/control-intelligence.js?v=dossier-archive-1'),{observeDiplomacy}=await import('/diplomatic-knowledge.js?v=dossier-archive-1'),{sendLetter,courierMonths,advanceMail}=await import('/epistulae.js?v=dossier-archive-1'),{proposeJointOperation,advanceJointOperations}=await import('/joint-operations.js?v=joint-operations-1');
- const {initializeAgreements}=await import('/agreements.js?v=dossier-archive-1');
+ const {initializeAgreements}=await import('/agreements.js?v=focus-agreement-consent-1');
+ const {newGame}=await import('/engine.js?v=faces-name-disagreement-1'),{createPlan,assignRole,approvePlan}=await import('/battle-plans.js?v=faces-name-disagreement-1'),{observeControl}=await import('/control-intelligence.js?v=control-delivery-1'),{observeDiplomacy}=await import('/diplomatic-knowledge.js?v=control-delivery-1'),{sendLetter,courierMonths,advanceMail}=await import('/epistulae.js?v=faces-name-disagreement-1'),{proposeJointOperation,advanceJointOperations}=await import('/joint-operations.js?v=joint-operations-1');
  const s=newGame('senate');s.difficulty='beginner';s.seed=100003;s.regions.find(r=>r.id==='africa').owner='caesar';s.regions.find(r=>r.id==='mauretania').owner='caesar';s.wars.push(['numidia','caesar']);s.alliances.push(['numidia','senate']);initializeAgreements(s);s.relations['numidia:senate']=60;
+
  for(const id of ['senate','numidia'])Object.assign(s.factions[id],{treasury:300,food:300,stability:80});
  for(const a of s.armies){a.move=null;a.siege=null;if(a.owner==='caesar')a.men=500}
  const a=s.armies.find(a=>a.id==='pompey'),b=s.armies.find(a=>a.owner==='numidia');for(const u of [a,b])Object.assign(u,{men:12000,morale:80});observeControl(s);observeDiplomacy(s);
@@ -26,7 +27,7 @@ try{
   await page.evaluate(installFixture,{view,incoming:true});await open();assert.equal(await page.locator('[data-joint-offer]').count(),1);const accept=page.locator('[data-joint-answer="accept"]');await accept.click();assert.match(await accept.innerText(),/确认保留己方计划/);await accept.click();s=await save();const own=s.world.battlePlans.find(p=>p.owner==='senate');assert.equal(s.factions.senate.treasury,298);assert.equal(own.coordination.state,'waiting_confirmation');assert.equal(s.mail.messages.find(m=>m.id===own.coordination.replyId).delivery,'traveling');assert.equal(s.armies.find(a=>a.id==='pompey').move,null);
   // Advance the actual couriers in the saved player-created state, then use
   // the visible next-month control for the real agreed departure.
-  await page.evaluate(async view=>{const {advanceMail,sendLetter}=await import('/epistulae.js?v=dossier-archive-1'),{advanceJointOperations}=await import('/joint-operations.js?v=joint-operations-1'),s=JSON.parse(localStorage.getItem('spqr-save-1')),p=s.world.battlePlans.find(p=>p.owner==='senate');for(let i=0;i<100&&s.year*12+s.month<p.coordination.launchAt-1;i++){for(const m of s.mail.messages.filter(m=>m.context?.kind?.startsWith('joint_')))m.courierRisk=0;if(++s.month>12){s.month=1;s.year++}advanceMail(s);advanceJointOperations(s,{sendLetter})}if(p.coordination.state!=='agreed')throw Error('No real confirmation');sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:view,state:s}))},view);
+  await page.evaluate(async view=>{const {advanceMail,sendLetter}=await import('/epistulae.js?v=faces-name-disagreement-1'),{advanceJointOperations}=await import('/joint-operations.js?v=joint-operations-1'),s=JSON.parse(localStorage.getItem('spqr-save-1')),p=s.world.battlePlans.find(p=>p.owner==='senate');for(let i=0;i<100&&s.year*12+s.month<p.coordination.launchAt-1;i++){for(const m of s.mail.messages.filter(m=>m.context?.kind?.startsWith('joint_')))m.courierRisk=0;if(++s.month>12){s.month=1;s.year++}advanceMail(s);advanceJointOperations(s,{sendLetter})}if(p.coordination.state!=='agreed')throw Error('No real confirmation');sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:view,state:s}))},view);
   await open();assert.match(await page.locator('[data-joint-state]').innerText(),/本方已确认/);await page.locator('#step').click();s=await save();for(const owner of ['senate','numidia']){assert.equal(s.world.battlePlans.find(p=>p.owner===owner).coordination.state,'launched');assert.ok(s.armies.find(a=>a.owner===owner&&(owner!=='senate'||a.id==='pompey')).move,`${view} ${owner} actual departure`)}
   await plans();await page.evaluate(()=>document.fonts.ready);await page.screenshot({path:`joint-operations-${view}-controls-1920x1080.png`});
   if(view==='atlas'){await page.locator('#open-atlas').click();await page.locator('#turn-date').waitFor();await page.locator('[data-city="ROMA"]').waitFor();await page.waitForTimeout(8000);await page.locator('#save').click();const carried=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')));assert.ok(carried.armies.find(a=>a.id==='pompey').move,'real return to the atlas retains orders');assert.equal(carried.world.battlePlans.find(p=>p.owner==='senate').coordination.state,'launched');await page.evaluate(()=>document.fonts.ready);await page.screenshot({path:'joint-operations-atlas-1920x1080.png'})}
@@ -35,3 +36,5 @@ try{
  }
  assert.deepEqual(errors,[]);
 }finally{await browser.close()}
+
+

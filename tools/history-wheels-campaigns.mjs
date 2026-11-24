@@ -1,10 +1,10 @@
 // Cloud-only diagnostic playthroughs. Report observed state, not invented stories.
 import assert from 'node:assert/strict';
-import {newGame,tick,forecastEconomy,issueMilitaryOrder,recruit,sendInquiry,setTax} from '../engine.js';
-import {configureStartingDifficulty} from '../difficulty.js';
-import {chooseAmbition,ambitionStatus} from '../history-wheels.js';
-import {newHanGame,tick as tickHan} from '../han/engine.js';
-import {choose as chooseHanAmbition,status as hanAmbitionStatus} from '../han/ambitions.js';
+import {newGame,tick,forecastEconomy,issueMilitaryOrder,recruit,sendInquiry,setTax} from '../engine.js?v=faces-name-disagreement-1';
+import {configureStartingDifficulty} from '../difficulty.js?v=faces-name-disagreement-1';
+import {chooseAmbition,ambitionStatus} from '../history-wheels.js?v=faces-name-disagreement-1';
+import {newHanGame,tick as tickHan} from '../han/engine.js?v=faces-name-disagreement-1';
+import {choose as chooseHanAmbition,status as hanAmbitionStatus} from '../han/ambitions.js?v=faces-name-disagreement-1';
 
 const date=s=>s.year*12+s.month;
 function roman(side,months,seed,{autoplay=false,difficulty='standard',aiLevel=null}={}){
@@ -114,4 +114,3 @@ for(const plan of ['levy_guard','travel_guard']){
  const runs=playerStrategySweep[plan];
  assert.ok(runs.every(run=>run.months===36&&!run.defeat&&run.trace.at(-1).regions>=1&&run.trace.at(-1).armies>=1&&run.trace.at(-1).treasury>=0&&run.trace.at(-1).food>=0),`${plan} should preserve a supplied Roman command across all six 36-month cloud seeds`);
 }
-

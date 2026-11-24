@@ -1,11 +1,11 @@
 import {startingTreaties} from './helpers/starting-treaties.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick,diplomacy,isWar,moveArmy,sendStrategicOffer,advanceStrategicOffers,answerStrategicOffer} from '../engine.js?v=dossier-archive-1';
-import {proposeAgreement,terminateAgreement,advanceAgreements,activeAgreement,neutralityBlocksWar,neutralityBlocksAid} from '../agreements.js?v=dossier-archive-1';
-import {sendAgreementProposal,advanceAgreementProposals,answerAgreementProposal} from '../agreement-negotiations.js?v=dossier-archive-1';
-import {syncAgreementLetters,receivedMail,replyToLetter} from '../epistulae.js?v=dossier-archive-1';
-import {observeDiplomacy} from '../diplomatic-knowledge.js?v=dossier-archive-1';
+import {newGame,upgradeSave,tick,diplomacy,isWar,moveArmy,sendStrategicOffer,advanceStrategicOffers,answerStrategicOffer} from '../engine.js?v=faces-name-disagreement-1';
+import {proposeAgreement,terminateAgreement,advanceAgreements,activeAgreement,neutralityBlocksWar,neutralityBlocksAid} from '../agreements.js?v=focus-agreement-consent-1';
+import {sendAgreementProposal,advanceAgreementProposals,answerAgreementProposal} from '../agreement-negotiations.js?v=focus-agreement-consent-1';
+import {syncAgreementLetters,receivedMail,replyToLetter} from '../epistulae.js?v=faces-name-disagreement-1';
+import {observeDiplomacy} from '../diplomatic-knowledge.js?v=control-delivery-1';
 
 const date=s=>s.year*12+s.month;
 function fixture(seed=1000003){const s=newGame('caesar');s.seed=seed;s.alliances=[];s.relations['caesar:egypt']=60;for(const id of ['caesar','egypt'])Object.assign(s.factions[id],{treasury:300,food:300});return s}
@@ -30,7 +30,8 @@ test('the neutral party cannot open either named front, signatories cannot attac
 
 test('trade survives neutrality and the fixed term does not secretly expire when the original war ends',()=>{
  const s=fixture(),t=pact(s),trade=proposeAgreement(s,'egypt','caesar','trade');assert.ok(trade.ok);
- const a=s.factions.caesar.treasury,b=s.factions.egypt.treasury;advanceAgreements(s);assert.equal(s.factions.caesar.treasury,a+1);assert.equal(s.factions.egypt.treasury,b+1);
+ assert.equal(trade.agreement.terms.marketAccess,true);
+ const a=s.factions.caesar.treasury,b=s.factions.egypt.treasury;advanceAgreements(s);assert.equal(s.factions.caesar.treasury,a);assert.equal(s.factions.egypt.treasury,b);
  s.wars=s.wars.filter(w=>!(w.includes('caesar')&&w.includes('senate')));assert.equal(neutralityBlocksWar(s,'egypt','senate'),true);
  while(date(s)<t.expiresAt){if(++s.month>12){s.month=1;s.year++}}advanceAgreements(s);assert.equal(t.status,'expired');assert.equal(neutralityBlocksWar(s,'egypt','senate'),false);
 });
@@ -138,3 +139,5 @@ test('a newly formed pledge does not erase supplies already paid for and dispatc
  }
  assert.ok(delivered);
 });
+
+
