@@ -9,6 +9,16 @@ import {advanceDate} from '../han/util.js?v=han-1';
 import {COMMODITIES,marketPrice} from '../market-goods.js?v=faces-wheels-1';
 import {constructionMaterialText,inventionReason} from '../map-lab/invention-ui.js?v=mission-discount-1';
 
+test('bridge projects require a mapped river or river crossing before any funds are spent',()=>{
+ const state=newGame('senate');state.inventions.senate.knownMaterial.push('bridges');
+ const before=state.factions.senate.treasury,manpower=state.factions.senate.manpower;
+ assert.equal(canConstruct(state,'senate','sicilia','bridges'),'site');
+ assert.deepEqual(startConstruction(state,'senate','sicilia','bridges'),{ok:false,reason:'site'});
+ assert.equal(state.factions.senate.treasury,before);
+ assert.equal(state.factions.senate.manpower,manpower);
+ assert.notEqual(canConstruct(state,'senate','roma','bridges'),'site');
+});
+
 test('quarried stone is a measured good in both campaigns and old saves',()=>{
  assert.deepEqual(COMMODITIES.stone.unit,['20 tons','二十吨']);
  let roman=newGame('senate');const treasury=roman.factions.senate.treasury;
