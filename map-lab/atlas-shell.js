@@ -8,11 +8,12 @@
 import {campaignDate} from '../campaign-date.js?v=calendar-1';
 import {FACTIONS} from '../data.js?v=phase-x-1';
 import {factionMark} from '../identity.js?v=phase-x-1';
+import {HISTORICAL_RELATIONSHIPS} from '../historical-reference.js?v=phase-x-1';
 
 const RAIL=['factions','campaign-government','campaign-focus','campaign-legions','campaign-plans','inventions','chronicle','atlas-mail'];
 const courts=new Map();
 const homes=new Map();
-let options={language:()=>'en',openCourt(){},openFamily(){},onClose(){}};
+let options={language:()=>'en',openCourt(){},openFamily(){},openPerson(){},onClose(){}};
 let rail=null,bar=null,ready=false,dossierTab='overview';
 
 export function rememberCourt(id,faction){if(id&&faction)courts.set(id,faction)}
@@ -145,7 +146,13 @@ export function layoutDossier(panel,meta={}){
 
  const side=el('aside','dossier-side');
  frame.append(card);if(card.dossierLarge)frame.append(card.dossierLarge);side.append(frame);
- if(grid){grid.classList.add('dossier-vitals');side.append(grid)}
+ // Vitals: what your faction knows, row by row. Each value is marked known or unknown from the
+ // text character-ui.js printed; the value itself is never recomputed here.
+ const UNKNOWN=/^(未知|Unknown|unknown|—|-)$/;
+ const pairs=[];
+ if(grid){const cells=[...grid.children];for(let i=0;i+1<cells.length;i+=2)pairs.push([cells[i],cells[i+1]])}
+ for(const [,value] of pairs)value.dataset.state=UNKNOWN.test(value.textContent.trim())?'unknown':'known';
+ if(pairs.length){const id=el('div','dossier-identity');id.append(el('small',null,pairs[0][0].textContent),el('strong',null,pairs[0][1].textContent));side.append(id)}
  if(note)side.append(note);
 
  const main=el('div','dossier-main');
@@ -169,6 +176,7 @@ export function layoutDossier(panel,meta={}){
  const bio=panel.querySelector('[data-hist="bio"]'),culture=panel.querySelector('[data-hist="culture"]');
  if(bio)add('overview',el('p','dossier-lede',bio.textContent));
  if(culture)add('overview',el('p','dossier-culture',culture.textContent));
+ if(pairs.length>1){const strip=el('div','dossier-standing');for(const [label,value] of pairs.slice(1,5)){const cell=el('div');cell.dataset.state=value.dataset.state;cell.append(el('small',null,label.textContent),el('strong',null,value.textContent));strip.append(cell)}add('overview',strip)}
  if(!bio&&!culture)add('overview',el('p','dossier-lede',meta.friendly?L('A member of your faction created for this campaign. There is no historical entry.','本方的模拟人物，没有对应的历史条目。'):L('Nothing is recorded about this person beyond the reports your faction holds.','除本方持有的报告外，没有关于此人的其他记录。')));
 
  // Career
@@ -179,7 +187,27 @@ export function layoutDossier(panel,meta={}){
 
  // Family
  const family=panel.querySelector('[data-hist="family"]');
- if(family){const list=el('ul','dossier-kin');for(const part of family.innerHTML.replace(/^[^:：]*[:：]\s*/,'').split(/;\s*/)){const li=el('li');li.innerHTML=part;list.append(li)}add('family',heading(L('Historical family','历史家族关系')),list,el('p','dossier-caveat',L('Family ties are historical reference. They say nothing about trust, office or succession in this campaign.','家族关系是历史资料，不代表本局中的信任、职权或继承。')))}
+ const kin=HISTORICAL_RELATIONSHIPS[meta.id]||[];
+ if(family&&kin.length){
+  const parts=family.innerHTML.replace(/^[^:：]*[:：]\s*/,'').split(/;\s*/);
+  const tree=el('div','dossier-kin-tree');
+  const self=el('div','kin-node kin-self');const selfImg=new Image();selfImg.alt='';selfImg.src=img?.getAttribute('src')||'';self.append(selfImg,el('strong',null,name));
+  const branches=el('div','kin-branches');
+  kin.forEach((rel,i)=>{
+   const holder=document.createElement('div');holder.innerHTML=parts[i]||'';
+   const text=holder.textContent,label=text.split(' · ')[0].trim(),rest=text.slice(text.indexOf(' · ')+3).replace(/\s*\([^()]*\)\s*$/,'');
+   const link=holder.querySelector('a');
+   const node=el('div','kin-branch');
+   const person=el('button','kin-node');person.type='button';person.dataset.kin=rel.person;
+   const face=new Image();face.alt='';face.src=`../assets/portraits/${rel.person}-128.jpg`;face.onerror=()=>face.replaceWith(el('span','kin-face-empty'));
+   person.append(face,el('strong',null,label));person.onclick=()=>options.openPerson(rel.person);
+   const note=el('p','kin-relation',rest);
+   node.append(person,note);if(link){link.className='kin-source';node.append(link)}
+   branches.append(node);
+  });
+  tree.append(self,branches);
+  add('family',heading(L('Historical family','历史家族关系')),tree,el('p','dossier-caveat',L('Family ties are historical reference with a cited source. They say nothing about trust, office or succession in this campaign.','家族关系是附有出处的历史资料，不代表本局中的信任、职权或继承。')));
+ }else if(family){const list=el('ul','dossier-kin');for(const part of family.innerHTML.replace(/^[^:：]*[:：]\s*/,'').split(/;\s*/)){const li=el('li');li.innerHTML=part;list.append(li)}add('family',heading(L('Historical family','历史家族关系')),list,el('p','dossier-caveat',L('Family ties are historical reference. They say nothing about trust, office or succession in this campaign.','家族关系是历史资料，不代表本局中的信任、职权或继承。')))}
  if(meta.friendly){const open=el('button','dossier-action',L('Open family tree and succession','打开家谱与继承'));open.type='button';open.onclick=()=>options.openFamily();add('family',heading(L('Household and succession','家族与继承')),el('p',null,L('Marriages, heirs and succession plans are managed in Government & Families.','婚姻、继承人与继任安排在“政府与家族”中管理。')),open)}
 
  // Offices and power
@@ -191,7 +219,9 @@ export function layoutDossier(panel,meta={}){
  if(groups.meetings)add('relations',groups.meetings);
 
  // Intelligence
+ if(grid&&pairs.length){grid.classList.add('dossier-ledger');const known=pairs.filter(([,v])=>v.dataset.state==='known').length;add('intel',heading(L('What your faction knows','本方掌握的情况')+` · ${known}/${pairs.length}`),grid)}
  for(const key of ['health','age','location','stance'])if(groups[key])add('intel',groups[key]);
+ if(!meta.friendly&&faction&&pairs.some(([,v])=>v.dataset.state==='unknown')){const ask=el('button','dossier-action',L('Investigate this court','调查该宫廷'));ask.type='button';ask.onclick=()=>options.openCourt(court,'intelligence');add('intel',el('p','dossier-hint',L('Unknown entries can only be filled by reports: an investigation, an envoy, a meeting or a battlefield sighting.','未知项只能由报告补全：调查、使者、会面或战场目击。')),ask)}
  if(sections.intel)sections.intel.prepend(el('p','dossier-caveat',L('Each line names its source, date and confidence. Outdated or disputed reports are kept, not hidden.','每条都注明来源、日期与可信度；过时或有争议的报告会保留，不会隐藏。')));
 
  // Actions

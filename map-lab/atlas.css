@@ -50,7 +50,7 @@ body.atlas-shell .atlas-rail #atlas-mail.has-unread,body.atlas-shell .atlas-rail
 
 /* Campaign ledger (left): objectives, situation, map mode and its legend. The four system
    buttons it used to hold are in the rail, and the title copy is gone, so it is short. */
-body.atlas-shell .brief{top:calc(var(--atlas-top) + var(--atlas-gap));left:calc(var(--atlas-rail) + var(--atlas-gap));width:308px;max-height:calc(100vh - var(--atlas-top) - 150px);padding:16px 18px 18px;z-index:3}
+body.atlas-shell .brief{top:calc(var(--atlas-top) + var(--atlas-gap));left:calc(var(--atlas-rail) + var(--atlas-gap));width:308px;height:auto;bottom:auto;max-height:min(calc(100vh - var(--atlas-top) - 150px),470px);padding:16px 18px 18px;z-index:3}
 body.atlas-shell .brief h1,body.atlas-shell .brief h1+p,body.atlas-shell .brief .imperium-links,body.atlas-shell .brief #campaign-government-note:empty,body.atlas-shell .brief h1~.divider:first-of-type{display:none}
 body.atlas-shell .brief:not(.collapsed){display:flex;flex-direction:column}
 body.atlas-shell .brief>.kicker{order:-3}
@@ -237,6 +237,40 @@ body.atlas .selection .dossier-tile:hover{background:var(--iv-basalt-700);border
 body.atlas .selection .dossier-tile small{font:700 11px/1.3 var(--iv-ui);letter-spacing:.16em;text-transform:uppercase;color:var(--iv-gold)}
 body.atlas .selection .dossier-tile span{font:14px/1.5 var(--iv-ui);color:var(--iv-text-dim)}
 
+/* Identity under the portrait: one line, no scrolling sidebar. */
+.dossier-identity{margin-top:18px;padding-top:12px;border-top:1px solid var(--iv-line)}
+.dossier-identity small{display:block;font:700 11px/1.3 var(--iv-ui);letter-spacing:.14em;text-transform:uppercase;color:var(--iv-gold-dim)}
+.dossier-identity strong{display:block;margin-top:4px;font:600 16px/1.35 var(--iv-ui);color:var(--iv-text)}
+/* Standing strip: four facts in a row, unknowns shown as unknown rather than hidden. */
+.dossier-standing{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0;margin:18px 0 22px;border:1px solid var(--iv-line);background:var(--iv-basalt-900)}
+.dossier-standing>div{padding:12px 16px;border-right:1px solid var(--iv-line-soft)}
+.dossier-standing>div:last-child{border-right:0}
+.dossier-standing small{display:block;font:700 11px/1.3 var(--iv-ui);letter-spacing:.12em;text-transform:uppercase;color:var(--iv-text-faint)}
+.dossier-standing strong{display:block;margin-top:6px;font:600 18px/1.25 'Cormorant Garamond',var(--iv-display);color:#fff3da}
+.dossier-standing>[data-state="unknown"] strong{font:italic 500 16px/1.25 var(--iv-serif);color:var(--iv-text-faint)}
+/* Intelligence ledger */
+body.atlas .selection .dossier-ledger{display:grid;grid-template-columns:minmax(160px,.8fr) minmax(0,1.6fr);gap:0;margin:0 0 18px;padding:0;border:1px solid var(--iv-line);border-top:0}
+body.atlas .selection .dossier-ledger>span{padding:11px 14px;border-top:1px solid var(--iv-line);background:var(--iv-basalt-900);font:600 13px/1.4 var(--iv-ui);letter-spacing:.02em;color:var(--iv-text-dim)}
+body.atlas .selection .dossier-ledger>b{position:relative;text-align:left;padding:11px 14px 11px 34px;border-top:1px solid var(--iv-line);font:600 15px/1.4 var(--iv-ui);color:var(--iv-text)}
+body.atlas .selection .dossier-ledger>b::before{content:"";position:absolute;left:14px;top:17px;width:8px;height:8px;transform:rotate(45deg);background:var(--iv-gold)}
+body.atlas .selection .dossier-ledger>b[data-state="unknown"]{font:italic 500 15px/1.4 var(--iv-serif);color:var(--iv-text-faint)}
+body.atlas .selection .dossier-ledger>b[data-state="unknown"]::before{background:transparent;border:1px solid var(--iv-text-faint)}
+body.atlas .selection .dossier-hint{margin:6px 0 0;font:14px/1.55 var(--iv-ui);color:var(--iv-text-dim)}
+/* Kin diagram: the subject on the left, each sourced relative joined by a rule. */
+.dossier-kin-tree{display:grid;grid-template-columns:150px minmax(0,1fr);align-items:center;gap:0 28px;padding:18px;background:var(--iv-basalt-900);border:1px solid var(--iv-line)}
+.kin-node{display:flex;flex-direction:column;align-items:center;gap:8px;padding:0;background:transparent;border:0;color:var(--iv-text);text-align:center}
+.kin-node img,.kin-face-empty{display:block;width:96px;height:120px;object-fit:cover;object-position:50% 14%;border:1px solid var(--iv-basalt-950);outline:1px solid var(--iv-bronze);outline-offset:3px;background:var(--iv-basalt-700)}
+.kin-self img{width:120px;height:150px;outline-color:var(--iv-gold)}
+.kin-node strong{font:600 16px/1.2 'Cormorant Garamond',var(--iv-display);color:#fff3da}
+body.atlas .selection button.kin-node{cursor:pointer;margin:0;min-height:0}
+body.atlas .selection button.kin-node:hover img{outline-color:var(--iv-gold)}
+.kin-branches{display:grid;gap:14px;border-left:1px solid var(--iv-bronze);padding-left:28px}
+.kin-branch{position:relative;display:grid;grid-template-columns:120px minmax(0,1fr);gap:4px 20px;align-items:center}
+.kin-branch::before{content:"";position:absolute;left:-28px;top:50%;width:24px;border-top:1px solid var(--iv-bronze)}
+.kin-branch .kin-node{grid-row:1/3}
+body.atlas .selection .kin-relation{margin:0;font:15px/1.55 var(--iv-ui);color:var(--iv-text)}
+body.atlas .selection .kin-source{font:12px/1.4 var(--iv-ui);color:var(--iv-gold-dim)}
+
 /* ---------- Tablet and short frames ---------- */
 @media(max-width:1400px){
   body.atlas-shell .mast .identity>div{display:none}
@@ -303,6 +337,12 @@ body.atlas .selection .dossier-tile span{font:14px/1.5 var(--iv-ui);color:var(--
   body.atlas .selection .dossier-tabs button{flex:none;min-height:48px}
   .dossier-body{padding:16px 14px 24px;overflow:visible}
   .dossier-timeline li{grid-template-columns:1fr;padding-left:20px}
+  .dossier-kin-tree{grid-template-columns:1fr;gap:16px}
+  .kin-branches{padding-left:16px}
+  .kin-branch{grid-template-columns:96px minmax(0,1fr)}
+  body.atlas .selection .dossier-ledger{grid-template-columns:1fr}
+  body.atlas .selection .dossier-ledger>span{border-bottom:0;padding-bottom:2px}
+  body.atlas .selection .dossier-ledger>b{border-top:0}
   .dossier-timeline time{grid-row:auto}
   body.atlas .selection .dossier-action,body.atlas .selection .identity-focus-map,body.atlas .selection .mission-box button{min-height:46px}
 }
