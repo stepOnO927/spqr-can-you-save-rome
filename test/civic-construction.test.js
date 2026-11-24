@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=faces-name-disagreement-1';
+import {newGame,resolveBattle,upgradeSave} from '../engine.js?v=faces-name-disagreement-1';
 import {MATERIALS,advanceInventions,buildingModifiers,canConstruct,startConstruction,startResearch} from '../inventions.js?v=mission-discount-1';
 import {advanceMarkets} from '../trade-markets.js?v=faces-import-legs-1';
 import {advanceReligion} from '../religion.js?v=faces-name-disagreement-1';
@@ -58,4 +58,28 @@ test('a civic record office raises real local tax and loyalty while charging upk
  assert.ok(item.source.startsWith('https://')&&item.image.startsWith('data:image/svg+xml,'));
  assert.equal(startConstruction(s,'senate','roma','civic_offices').ok,true);complete(s,rome);
  assert.deepEqual({tax:buildingModifiers(rome).tax,loyalty:buildingModifiers(rome).loyalty,upkeep:buildingModifiers(rome).upkeep},{tax:1,loyalty:1,upkeep:1});
+});
+
+test('fortification works consume local supplies and increase actual battle defense',()=>{
+ const s=newGame('senate'),rome=s.regions.find(r=>r.id==='roma');
+ s.inventions.senate.knownMaterial.push('barracks','fortifications');
+ const stone=s.markets.regions.roma.goods.stone.stock,timber=s.markets.regions.roma.goods.timber.stock;
+ assert.equal(startConstruction(s,'senate','roma','fortifications').ok,true);
+ assert.equal(s.markets.regions.roma.goods.stone.stock,stone-2);
+ assert.equal(s.markets.regions.roma.goods.timber.stock,timber-2);
+ assert.equal(rome.fort,1);
+ complete(s,rome);
+ assert.equal(rome.fort,2);
+ assert.equal(buildingModifiers(rome).upkeep,2);
+ const plain=structuredClone(s);
+ plain.regions.find(r=>r.id==='roma').fort=1;
+ const fight=campaign=>{
+  const attacker=campaign.armies.find(a=>a.owner==='caesar'),defender=campaign.armies.find(a=>a.owner==='senate');
+  defender.region='roma';
+  resolveBattle(campaign,attacker,defender,campaign.regions.find(r=>r.id==='roma'));
+  return campaign.battles[0].defender.power;
+ };
+ assert.ok(fight(s)>fight(plain));
+ const saved=upgradeSave(structuredClone(s));
+ assert.equal(saved.regions.find(r=>r.id==='roma').fort,2);
 });

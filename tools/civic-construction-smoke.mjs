@@ -20,7 +20,7 @@ try{
  });
  await page.reload({waitUntil:'domcontentloaded'});
  await page.locator('#inventions').click();
- for(const id of ['quarries','market_halls','archives','baths','civic_offices']){
+ for(const id of ['fortifications','quarries','market_halls','archives','baths','civic_offices']){
   await page.locator(`[data-node="${id}"]`).click();
   assert.ok((await page.locator('.invention-detail').innerText()).includes('历史资料'));
  }
