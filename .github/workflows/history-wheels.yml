@@ -6,6 +6,8 @@ on:
       - 'engine.js'
       - 'agreements.js'
       - 'agreement-negotiations.js'
+      - 'coalitions.js'
+      - 'coalition-negotiations.js'
       - 'strategic-planning.js'
       - 'legion-designer.js'
       - 'han/ambitions.js'
