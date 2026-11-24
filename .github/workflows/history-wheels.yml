@@ -4,6 +4,8 @@ on:
     paths:
       - 'history-wheels.js'
       - 'engine.js'
+      - 'agreements.js'
+      - 'agreement-negotiations.js'
       - 'strategic-planning.js'
       - 'legion-designer.js'
       - 'han/ambitions.js'

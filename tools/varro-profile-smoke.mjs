@@ -36,6 +36,11 @@ try{
  await page.locator('[data-character="han_xuan"]').first().click();
  const hanPortrait=page.locator('#command-detail img[src$="han-liu-xun-128.jpg"]').first();
  assert.equal(await hanPortrait.evaluate(img=>img.complete&&img.naturalWidth===128),true);
+ assert.match(await page.locator('#command-detail').innerText(),/刘询/);
+ await page.locator('#language').click();
+ await page.locator('#factions').click();
+ await page.locator('[data-faction="han"]').click();
+ await page.locator('[data-character="han_xuan"]').first().click();
  assert.match(await page.locator('#command-detail').innerText(),/Liu Xun/);
  assert.deepEqual(errors,[]);
  console.log('Varro bilingual profile and integrated Han ruler portrait browser checks passed.');
