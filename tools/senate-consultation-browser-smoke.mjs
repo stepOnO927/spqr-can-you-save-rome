@@ -18,6 +18,7 @@ try{
  await page.goto('http://spqr.test/',{waitUntil:'domcontentloaded'});
  await page.locator('#entry-continue').click();
  await page.locator('[data-tab="development"]').click();
+ assert.match(await page.locator('#tech-grain-processing').innerText(),/Cato, On Agriculture 10–11/);
  await page.locator('[data-dev-branch="idea"]').click();
  const card=page.locator('#tech-senatorial-consultation');
  assert.match(await card.innerText(),/Caesar says he convened the Senate in Rome in 49 BCE[\s\S]*no one agreed to go/);
@@ -26,5 +27,5 @@ try{
  assert.equal(await page.locator('html').getAttribute('lang'),'zh-CN');
  assert.match(await card.innerText(),/凯撒记载[\s\S]*讨论三日后仍无人愿意出使/);
  assert.deepEqual(errors,[]);
- console.log('Senate consultation browser smoke passed in English and Chinese');
+ console.log('Development source browser smoke passed in English and Chinese');
 }finally{await browser.close()}

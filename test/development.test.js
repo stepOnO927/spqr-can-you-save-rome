@@ -1276,6 +1276,7 @@ test('Republican-era source corrections retain save IDs and avoid later public-l
  for(const id of ['roadmaking','road-milestones','bridge-engineering','barracks-design','stone-fortification','quarrying','metal-extraction','siege-machinery','library-organization','grain-storage','supply-organization','grain-processing']){
   const item=MATERIALS.find(x=>x.id===id);assert.ok(item?.source.url.startsWith('https://'),id);assert.notEqual(item.source.title,'World History Encyclopedia',id);
  }
+ assert.equal(MATERIALS.find(x=>x.id==='grain-processing').source.title,'Cato, On Agriculture 10–11');
  const ideaEvidence={
   'tax-farming':['In Verrem','verres23.html'],
   'estate-organization':['Cato, On Agriculture','De_Agricultura/A%2A.html'],
