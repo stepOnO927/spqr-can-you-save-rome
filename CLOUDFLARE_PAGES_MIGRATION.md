@@ -113,9 +113,15 @@ Cloudflare Pages 文档：[Git 集成](https://developers.cloudflare.com/pages/c
 - 只读复核：GitHub API 仍报告仓库为 public，默认分支仍是 `main`；旧 GitHub Pages 的 `/` 与 `/map-lab/` HTTP HEAD 均返回 200。没有修改现有发布。Cloudflare 真实部署及其正式域名验收仍未进行，仓库转为 private 和 DNS 切换也未进行。
 - 后续 `24c070fc` 的 [规则检查](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/44996298598)、[Pages 打包](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/44996298514)、[Poki 打包](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/44996298550)、[单浏览器检查](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/44996298526)和[三组浏览器回归](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/44996298561)也全部通过。规则检查记录 1,248/1,248 项通过；公开目录 311 个文件、总计 4.78 MiB、最大单文件 1.06 MiB。新加的地图地方保护与人物报告存读档场景在托管浏览器通过。其后的主分支又加入新肖像，合并后的公开包仍须重新验证。
 
+### 11 月 24 日城邦粮援与主线分歧复核
+
+- 审查分支提交 `a3fc02e67` 的[规则测试](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45442741038)通过 1,492/1,492；[Pages 打包及公开目录审计](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45442741110)通过：351 个公开文件、总计 6.37 MiB、最大单文件 1.09 MiB，低于 Cloudflare Pages 的 25 MiB 单文件上限。[三组真实浏览器回归](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45442741289)全部通过；第二组实际点击城邦紧急粮援，核对回信与保存结果。[Poki](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45442741249)及[长期战役浏览器](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45442741103)也通过。
+- Cloudflare 审查分支预览的 `/`、`/map-lab/`、`/han/` 及旧 GitHub Pages 的 `/`、`/map-lab/` 均返回 HTTP 200，页面各有一个 Web Analytics beacon。预览站已经提供新的城邦粮援规则、界面与存档脚本；本轮只读检查没有操作旧部署。此前跨域存档的真实 Cloudflare 浏览器验收仍见上方证据；正式域名切换后还须复核。
+- 公开 `main` 同期推进到 `ba2f270ef`。合并试验产生 177 个冲突文件，已安全撤销；草稿 PR #307 仍未合并且当前不可直接合并。必须先整合并复测主线新增玩法，之后才能将其视为最终上线候选。仓库仍是 public，默认分支仍是 `main`；没有更改可见性、域名或旧 GitHub Pages 发布。
+
 ## 切换验收清单
 
-- [x] 候选提交 `4c8d039ed` 的 CI、三组深入浏览器与 Cloudflare 分支预览通过；`dist/` 公开文件审计通过。
+- [x] 审查分支提交 `a3fc02e67` 的 CI、三组深入浏览器和 `dist/` 公开文件审计通过；Cloudflare 分支预览的入口及新增脚本已作线上 HTTP 核对。最新功能尚未单独运行跨域线上浏览器回归；与公开 `main` 的整合及复测仍未完成。
 - [ ] 完成草稿 PR 人工审查并获得明确上线批准后，才合并到 `main`，并核对旧 GitHub Pages 更新后的状态。
 - [x] 2026-11-24 只读核对：GitHub 仓库仍为 public，原 GitHub Pages 主入口可访问；未触碰旧部署。
 - [x] Cloudflare Pages `main` / `dist` 部署成功；生产站和审查分支预览的 `/`、`/map-lab/`、`/han/` 均通过真实地址浏览器检查。审查分支仍未合入 `main`，因此生产站目前不是最终玩法版本。
