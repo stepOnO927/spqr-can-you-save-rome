@@ -104,6 +104,8 @@ export function settleRecruitmentTravel(s){
 }
 export function aiCivilization(s,owner){
  const c=initializeCivilization(s),f=s.factions[owner];if(!f||owner===s.player||owner==='rebels')return;
+ // Wartime courts only patronize culture after keeping a substantial reserve.
+ if(s.wars?.some(w=>w.includes(owner))&&f.treasury<150)return;
  if(f.treasury>85&&c.prestige[owner]<8)commissionCulturalEvent(s,owner);
  if(f.treasury>95&&c.prestige[owner]>=8&&!c.recruitment.some(x=>x.owner===owner&&['pending','travel'].includes(x.status))){
   const candidate=knownForeignSpecialists(s,owner)[0];

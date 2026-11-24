@@ -98,6 +98,14 @@ test('AI courts pay the same recruitment costs and only use their received leads
  assert.equal(s.factions.egypt.treasury,before-20);
 });
 
+test('an AI court at war reserves its treasury and research for the campaign',()=>{
+ const s=newGame('caesar'),senate=s.factions.senate;
+ senate.treasury=100;s.civilization.prestige.senate=8;
+ const before={treasury:senate.treasury,prestige:s.civilization.prestige.senate,visits:s.inventions.senate.scholarVisits||0};
+ aiCivilization(s,'senate');
+ assert.deepEqual({treasury:senate.treasury,prestige:s.civilization.prestige.senate,visits:s.inventions.senate.scholarVisits||0},before);
+});
+
 test('older campaign saves gain empty Prestige without changing treasury, people or research',()=>{
  const original=newGame('senate'),before={treasury:original.factions.senate.treasury,people:original.regions.find(r=>r.id==='roma').population.total,research:JSON.stringify(original.inventions.senate)};
  delete original.civilization;
