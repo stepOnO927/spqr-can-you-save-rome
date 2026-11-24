@@ -1,3 +1,4 @@
+import {knownRelation} from './treaty-observation.js?v=treaty-observation-1';
 import {namedReportSubjects,reportedPersonalContacts,reportedPeople,isDeliveredReport,visiblePersonName} from './person-knowledge.js?v=faces-name-disagreement-1';
 import {recordLegendEvidence} from './legend.js?v=names-of-legend-1';
 import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange,characterAgeRange} from './characters.js?v=faces-name-disagreement-1';
@@ -269,7 +270,7 @@ function prepareExchange(s,op){
  // relations influence its independent response; the sender learns only the
  // reply if it survives the return journey, never the reason or hidden report.
  if(access==='trade'){
-  const relation=s.relations[[partner,op.actor].sort().join(':')]||0;
+  const relation=knownRelation(s,partner,op.actor);
   const refusal=Math.max(.2,Math.min(.65,.5-relation*.003));
   if(rand(s)<refusal)return {available:false,declined:true};
  }
@@ -295,12 +296,13 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
  if(op.type==='counter'&&op.subject==='counter_spies'){const now=s.year*12+s.month;(s.world.securityWatches||={})[op.actor]={start:now+1,end:now+6};op.status='complete';if(op.actor===s.player)notify(s,'A counterintelligence watch will operate for the next six months.','反间谍警戒将在接下来的六个月运行。');continue}
  const watch=op.type==='spy'&&counterWatchActive(s,op.target),captureLimit=watch?.36:.24,discoveryLimit=watch?.52:.33;
  if(op.type==='spy'&&q<discoveryLimit){op.status=q<captureLimit?'captured':'detected';if(op.status==='captured'){op.captiveId='captive'+s.world.nextCaptive++;s.world.captives.push({id:op.captiveId,owner:op.actor,holder:op.target,personId:op.agentId,state:'held',year:s.year,month:s.month});const agent=s.world.characters[op.agentId];if(agent){agent.detainedBy=op.target;agent.location=s.regions.find(r=>r.owner===op.target)?.id||null}}const k=[op.actor,op.target].sort().join(':');s.relations[k]=(s.relations[k]||0)-10;if(op.actor===s.player||op.target===s.player)notify(s,op.status==='captured'?`A spy from ${FACTIONS[op.actor].short[0]} was captured by ${FACTIONS[op.target].short[0]}; ${CHARACTER_CATALOG[op.agentId]?.name?.[0]||'an unidentified person'} is held.`:`A spy from ${FACTIONS[op.actor].short[0]} was detected by ${FACTIONS[op.target].short[0]}; ${CHARACTER_CATALOG[op.agentId]?.name?.[0]||'an unidentified person'} returned.`,op.status==='captured'?`${FACTIONS[op.actor].short[1]}的间谍被${FACTIONS[op.target].short[1]}抓获：${CHARACTER_CATALOG[op.agentId]?.name?.[1]||'身份不明者'}。双方关系恶化。`:`${FACTIONS[op.actor].short[1]}的间谍被${FACTIONS[op.target].short[1]}发现：${CHARACTER_CATALOG[op.agentId]?.name?.[1]||'身份不明者'}。双方关系恶化。`);continue}
- const relation=s.relations[[op.actor,op.target].sort().join(':')]||0,atWar=s.wars.some(w=>w.includes(op.actor)&&w.includes(op.target));
+ const relation=knownRelation(s,op.target,op.actor),atWar=s.wars.some(w=>w.includes(op.actor)&&w.includes(op.target));
+
  const refusal=Math.max(.23,Math.min(.70,.38-relation*.0015+(atWar?.18:0)+(s.factions[op.target]?.stability<35?.08:0)));
  if((op.type==='audience'||op.type==='envoy')&&q<refusal){op.status='declined';if(op.actor===s.player)notify(s,'The court declined the envoy or audience request.','宫廷拒绝了使者或会面请求。');continue}
  if(op.type==='envoy'&&op.subject==='relations'){
   // A diplomatic reception changes relations at arrival; it produces no secret intelligence.
-  const key=[op.actor,op.target].sort().join(':');s.relations[key]=Math.min(100,relation+8);op.status='complete';
+  const key=[op.actor,op.target].sort().join(':');s.relations[key]=Math.min(100,(s.relations[key]||0)+8);op.status='complete';
   if(op.actor===s.player)notify(s,'The envoy was received and relations improved by up to 8.','使者获接待，双方关系最多提高8。');continue
  }
  if(op.type==='exchange'){
@@ -596,3 +598,5 @@ export function observeArmies(s){
  }
 }
 export function reportedArmies(s,viewer){initializeWorld(s);const result=[];for(const [owner,k] of Object.entries(s.knowledge[viewer]||{})){if(owner===viewer)continue;for(const x of Object.values(k.sightings||{}))if(isDeliveredReport(s,x))result.push({...x,reported:true})}return result}
+
+

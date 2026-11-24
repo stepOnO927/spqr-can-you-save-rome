@@ -7,7 +7,7 @@ try{
  await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
  await page.evaluate(async()=>{
   const e=await import('/engine.js?v=faces-name-disagreement-1'),c=await import('/character-system.js?v=faces-name-disagreement-1');
-  const s=e.newGame('caesar');s.alliances.push(['caesar','numidia']);s.agreements.push({id:'test-intelligence',type:'intelligence',status:'active',parties:['caesar','parthia'],expiresAt:s.year*12+s.month+12});
+  const s=e.newGame('caesar');s.alliances.push(['caesar','numidia']);s.agreements.push({id:'test-intelligence',type:'intelligence',status:'active',parties:['caesar','parthia'],expiresAt:s.year*12+s.month+12});{const {initializeAgreements}=await import('/agreements.js?v=focus-agreement-consent-1'),{rememberTreatyCopy,treatyDocument}=await import('/treaty-observation.js?v=treaty-observation-1');initializeAgreements(s);for(const t of s.agreements||[])if(t.status==='active')rememberTreatyCopy(s,treatyDocument(t));}
   c.addReport(s,'parthia','egypt',{kind:'health',character:'ptolemy',value:'ill',source:'spy',confidence:'unverified'});
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:s}));
  });

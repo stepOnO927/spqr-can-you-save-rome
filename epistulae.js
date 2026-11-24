@@ -91,7 +91,7 @@ export function sendLetter(s, spec) {
   const {senderId, senderInstitution, senderFaction, recipient, category = 'personal'} = spec;
   // A dispatched institutional letter can outlive its sending court; arrival
   // must not disclose a later, undiscovered disappearance.
-  const formerInstitutionalSender=['aid_result','coalition_offer','coalition_result','agreement_offer','agreement_confirmation','agreement_result','asylum_result','family_marriage_result','family_accord_result','agent_release_request','official_inquiry','peace','inquiry_result','personal_audience_result'].includes(spec.context?.kind)&&!senderId&&senderInstitution===senderFaction&&!!FACTIONS[senderFaction];
+  const formerInstitutionalSender=['aid_result','coalition_offer','coalition_result','agreement_offer','agreement_confirmation','agreement_result','asylum_result','family_marriage_result','family_accord_result','agent_release_request','official_inquiry','peace','inquiry_result','personal_audience_result','treaty_notice'].includes(spec.context?.kind)&&!senderId&&senderInstitution===senderFaction&&!!FACTIONS[senderFaction];
   if ((!s.factions?.[senderFaction]&&!formerInstitutionalSender) || !s.factions?.[recipient] || (senderFaction === recipient && category === 'diplomatic')) return {ok:false, reason:'faction'};
   if (senderId && (!s.world?.characters?.[senderId]||!s.world.characters[senderId].alive||s.world.characters[senderId].faction!==senderFaction)) return {ok:false, reason:'sender'};
   if (!senderId && senderInstitution !== senderFaction) return {ok:false, reason:'sender'};
@@ -340,15 +340,15 @@ export function syncCoalitionLetters(s){
    const leader=factionName(x.leader),target=factionName(x.target),other=factionName(x.members.find(id=>id!==s.player));
    const result=sendLetter(s,{senderId:null,senderInstitution:x.leader,senderFaction:x.leader,recipient:s.player,category:'diplomatic',priority:'important',
     subject:['Defensive coalition invitation','防御联盟邀请'],
-    body:[`${leader[0]} invites us and ${other[0]} to defend against ${target[0]}. Accepting sends a reply; formation requires all parties and a later confirmation. Membership costs 5 treasury only if concluded. Members are obliged to defend each other if the named threat attacks; accepting does not declare war now. Letters may be lost.`,`${leader[1]}邀请本方与${other[1]}共同防范${target[1]}。接受仅寄出回信；须各方同意并收到后续确认方能成立，成立时支付5国库。若该威胁攻击成员，各方负有防御义务；接受本身不会立即宣战。信件可能遗失。`],
+    body:[`${leader[0]} invites us and ${other[0]} to defend against ${target[0]}. Accepting sends a reply; formation requires all parties and a later confirmation. Our court pays 5 treasury locally when signing the received charter; other courts may fail to receive or sign their copies. Members are obliged to defend each other if the named threat attacks; accepting does not declare war now. Letters may be lost.`,`${leader[1]}邀请本方与${other[1]}共同防范${target[1]}。接受仅寄出回信；须各方同意并收到后续确认方能成立，本方收到正式章程并签署时支付5国库；其他国家也可能未收到或未能签署副本。若该威胁攻击成员，各方负有防御义务；接受本身不会立即宣战。信件可能遗失。`],
     options:['accept_coalition','refuse','ignore'],expires:monthIndex(s.year,s.month)+Math.max(0,x.remaining-1),context:{kind:'coalition_offer',invitationId:x.id}});
    if(result.ok){x.mailId=result.letter.id;result.letter.created={...x.sent};result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received';mail.generated['coalition-offer:'+x.id]=true}
   }
-  if(x.phase==='delivered'&&x.playerDecision==='accepted'&&['accepted','lapsed'].includes(x.status)&&!x.resultMailId&&!mail.generated['coalition-result:'+x.id]){
-   const target=factionName(x.target),accepted=x.status==='accepted';
+  if(x.signedCopies?.[s.player]?.status==='received'&&!x.resultMailId&&!mail.generated['coalition-result:'+x.id]){
+   const target=factionName(x.target),accepted=x.signedCopies[s.player].outcome==='signed';
    const result=sendLetter(s,{senderId:null,senderInstitution:x.leader,senderFaction:x.leader,recipient:s.player,category:'diplomatic',priority:'important',
     subject:accepted?['Defensive coalition concluded','防御联盟已成立']:['Coalition not concluded','联盟未能成立'],
-    body:accepted?[`The defensive coalition against ${target[0]} has been concluded. The agreed 5-treasury membership cost has been paid.`, `针对${target[1]}的防御联盟已经成立，约定的5国库会费已支付。`]:['The proposed coalition could not be concluded; no membership cost was paid.','拟议联盟未能成立；没有支付会费。'],
+    body:accepted?[`A dated charter against ${target[0]} arrived. Our court signed and paid 5 treasury locally; other courts’ later circumstances are unconfirmed.`, `收到针对${target[1]}的有日期联盟章程。本方已签署并在本地支付5国库；其他国家后续情况尚未确认。`]:['The charter arrived, but our own resources or commitments prevented signature. No membership cost was paid; notices are being posted.','章程已送达，但本方资源或义务阻止签署；未支付会费，已安排寄出通知。'],
     options:[],context:{kind:'coalition_result',invitationId:x.id}});
    if(result.ok){x.resultMailId=result.letter.id;result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received';mail.generated['coalition-result:'+x.id]=true}
   }
@@ -391,20 +391,20 @@ export function syncFamilyReplies(s){
 // A proposal's two journeys have already completed; do not roll a second delivery.
 export function syncAgreementLetters(s){
  const mail=initializeMail(s),types={neutrality:['Named-war neutrality','特定战争中立承诺'],full_alliance:['Full alliance','全面同盟'],non_aggression:['Non-aggression pact','互不侵犯条约'],military_access:['Military access','军事通行权'],trade:['Trade agreement','贸易协定'],intelligence:['Intelligence sharing','情报共享'],defensive:['Defensive alliance','防御同盟'],offensive:['Offensive alliance','进攻同盟'],military_support:['Wartime aid agreement','战时援助协定'],political:['Political cooperation','政治合作'],guarantee:['Independence guarantee','独立保障']};
- const terms={full_alliance:['The alliance can involve both sides in wars.','同盟可能使双方卷入战争。'],non_aggression:['Both parties promise not to declare war on each other.','双方承诺互不宣战。'],military_access:['Both sides receive military passage.','双方获得军事通行权。'],trade:['Each side receives one treasury per month while eligible.','条件满足时双方每月各增1国库。'],intelligence:['The agreement permits requests to share existing intelligence.','协议允许请求共享已有情报。'],defensive:['A defensive obligation may bring us into war if the partner is attacked.','若对方遭攻击，防御义务可能使本方参战。'],offensive:['If the partner declares war, this agreement may bring us into that war unless other commitments prevent it.','若对方宣战，此协议可能使本方参战；其他承诺可能阻止参战。'],military_support:['The sender offers wartime treasury and food, subject to its reserves.','来信方将在条件允许时提供战时国库和粮食援助。'],political:['Each side may pay one treasury every six months for stability.','双方可能每半年各支付1国库以提高稳定度。'],guarantee:['The sender guarantees our independence and may defend us.','来信方保障本方独立，并可能提供防御。']};
+ const terms={full_alliance:['The alliance can involve both sides in wars.','同盟可能使双方卷入战争。'],non_aggression:['Both parties promise not to declare war on each other.','双方承诺互不宣战。'],military_access:['Both sides receive military passage.','双方获得军事通行权。'],trade:['The agreement grants market access; income requires completed trades.','协议开放市场准入；收入取决于实际成交。'],intelligence:['The agreement permits requests to share existing intelligence.','协议允许请求共享已有情报。'],defensive:['A defensive obligation may bring us into war if the partner is attacked.','若对方遭攻击，防御义务可能使本方参战。'],offensive:['If the partner declares war, this agreement may bring us into that war unless other commitments prevent it.','若对方宣战，此协议可能使本方参战；其他承诺可能阻止参战。'],military_support:['The sender offers wartime treasury and food, subject to its reserves.','来信方将在条件允许时提供战时国库和粮食援助。'],political:['Each side may pay one treasury every six months for stability.','双方可能每半年各支付1国库以提高稳定度。'],guarantee:['The sender guarantees our independence and may defend us.','来信方保障本方独立，并可能提供防御。']};
  for(const x of s.world?.agreementLetters||[]){
   if(x.target!==s.player||x.actor===s.player)continue;const label=types[x.type]||['Diplomatic agreement','外交条约'],detail=x.type==='neutrality'?[`Our court is asked to remain neutral toward ${factionName(x.actor)[0]} and ${factionName(x.enemy)[0]} for 12 months after conclusion: no direct declaration, military aid or new military access to either. The signatories promise not to attack each other. Trade, independent self-defense and other fronts remain allowed; the fixed term continues if the original war ends. Existing belligerency or conflicting military obligations can prevent acceptance. Unilateral breach costs 20 credibility and 20 bilateral relations. Existing marching orders and dispatched supplies are not recalled automatically.`,`本朝被请求在条约成立后12个月内对${factionName(x.actor)[1]}与${factionName(x.enemy)[1]}保持中立：不直接向双方宣战、提供直接军援或新授予军事通行。签约双方互不宣战；贸易、独立自卫及其他战线仍可进行，原战争结束不会自动解除固定期限的承诺。已有参战或冲突军事义务可能阻止接受；单方违约降低20信誉和20双边关系；在途命令及已经派出的物资不会自动撤回。`]:terms[x.type]||['Conditions are described in the proposal.','条件以提议为准。'];
   if(x.status==='pending'&&x.phase==='awaiting_player'&&!x.incomingMailId){
    const result=sendLetter(s,{senderId:null,senderInstitution:x.actor,senderFaction:x.actor,recipient:s.player,category:'diplomatic',priority:'important',subject:['Agreement proposal','条约提议'],body:[`${factionName(x.actor)[0]} proposes ${label[0]}. ${detail[0]} Accepting sends a reply; the agreement takes effect only after a later confirmation. Letters may be lost. The sender pays the treaty cost.`,`${factionName(x.actor)[1]}提出${label[1]}。${detail[1]}接受仅寄出答复；须收到后续确认才会生效。书信可能遗失，条约费用由来信方支付。`],options:['accept_agreement','refuse','ignore'],confidentiality:x.secret?'secret':'ordinary',expires:monthIndex(s.year,s.month)+Math.max(0,x.remaining-1),context:{kind:'agreement_offer',proposalId:x.id}});
    if(result.ok){x.incomingMailId=result.letter.id;result.letter.created={...x.sent};result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received'}
   }
-  if(x.playerDecision==='accepted'&&x.phase==='delivered'&&['accepted','lapsed'].includes(x.status)&&!x.confirmationMailId){
-   const accepted=x.status==='accepted',result=sendLetter(s,{senderId:null,senderInstitution:x.actor,senderFaction:x.actor,recipient:s.player,category:'diplomatic',priority:'important',subject:accepted?['Agreement confirmed','条约已确认']:['Agreement not concluded','条约未能成立'],body:accepted?[`The proposed ${label[0]} is now in effect.`,`${label[1]}现已生效。`]:[`The proposed ${label[0]} could not be concluded under current conditions.`,`${label[1]}未能在当前条件下成立。`],options:[],confidentiality:x.secret?'secret':'ordinary',context:{kind:'agreement_confirmation',proposalId:x.id}});
+  if(x.signedCopy?.status==='received'&&!x.confirmationMailId){
+   const accepted=x.status==='accepted',result=sendLetter(s,{senderId:null,senderInstitution:x.actor,senderFaction:x.actor,recipient:s.player,category:'diplomatic',priority:'important',subject:accepted?['Agreement confirmed','条约已确认']:['Agreement not concluded','条约未能成立'],body:accepted?[`A signed copy of the proposed ${label[0]} has arrived. It records the sender’s dated commitment, not a fresh guarantee of the remote situation.`,`收到${label[1]}的正式副本。这是来信方在签署时作出的承诺，并非对远方现状的最新保证。`]:[`The proposed ${label[0]} could not be concluded under current conditions.`,`${label[1]}未能在当前条件下成立。`],options:[],confidentiality:x.secret?'secret':'ordinary',context:{kind:'agreement_confirmation',proposalId:x.id}});
    if(result.ok){x.confirmationMailId=result.letter.id;result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received'}
   }
  }
  for(const x of s.world?.agreementLetters||[]){if(x.actor!==s.player||x.phase!=='delivered'||!['accepted','refused'].includes(x.status)||x.mailId||mail.generated['agreement-result:'+x.id])continue;
-  const terms=types[x.type]||['Diplomatic agreement','外交条约'],accepted=x.status==='accepted',result=sendLetter(s,{senderId:null,senderInstitution:x.target,senderFaction:x.target,recipient:s.player,category:'diplomatic',priority:'important',subject:accepted?['Agreement concluded','条约已达成']:['Agreement declined','条约遭拒'],body:accepted?[`The proposed ${terms[0]} has been concluded; its treaty cost has been paid.`,`提出的${terms[1]}已经达成，条约费用已支付。`]:[`The proposed ${terms[0]} was declined; no treaty cost was paid.`,`提出的${terms[1]}遭到拒绝，未支付条约费用。`],options:[],confidentiality:x.secret?'secret':'ordinary',context:{kind:'agreement_result',proposalId:x.id}});
+  const terms=types[x.type]||['Diplomatic agreement','外交条约'],accepted=x.status==='accepted',result=sendLetter(s,{senderId:null,senderInstitution:x.target,senderFaction:x.target,recipient:s.player,category:'diplomatic',priority:'important',subject:accepted?['Agreement concluded','条约已达成']:['Agreement declined','条约遭拒'],body:accepted?[`The dated acceptance of ${terms[0]} has arrived. Our court ratified it and paid the treaty cost; a signed copy is being posted. Its arrival is not independently confirmed.`,`收到${terms[1]}的有日期接受答复。本方已签署并支付条约费用，正式副本正在寄出；尚未独立确认对方收件。`]:[`The proposed ${terms[0]} was declined; no treaty cost was paid.`,`提出的${terms[1]}遭到拒绝，未支付条约费用。`],options:[],confidentiality:x.secret?'secret':'ordinary',context:{kind:'agreement_result',proposalId:x.id}});
   if(result.ok){x.mailId=result.letter.id;result.letter.created=x.answered||{...x.delivered};result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received';mail.generated['agreement-result:'+x.id]=true}
  }
 }
@@ -656,6 +656,7 @@ export function advanceMail(s, actions = {}) {
   }
   for (const event of mail.events) {
     if (event.status !== 'scheduled' || event.date > now) continue;
+    if(event.type==='treaty_notice'){const result=sendLetter(s,event.spec);event.status=result.ok?'completed':'failed';if(result.ok)event.mailId=result.letter.id;continue}
     if (event.type === 'audit') {
       event.status='completed';
       const f=s.factions[s.player];
@@ -744,6 +745,7 @@ export function advanceMail(s, actions = {}) {
     if (m.delivery !== 'traveling' || m.arrival > now || ['strategic_reply','peace_reply'].includes(m.context?.kind)) continue;
     if(courierLost(s,m)){m.delivery='lost';continue}
     m.delivery = 'received';
+    if(m.context?.kind==='treaty_notice')actions.receiveTreatyNotice?.(s,m);
     if(m.recipient===s.player&&m.context?.kind==='support_result'&&m.context.transfer>0){s.factions[s.player].treasury+=m.context.transfer;m.context.transfer=0}
     if(m.recipient!==s.player&&m.context?.kind==='allied_support'){
       const enemy=m.context.enemy,ally=m.recipient,relation=s.relations[pair(ally,s.player)]||0;
@@ -797,3 +799,5 @@ export function advanceMail(s, actions = {}) {
   foreignCourtNotes(s);
   return mail;
 }
+
+

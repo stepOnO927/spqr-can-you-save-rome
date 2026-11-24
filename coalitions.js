@@ -1,3 +1,4 @@
+import {knownTreatyDocuments,knownAgreement,knownAlliance,knownRelation,rememberTreatyCopy,treatyDocument,announceTreatyChange} from './treaty-observation.js?v=treaty-observation-1';
 import {isDeliveredReport} from './person-knowledge.js?v=faces-name-disagreement-1';
 import {ROUTES} from './data.js?v=phase-x-1';
 import {reportedControl} from './control-intelligence.js?v=control-delivery-1';
@@ -6,7 +7,7 @@ import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2
 import {reportedDiplomacy} from './diplomatic-knowledge.js?v=control-delivery-1';
 
 const pair=(a,b)=>[a,b].sort().join(':');
-const rel=(s,a,b)=>s.relations[pair(a,b)]??0;
+const rel=(s,a,b)=>knownRelation(s,a,b);
 const war=(s,a,b)=>s.wars.some(w=>w.includes(a)&&w.includes(b));
 const now=s=>s.year*12+s.month;
 const ownStrength=(s,a)=>s.armies.filter(x=>x.owner===a).reduce((n,x)=>n+x.men,0);
@@ -39,7 +40,26 @@ export function coalitionInterest(s,actor,target,estimateStrength){
  if(!s.factions[actor]||!s.factions[target]||actor===target)return {interested:false,reason:'unavailable'};
  const balance=perceivedBalance(s,actor,target,estimateStrength),enemy=war(s,actor,target);
  const perceivedThreat=enemy||balance.border&&(rel(s,actor,target)<-15||balance.estimate>balance.own*1.35||balance.ratio>1&&balance.pressure>=6.5);
- return {interested:perceivedThreat&&!activeAgreement(s,actor,target,'non_aggression'),border:balance.border,enemy,estimate:balance.estimate,balance};
+ return {interested:perceivedThreat&&!knownAgreement(s,actor,target,'non_aggression'),border:balance.border,enemy,estimate:balance.estimate,balance};
+}
+// A charter is stored in the existing coalition ledger. Correspondence may
+// give a signatory a dated claim even when the actual charter is ineffective.
+function charter(s,leader,parties,target,{pledges=null,reference=null}={}){
+ let fundingAssigned=false;
+ const contributions=Object.fromEntries(parties.map(id=>{const f=s.factions[id];let policy=pledges?.[id]?.policy;if(!policy){if(f.food<10)policy='diplomacy';else if(id===leader)policy='military';else if(!fundingAssigned&&f.treasury>50){policy='funding';fundingAssigned=true}else policy=f.food>40?'supplies':f.treasury>50?'funding':'military'}return [id,{policy,paid:0,supplies:0}]}));
+ const trust=Object.fromEntries(parties.flatMap((a,i)=>parties.slice(i+1).map(b=>[pair(a,b),Math.round(((pledges?.[a]?.trust?.[b]??rel(s,a,b))+100)/2)])));
+ return {id:`coalition:${s.nextCoalitionId||1}`,leader,parties:[...parties],target,objective:'defend_against_threat',start:{year:s.year,month:s.month},expiresAt:now(s)+36,status:'active',cohesion:70,trust,contributions,departures:[],obligations:['defend_members'],jointPlan:{target,kind:'coordinate_defense'},disagreements:[],...(reference?{reference}:{})};
+}
+export function ratifyCoalitionCharter(s,leader,members,target,pledges,reference){
+ const parties=[leader,...members];if(!s.factions[leader]||s.factions[leader].treasury<5)return {ok:false,reason:'resources'};
+ const complete=Object.fromEntries(parties.map(id=>[id,id===leader?{policy:s.factions[id].food<10?'diplomacy':'military',trust:Object.fromEntries(parties.filter(p=>p!==id).map(p=>[p,rel(s,id,p)]))}:pledges[id]]));
+ if(parties.some(id=>!complete[id]||!['military','funding','supplies','diplomacy'].includes(complete[id].policy)))return {ok:false,reason:'consent'};
+ const c=charter(s,leader,parties,target,{pledges:complete,reference});
+ // This result belongs to actual effects, never to the initiating court's
+ // received reply or copy. Dues are paid by each court at its own signature.
+ const legal=parties.every(id=>s.factions[id]&&s.regions.some(r=>r.owner===id))&&s.factions[target]&&!parties.some((id,i)=>activeAgreement(s,id,target,'non_aggression')||neutralityBlocksWar(s,id,target)||parties.slice(i+1).some(other=>war(s,id,other))||s.alliances.some(a=>a.includes(id)&&a.includes(target)))&&!(s.coalitions||[]).some(t=>t.status==='active'&&t.target===target&&t.parties.some(id=>parties.includes(id)));
+ s.factions[leader].treasury-=5;s.nextCoalitionId=(s.nextCoalitionId||1)+1;(s.coalitions||=[]).push({...c,status:legal?'active':'not_effective'});
+ const paper=treatyDocument(c,'coalition');rememberTreatyCopy(s,paper,[leader],{source:'own_ratification'});return {ok:true,coalition:paper};
 }
 export function formCoalition(s,leader,members,target,estimateStrength,{allowPlayer=false,consentingPlayer=false,priorConsent=false,consentingLeader=false}={}){
  const parties=[...new Set([leader,...members])];
@@ -52,17 +72,19 @@ export function formCoalition(s,leader,members,target,estimateStrength,{allowPla
  s.coalitions||=[];
  if(s.coalitions.some(c=>c.status==='active'&&c.target===target&&c.parties.some(id=>parties.includes(id))))return {ok:false,reason:'existing'};
  for(const id of parties)s.factions[id].treasury-=5;
- let fundingAssigned=false;const contributions=Object.fromEntries(parties.map(id=>{const f=s.factions[id];let policy;if(f.food<10)policy='diplomacy';else if(id===leader)policy='military';else if(!fundingAssigned&&f.treasury>50){policy='funding';fundingAssigned=true}else policy=f.food>40?'supplies':f.treasury>50?'funding':'military';return [id,{policy,paid:0,supplies:0}]}));
- if(consentingPlayer&&contributions[s.player])contributions[s.player].policy='diplomacy';
- const trust=Object.fromEntries(parties.flatMap((a,i)=>parties.slice(i+1).map(b=>[pair(a,b),Math.round((rel(s,a,b)+100)/2)])));
- const c={id:`coalition:${s.nextCoalitionId||1}`,leader,parties,target,objective:'defend_against_threat',start:{year:s.year,month:s.month},expiresAt:now(s)+36,status:'active',cohesion:70,trust,contributions,departures:[],obligations:['defend_members'],jointPlan:{target,kind:'coordinate_defense'},disagreements:[]};
- s.nextCoalitionId=(s.nextCoalitionId||1)+1;s.coalitions.push(c);return {ok:true,coalition:c};
+ const c=charter(s,leader,parties,target);
+ if(consentingPlayer&&c.contributions[s.player])c.contributions[s.player].policy='diplomacy';
+ s.nextCoalitionId=(s.nextCoalitionId||1)+1;s.coalitions.push(c);rememberTreatyCopy(s,treatyDocument(c,'coalition'));return {ok:true,coalition:c};
 }
 export function leaveCoalition(s,id,actor){
- const c=(s.coalitions||[]).find(x=>x.id===id&&x.status==='active');if(!c||!c.parties.includes(actor))return {ok:false,reason:'unavailable'};
- c.parties=c.parties.filter(x=>x!==actor);c.departures.push({actor,year:s.year,month:s.month});s.diplomaticCredibility||={};s.diplomaticCredibility[actor]=Math.max(0,(s.diplomaticCredibility[actor]??100)-15);
- for(const other of c.parties){const k=pair(actor,other);s.relations[k]=Math.max(-100,rel(s,actor,other)-15);rememberPoliticalEvent(s,other,actor,'coalition_departure',-8)}
- if(c.leader===actor)c.leader=c.parties[0];if(c.parties.length<3)c.status='dissolved';return {ok:true};
+ const known=knownTreatyDocuments(s,actor,'coalition').find(c=>c.id===id);if(!known)return {ok:false,reason:'unavailable'};
+ const c=(s.coalitions||[]).find(c=>c.id===id&&c.status==='active'&&c.parties.includes(actor));
+ if(c){c.parties=c.parties.filter(p=>p!==actor);c.departures.push({actor,year:s.year,month:s.month});if(c.leader===actor)c.leader=c.parties[0];if(c.parties.length<3)c.status='dissolved'}
+ s.diplomaticCredibility||={};s.diplomaticCredibility[actor]=Math.max(0,(s.diplomaticCredibility[actor]??100)-15);
+ const remaining=known.parties.filter(p=>p!==actor),document={...known,parties:remaining,leader:known.leader===actor?remaining[0]:known.leader,status:remaining.length<3?'dissolved':'active',ended:{year:s.year,month:s.month,actor}};
+ announceTreatyChange(s,document,actor,{relationPenalty:15,memoryKind:'coalition_departure',memoryWeight:-8,viewers:known.parties});
+ // The departing court has withdrawn even if its old copy was already stale.
+ s.world.diplomaticKnowledge[actor][id].status='withdrawn';return {ok:true};
 }
 export function advanceCoalitions(s){
  for(const c of s.coalitions||[]){
@@ -74,14 +96,27 @@ export function advanceCoalitions(s){
   c.cohesion=Math.max(0,Math.min(100,Math.round(c.cohesion+(average<0?-3:average>30?1:0))));
   c.disagreements=average<0?['rival_members']:[];
   if(c.cohesion<15){c.status='fractured';continue}
-  if(s.month%3===0&&s.factions[c.leader])for(const id of c.parties){const f=s.factions[id],p=c.contributions[id];if(id===c.leader||!f||!p)continue;if(p.policy==='funding'&&f.treasury>35){f.treasury--;s.factions[c.leader].treasury++;p.paid++}else if(p.policy==='supplies'&&f.food>25){f.food-=2;s.factions[c.leader].food+=2;p.supplies=(p.supplies||0)+2}else if(p.policy==='diplomacy'){const k=pair(id,c.leader);s.relations[k]=Math.min(100,rel(s,id,c.leader)+1)}}
+
  }
+ // Contribution orders follow the paying court's received charter, even if
+ // another signatory has withdrawn without its notice arriving yet.
+ if(s.month%3===0)for(const actor of Object.keys(s.factions))for(const known of knownTreatyDocuments(s,actor,'coalition')){
+  if(actor===known.leader)continue;
+  const c=(s.coalitions||[]).find(t=>t.id===known.id&&(!known.reference||t.reference===known.reference)),f=s.factions[actor],leader=s.factions[known.leader],p=c?.contributions?.[actor];
+  if(!f||!leader||!p)continue;
+  if(p.policy==='funding'&&f.treasury>35){f.treasury--;leader.treasury++;p.paid++}
+  else if(p.policy==='supplies'&&f.food>25){f.food-=2;leader.food+=2;p.supplies=(p.supplies||0)+2}
+  else if(p.policy==='diplomacy'){const k=pair(actor,known.leader);s.relations[k]=Math.min(100,rel(s,actor,known.leader)+1)}
+ }
+
 }
 
 // Members pursuing a military contribution retain their own armies and
 // information. The shared threat only affects which known enemy they weigh
 // first; it does not give the coalition control over their orders.
 export function coalitionMilitaryObjective(s,actor){
- const c=(s.coalitions||[]).find(c=>c.status==='active'&&c.parties.includes(actor)&&c.contributions?.[actor]?.policy==='military'&&war(s,actor,c.target));
+ const c=knownTreatyDocuments(s,actor,'coalition').find(c=>((s.coalitions||[]).find(t=>t.id===c.id)?.contributions?.[actor]?.policy||c.contributions?.[actor]?.policy)==='military'&&war(s,actor,c.target));
  return c?.target||null;
 }
+
+

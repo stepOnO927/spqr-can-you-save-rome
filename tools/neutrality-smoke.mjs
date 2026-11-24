@@ -10,7 +10,7 @@ async function incomingFixture(){
   const offer=sendAgreementProposal(s,'egypt','caesar','neutrality',{enemy:'parthia'});if(!offer.ok)throw Error(offer.reason);advance(s);advance(s);
   if(s.world.agreementLetters[0].phase!=='awaiting_player')continue;
   const copy=structuredClone(s),letter=receivedMail(copy).find(m=>m.context?.kind==='agreement_offer'&&m.context.proposalId===offer.id);if(!replyToLetter(copy,letter.id,'accept_agreement',{answerAgreementProposal}).ok)continue;for(let i=0;i<4;i++)tick(copy);
-  if(copy.world.agreementLetters[0].status!=='accepted')continue;
+  if(copy.world.agreementLetters[0].signedCopy?.status!=='received')continue;
   const beforeAidSeed=copy.seed,aid=sendStrategicOffer(copy,'egypt','caesar','parthia',{kind:'request_aid'});if(!aid.ok)continue;for(let i=0;i<2;i++)tick(copy);if(copy.world.strategicOffers.find(o=>o.id===aid.id)?.status!=='awaiting_decision')continue;
   localStorage.setItem('spqr-lang','zh');sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state:s}));return {id:offer.id,beforeAidSeed};
  }
@@ -25,7 +25,7 @@ try{
  async function openMail(kind,id){await page.locator('#mail-open').click();const state=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1'))),message=state.mail.messages.find(m=>m.context?.kind===kind&&(kind==='agreement_offer'?m.context.proposalId===id:m.context.offerId===id));assert.ok(message);await page.locator(`[data-mail-select="${message.id}"]`).click()}
  let s=await save();const before=s.factions.caesar.treasury;await openMail('agreement_offer',proposalId);assert.match(await page.locator('.mail-letter').innerText(),/12个月/);assert.match(await page.locator('.mail-letter').innerText(),/帕提亚/);
  const accept=page.locator('[data-mail-reply="accept_agreement"]');await accept.click();assert.match(await accept.innerText(),/确认答复/);await accept.click();s=await save();assert.equal(s.factions.caesar.treasury,before);assert.equal(s.agreements.some(t=>t.type==='neutrality'),false);
- for(let i=0;i<3;i++)await page.locator('#step').click();s=await save();assert.equal(s.agreements.some(t=>t.type==='neutrality'),false);
+ for(let i=0;i<3;i++)await page.locator('#step').click();s=await save();assert.equal(Object.values(s.world.diplomaticKnowledge.caesar||{}).some(t=>t.type==='neutrality'&&t.participantCopy),false);
  await page.locator('#step').click();s=await save();const treaty=s.agreements.find(t=>t.type==='neutrality');assert.ok(treaty);assert.deepEqual(treaty.terms.warParties,['egypt','parthia']);assert.equal(treaty.terms.neutral,'caesar');
  await page.locator('[data-tab="government"]').click();const defaultPartner=await page.locator('#agreement-target').inputValue();assert.ok(defaultPartner);assert.equal(s.wars.some(w=>w.includes(s.player)&&w.includes(defaultPartner)),false);assert.equal(await page.locator('#agreement-propose').isEnabled(),true);assert.equal(await page.locator('[data-dip="parthia"][data-act="war"]').isDisabled(),true);assert.match(await page.locator('[data-dip="parthia"][data-act="war"]').getAttribute('title'),/中立承诺/);
  await page.locator(`[data-breach="${treaty.id}"]`).scrollIntoViewIfNeeded();await page.evaluate(()=>document.fonts.ready);await page.screenshot({path:'neutrality-controls-1920x1080.png'});

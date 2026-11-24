@@ -1,3 +1,4 @@
+import {startingTreaties} from './helpers/starting-treaties.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave,issueMilitaryOrder,estimatedStrength,tick} from '../engine.js?v=dossier-archive-1';
@@ -10,7 +11,7 @@ import {jointPartners,proposeJointOperation,answerJointOperation,advanceJointOpe
 const date=s=>s.year*12+s.month,opts={sendLetter,courierMonths,estimatedStrength};
 function setup(){
  const s=newGame('senate');s.difficulty='expert';s.player='numidia';
- s.regions.find(r=>r.id==='africa').owner='caesar';s.regions.find(r=>r.id==='mauretania').owner='caesar';s.wars.push(['numidia','caesar']);s.alliances.push(['numidia','senate']);s.relations['numidia:senate']=60;
+ s.regions.find(r=>r.id==='africa').owner='caesar';s.regions.find(r=>r.id==='mauretania').owner='caesar';s.wars.push(['numidia','caesar']);s.alliances.push(['numidia','senate']);startingTreaties(s);s.relations['numidia:senate']=60;
  for(const f of ['senate','numidia'])Object.assign(s.factions[f],{treasury:300,food:300,stability:80});
  const a=s.armies.find(a=>a.id==='pompey'),b=s.armies.find(a=>a.owner==='numidia');for(const u of [a,b])Object.assign(u,{men:12000,morale:80,move:null,siege:null});
  observeControl(s);observeDiplomacy(s);
@@ -101,7 +102,7 @@ test('at least four autonomous courts can send and independently answer cooperat
  for(const scenario of ['four_fronts','neutral_egypt'])for(let n=1;n<=24;n++){
   const fourFronts=scenario==='four_fronts';
   const s=newGame('caesar');s.difficulty='expert';s.seed=(Math.imul(n,2654435761)^10949)>>>0;
-  s.alliances.push(['caesar','egypt'],['parthia','armenia']);s.relations['caesar:egypt']=60;s.relations['armenia:parthia']=60;
+  s.alliances.push(['caesar','egypt'],['parthia','armenia']);startingTreaties(s);s.relations['caesar:egypt']=60;s.relations['armenia:parthia']=60;
   for(const actor of ['caesar','egypt','parthia','armenia']){Object.assign(s.factions[actor],{treasury:220,food:220,stability:80});if(actor!=='caesar'&&(actor!=='egypt'||fourFronts))s.wars.push([actor,'senate'])}
   observeControl(s);observeDiplomacy(s);
   const previous=new Map();

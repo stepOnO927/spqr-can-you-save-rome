@@ -1,3 +1,4 @@
+import {knownRelation} from './treaty-observation.js?v=treaty-observation-1';
 import {REGIONS} from './data.js?v=phase-x-1';
 import {campaignDate} from './campaign-date.js?v=calendar-1';
 import {courierMonths as mailTravelMonths} from './epistulae.js?v=faces-name-disagreement-1';
@@ -133,7 +134,7 @@ export function advanceJointOperations(s,{sendLetter,estimatedStrength,autoplayP
   if(x.kind==='joint_invite'){
    if(owner===s.player&&!autoplayPlayer)continue;
    if(!jointInvitations(s,owner).includes(m))continue;
-   const f=s.factions[owner],trust=(s.relations[pair(owner,m.senderFaction)]||0)+politicalMemoryAdjustment(s,owner,m.senderFaction);
+   const f=s.factions[owner],trust=knownRelation(s,owner,m.senderFaction)+politicalMemoryAdjustment(s,owner,m.senderFaction);
    let plan=null;
    const eligible=f&&f.treasury>=40&&f.food>=35&&f.stability>=45&&trust>=10&&s.wars.filter(w=>w.includes(owner)).length<3&&operationPartners(s,owner).includes(m.senderFaction)&&war(s,owner,x.enemy)&&!plans(s,owner).some(p=>waiting(p.coordination));
    if(eligible&&roll(s,`${m.id}:${owner}:reply`)<Math.max(.15,Math.min(.8,.3+trust*.005))){plan=jointAcceptancePlans(s,owner,m).find(p=>p.mode==='automatic'&&aiPlanReady(s,owner,p,x.enemy,{estimatedStrength}))||createAiPlan(s,owner,x.enemy,{estimatedStrength})}
@@ -172,9 +173,11 @@ export function proposeAiJointOperation(s,owner,{sendLetter,courierMonths,autopl
  for(const plan of plans(s,owner)){
   if(plan.mode!=='automatic'||!jointPlanEnemy(s,owner,plan))continue;
   for(const partner of jointPartners(s,owner,plan.id)){
-   const trust=(s.relations[pair(owner,partner)]||0)+politicalMemoryAdjustment(s,owner,partner);if(trust<20||roll(s,`${owner}:${partner}:${plan.id}:invite`)>.45)continue;
+   const trust=knownRelation(s,owner,partner)+politicalMemoryAdjustment(s,owner,partner);if(trust<20||roll(s,`${owner}:${partner}:${plan.id}:invite`)>.45)continue;
    const route=operationNoticeRoute(s,owner,partner);if(courierMonths(s,route.source,route.destination)>6)continue;
    const result=proposeJointOperation(s,owner,plan.id,partner,{sendLetter,courierMonths});if(result.ok)return result;
   }
  }
 }
+
+

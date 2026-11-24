@@ -40,7 +40,7 @@ test('older treaties receive structured terms on save migration without changing
 test('legacy full alliances gain terms without an invented start and breaking one damages credibility',()=>{
  const old=newGame('egypt');old.alliances.push(['egypt','armenia']);let s=upgradeSave(JSON.parse(JSON.stringify(old)));
  assert.deepEqual(s.alliances[0].slice(0,2),['egypt','armenia']);assert.equal(s.alliances[0][2].start,null);assert.equal(s.alliances[0][2].duration,null);
- assert.ok(diplomacy(s,'egypt','armenia','break'));assert.equal(s.diplomaticCredibility.egypt,80);assert.equal(s.world.allianceHistory[0].outcome,'breached');assert.ok(s.world.politicalMemories.some(m=>m.subject==='egypt'&&m.kind==='broken_treaty'));
+ assert.ok(diplomacy(s,'egypt','armenia','break'));assert.equal(s.diplomaticCredibility.egypt,80);assert.equal(s.world.allianceHistory[0].outcome,'breached');assert.equal((s.world.politicalMemories||[]).some(m=>m.subject==='egypt'&&m.kind==='broken_treaty'),false);assert.ok(s.mail.events.some(e=>e.type==='treaty_notice'&&e.spec.recipient==='armenia'));
  s.relations['armenia:egypt']=60;assert.ok(diplomacy(s,'egypt','armenia','alliance'));assert.deepEqual(s.alliances[0][2].start,{year:s.year,month:s.month});
 });
 test('military access moves through a friendly territory without capturing it and ends on breach',()=>{
@@ -91,3 +91,5 @@ test('military aid transfers actual reserves and civic cooperation has a shared 
  assert.equal(s.factions.egypt.treasury,a.cash-2);assert.equal(s.factions.egypt.food,a.food-2);assert.equal(s.factions.armenia.treasury,b.cash+2);assert.equal(s.factions.armenia.food,b.food+2);
  const q=newGame('egypt');friendly(q,'egypt','armenia');assert.ok(proposeAgreement(q,'egypt','armenia','political').ok);q.month=6;const before=q.factions.egypt.stability,cash=q.factions.egypt.treasury;advanceAgreements(q);assert.equal(q.factions.egypt.stability,before+1);assert.equal(q.factions.egypt.treasury,cash-1);
 });
+
+

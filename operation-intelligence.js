@@ -1,4 +1,4 @@
-import {activeAgreement} from './agreements.js?v=focus-agreement-consent-1';
+import {knownAgreement as activeAgreement,knownAlliance} from './treaty-observation.js?v=treaty-observation-1';
 import {reportedControl} from './control-intelligence.js?v=control-delivery-1';
 
 const now=s=>s.year*12+s.month;
@@ -11,7 +11,7 @@ export function operationNoticeRoute(s,owner,recipient){
 }
 export function operationPartners(s,owner){
  return Object.keys(s.factions).filter(id=>id!==owner&&id!=='rebels'&&!atWar(s,owner,id)&&(
-  (s.alliances||[]).some(pair=>pair.slice(0,2).includes(owner)&&pair.slice(0,2).includes(id))||
+  knownAlliance(s,owner,id)||
   ['defensive','offensive'].some(type=>activeAgreement(s,owner,id,type))));
 }
 export function shareOperation(s,owner,planId,recipient,{sendLetter}={}){
@@ -60,3 +60,5 @@ export function shareAiOperation(s,owner,{sendLetter,autoplayPlayer=false}={}){
  }
  return last;
 }
+
+

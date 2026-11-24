@@ -1,3 +1,4 @@
+import {startingTreaties} from './helpers/starting-treaties.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,canFormAlliance} from '../engine.js?v=dossier-archive-1';
@@ -5,7 +6,7 @@ import {sendAgreementProposal,advanceAgreementProposals} from '../agreement-nego
 
 function start(seed=1000003){
  const s=newGame('caesar');s.seed=seed;s.factions.caesar.treasury=100;s.relations['caesar:egypt']=60;
- s.alliances.push(['egypt','parthia']);assert.ok(sendAgreementProposal(s,'caesar','egypt','full_alliance').ok);return s;
+ s.alliances.push(['egypt','parthia']);startingTreaties(s);assert.ok(sendAgreementProposal(s,'caesar','egypt','full_alliance').ok);return s;
 }
 function receive(s){for(let i=0;i<2;i++){if(++s.month>12){s.month=1;s.year++}advanceAgreementProposals(s,{checkAlliance:canFormAlliance})}return s.world.agreementLetters[0].sealed.outcome}
 function report(s,id,kind,parties,{future=false}={}){

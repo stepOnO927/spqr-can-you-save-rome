@@ -1,3 +1,4 @@
+import {startingTreaties} from './helpers/starting-treaties.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,estimatedStrength,upgradeSave} from '../engine.js?v=dossier-archive-1';
@@ -43,10 +44,14 @@ test('old pending letters retain a neutral baseline rather than reconstructing p
  let s=setup();assert.ok(sendCoalitionInvitation(s,'caesar',['egypt','numidia'],'senate').ok);delete s.world.coalitionInvitations[0].credentials;s.diplomaticCredibility.caesar=0;
  s=upgradeSave(structuredClone(s));step(s);step(s);assert.deepEqual(s.world.coalitionInvitations[0].sealed.replies,['accepted','accepted']);
 });
-test('actual resources and legal war obligations still prevent invalid conclusion',()=>{
- let s=setup();sendCoalitionInvitation(s,'caesar',['egypt','numidia'],'senate');step(s);step(s);s.factions.egypt.treasury=0;step(s);step(s);assert.equal(s.world.coalitionInvitations[0].status,'lapsed');assert.equal((s.coalitions||[]).length,0);
- s=setup();sendCoalitionInvitation(s,'caesar',['egypt','numidia'],'senate');step(s);step(s);s.wars.push(['egypt','numidia']);step(s);step(s);assert.equal(s.world.coalitionInvitations[0].status,'lapsed');
+test('foreign changes after acceptance do not become a remote sender-side failure or debit',()=>{
+ let s=setup();sendCoalitionInvitation(s,'caesar',['egypt','numidia'],'senate');step(s);step(s);s.factions.egypt.treasury=0;step(s);step(s);
+ assert.equal(s.world.coalitionInvitations[0].status,'accepted');assert.equal(s.factions.egypt.treasury,0,'no remote membership debit');step(s);step(s);
+ assert.equal(s.factions.egypt.treasury,0);assert.equal(s.world.coalitionInvitations[0].signedCopies.egypt.outcome,'not_signed');assert.equal(s.world.coalitionInvitations[0].status,'accepted');
+ s=setup();sendCoalitionInvitation(s,'caesar',['egypt','numidia'],'senate');step(s);step(s);s.wars.push(['egypt','numidia']);step(s);step(s);
+ assert.equal(s.world.coalitionInvitations[0].status,'accepted');assert.equal(s.coalitions.some(c=>c.status==='active'),false);
 });
+
 function incoming(){
  const s=setup();s.relations['egypt:numidia']=40;s.world.diplomaticKnowledge.egypt={caesar:{id:'caesar',status:'active',parties:['egypt','caesar']},numidia:{id:'numidia',status:'active',parties:['egypt','numidia']}};
  assert.ok(sendCoalitionInvitation(s,'egypt',['caesar','numidia'],'senate').ok);step(s);step(s);return s;
@@ -58,7 +63,7 @@ test('player can decline a conflicting coalition but cannot accept against own b
  assert.ok(replyToLetter(s,m.id,'refuse',{answerCoalitionInvitation}).ok);
 });
 test('new non-aggression and neutrality promises are respected before accepting and on conclusion',()=>{
- const s=incoming();s.wars=[];s.agreements.push({id:'neutral',type:'neutrality',status:'active',parties:['parthia','caesar'],expiresAt:s.year*12+s.month+12,terms:neutralityTerms('parthia','caesar','senate')});
+ const s=incoming();s.wars=[];s.agreements.push({id:'neutral',type:'neutrality',status:'active',parties:['parthia','caesar'],expiresAt:s.year*12+s.month+12,terms:neutralityTerms('parthia','caesar','senate')});startingTreaties(s);
  assert.equal(answerCoalitionInvitation(s,s.world.coalitionInvitations[0].id,'accept_coalition').reason,'coalition_conflict');
 });
 

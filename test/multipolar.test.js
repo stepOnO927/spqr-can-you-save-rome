@@ -1,3 +1,4 @@
+import {startingTreaties} from './helpers/starting-treaties.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -57,7 +58,7 @@ test('relations and alliances trigger only the participating court’s review',(
  copy.relations['armenia:parthia']=(copy.relations['armenia:parthia']||0)+10;
  assert.notEqual(opportunityEvidenceSignature(copy,'parthia'),parthia);
  assert.equal(opportunityEvidenceSignature(copy,'caesar'),caesar);
- const after=opportunityEvidenceSignature(copy,'parthia');copy.alliances.push(['armenia','parthia']);
+ const after=opportunityEvidenceSignature(copy,'parthia');copy.alliances.push(['armenia','parthia']);startingTreaties(copy);
  assert.notEqual(opportunityEvidenceSignature(copy,'parthia'),after);
  assert.equal(opportunityEvidenceSignature(copy,'caesar'),caesar);
 });
@@ -342,3 +343,5 @@ test('old saves without a warning queue keep working and do not duplicate existi
  const source=fs.readFileSync(new URL('../strategic-warnings.js?v=faces-name-disagreement-1',import.meta.url),'utf8');
  assert.doesNotMatch(source,/diplomacy\(|proposeAgreement|terminateAgreement|supportClaimant|wars\.push|alliances\.push|opportunistic_war|treaty_breach/);
 });
+
+

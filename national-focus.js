@@ -1,3 +1,4 @@
+import {knownRelation} from './treaty-observation.js?v=treaty-observation-1';
 import {FOCUS_TREES,TREE_ALIASES,BRANCHES,ICONS} from './imperium-focus-data.js?v=imperium-1';
 import {ROUTES,FACTIONS} from './data.js?v=phase-x-1';
 import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
@@ -205,7 +206,7 @@ export function scoreFocus(s,actor,f){
  const atWar=s.wars.some(w=>w.includes(actor));
  const sightings=Object.values(s.knowledge?.[actor]||{}).flatMap(k=>Object.values(k.sightings||{})).filter(x=>isDeliveredReport(s,x)&&sightingAge(s,x)>=0&&sightingAge(s,x)<=6&&x.owner!==actor);
  const ownRegions=new Set(s.regions.filter(r=>r.owner===actor).map(r=>r.id));
- const near=sightings.filter(x=>ownRegions.has(x.region)||ROUTES.some(([a,b])=>(a===x.region&&ownRegions.has(b))||(b===x.region&&ownRegions.has(a)))).filter(x=>isWar(s,actor,x.owner)||(s.relations[pair(actor,x.owner)]??0)<0).length;
+ const near=sightings.filter(x=>ownRegions.has(x.region)||ROUTES.some(([a,b])=>(a===x.region&&ownRegions.has(b))||(b===x.region&&ownRegions.has(a)))).filter(x=>isWar(s,actor,x.owner)||knownRelation(s,actor,x.owner)<0).length;
  const reports=(s.world.focusReports?.[actor]||[]).filter(r=>r.threat&&isDeliveredReport(s,r)&&sightingAge(s,r)>=0&&sightingAge(s,r)<=12).length;
  let score=ai.base||10;
  if(atWar)score+=ai.war||0;else score+=ai.peace||0;
@@ -267,3 +268,5 @@ export function generalsReact(s,actor,f,{log=()=>{}}={}){
  }
  return out;
 }
+
+

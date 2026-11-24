@@ -1,5 +1,6 @@
+import {knownRelation} from './treaty-observation.js?v=treaty-observation-1';
 import {observeArrival} from './control-intelligence.js?v=control-delivery-1';
-import {initializeWorld, CHARACTER_CATALOG} from './characters.js?v=faces-name-disagreement-1';
+import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=faces-name-disagreement-1';
 import {personTravelRoute} from './person-travel-route.js';
 import {addReport,reportedHealthSubjects,reportedPersonName,apparentAgeRange} from './character-system.js?v=faces-name-disagreement-1';
 import {officeOf} from './office-system.js?v=faces-name-disagreement-1';
@@ -82,8 +83,9 @@ export function advancePersonalDiplomacy(s){
  initializeWorld(s);for(const c of Object.values(s.world.characters)){const t=c.travel;if(!t)continue;if(!c.alive||c.missing||['seriously_ill','dying','deceased'].includes(c.health)){interruptJourney(s,c);continue}const next=t.legs[0],r=s.regions.find(x=>x.id===next?.to);if(!r){delete c.travel;continue}if(--t.remaining>0)continue;observeArrival(s,c.faction,next.to);if(atWar(s,c.faction,r.owner)){delete c.travel;if(c.faction===s.player)log(s,'A personal journey stopped on arrival: entry is no longer safe.','人物抵达途中核实了战区控制；因无法安全进入而中止行程。');continue}c.location=next.to;t.legs.shift();if(t.haltAfterLeg){delete c.travel;if(c.faction===s.player)log(s,`${CHARACTER_CATALOG[c.id].name[0]} stopped in ${r.name[0]} as ordered.`,`${CHARACTER_CATALOG[c.id].name[1]}按命令在${r.name[1]}停下。`)}else if(t.legs.length)t.remaining=t.legs[0].months;else{delete c.travel;if(c.faction===s.player)log(s,`${CHARACTER_CATALOG[c.id].name[0]} arrived in ${r.name[0]}.`,`${CHARACTER_CATALOG[c.id].name[1]}抵达${r.name[1]}。`)}}
  for(const m of s.meetings){
   if(m.status!=='pending'||--m.remaining>0)continue;
-  const a=s.world.characters[m.person],b=s.world.characters[m.target],q=random(s),personKey=[m.person,m.target].sort().join(':'),factionKey=[m.actor,m.targetFaction].sort().join(':'),trust=s.world.personalRelations[personKey]?.trust||0,relations=s.relations[factionKey]||0,declineLimit=Math.max(.25,Math.min(.7,.45-trust*.002-relations*.001));
+  const a=s.world.characters[m.person],b=s.world.characters[m.target],q=random(s),personKey=[m.person,m.target].sort().join(':'),factionKey=[m.actor,m.targetFaction].sort().join(':'),trust=s.world.personalRelations[personKey]?.trust||0,relations=knownRelation(s,m.targetFaction,m.actor),declineLimit=Math.max(.25,Math.min(.7,.45-trust*.002-relations*.001));
   // Silence is possible regardless of the recipient's hidden condition.
+
   if(q<.2)m.status='no_reply';
   else if(!a?.alive||a.missing||a.faction!==m.actor||a.travel||commandingMarch(s,m.person)||a.location!==m.location||['seriously_ill','dying','deceased'].includes(a.health)||!b?.alive||b.missing||b.faction!==m.targetFaction||b.travel||commandingMarch(s,m.target)||b.location!==m.location||atWar(s,m.actor,m.targetFaction))m.status='no_contact';
   else if(q<declineLimit||['seriously_ill','dying','deceased'].includes(b.health))m.status='declined';
@@ -93,3 +95,5 @@ export function advancePersonalDiplomacy(s){
   m.resolvedYear=s.year;m.resolvedMonth=s.month;if(m.actor===s.player){const status=audiencePublicStatus(m.status);log(s,`Personal audience: ${status.replace('_',' ')}.`,({no_reply:'个人会面请求没有收到答复。',declined:'个人会面请求被拒绝。',met:'双方在同一战区举行了个人会面，关系有所改善。'})[status])}
  }
 }
+
+

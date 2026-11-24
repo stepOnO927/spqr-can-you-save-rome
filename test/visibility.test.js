@@ -1,3 +1,4 @@
+import {startingTreaties} from './helpers/starting-treaties.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,resolveBattle,region,tick,upgradeSave,diplomacy,setTax,isWar} from '../engine.js?v=faces-name-disagreement-1';
@@ -56,5 +57,7 @@ test('unrelated foreign diplomacy and taxation do not appear in the player chron
 });
 test('diplomacy involving the player and wars entered through alliances remain visible',()=>{
  const direct=newGame('caesar');direct.log=[];assert.equal(diplomacy(direct,'caesar','egypt','improve'),true);assert.match(direct.log[0].en,/improved relations/);
- for(const side of ['egypt','parthia']){const s=newGame('caesar');s.log=[];s.alliances.push(['caesar',side]);assert.equal(diplomacy(s,'egypt','parthia','war'),true);const enemy=side==='egypt'?'parthia':'egypt';assert.equal(isWar(s,'caesar',enemy),true);assert.equal(s.log.length,1);assert.match(s.log[0].en,/Treaty obligations have brought your faction into war/);assert.equal(s.log[0].other,enemy);assert.match(s.log[0].en,new RegExp(enemy==='egypt'?'Egypt':'Parthia'));}
+ for(const side of ['egypt','parthia']){const s=newGame('caesar');s.log=[];s.alliances.push(['caesar',side]);startingTreaties(s);assert.equal(diplomacy(s,'egypt','parthia','war'),true);const enemy=side==='egypt'?'parthia':'egypt';assert.equal(isWar(s,'caesar',enemy),true);assert.equal(s.log.length,1);assert.match(s.log[0].en,/Treaty obligations have brought your faction into war/);assert.equal(s.log[0].other,enemy);assert.match(s.log[0].en,new RegExp(enemy==='egypt'?'Egypt':'Parthia'));}
 });
+
+
