@@ -177,13 +177,13 @@ export function replyToLetter(s, id, choice, actions, details={}) {
   } else if (m.context?.kind === 'wheels_commander') {
     ok=actions.commanderDecision?.(s,m.context.chainId,choice)===true;
   } else if (m.context?.kind === 'strategic_offer') {
-    ok = actions.answerStrategicOffer?.(s,m.context.offerId,choice).ok === true;
+    const answer=actions.answerStrategicOffer?.(s,m.context.offerId,choice);if(answer?.reason==='neutrality')return answer;ok=answer?.ok===true;
   } else if (m.context?.kind === 'agent_release_request') {
     const request=(s.releaseRequests||[]).find(r=>r.mailId===m.id&&r.holder===s.player&&r.status==='awaiting_decision');
     if(!request)return {ok:false,reason:'unavailable'};
     if(choice!=='ignore')ok=actions.answerAgentRelease?.(s,request.captiveId,choice==='release_agent'?'release':choice).ok===true;
   } else if (m.context?.kind === 'agreement_offer') {
-    ok = actions.answerAgreementProposal?.(s,m.context.proposalId,choice).ok === true;
+    const answer=actions.answerAgreementProposal?.(s,m.context.proposalId,choice);if(['neutrality','neutrality_offer'].includes(answer?.reason))return answer;ok=answer?.ok===true;
   } else if (m.context?.kind === 'coalition_offer') {
     ok = actions.answerCoalitionInvitation?.(s,m.context.invitationId,choice).ok === true;
   } else if (m.context?.kind === 'official_inquiry') {
@@ -390,10 +390,10 @@ export function syncFamilyReplies(s){
 
 // A proposal's two journeys have already completed; do not roll a second delivery.
 export function syncAgreementLetters(s){
- const mail=initializeMail(s),types={full_alliance:['Full alliance','全面同盟'],non_aggression:['Non-aggression pact','互不侵犯条约'],military_access:['Military access','军事通行权'],trade:['Trade agreement','贸易协定'],intelligence:['Intelligence sharing','情报共享'],defensive:['Defensive alliance','防御同盟'],offensive:['Offensive alliance','进攻同盟'],military_support:['Wartime aid agreement','战时援助协定'],political:['Political cooperation','政治合作'],guarantee:['Independence guarantee','独立保障']};
+ const mail=initializeMail(s),types={neutrality:['Named-war neutrality','特定战争中立承诺'],full_alliance:['Full alliance','全面同盟'],non_aggression:['Non-aggression pact','互不侵犯条约'],military_access:['Military access','军事通行权'],trade:['Trade agreement','贸易协定'],intelligence:['Intelligence sharing','情报共享'],defensive:['Defensive alliance','防御同盟'],offensive:['Offensive alliance','进攻同盟'],military_support:['Wartime aid agreement','战时援助协定'],political:['Political cooperation','政治合作'],guarantee:['Independence guarantee','独立保障']};
  const terms={full_alliance:['The alliance can involve both sides in wars.','同盟可能使双方卷入战争。'],non_aggression:['Both parties promise not to declare war on each other.','双方承诺互不宣战。'],military_access:['Both sides receive military passage.','双方获得军事通行权。'],trade:['Each side receives one treasury per month while eligible.','条件满足时双方每月各增1国库。'],intelligence:['The agreement permits requests to share existing intelligence.','协议允许请求共享已有情报。'],defensive:['A defensive obligation may bring us into war if the partner is attacked.','若对方遭攻击，防御义务可能使本方参战。'],offensive:['If the partner declares war, this agreement may bring us into that war unless other commitments prevent it.','若对方宣战，此协议可能使本方参战；其他承诺可能阻止参战。'],military_support:['The sender offers wartime treasury and food, subject to its reserves.','来信方将在条件允许时提供战时国库和粮食援助。'],political:['Each side may pay one treasury every six months for stability.','双方可能每半年各支付1国库以提高稳定度。'],guarantee:['The sender guarantees our independence and may defend us.','来信方保障本方独立，并可能提供防御。']};
  for(const x of s.world?.agreementLetters||[]){
-  if(x.target!==s.player||x.actor===s.player)continue;const label=types[x.type]||['Diplomatic agreement','外交条约'],detail=terms[x.type]||['Conditions are described in the proposal.','条件以提议为准。'];
+  if(x.target!==s.player||x.actor===s.player)continue;const label=types[x.type]||['Diplomatic agreement','外交条约'],detail=x.type==='neutrality'?[`Our court is asked to remain neutral toward ${factionName(x.actor)[0]} and ${factionName(x.enemy)[0]} for 12 months after conclusion: no direct declaration, military aid or new military access to either. The signatories promise not to attack each other. Trade, independent self-defense and other fronts remain allowed; the fixed term continues if the original war ends. Existing belligerency or conflicting military obligations can prevent acceptance. Unilateral breach costs 20 credibility and 20 bilateral relations. Existing marching orders and dispatched supplies are not recalled automatically.`,`本朝被请求在条约成立后12个月内对${factionName(x.actor)[1]}与${factionName(x.enemy)[1]}保持中立：不直接向双方宣战、提供直接军援或新授予军事通行。签约双方互不宣战；贸易、独立自卫及其他战线仍可进行，原战争结束不会自动解除固定期限的承诺。已有参战或冲突军事义务可能阻止接受；单方违约降低20信誉和20双边关系；在途命令及已经派出的物资不会自动撤回。`]:terms[x.type]||['Conditions are described in the proposal.','条件以提议为准。'];
   if(x.status==='pending'&&x.phase==='awaiting_player'&&!x.incomingMailId){
    const result=sendLetter(s,{senderId:null,senderInstitution:x.actor,senderFaction:x.actor,recipient:s.player,category:'diplomatic',priority:'important',subject:['Agreement proposal','条约提议'],body:[`${factionName(x.actor)[0]} proposes ${label[0]}. ${detail[0]} Accepting sends a reply; the agreement takes effect only after a later confirmation. Letters may be lost. The sender pays the treaty cost.`,`${factionName(x.actor)[1]}提出${label[1]}。${detail[1]}接受仅寄出答复；须收到后续确认才会生效。书信可能遗失，条约费用由来信方支付。`],options:['accept_agreement','refuse','ignore'],confidentiality:x.secret?'secret':'ordinary',expires:monthIndex(s.year,s.month)+Math.max(0,x.remaining-1),context:{kind:'agreement_offer',proposalId:x.id}});
    if(result.ok){x.incomingMailId=result.letter.id;result.letter.created={...x.sent};result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received'}
@@ -797,4 +797,3 @@ export function advanceMail(s, actions = {}) {
   foreignCourtNotes(s);
   return mail;
 }
-

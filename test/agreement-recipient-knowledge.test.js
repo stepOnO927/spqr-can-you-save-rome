@@ -8,13 +8,13 @@ import {syncAgreementLetters,receivedMail} from '../epistulae.js?v=dossier-archi
 function start(seed=1000003,type='trade',relation=60,{bonus=false}={}){
  const s=newGame('caesar');s.seed=seed;s.relations['caesar:egypt']=relation;s.factions.caesar.treasury=100;
  if(bonus)s.inventions.caesar.active.government.push('gc_diplomacy');
- assert.ok(sendAgreementProposal(s,'caesar','egypt',type).ok);return s;
+ assert.ok(sendAgreementProposal(s,'caesar','egypt',type,type==='neutrality'?{enemy:'senate'}:{}).ok);return s;
 }
 function step(s){if(++s.month>12){s.month=1;s.year++}advanceAgreementProposals(s);syncAgreementLetters(s)}
 function receive(s){step(s);step(s);return s.world.agreementLetters[0]}
 function replied(s){return s.world.agreementLetters[0].sealed?.outcome==='accepted'}
 
-test('all nine received treaty types ignore the sender’s hidden current funding, territory and policy',()=>{
+test('all received limited treaty types ignore the sender’s hidden current funding, territory and policy',()=>{
  const delivered=new Set();
  for(const type of Object.keys(AGREEMENT_TYPES))for(let seed=1;seed<=12;seed++){
   const a=start(seed*1000003,type),b=structuredClone(a),paper=structuredClone(b.world.agreementLetters[0]);
