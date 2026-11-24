@@ -154,11 +154,11 @@
 
 #guide{max-height:min(62dvh,390px);overflow:auto;pointer-events:auto}
 #guide.guide-at-top{top:68px;bottom:auto}
-#guide-result{margin-top:8px;color:#e7d292;font:600 13px/1.45 Manrope,'Microsoft YaHei',sans-serif}
+#guide-result{margin-top:8px;color:#e7d292;font:600 13px/1.45 Manrope,'Microsoft YaHei','SPQR CJK',sans-serif}
 #guide-result:empty,#guide-feedback:empty{display:none}
-#guide-recovery{margin-top:8px;color:#cabd9b;font:12px/1.45 Manrope,'Microsoft YaHei',sans-serif}
+#guide-recovery{margin-top:8px;color:#cabd9b;font:12px/1.45 Manrope,'Microsoft YaHei','SPQR CJK',sans-serif}
 .guide-actions,#guide-choices{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
-.guide-actions button,#guide-choices button{min-height:38px;padding:7px 11px;background:#35483f;color:#f4e5bf;border:1px solid #bca36b;font:700 12px Manrope,'Microsoft YaHei',sans-serif;cursor:pointer}
+.guide-actions button,#guide-choices button{min-height:38px;padding:7px 11px;background:#35483f;color:#f4e5bf;border:1px solid #bca36b;font:700 12px Manrope,'Microsoft YaHei','SPQR CJK',sans-serif;cursor:pointer}
 #guide-show{background:#784036}
 #guide-choices button{flex:1 1 86px}
 @media(max-width:700px){#guide,#guide.guide-at-top{left:50%;right:auto;transform:translateX(-50%);width:min(340px,calc(100vw - 18px));max-height:37dvh;bottom:8px;top:auto}#guide.guide-at-top{top:60px;bottom:auto}#guide h2{font-size:20px}#guide p{font-size:14px;line-height:1.45}}
