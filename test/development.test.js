@@ -118,7 +118,7 @@ test('agreed grain-dues commutation converts only real surplus after paid adopti
  tick(activeTurn);tick(controlTurn);
  assert.equal(activeTurn.factions.caesar.treasury,controlTurn.factions.caesar.treasury+3);
  assert.equal(activeTurn.factions.caesar.food,controlTurn.factions.caesar.food-3);
- for(const [lang,name,cash,grain] of [['en','Grain Dues Commutation','Grain dues paid in cash','Grain dues retained locally'],['zh','粮赋折现协定','粮赋折现收入','粮赋折现减少入库粮']]){
+ for(const [lang,name,cash,grain] of [['en','Requisition Grain Commutation','Requisition grain commuted to cash','Requisition grain withheld from stores'],['zh','征粮折现协定','征粮折现收入','征粮折现减少入库粮']]){
   assert.match(developmentPanel(saved,lang,'idea'),new RegExp(name));
   assert.match(budgetHtml(saved,lang),new RegExp(cash));assert.match(budgetHtml(saved,lang),new RegExp(grain));
  }

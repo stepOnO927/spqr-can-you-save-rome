@@ -102,8 +102,8 @@ for(let month=1;month<months&&!s.achievementState.finalized;month++){
  if(commuteGrain){
   const d=s.development.caesar,idea='grain-dues-commutation';
   const irrigated=s.regions.filter(r=>r.owner==='caesar'&&(r.buildings.includes('irrigation')||r.construction?.buildingId==='irrigation')).length;
-  if(irrigated>=2&&d.knownMaterial.includes('water-control')&&!d.knownIdeas.includes(idea)&&!d.research&&f.treasury>=35&&f.food>=30)record('study agreed grain dues',researchInnovation(s,'caesar','idea',idea));
-  else if(d.knownIdeas.includes(idea)&&!d.slots.economy.includes(idea)&&!d.adoption)record('adopt agreed grain dues',adoptIdea(s,'caesar',idea,0));
+  if(irrigated>=2&&d.knownMaterial.includes('water-control')&&!d.knownIdeas.includes(idea)&&!d.research&&f.treasury>=35&&f.food>=30)record('study requisition commutation',researchInnovation(s,'caesar','idea',idea));
+  else if(d.knownIdeas.includes(idea)&&!d.slots.economy.includes(idea)&&!d.adoption)record('adopt requisition commutation',adoptIdea(s,'caesar',idea,0));
  }
  if(investFood){
   const budget=nationalBudget(s,'caesar'),knowledge=s.development.caesar;

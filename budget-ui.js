@@ -1,4 +1,4 @@
-import {nationalBudget} from './national-budget.js?v=52';
+import {nationalBudget} from './national-budget.js?v=54';
 import {expensesThisMonth} from './expense-ledger.js?v=3';
 const number=x=>(Object.is(x,-0)?0:Number(x)).toLocaleString(undefined,{maximumFractionDigits:1});
 export function budgetHtml(s,lang,contribution=null,provisions=null,aerarium=null){
@@ -7,7 +7,7 @@ export function budgetHtml(s,lang,contribution=null,provisions=null,aerarium=nul
   row('Tax revenue','税收',b.tax),row('Army upkeep','陆军军费',-b.armyUpkeep),
   b.homeIncome?row('Home domain dues · game estimate','本土领地收入 · 游戏估算',b.homeIncome):'',
   row('Office income','行政收入',b.officeIncome),row('Ideas: income / upkeep','理念收入／维持费',b.ideaIncome-b.ideaUpkeep),
-  b.grainCommutation?row('Grain dues paid in cash','粮赋折现收入',b.grainCommutation):'',
+  b.grainCommutation?row('Requisition grain commuted to cash','征粮折现收入',b.grainCommutation):'',
   row('Buildings: income / upkeep','建筑收入／维持费',b.buildingIncome-b.buildingUpkeep),row('Fleet upkeep','舰队军费',-b.navyUpkeep),
   row('Naval officers','海军官员',-b.navalJobs),row('Administration','行政维持费',-b.administrationExpense),
   b.reviewExpense?row('Provincial tax review','行省税务复核',-b.reviewExpense):'',
@@ -27,7 +27,7 @@ export function budgetHtml(s,lang,contribution=null,provisions=null,aerarium=nul
   b.ideaFood?row('Ideas: food','理念粮食收益',b.ideaFood):'',
   b.buildingFood?row('Buildings: food','建筑粮食收益',b.buildingFood):'',
   b.tenantFood?row('Tenant crop shares','佃作分成粮食',-b.tenantFood):'',
-  b.grainCommutation?row('Grain dues retained locally','粮赋折现减少入库粮',-b.grainCommutation):'',
+  b.grainCommutation?row('Requisition grain withheld from stores','征粮折现减少入库粮',-b.grainCommutation):'',
   row('Projected food change','预计粮食变化',b.foodNet),row('Projected manpower gain','预计兵源恢复',b.manpowerNet)
  ].join('');
  const taxRates={low:.65,normal:1,high:1.4},currentRate=taxRates[s.factions[s.player].tax]||1;
