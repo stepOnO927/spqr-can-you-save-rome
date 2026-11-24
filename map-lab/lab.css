@@ -168,4 +168,4 @@
 @media(max-width:700px) and (max-height:500px){#guide,#guide.guide-at-top{width:min(300px,calc(100vw - 16px));max-height:43dvh}#guide.guide-at-top{top:56px;bottom:auto}}
 @media(max-width:700px) and (max-height:500px){#guide,#guide.guide-at-top{left:8px;right:auto;top:56px;bottom:auto;transform:none;width:min(232px,36vw);max-height:calc(100dvh - 64px)}#guide.guide-on-right,#guide.guide-on-right.guide-at-top{left:auto;right:8px}.guide-actions{position:sticky;bottom:-1px;background:#1a2b29;padding:5px 0}#guide h2{font-size:18px}#guide p{font-size:12px}#guide-recovery{font-size:11px}}
 #training-badge{padding:5px 9px;border:1px solid #ba9c62;background:#2c463d;color:#f4dfaa;font:700 11px Manrope,'Microsoft YaHei','SPQR CJK',sans-serif;white-space:nowrap}#training-badge[hidden]{display:none}#start-training{border-color:#bfa473;color:#f1ddad;background:#315043}
-@media(max-width:700px){#training-badge{max-width:66px;overflow:hidden;text-overflow:ellipsis;font-size:9px;padding:3px}}
+@media(max-width:700px){#training-badge{max-width:66px;overflow:hidden;text-overflow:ellipsis;font-size:9px;padding:3px}}.strength-line b{white-space:nowrap}
