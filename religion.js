@@ -61,6 +61,9 @@ function workingAuthority(s,o,actor){
  const person=s.world.characters[o.leader];
  return person?.alive&&person.faction===actor&&person.location===o.region&&!person.travel&&(person.religiousWorks||0)>=2?person:null;
 }
+function localReligiousAdvisor(s,o,actor){
+ return Object.values(s.world.characters).filter(person=>person.alive&&!person.missing&&!person.travel&&!person.institutionalOnly&&person.faction===actor&&person.location===o.region&&(person.religiousWorks||0)>=2&&!s.world.religiousInstitutions.some(institution=>institution.council?.includes(person.id))).sort((a,b)=>b.religiousWorks-a.religiousWorks||a.id.localeCompare(b.id))[0]||null;
+}
 function recordInstitutionWork(s,o,action,extra={}){
  const person=s.world.characters[o.leader];
  if(person?.alive&&person.location===o.region){person.religiousWorks=(person.religiousWorks||0)+1;person.influence=clamp((person.influence||0)+2,0,100)}
@@ -96,23 +99,24 @@ export function religiousPolicy(s,actor,id,action){
  if(action==='revoke'&&!o.privilegedBy.includes(actor))return {ok:false,reason:'unavailable'};
  if(action==='investigate'&&s.world.religionInvestigations.some(x=>x.actor===actor&&x.id===id&&x.status==='pending'))return {ok:false,reason:'pending'};
  if(f.treasury<cost)return {ok:false,reason:'treasury'};
- f.treasury-=cost;const relation=o.relations[actor]??0,share=o.followers/Math.max(1,r.population.total),authority=workingAuthority(s,o,actor);
+ f.treasury-=cost;const relation=o.relations[actor]??0,share=o.followers/Math.max(1,r.population.total),authority=workingAuthority(s,o,actor),advisor=['negotiate','tolerance'].includes(action)?localReligiousAdvisor(s,o,actor):null;
  if(action==='recognize'){o.recognizedBy.push(actor);o.relations[actor]=clamp(relation+12,-100,100);f.legitimacy=clamp(f.legitimacy+2,0,100)}
  if(action==='sponsor'){o.wealth+=10;o.relations[actor]=clamp(relation+12,-100,100);o.legitimacy=clamp(o.legitimacy+2,0,100)}
- if(action==='negotiate'){o.relations[actor]=clamp(relation+8+(authority?2:0),-100,100);if(relation>-40){r.population.satisfaction=clamp(r.population.satisfaction+2+(authority?1:0),0,100);r.loyalty=clamp(r.loyalty+1,0,100)}}
+ if(action==='negotiate'){o.relations[actor]=clamp(relation+8+(authority?2:0)+(advisor?1:0),-100,100);if(relation>-40){r.population.satisfaction=clamp(r.population.satisfaction+2+(authority?1:0)+(advisor?1:0),0,100);r.loyalty=clamp(r.loyalty+1,0,100)}}
  if(action==='privilege'){o.privilegedBy.push(actor);o.relations[actor]=clamp(relation+15,-100,100)}
  if(action==='revoke'){o.privilegedBy=o.privilegedBy.filter(id=>id!==actor);o.relations[actor]=clamp(relation-8,-100,100)}
  if(action==='restrict'){o.relations[actor]=clamp(relation-20,-100,100);r.population.satisfaction=clamp(r.population.satisfaction-Math.ceil(share*20)*(o.legitimacy>50?2:1),0,100);f.stability=clamp(f.stability+1,0,100)}
- if(action==='tolerance'){o.relations[actor]=clamp(relation+8,-100,100);r.population.satisfaction=clamp(r.population.satisfaction+1+Math.round(traditionDiversity(r.population)*4)+(buildingModifiers(r).satisfaction||0),0,100);f.legitimacy=clamp(f.legitimacy+1,0,100)}
+ if(action==='tolerance'){o.relations[actor]=clamp(relation+8+(advisor?1:0),-100,100);r.population.satisfaction=clamp(r.population.satisfaction+1+Math.round(traditionDiversity(r.population)*4)+(buildingModifiers(r).satisfaction||0)+(advisor?1:0),0,100);f.legitimacy=clamp(f.legitimacy+1,0,100)}
  if(['negotiate','tolerance'].includes(action)&&hasNationalIdea(s,actor,'tolerance'))o.relations[actor]=clamp(o.relations[actor]+2,-100,100);
  if(action==='investigate')s.world.religionInvestigations.push({actor,id,status:'pending',remaining:3,year:s.year,month:s.month});
  const loyaltyChange={recognize:4,sponsor:3,negotiate:2,privilege:4,revoke:-3,restrict:-10,tolerance:3,investigate:0}[action];o.institutionalLoyalty=clamp(o.institutionalLoyalty+loyaltyChange,0,100);
- o.history.push({action,actor,...(action==='negotiate'&&authority?{authority:authority.id}:{}),year:s.year,month:s.month});o.history=o.history.slice(-30);
+ o.history.push({action,actor,...(action==='negotiate'&&authority?{authority:authority.id}:{}),...(advisor?{advisor:advisor.id}:{}),year:s.year,month:s.month});o.history=o.history.slice(-30);
  if(actor===s.player){
   const official=o.leader&&s.world.characters[o.leader]?.alive?s.world.dynasties.catalog[o.leader]?.name:null;
   const subject=official?`${o.name[0]} (led by ${official[0]})`:o.name[0],subjectZh=official?`${o.name[1]}（主持者：${official[1]}）`:o.name[1];
   const namedAuthority=action==='negotiate'&&authority?s.world.dynasties.catalog[authority.id]?.name:null;
-  log(s,namedAuthority?`${namedAuthority[0]} helped negotiate with ${subject} in ${r.name[0]}.`:`Your government ${policyNames[action][0]} ${subject} in ${r.name[0]}${cost?`; ${cost} treasury spent`:''}.`,namedAuthority?`${namedAuthority[1]}协助商谈与${subjectZh}在${r.name[1]}的关系。`:`本方在${r.name[1]}：${subjectZh} · ${policyNames[action][1]}${cost?`；支出国库${cost}`:''}。`);
+  const namedAdvisor=advisor?s.world.dynasties.catalog[advisor.id]?.name:null;
+  log(s,namedAuthority?`${namedAuthority[0]} helped negotiate with ${subject} in ${r.name[0]}.`:namedAdvisor?`${namedAdvisor[0]} advised your government as it ${policyNames[action][0]} ${subject} in ${r.name[0]}.`:`Your government ${policyNames[action][0]} ${subject} in ${r.name[0]}${cost?`; ${cost} treasury spent`:''}.`,namedAuthority?`${namedAuthority[1]}协助商谈与${subjectZh}在${r.name[1]}的关系。`:namedAdvisor?`${namedAdvisor[1]}协助本方在${r.name[1]}对${subjectZh}采取${policyNames[action][1]}政策。`:`本方在${r.name[1]}：${subjectZh} · ${policyNames[action][1]}${cost?`；支出国库${cost}`:''}。`);
  }
  return {ok:true,cost};
 }

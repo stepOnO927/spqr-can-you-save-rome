@@ -23,7 +23,7 @@ export function specialistRoles(s,id){
  if((p.education||0)>=45)roles.push('engineer');
  if((p.influence||0)>=55)roles.push('statesman');
  if((p.battlesCommanded||0)>=2)roles.push('military');
- if(p.institutionalOnly)roles.push('religious');
+ if(p.institutionalOnly||(p.religiousWorks||0)>=2)roles.push('religious');
  return roles;
 }
 export function specialistBonus(s,owner,role){
@@ -76,7 +76,7 @@ export function advanceCivilization(s){
  for(const offer of c.recruitment.filter(x=>x.status==='pending')){
   if(--offer.remaining>0)continue;
   const p=s.world.characters[offer.id];
-  const available=p?.alive&&!p.missing&&p.faction===offer.target&&!p.travel&&specialistRoles(s,offer.id).length>0&&!s.wars.some(w=>w.includes(offer.owner)&&w.includes(offer.target))&&!(s.world.leadership?.[offer.target]||[]).includes(offer.id)&&!(s.world.claimants?.[offer.target]||[]).includes(offer.id)&&!s.armies.some(a=>a.characterId===offer.id)&&!Object.values(s.world.offices?.[offer.target]||{}).includes(offer.id)&&!Object.values(s.world.localGovernors||{}).some(post=>post.faction===offer.target&&post.person===offer.id);
+  const available=p?.alive&&!p.missing&&p.faction===offer.target&&!p.travel&&specialistRoles(s,offer.id).length>0&&!s.wars.some(w=>w.includes(offer.owner)&&w.includes(offer.target))&&!(s.world.leadership?.[offer.target]||[]).includes(offer.id)&&!(s.world.claimants?.[offer.target]||[]).includes(offer.id)&&!s.armies.some(a=>a.characterId===offer.id)&&!Object.values(s.world.offices?.[offer.target]||{}).includes(offer.id)&&!Object.values(s.world.localGovernors||{}).some(post=>post.faction===offer.target&&post.person===offer.id)&&!s.world.religiousInstitutions?.some(o=>o.council?.includes(offer.id));
   const relation=s.relations?.[pair(offer.owner,offer.target)]||0;
   const ambition=p?.ambition??40,loyalty=p?.loyalty??75;
   const chance=clamp(.32+relation/250+ambition/400-loyalty/250,0,.8);
@@ -99,7 +99,7 @@ export function settleRecruitmentTravel(s){
  for(const offer of c.recruitment.filter(x=>x.status==='travel')){
   const p=s.world.characters[offer.id],travel=p?.travel;
   if(travel){offer.remaining=travel.remaining+travel.legs.slice(1).reduce((n,leg)=>n+leg.months,0);continue}
-  const destination=s.regions.find(r=>r.id===offer.destination),employed=s.armies.some(a=>a.characterId===offer.id)||Object.values(s.world.offices?.[offer.target]||{}).includes(offer.id);
+  const destination=s.regions.find(r=>r.id===offer.destination),employed=s.armies.some(a=>a.characterId===offer.id)||Object.values(s.world.offices?.[offer.target]||{}).includes(offer.id)||s.world.religiousInstitutions?.some(o=>o.council?.includes(offer.id));
   const name=offerName(offer);
   if(!p?.alive||p.missing||p.faction!==offer.target||p.location!==offer.destination||destination?.owner!==offer.owner||employed||s.wars.some(w=>w.includes(offer.owner)&&w.includes(offer.target))){offer.status='lost';if(offer.owner===s.player)note(s,`The journey of ${name[0]} did not complete the appointment.`,`未能完成${name[1]}的聘任行程。`);continue}
   p.faction=offer.owner;p.loyalty=clamp(Math.round((p.loyalty||60)*.55),30,70);offer.status='arrived';offer.remaining=0;

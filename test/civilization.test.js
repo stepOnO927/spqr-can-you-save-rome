@@ -5,6 +5,7 @@ import {startResearch,startConstruction} from '../inventions.js';
 import {initializeCivilization,commissionCulturalEvent,fundEducation,knownForeignSpecialists,inviteForeignSpecialist,specialistRoles,aiCivilization,advanceCivilization,settleRecruitmentTravel} from '../civilization.js';
 import {advancePersonalDiplomacy} from '../personal-diplomacy.js?v=faces-name-disagreement-1';
 import {createFictionalPerson} from '../dynasties.js?v=faces-name-disagreement-1';
+import {religiousPolicy} from '../religion.js?v=faces-name-disagreement-1';
 
 const advance=(s,months)=>{for(let i=0;i<months;i++)tick(s)};
 
@@ -186,4 +187,37 @@ test('a newly hostile theater interrupts a funded specialist journey without tra
  assert.equal(offer.status,'lost');
  assert.equal(s.world.characters.cicero.faction,'senate');
  assert.notEqual(s.world.characters.cicero.location,offer.destination);
+});
+
+test('an active religious council member cannot abandon an institution through a paid foreign invitation',()=>{
+ const s=newGame('egypt'),institution=s.world.religiousInstitutions.find(x=>x.id==='roman_college'),id=institution.leader;
+ s.wars=[];s.relations['egypt:senate']=80;s.factions.egypt.treasury=300;s.civilization.prestige.egypt=8;s.civilization.seed=0;
+ s.knowledge.egypt.senate.reports.push({kind:'leaders',leaders:[id],year:s.year,month:s.month,peopleNames:{[id]:[...s.world.dynasties.catalog[id].name]}});
+ assert.equal(inviteForeignSpecialist(s,'egypt',id).ok,true);
+ for(let i=0;i<3;i++)advanceCivilization(s);
+ assert.equal(s.civilization.recruitment[0].status,'refused');
+ assert.equal(s.world.characters[id].faction,'senate');
+ assert.equal(institution.leader,id);
+});
+
+test('an unaffiliated trained religious specialist can advise local policy after international recruitment',()=>{
+ const s=newGame('egypt'),id=createFictionalPerson(s,{name:['Lucius Rufus','卢基乌斯·鲁弗斯'],faction:'senate',birthYear:-80,location:'roma'});
+ s.world.characters[id].religiousWorks=2;
+ assert.ok(specialistRoles(s,id).includes('religious'));
+ s.wars=[];s.relations['egypt:senate']=80;s.factions.egypt.treasury=300;s.civilization.prestige.egypt=8;s.civilization.seed=0;
+ s.knowledge.egypt.senate.reports.push({kind:'location',character:id,year:s.year,month:s.month,peopleNames:{[id]:['Lucius Rufus','卢基乌斯·鲁弗斯']}});
+ assert.equal(inviteForeignSpecialist(s,'egypt',id).ok,true);
+ for(let i=0;i<3;i++)advanceCivilization(s);
+ assert.equal(s.civilization.recruitment[0].status,'travel');
+ for(let i=0;i<30&&s.civilization.recruitment[0].status==='travel';i++){advancePersonalDiplomacy(s);settleRecruitmentTravel(s)}
+ assert.equal(s.civilization.recruitment[0].status,'arrived');
+ assert.equal(s.world.characters[id].faction,'egypt');
+ s.world.characters[id].location='egyptUpper';
+ const control=structuredClone(s),temple=s.world.religiousInstitutions.find(x=>x.id==='theban_temples');
+ control.world.characters[id].religiousWorks=0;
+ const baseline=s.regions.find(r=>r.id===temple.region).population.satisfaction;
+ assert.equal(religiousPolicy(s,'egypt',temple.id,'tolerance').ok,true);
+ assert.equal(religiousPolicy(control,'egypt',temple.id,'tolerance').ok,true);
+ assert.equal(s.regions.find(r=>r.id===temple.region).population.satisfaction,control.regions.find(r=>r.id===temple.region).population.satisfaction+1);
+ assert.ok(s.regions.find(r=>r.id===temple.region).population.satisfaction>baseline);
 });
