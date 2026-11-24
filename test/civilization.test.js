@@ -2,8 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,tick,upgradeSave} from '../engine.js';
 import {startResearch,startConstruction} from '../inventions.js';
-import {initializeCivilization,commissionCulturalEvent,fundEducation,knownForeignSpecialists,inviteForeignSpecialist,specialistRoles,aiCivilization,settleRecruitmentTravel} from '../civilization.js';
+import {initializeCivilization,commissionCulturalEvent,fundEducation,knownForeignSpecialists,inviteForeignSpecialist,specialistRoles,aiCivilization,advanceCivilization,settleRecruitmentTravel} from '../civilization.js';
 import {advancePersonalDiplomacy} from '../personal-diplomacy.js?v=dossier-archive-1';
+import {createFictionalPerson} from '../dynasties.js?v=dossier-archive-1';
 
 const advance=(s,months)=>{for(let i=0;i<months;i++)tick(s)};
 
@@ -55,6 +56,41 @@ test('documented foreign specialist needs a received lead, consent, travel and a
  assert.equal(saved.world.characters.cicero.faction,'egypt');
  assert.equal(Object.keys(saved.world.characters).filter(id=>id==='cicero').length,1);
  assert.equal(startResearch(saved,'egypt','rhetorical_education').remaining,3);
+});
+
+test('reported fictional scholars can be recruited without exposing private skills or later names',()=>{
+ const s=newGame('egypt');s.wars=[];s.relations['egypt:senate']=80;s.factions.egypt.treasury=300;s.civilization.prestige.egypt=16;s.civilization.seed=0;
+ const id=createFictionalPerson(s,{name:['Private name','私下姓名'],faction:'senate',birthYear:-80,location:'roma',role:['Scholar','学者']});
+ s.world.characters[id].education=70;
+ assert.equal(knownForeignSpecialists(s,'egypt').some(x=>x.id===id),false);
+ s.knowledge.egypt.senate.reports.push({kind:'office_finance',value:id,year:s.year,month:s.month,peopleNames:{[id]:['Reported name','情报姓名']}});
+ assert.deepEqual(knownForeignSpecialists(s,'egypt').find(x=>x.id===id).name,['Reported name','情报姓名']);
+ assert.equal(inviteForeignSpecialist(s,'egypt',id).ok,true);
+ const offer=s.civilization.recruitment[0];assert.deepEqual(offer.name,['Reported name','情报姓名']);
+ s.world.dynasties.catalog[id].name=['Later private name','后来的私名'];
+ advanceCivilization(s);advanceCivilization(s);advanceCivilization(s);
+ assert.equal(offer.status,'travel');
+ assert.ok(s.log.some(x=>x.en.includes('Reported name accepted')));
+ assert.equal(s.log.some(x=>x.en.includes('Private name')),false);
+ const saved=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.deepEqual(saved.civilization.recruitment[0].name,['Reported name','情报姓名']);
+ assert.equal(saved.world.characters[id].faction,'senate');
+ for(let i=0;i<30&&saved.civilization.recruitment[0].status==='travel';i++){advancePersonalDiplomacy(saved);settleRecruitmentTravel(saved)}
+ assert.equal(saved.civilization.recruitment[0].status,'arrived');
+ assert.equal(saved.world.characters[id].faction,'egypt');
+ assert.equal(specialistRoles(saved,id).includes('scholar'),true);
+});
+
+test('a reported fictional contact without specialist skills receives a generic refusal',()=>{
+ const s=newGame('egypt');s.wars=[];s.relations['egypt:senate']=80;s.factions.egypt.treasury=300;s.civilization.prestige.egypt=8;
+ const id=createFictionalPerson(s,{name:['Hidden person','秘密人物'],faction:'senate',birthYear:-80,location:'roma'});
+ s.knowledge.egypt.senate.reports.push({kind:'office_finance',value:id,year:s.year,month:s.month,peopleNames:{[id]:['Observed person','已知人物']}});
+ assert.ok(knownForeignSpecialists(s,'egypt').some(x=>x.id===id));
+ assert.equal(inviteForeignSpecialist(s,'egypt',id).ok,true);
+ advanceCivilization(s);advanceCivilization(s);advanceCivilization(s);
+ assert.equal(s.civilization.recruitment[0].status,'refused');
+ assert.ok(s.log.some(x=>x.en.includes('Observed person declined or could not travel')));
+ assert.equal(s.log.some(x=>x.en.includes('Hidden person')),false);
 });
 
 test('rulers are excluded, while war and poor relations prevent recruitment without exposing hidden employment',()=>{

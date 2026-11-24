@@ -6,6 +6,7 @@ const pair=(a,b)=>[a,b].sort().join(':');
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const namedRoles={antony:['military'],labienus:['military'],scipio:['military','statesman'],cicero:['statesman','scholar'],cato:['statesman'],lepidus:['statesman']};
 const note=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.log.slice(0,80)};
+const offerName=offer=>offer.name||(!CHARACTER_CATALOG[offer.id]?.fictional?CHARACTER_CATALOG[offer.id]?.name:null)||['Unrecorded name','姓名未记录'];
 
 export function initializeCivilization(s){
  initializeWorld(s);s.civilization||={prestige:{},patronage:{},recruitment:[],seed:49049};
@@ -48,7 +49,9 @@ export function fundEducation(s,owner){
 }
 export function knownForeignSpecialists(s,owner){
  initializeCivilization(s);
- const seen=new Set();return Object.keys(s.factions||{}).filter(target=>target!==owner&&target!=='rebels').flatMap(target=>reportedPeople(s,owner,target).filter(id=>namedRoles[id]&&!seen.has(id)&&seen.add(id)).map(id=>({id,target,name:visiblePersonName(s,owner,id)})));
+ // A reported fictional person may be invited without exposing private
+ // education or employment. Their suitability is resolved when they reply.
+ const seen=new Set();return Object.keys(s.factions||{}).filter(target=>target!==owner&&target!=='rebels').flatMap(target=>reportedPeople(s,owner,target).filter(id=>(namedRoles[id]||CHARACTER_CATALOG[id]?.fictional)&&!seen.has(id)&&seen.add(id)).map(id=>({id,target,name:visiblePersonName(s,owner,id)})));
 }
 export function inviteForeignSpecialist(s,owner,id){
  const c=initializeCivilization(s),lead=knownForeignSpecialists(s,owner).find(x=>x.id===id),target=lead?.target,f=s.factions[owner];
@@ -59,8 +62,8 @@ export function inviteForeignSpecialist(s,owner,id){
  if(c.prestige[owner]<8)return {ok:false,reason:'prestige'};
  if(f.treasury<20)return {ok:false,reason:'treasury'};
  c.prestige[owner]-=8;f.treasury-=20;
- c.recruitment.push({id,owner,target,remaining:3,status:'pending',year:s.year,month:s.month});
- if(owner===s.player)note(s,`A paid invitation was sent to ${CHARACTER_CATALOG[id].name[0]}; a reply will take three months.`,`已向${CHARACTER_CATALOG[id].name[1]}发出有偿邀约；约三个月后收到答复。`);
+ const name=[...lead.name];c.recruitment.push({id,owner,target,name,remaining:3,status:'pending',year:s.year,month:s.month});
+ if(owner===s.player)note(s,`A paid invitation was sent to ${name[0]}; a reply will take three months.`,`已向${name[1]}发出有偿邀约；约三个月后收到答复。`);
  return {ok:true,remaining:3};
 }
 export function advanceCivilization(s){
@@ -73,19 +76,20 @@ export function advanceCivilization(s){
  for(const offer of c.recruitment.filter(x=>x.status==='pending')){
   if(--offer.remaining>0)continue;
   const p=s.world.characters[offer.id];
-  const available=p?.alive&&!p.missing&&p.faction===offer.target&&!p.travel&&!s.wars.some(w=>w.includes(offer.owner)&&w.includes(offer.target))&&!(s.world.leadership?.[offer.target]||[]).includes(offer.id)&&!(s.world.claimants?.[offer.target]||[]).includes(offer.id)&&!s.armies.some(a=>a.characterId===offer.id)&&!Object.values(s.world.offices?.[offer.target]||{}).includes(offer.id)&&!Object.values(s.world.localGovernors||{}).some(post=>post.faction===offer.target&&post.person===offer.id);
+  const available=p?.alive&&!p.missing&&p.faction===offer.target&&!p.travel&&specialistRoles(s,offer.id).length>0&&!s.wars.some(w=>w.includes(offer.owner)&&w.includes(offer.target))&&!(s.world.leadership?.[offer.target]||[]).includes(offer.id)&&!(s.world.claimants?.[offer.target]||[]).includes(offer.id)&&!s.armies.some(a=>a.characterId===offer.id)&&!Object.values(s.world.offices?.[offer.target]||{}).includes(offer.id)&&!Object.values(s.world.localGovernors||{}).some(post=>post.faction===offer.target&&post.person===offer.id);
   const relation=s.relations?.[pair(offer.owner,offer.target)]||0;
   const ambition=p?.ambition??40,loyalty=p?.loyalty??75;
   const chance=clamp(.32+relation/250+ambition/400-loyalty/250,0,.8);
   c.seed=(Math.imul(c.seed,1664525)+1013904223)>>>0;
-  if(!available||c.seed/4294967296>=chance){offer.status='refused';if(offer.owner===s.player)note(s,`${CHARACTER_CATALOG[offer.id].name[0]} declined or could not travel; the invitation cost was spent.`,`${CHARACTER_CATALOG[offer.id].name[1]}拒绝或无法成行；邀约费用已经支付。`);continue}
+  const name=offerName(offer);
+  if(!available||c.seed/4294967296>=chance){offer.status='refused';if(offer.owner===s.player)note(s,`${name[0]} declined or could not travel; the invitation cost was spent.`,`${name[1]}拒绝或无法成行；邀约费用已经支付。`);continue}
   const routes=s.regions.filter(r=>r.owner===offer.owner).map(r=>({destination:r,route:personTravelRoute(s,p,offer.target,r.id)})).filter(x=>x.route).sort((a,b)=>a.route.months-b.route.months||a.destination.id.localeCompare(b.destination.id));
   const selected=routes[0];
-  if(!selected||s.factions[offer.owner].treasury<selected.route.cost){offer.status='refused';if(offer.owner===s.player)note(s,`The journey for ${CHARACTER_CATALOG[offer.id].name[0]} could not be funded or routed.`,`无法为${CHARACTER_CATALOG[offer.id].name[1]}安排或支付行程。`);continue}
+  if(!selected||s.factions[offer.owner].treasury<selected.route.cost){offer.status='refused';if(offer.owner===s.player)note(s,`The journey for ${name[0]} could not be funded or routed.`,`无法为${name[1]}安排或支付行程。`);continue}
   s.factions[offer.owner].treasury-=selected.route.cost;
   offer.status='travel';offer.destination=selected.destination.id;offer.travelCost=selected.route.cost;offer.remaining=selected.route.months;
   p.travel={destination:offer.destination,legs:selected.route.legs,remaining:selected.route.legs[0].months+1};
-  if(offer.owner===s.player)note(s,`${CHARACTER_CATALOG[offer.id].name[0]} accepted and began the journey.`,`${CHARACTER_CATALOG[offer.id].name[1]}接受邀约，正在旅途中。`);
+  if(offer.owner===s.player)note(s,`${name[0]} accepted and began the journey.`,`${name[1]}接受邀约，正在旅途中。`);
  }
  if(c.recruitment.length>60){const active=c.recruitment.filter(x=>['pending','travel'].includes(x.status)),history=c.recruitment.filter(x=>!['pending','travel'].includes(x.status));c.recruitment=[...history.slice(-60),...active]}
  return c;
@@ -96,9 +100,10 @@ export function settleRecruitmentTravel(s){
   const p=s.world.characters[offer.id],travel=p?.travel;
   if(travel){offer.remaining=travel.remaining+travel.legs.slice(1).reduce((n,leg)=>n+leg.months,0);continue}
   const destination=s.regions.find(r=>r.id===offer.destination),employed=s.armies.some(a=>a.characterId===offer.id)||Object.values(s.world.offices?.[offer.target]||{}).includes(offer.id);
-  if(!p?.alive||p.missing||p.faction!==offer.target||p.location!==offer.destination||destination?.owner!==offer.owner||employed||s.wars.some(w=>w.includes(offer.owner)&&w.includes(offer.target))){offer.status='lost';if(offer.owner===s.player)note(s,`The journey of ${CHARACTER_CATALOG[offer.id].name[0]} did not complete the appointment.`,`未能完成${CHARACTER_CATALOG[offer.id].name[1]}的聘任行程。`);continue}
+  const name=offerName(offer);
+  if(!p?.alive||p.missing||p.faction!==offer.target||p.location!==offer.destination||destination?.owner!==offer.owner||employed||s.wars.some(w=>w.includes(offer.owner)&&w.includes(offer.target))){offer.status='lost';if(offer.owner===s.player)note(s,`The journey of ${name[0]} did not complete the appointment.`,`未能完成${name[1]}的聘任行程。`);continue}
   p.faction=offer.owner;p.loyalty=clamp(Math.round((p.loyalty||60)*.55),30,70);offer.status='arrived';offer.remaining=0;
-  if(offer.owner===s.player||offer.target===s.player)note(s,`${CHARACTER_CATALOG[offer.id].name[0]} arrived and joined ${offer.owner}.`,`${CHARACTER_CATALOG[offer.id].name[1]}抵达并加入${offer.owner}。`);
+  if(offer.owner===s.player||offer.target===s.player)note(s,`${name[0]} arrived and joined ${offer.owner}.`,`${name[1]}抵达并加入${offer.owner}。`);
  }
  return c;
 }
