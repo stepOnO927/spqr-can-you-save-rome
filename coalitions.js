@@ -62,16 +62,16 @@ export function normalizeCoalitionName(name){
  const clean=name.trim().replace(/\s+/g,' ');
  return clean.length>=3&&clean.length<=48&&!/[<>\u0000-\u001f]/u.test(clean)?clean:null;
 }
-export function formCoalition(s,leader,members,target,estimateStrength,{allowPlayer=false,consentingPlayer=false,name=null}={}){
+export function formCoalition(s,leader,members,target,estimateStrength,{allowPlayer=false,consentingPlayer=false,priorConsent=false,consentingLeader=false,name=null}={}){
  const parties=[...new Set([leader,...members])];
  if(parties.length<3||parties.length>5||parties.includes(target)||typeof estimateStrength!=='function')return {ok:false,reason:'members'};
  const chosenName=name===null?`Defensive Coalition ${s.nextCoalitionId||1}`:normalizeCoalitionName(name);
  if(!chosenName)return {ok:false,reason:'name'};
  if(!allowPlayer&&leader!==s.player&&parties.includes(s.player))return {ok:false,reason:'player_decision'};
  if(parties.some(id=>!s.factions[id]||!s.regions.some(r=>r.owner===id)||s.factions[id].treasury<5))return {ok:false,reason:'resources'};
- if(!s.factions[target]||parties.some((id,i)=>parties.slice(i+1).some(other=>war(s,id,other))||s.alliances.some(a=>a.includes(id)&&a.includes(target))))return {ok:false,reason:'conflict'};
- if(parties.some(id=>id!==leader&&(rel(s,id,leader)<15||rel(s,id,leader)-(100-(s.diplomaticCredibility?.[leader]??100))*.4<15)))return {ok:false,reason:'relations'};
- if(parties.some(id=>!(consentingPlayer&&id===s.player)&&!coalitionInterest(s,id,target,estimateStrength).interested))return {ok:false,reason:'interest'};
+ if(!s.factions[target]||parties.some(id=>activeAgreement(s,id,target,'non_aggression')||neutralityBlocksWar(s,id,target))||parties.some((id,i)=>parties.slice(i+1).some(other=>war(s,id,other))||s.alliances.some(a=>a.includes(id)&&a.includes(target))))return {ok:false,reason:'conflict'};
+ if(!priorConsent&&parties.some(id=>id!==leader&&(rel(s,id,leader)<15||rel(s,id,leader)-(100-(s.diplomaticCredibility?.[leader]??100))*.4<15)))return {ok:false,reason:'relations'};
+ if(parties.some(id=>!(consentingPlayer&&id===s.player)&&!(priorConsent&&id!==leader)&&!(consentingLeader&&id===leader)&&!coalitionInterest(s,id,target,estimateStrength).interested))return {ok:false,reason:'interest'};
  s.coalitions||=[];
  if(s.coalitions.some(c=>c.status==='active'&&c.target===target&&c.parties.some(id=>parties.includes(id))))return {ok:false,reason:'existing'};
  for(const id of parties)s.factions[id].treasury-=5;
