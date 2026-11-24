@@ -13,8 +13,9 @@ import {HISTORICAL_RELATIONSHIPS} from '../historical-reference.js?v=phase-x-1';
 const RAIL=['factions','campaign-government','campaign-focus','campaign-legions','campaign-plans','inventions','chronicle','atlas-mail'];
 const courts=new Map();
 const homes=new Map();
+const readingPosition=new Map();let lastDossier=null;
 let options={language:()=>'en',openCourt(){},openFamily(){},openPerson(){},onClose(){}};
-let rail=null,bar=null,ready=false,dossierTab='overview';
+let rail=null,bar=null,ready=false;
 
 export function rememberCourt(id,faction){if(id&&faction)courts.set(id,faction)}
 export function courtOf(id){return courts.get(id)||null}
@@ -252,12 +253,19 @@ export function layoutDossier(panel,meta={}){
   glance.append(tile);
  }
  if(glance.children.length)add('overview',heading(L('At a glance','概要')),glance);
- const nav=el('nav','dossier-tabs');nav.setAttribute('role','tablist');
+ // One continuous record with a sticky section index. Every section stays rendered and
+ // readable; the index jumps to a section and follows the reader's scroll position.
+ const nav=el('nav','dossier-tabs');nav.setAttribute('aria-label',L('Dossier sections','档案分区'));
  const present=TABS.filter(([key])=>sections[key]);
- if(!present.some(([key])=>key===dossierTab))dossierTab=present[0]?.[0]||'overview';
  const body=el('div','dossier-body');
- const select=key=>{dossierTab=key;for(const b of nav.children){const on=b.dataset.tab===key;b.classList.toggle('active',on);b.setAttribute('aria-selected',on?'true':'false')}for(const [k,node] of Object.entries(sections))node.hidden=k!==key;body.scrollTop=0};
- for(const [key,en,cn] of present){const b=el('button',null,L(en,cn));b.type='button';b.dataset.tab=key;b.setAttribute('role','tab');b.onclick=()=>select(key);nav.append(b);sections[key].dataset.section=key;body.append(sections[key])}
+ const mark=key=>{for(const b of nav.children){const on=b.dataset.tab===key;b.classList.toggle('active',on);if(on)b.setAttribute('aria-current','true');else b.removeAttribute('aria-current')}};
+ const select=key=>{const target=sections[key];if(!target)return;body.scrollTo({top:Math.max(0,target.offsetTop-body.offsetTop-8),behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});mark(key)};
+ for(const [key,en,cn] of present){
+  const b=el('button',null,L(en,cn));b.type='button';b.dataset.tab=key;b.onclick=()=>select(key);nav.append(b);
+  const section=sections[key];section.dataset.section=key;
+  if(key!=='overview')section.prepend(el('h3','dossier-section-title',L(en,cn)));
+  body.append(section);
+ }
  main.append(nav,body);
  glance.querySelectorAll('[data-goto]').forEach(tile=>tile.onclick=()=>select(tile.dataset.goto));
  article.append(side,main);
@@ -266,5 +274,11 @@ export function layoutDossier(panel,meta={}){
  panel.replaceChildren(article);
  const leftovers=rest.filter(node=>node.nodeType===1&&!article.contains(node)&&node.childNodes.length);
  if(leftovers.length){const extra=el('section','dossier-section dossier-extra');extra.append(...leftovers);body.append(extra)}
- select(dossierTab);
+ const keys=present.map(([key])=>key);
+ body.addEventListener('scroll',()=>{let current=keys[0];for(const key of keys){if(sections[key].offsetTop-body.offsetTop-40<=body.scrollTop)current=key}mark(current);readingPosition.set(meta.id,body.scrollTop)},{passive:true});
+ mark(keys[0]);
+ // A monthly refresh rebuilds the panel; keep the reader where they were in this person's file.
+ const kept=readingPosition.get(meta.id);if(kept&&lastDossier===meta.id)requestAnimationFrame(()=>{body.scrollTop=kept});
+ if(lastDossier!==meta.id)readingPosition.delete(meta.id);
+ lastDossier=meta.id;
 }

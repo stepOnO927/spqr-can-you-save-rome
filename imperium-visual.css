@@ -74,11 +74,11 @@
   --han-text-dim:#b8a78d;
   /* Type. Web fonts are optional: the system stacks below are the designed fallback, because
      the Poki build ships without network fonts. */
-  --iv-display:'Cinzel','Trajan Pro 3','Trajan Pro','Cormorant Garamond','Palatino Linotype','Book Antiqua',Palatino,'Songti SC','Noto Serif SC','Source Han Serif SC',Georgia,serif;
-  --iv-serif:'Palatino Linotype','Book Antiqua',Palatino,'Iowan Old Style','Songti SC','Noto Serif SC','Source Han Serif SC','SimSun',Georgia,serif;
-  --iv-ui:'Manrope','Segoe UI Variable Text','Segoe UI','Helvetica Neue',Arial,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
-  --han-display:'Kaiti SC','STKaiti','KaiTi','Songti SC','Noto Serif SC','Source Han Serif SC','SimSun',Georgia,serif;
-  --han-serif:'Songti SC','Noto Serif SC','Source Han Serif SC','STSong','SimSun',Georgia,serif;
+  --iv-display:'Cinzel','Trajan Pro 3','Trajan Pro','Cormorant Garamond','Palatino Linotype','Book Antiqua',Palatino,'Songti SC','Noto Serif SC','Source Han Serif SC',Georgia,'SPQR CJK',serif;
+  --iv-serif:'Palatino Linotype','Book Antiqua',Palatino,'Iowan Old Style','Songti SC','Noto Serif SC','Source Han Serif SC','SimSun',Georgia,'SPQR CJK',serif;
+  --iv-ui:'Manrope','Segoe UI Variable Text','Segoe UI','Helvetica Neue',Arial,'PingFang SC','Hiragino Sans GB','Microsoft YaHei','SPQR CJK',sans-serif;
+  --han-display:'Kaiti SC','STKaiti','KaiTi','Songti SC','Noto Serif SC','Source Han Serif SC','SimSun',Georgia,'SPQR CJK',serif;
+  --han-serif:'Songti SC','Noto Serif SC','Source Han Serif SC','STSong','SimSun',Georgia,'SPQR CJK',serif;
   /* Scale: 11 / 12 / 13 / 15 / 18 / 22 / 28. Nothing under 11px carries information. */
   --iv-fs-micro:11px;
   --iv-fs-small:12px;
@@ -793,6 +793,7 @@ button,select,input{font-family:var(--iv-ui)}
 .han-map .region-label.capital{fill:#7a2015}
 .han-map .group-label{font-family:var(--han-display);letter-spacing:.42em;fill:#3a2019}
 .han-map .seat{fill:#1b1412;stroke:#f1e7cd}
+.han-map .seat-g{pointer-events:none}
 .han-map .seat.capital{fill:var(--han-cinnabar);stroke:#f1e7cd;stroke-width:1.8}
 .han-map .territory{transition:fill-opacity var(--iv-fast) var(--iv-ease)}
 .han-map .territory.selected{stroke:#fff4d6;stroke-width:3.2}
@@ -948,7 +949,10 @@ body.atlas .spqr-version{left:auto;right:10px}
   :root .experience-strip{left:6px;right:6px;top:52px;width:auto;max-width:none;margin:0;padding:4px;background:transparent;border:0;box-shadow:none;pointer-events:none}
   :root .experience-actions{flex-wrap:nowrap}
   :root .experience-actions button{background:#161310f2}
-  :root .experience-strip .experience-summary,:root .experience-strip .experience-lesson{display:none}
+  :root .experience-strip .experience-summary{display:none}
+  :root .experience-strip .experience-actions,:root .experience-strip .experience-lesson{pointer-events:auto}
+  :root .experience-strip .experience-lesson{position:fixed;z-index:6;left:calc(var(--iv-rail-w) + 6px);right:6px;bottom:58px;margin:0;padding:5px 10px;border:1px solid var(--iv-line);border-left:3px solid var(--iv-gold-dim);background:#161310e6;font-size:11.5px;line-height:1.35;pointer-events:none}
+  :root .experience-strip .experience-lesson button{pointer-events:auto;min-height:32px}
   :root .experience-actions{margin-top:0}
   :root .experience-actions button{min-height:36px;padding:0 var(--iv-2);font-size:10px}
   :root main:has(.chessboard-mode) .experience-strip{display:none}
@@ -1002,7 +1006,10 @@ body.atlas .spqr-version{left:auto;right:10px}
   :root .controls #save-transfer-open{display:none}
   :root .victory-progress,:root .resource-forecast,:root .feather-panel{display:none}
   :root .experience-strip{top:4px;padding:5px var(--iv-2)}
-  :root .experience-strip .experience-summary,:root .experience-strip .experience-lesson{display:none}
+  :root .experience-strip .experience-summary{display:none}
+  :root .experience-strip .experience-actions,:root .experience-strip .experience-lesson{pointer-events:auto}
+  :root .experience-strip .experience-lesson{position:fixed;z-index:6;left:calc(var(--iv-rail-w) + 6px);right:6px;bottom:58px;margin:0;padding:5px 10px;border:1px solid var(--iv-line);border-left:3px solid var(--iv-gold-dim);background:#161310e6;font-size:11.5px;line-height:1.35;pointer-events:none}
+  :root .experience-strip .experience-lesson button{pointer-events:auto;min-height:32px}
   :root .experience-actions{margin-top:0}
   :root .setup-panel{width:min(560px,calc(100vw - 16px));max-height:calc(100dvh - 12px);padding:var(--iv-3) var(--iv-5)}
   :root .setup-panel>.eyebrow{font-size:18px;text-align:left}
@@ -1042,4 +1049,15 @@ body.atlas .spqr-version{left:auto;right:10px}
 @keyframes iv-toast{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
 @media(prefers-reduced-motion:reduce){
   :root *,:root *::before,:root *::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
+}
+/* Portrait phones: navigation is a bottom bar, so the lesson band sits above the command bar. */
+@media(max-width:700px) and (min-height:601px){
+  :root .experience-strip .experience-lesson{left:6px;bottom:calc(var(--iv-rail-h) + 58px)}
+}
+/* When a panel is open on a phone, the lesson band moves out of its way. */
+@media(max-height:600px) and (orientation:landscape){
+  :root .shell:has(.inspector:not(.closed)) .experience-strip .experience-lesson{left:calc(var(--iv-rail-w) + var(--iv-panel-w) + 10px)}
+}
+@media(max-width:700px) and (min-height:601px){
+  :root .shell:has(.inspector:not(.closed)) .experience-strip .experience-lesson{bottom:auto;top:calc(var(--iv-top-h) + 50px)}
 }
