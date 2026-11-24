@@ -45,7 +45,8 @@ try{
   assert.match(await toggle.getAttribute('aria-label'),/Collapse campaign briefing/);
  }
  const ready=()=>page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return !map.isMoving()&&map.areTilesLoaded()&&document.querySelector('#map-charting').hidden&&Number(getComputedStyle(document.querySelector('#map')).opacity)>.99},null,{timeout:30000});
- await page.evaluate(async close=>{const {map}=await import(document.querySelector('script[type="module"]').src);map.jumpTo({center:close?[12.6,44.1]:[13.8,42.3],zoom:close?9.05:5.7})},close);
+ const trialZoom=Number(process.env.SPQR_MAP_FOCUS_ZOOM)||(close?9.05:5.7);
+ await page.evaluate(async({close,trialZoom})=>{const {map}=await import(document.querySelector('script[type="module"]').src);if(trialZoom>map.getMaxZoom())map.setMaxZoom(trialZoom);map.jumpTo({center:close?[12.6,44.1]:[13.8,42.3],zoom:trialZoom})},{close,trialZoom});
  await page.waitForTimeout(2700);await ready();await page.waitForTimeout(750);
  if(close){
   const ariminum=page.locator('.grand-site[data-site="italiaN"]');
@@ -61,6 +62,18 @@ try{
   assert.match(await ariminum.getAttribute('aria-label'),/阿里米努姆/);
   await checkCityFlag('the close-map city and standard should stay separate after a language switch');
   await page.locator('#language').click();
+  if(width<=600&&await page.locator('.brief').evaluate(element=>element.classList.contains('collapsed')))await page.locator('#brief-toggle').click();
+  await page.locator('#map-mode').selectOption('terrain');
+  assert.match(await page.locator('.legend').innerText(),/Modern elevation bands/);
+  await page.locator('#language').click();
+  assert.match(await page.locator('.legend').innerText(),/现代高程色带/);
+  await page.locator('#language').click();
+  if(width>600)for(const mode of ['political','military']){
+   await page.locator('#map-mode').selectOption(mode);await ready();
+   assert.equal(await page.locator('.army').first().isVisible(),true,`${mode} keeps army standards visible`);
+   await page.screenshot({path:resolve(output,`atlas-${mode}${suffix}.png`)});
+  }
+  await page.locator('#map-mode').selectOption('terrain');
  }
  await page.screenshot({path:resolve(output,`atlas-focus-before${suffix}.png`)});
  await page.locator('#atlas-focus').click();

@@ -25,9 +25,9 @@ const nileDelta={type:'Feature',properties:{name:'Nile Delta (approximate)'},geo
 // At local scale, separate lowland, upland and exposed rock more clearly.
 // These are modern elevation bands, not reconstructed ancient land cover.
 const localElevationPalette=['interpolate',['linear'],['elevation'],-100,'#e5d9b8',0,'#dfd5b1',100,'#c6cba1',300,'#a7b88d',700,'#829c7d',1200,'#6c8676',1800,'#8b9384',2600,'#b9b8a5',3500,'#e4dfcc'];
-// Central Italy uses a warmer height progression so the Apennines read as
-// terrain beside the Tiber and Adriatic plains. Modern elevation only.
-const italyElevationPalette=['interpolate',['linear'],['elevation'],-100,'#ead9b6',0,'#e3d3af',100,'#d2c7a0',300,'#b6ae88',700,'#9b8d6e',1200,'#85765e',1800,'#9a876e',2600,'#c4ad8d',3500,'#eee1ca'];
+// Narrow transitions give the Italian close atlas readable hypsometric bands
+// without smearing the Apennines into a soft shaded texture. Modern elevation only.
+const italyElevationPalette=['interpolate',['linear'],['elevation'],-100,'#e9ddbd',80,'#e9ddbd',120,'#c9c49f',280,'#c9c49f',320,'#a7ac84',680,'#a7ac84',720,'#8a9777',1180,'#8a9777',1220,'#877d68',1780,'#877d68',1820,'#aa9c83',2600,'#aa9c83'];
 // Around the Nile Delta the local DEM changes mostly within 0–50 m. Use
 // narrower earth-tone intervals there so real low relief remains legible.
 const egyptElevationPalette=['interpolate',['linear'],['elevation'],-100,'#e8ddb9',0,'#e3d9b6',10,'#dfd0aa',25,'#d7c399',50,'#cbb288',100,'#bea178',300,'#aa8d6c',700,'#887866',1200,'#69796f',1800,'#8b9384',2600,'#b9b8a5',3500,'#e4dfcc'];
