@@ -113,7 +113,8 @@ export function aiCivilization(s,owner){
  if(s.wars?.some(w=>w.includes(owner))&&f.treasury<150)return;
  if(f.treasury>85&&c.prestige[owner]<8)commissionCulturalEvent(s,owner);
  if(f.treasury>95&&c.prestige[owner]>=8&&!c.recruitment.some(x=>x.owner===owner&&['pending','travel'].includes(x.status))){
-  const candidate=knownForeignSpecialists(s,owner)[0];
+  const now=s.year*12+s.month,recent=new Set(c.recruitment.filter(x=>x.owner===owner&&(x.status==='arrived'||Number.isInteger(x.year)&&Number.isInteger(x.month)&&now-(x.year*12+x.month)<12)).map(x=>x.id));
+  const candidate=knownForeignSpecialists(s,owner).find(x=>!recent.has(x.id));
   if(candidate)inviteForeignSpecialist(s,owner,candidate.id);
  }
  if(f.treasury>75&&c.prestige[owner]>=6&&s.inventions?.[owner]?.research==null&&s.inventions[owner].scholarVisits===0)fundEducation(s,owner);
