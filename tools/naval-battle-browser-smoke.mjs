@@ -73,4 +73,22 @@ for(const [lang,label] of [['en',/Patrol, escort and raid need crewed, supplied 
  await page.locator('[data-order="caesar-adriatic"]').click();
  assert.match(await page.locator('#naval-feedback').innerText(),label);
 }
-assert.deepEqual(errors,[]);await browser.close();console.log('Naval battle, interrupted troop transport, pirate defeat, and dated fleet pursuit passed in English and Chinese; older saves remain readable.');
+for(const [lang,label] of [['en','Merge docked fleet'],['zh','同港合并舰队']]){
+ const state=newGrandGame('senate');
+ const {queueShip}=await import('../naval.js');
+ assert.equal(queueShip(state,'senate','italiaS','transport').ok,true);
+ assert.equal(orderFleet(state,'senate','senate-adriatic','intercept','ionian').ok,true);
+ for(let i=0;i<3;i++)advanceNaval(state);
+ assert.equal(orderFleet(state,'senate','senate-adriatic','return','italiaS').ok,true);
+ advanceNaval(state);advanceNaval(state);
+ await page.evaluate(async({state,language})=>{
+  const {renderNavalPanel}=await import('/map-lab/naval-ui.js'),{mergeFleets}=await import('/naval.js');
+  window.mergeState=state;
+  const render=()=>renderNavalPanel({state,lang:language,root:document.querySelector('#root'),section:'fleets',onAction:(action,id,donor)=>action==='merge'?mergeFleets(state,state.player,id,donor):(render(),{ok:true}),onZone:()=>{},onPort:()=>{}});
+  render();
+ },{state,language:lang});
+ assert.ok(await page.getByText(label).first().isVisible());
+ await page.locator('[data-merge="senate-adriatic"]').click();
+ assert.deepEqual(await page.evaluate(()=>({ships:window.mergeState.naval.fleets.find(f=>f.id==='senate-adriatic').ships.transport,donor:window.mergeState.naval.fleets.some(f=>f.id==='fleet-1')})),{ships:3,donor:false});
+}
+assert.deepEqual(errors,[]);await browser.close();console.log('Naval battle, interrupted troop transport, fleet merge, pirate defeat, and dated fleet pursuit passed in English and Chinese; older saves remain readable.');

@@ -184,6 +184,26 @@ try{
  await page.locator('#language').click();
  assert.match(await page.locator('.naval-content').innerText(),/商船远航成果/);
  assert.match(await page.locator('.naval-content').innerText(),/水利管理/);
+ await page.evaluate(async()=>{
+  const {newGrandGame}=await import('../engine.js?v=260');
+  const {queueShip,orderFleet,advanceNaval}=await import('../naval.js?v=80');
+  const state=newGrandGame('senate');
+  if(!queueShip(state,'senate','italiaS','transport').ok||!orderFleet(state,'senate','senate-adriatic','intercept','ionian').ok)throw Error('Could not begin the shipbuilding route');
+  for(let i=0;i<3;i++)advanceNaval(state);
+  orderFleet(state,'senate','senate-adriatic','return','italiaS');advanceNaval(state);advanceNaval(state);
+  sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state}));
+ });
+ await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
+ await page.locator('.grand-site').first().waitFor();await page.locator('#naval').click();
+ assert.equal(await page.locator('[data-merge="senate-adriatic"]').count(),1);
+ assert.match(await page.locator('.naval-content').innerText(),/Merge docked fleet/);
+ await page.locator('[data-merge="senate-adriatic"]').click();
+ assert.equal(await page.locator('[data-merge="senate-adriatic"]').count(),0);
+ assert.match(await page.locator('.naval-content').innerText(),/Military transport ×3/);
+ await page.locator('#save').click();await page.locator('#load').click();await page.locator('#naval').click();
+ assert.match(await page.locator('.naval-content').innerText(),/Military transport ×3/);
+ await page.locator('#language').click();
+ assert.match(await page.locator('.naval-content').innerText(),/军用运输船 ×3/);
  assert.deepEqual(errors,[]);
- console.log('Naval supply browser smoke passed in English and Chinese');
+ console.log('Naval supply and live fleet merge browser smoke passed in English and Chinese');
 }finally{await browser.close()}

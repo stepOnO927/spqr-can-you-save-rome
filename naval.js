@@ -1,7 +1,7 @@
 import {GRAND_SITES,GRAND_ROUTES} from './grand-map-data.js?v=2';
 import {activeEffects,localBuildingEffects,recordMerchantContact} from './development.js?v=68';
 import {officeOf} from './office-system.js';
-import {nationalBudget} from './national-budget.js?v=41';
+import {nationalBudget} from './national-budget.js?v=42';
 
 // Sea areas and costs are game-scale approximations of the 49 BCE Mediterranean.
 export const SEA_ZONES=[
@@ -350,6 +350,22 @@ function migratePonticFleetZones(s){
 }
 export function initializeNaval(s){if(!s.grandMap)return s;if(s.naval){const oldVersion=s.naval.version||2;s.naval.intel||={};s.naval.reports||=[];normalizeNavalReportIds(s.naval);s.naval.queues||=[];s.naval.jobs||=[];s.naval.captives||=[];s.naval.provisions||={};s.naval.inlandProvisions||={};s.naval.wagons||=[];for(const p of s.naval.pirates||[])p.cargo||={};ensureTrade(s);s.naval.nextFleet||=1;if(oldVersion<3)seedMarketMerchants(s);if(oldVersion<5&&['bosporus','t097'].every(id=>s.regions.some(r=>r.id===id&&r.owner==='bosporus'))&&s.naval.fleets.filter(f=>f.owner==='bosporus').reduce((total,f)=>total+(f.ships.transport||0),0)<2)s.naval.fleets.push(bosporanStraitFleet());for(const f of [...s.naval.fleets])detachReservedMerchants(s,f);if(oldVersion<6)migratePonticFleetZones(s);s.naval.version=6;return s}const senatePort=s.regions.find(r=>r.id==='italiaS'&&r.owner==='senate')?'italiaS':'epirus',caesarPort=s.regions.find(r=>r.id==='cisalpine'&&r.owner==='caesar')?'cisalpine':'narbo';s.naval={version:6,fleets:[makeFleet('senate-adriatic',['Adriatic Squadron','亚得里亚分舰队'],'senate',senatePort,{trireme:2,transport:2}),makeFleet('caesar-adriatic',['Caesarian Coastal Fleet','凯撒沿岸舰队'],'caesar',caesarPort,{trireme:2,light:2,transport:2}),makeFleet('egypt-grain',['Alexandrian Grain Fleet','亚历山大运粮船队'],'egypt','egypt',{trireme:1,merchant:3}),{...makeFleet('bosporan-strait',['Bosporan Strait Fleet','博斯普鲁斯海峡船队'],'bosporus','bosporus',{transport:2}),reserve:true}],pirates:[{id:'illyrian-raiders',zone:'adriatic',ships:2,pressure:24,wealth:8,backer:null,cargo:{}},{id:'cilician-raiders',zone:'eastern',ships:2,pressure:20,wealth:7,backer:null,cargo:{}}],routes:[{id:'egypt-italy',from:'egypt',to:'t016',good:'grain',volume:4,last:null},{id:'africa-sicily',from:'africa',to:'sicilia',good:'grain',volume:2,last:null},{id:'adriatic-commerce',from:'illyricum',to:'italiaS',good:'timber',volume:2,last:null}],queues:[],reports:[],intel:{},jobs:[],captives:[],provisions:{},inlandProvisions:{},wagons:[],nextFleet:1,nextReport:1};for(const id of [senatePort,caesarPort]){const r=s.regions.find(x=>x.id===id);if(!r)continue;r.buildings||=[];for(const b of ['port','shipyard'])if(!r.buildings.includes(b))r.buildings.push(b);const d=s.development?.[r.owner];if(d)for(const tech of ['port-facilities','shipyard-craft'])if(!d.knownMaterial.includes(tech))d.knownMaterial.push(tech)}ensureTrade(s);seedMarketMerchants(s);return s}
 export function fleet(s,id){return s.naval?.fleets.find(f=>f.id===id)}
+export function mergeFleets(s,owner,receiverId,donorId){
+ initializeNaval(s);
+ const receiver=fleet(s,receiverId),donor=fleet(s,donorId);
+ if(!receiver||!donor||receiver===donor||receiver.owner!==owner||donor.owner!==owner)return {ok:false,reason:'fleet'};
+ const port=s.regions.find(r=>r.id===receiver.port);
+ if(!port?.port||port.owner!==owner||donor.port!==receiver.port||receiver.order||donor.order||receiver.reserve||donor.reserve||receiver.mobilizing||donor.mobilizing||donor.commanderId||donor.pendingCommanderId||s.naval.voyages?.some(v=>v.fleetId===donorId))return {ok:false,reason:'port'};
+ const countA=ships(receiver),countB=ships(donor),count=countA+countB;
+ if(!countA||!countB||receiver.hull<=0||donor.hull<=0)return {ok:false,reason:'ships'};
+ const weighted=key=>Math.round((receiver[key]*countA+donor[key]*countB)/count);
+ for(const type of Object.keys(SHIPS))receiver.ships[type]=(receiver.ships[type]||0)+(donor.ships[type]||0);
+ receiver.sailors+=donor.sailors;
+ for(const key of ['hull','supply','morale','experience'])receiver[key]=weighted(key);
+ if(Number.isFinite(receiver.lastTacticChange)||Number.isFinite(donor.lastTacticChange))receiver.lastTacticChange=Math.max(Number.isFinite(receiver.lastTacticChange)?receiver.lastTacticChange:-Infinity,Number.isFinite(donor.lastTacticChange)?donor.lastTacticChange:-Infinity);
+ s.naval.fleets.splice(s.naval.fleets.indexOf(donor),1);
+ return {ok:true,ships:count,port:port.id};
+}
 export function setFleetTactic(s,owner,id,tactic){initializeNaval(s);const f=fleet(s,id),month=s.year*12+s.month;if(!f||f.owner!==owner||!NAVAL_TACTICS[tactic]||f.reserve||f.mobilizing||f.order?.armyId||f.lastTacticChange===month)return {ok:false,reason:'tactic'};if((f.tactic||'formation')===tactic)return {ok:false,reason:'unchanged'};f.tactic=tactic;f.lastTacticChange=month;return {ok:true}}
 export function ransomFleetCommander(s,owner,characterId){initializeNaval(s);const captive=s.naval?.captives?.find(c=>c.characterId===characterId&&c.owner===owner&&c.status==='held'),payer=s.factions[owner],holder=captive&&s.factions[captive.holder];if(!captive||!payer||!holder)return {ok:false,reason:'captive'};if(payer.treasury<18)return {ok:false,reason:'treasury'};payer.treasury-=18;holder.treasury+=18;captive.status='returning';captive.remaining=2;return {ok:true,months:2,cost:18}}
 export function reserveFleet(s,owner,id){initializeNaval(s);const f=fleet(s,id),dock=s.regions.find(r=>r.id===f?.port);if(!f||f.owner!==owner||!dock||dock.owner!==owner||f.order||f.reserve||f.mobilizing)return {ok:false,reason:'fleet'};const prior=fleetUpkeepDue(f);f.reserve=true;f.morale=Math.max(10,f.morale-5);const detached=detachReservedMerchants(s,f);return {ok:true,saving:prior-fleetUpkeepDue(f),detached:detached?.id}}
@@ -984,7 +1000,8 @@ function aiNavalOrders(s,owner,f){
   if(!report||s.year*12+s.month-(report.year*12+report.month)>2)f.order=null;
  }
  const cashflow=aiNavalCashflow(s,owner),treasury=s.factions[owner].treasury;
- const nearbyThreat=reportedHostileFleets(s,owner).some(r=>atWar(s,owner,r.owner)&&seaRoute(f.zone,r.zone)?.length<=1);
+ const ownPortUnderBlockade=!!f.port&&isPortBlockaded(s,f.port);
+ const nearbyThreat=ownPortUnderBlockade||reportedHostileFleets(s,owner).some(r=>atWar(s,owner,r.owner)&&seaRoute(f.zone,r.zone)?.length<=1);
  const wartimeReserve=Math.max(35,24+6*Math.max(0,-cashflow));
  const outnumbered=s.wars.some(w=>w.includes(owner)&&s.regions.filter(r=>r.owner===w.find(id=>id!==owner)).length>s.regions.filter(r=>r.owner===owner).length*1.5);
  const landReserveAtRisk=outnumbered&&treasury<wartimeReserve;
@@ -1007,6 +1024,9 @@ function aiNavalOrders(s,owner,f){
  }
  if(f.order||f.mobilizing)return;
  if(f.supply<25||f.hull<35){if(f.port){if(retireOptionalFleet)reserveFleet(s,owner,f.id);return}const home=s.regions.filter(r=>r.owner===owner&&r.port).sort((a,b)=>(seaRoute(f.zone,portZone(a.id))?.length??99)-(seaRoute(f.zone,portZone(b.id))?.length??99))[0];if(home)orderFleet(s,owner,f.id,'return',home.id);return}
+ // A squadron in its own blockaded harbor can see the blockade itself. It
+ // sorties on that evidence, without consulting hidden enemy fleet strength.
+ if(ownPortUnderBlockade&&blockadePower(f)>0&&combatPower(s,f)>4)return orderFleet(s,owner,f.id,'intercept',portZone(f.port));
  if(!f.port&&retireOptionalFleet){const home=s.regions.filter(r=>r.owner===owner&&r.port).map(r=>({id:r.id,path:seaRoute(f.zone,portZone(r.id))})).filter(x=>x.path).sort((a,b)=>a.path.length-b.path.length)[0];if(home)return orderFleet(s,owner,f.id,'return',home.id)}
  const transportBudget=treasury>=Math.max(35,26+3*Math.max(0,-cashflow));
  if(transportBudget&&f.port&&s.armies.some(a=>a.owner===owner&&a.region===f.port&&!a.move&&!a.siege&&a.men>=1200&&a.men<=fleetCapacity(f,s)&&hostileSeaLanding(s,owner,f.port)))return;

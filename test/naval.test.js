@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGrandGame,tick,moveArmy,cancelMarch,previewMarch,upgradeSave,aiTurn,startConstruction,resolveBattle as resolveLandBattle} from '../engine.js';
-import {SEA_ZONES,seaRoute,portZone,isPortBlockaded,queueShip,cancelShipConstruction,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,navalJobEffect,advanceNaval,resolveBattle,reportedHostileFleets,reportedNonHostileFleets,accessibleFleet,supportPirates,toggleTradeRoute,fleetSpeed,fleetCargoCapacity,fleetUpkeep,fleetUpkeepDue,wagonSupplyPlan,dispatchWagonSupply,harborTradeCapacity,settleMerchantDispute} from '../naval.js';
+import {SEA_ZONES,seaRoute,portZone,isPortBlockaded,queueShip,cancelShipConstruction,mergeFleets,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,navalJobEffect,advanceNaval,resolveBattle,reportedHostileFleets,reportedNonHostileFleets,accessibleFleet,supportPirates,toggleTradeRoute,fleetSpeed,fleetCargoCapacity,fleetUpkeep,fleetUpkeepDue,wagonSupplyPlan,dispatchWagonSupply,harborTradeCapacity,settleMerchantDispute} from '../naval.js';
 import {tradeCard,renderNavalPanel} from '../map-lab/naval-ui.js';
 import {developmentPanel,constructionPanel} from '../development-ui.js';
 import {advanceDevelopment} from '../development.js';
@@ -583,6 +583,33 @@ test('light-only fleets use ship speed and merchant hulls set cargo capacity',()
 });
 test('shipbuilding spends treasury, materials, crew and time at a real shipyard',()=>{
  const s=newGrandGame('senate'),f=s.naval.fleets.find(x=>x.owner==='senate'),before={treasury:s.factions.senate.treasury,timber:s.development.senate.materials.timber,crew:s.factions.senate.manpower};const result=queueShip(s,'senate','italiaS','merchant');assert.equal(result.ok,true);assert.equal(s.factions.senate.treasury,before.treasury-17);assert.equal(s.development.senate.materials.timber,before.timber-2);assert.equal(s.factions.senate.manpower,before.crew-45);assert.equal(queueShip(s,'senate','italiaS','trireme').ok,false);for(let i=0;i<result.months-1;i++)advanceNaval(s);assert.equal(f.ships.merchant||0,0);advanceNaval(s);assert.equal(f.ships.merchant,1)
+});
+test('a separately launched transport can join a returning fleet and embark an army after reload',()=>{
+ let s=newGrandGame('senate');s.seed=811;
+ assert.equal(queueShip(s,'senate','italiaS','transport').ok,true);
+ assert.equal(moveArmy(s,'pompey','italiaS').ok,true);
+ assert.equal(orderFleet(s,'senate','senate-adriatic','blockade','cisalpine').ok,true);
+ tick(s);tick(s);
+ assert.equal(orderFleet(s,'senate','senate-adriatic','return','italiaS').ok,true);
+ tick(s);
+ const receiver=s.naval.fleets.find(f=>f.id==='senate-adriatic'),donor=s.naval.fleets.find(f=>f.owner==='senate'&&f.port==='italiaS'&&f.id!==receiver.id);
+ assert.ok(donor,'the shipyard launched a separate hull while the squadron was offshore');
+ assert.deepEqual(mergeFleets(s,'caesar',receiver.id,donor.id),{ok:false,reason:'fleet'});
+ assert.equal(mergeFleets(s,'senate',receiver.id,receiver.id).ok,false);
+ const before={hull:receiver.hull,sailors:receiver.sailors+donor.sailors};
+ assert.equal(mergeFleets(s,'senate',receiver.id,donor.id).ok,true);
+ assert.equal(receiver.ships.transport,3);assert.equal(receiver.sailors,before.sailors);
+ assert.ok(receiver.hull<100&&receiver.hull>before.hull,'merging preserves damage instead of repairing the squadron for free');
+ assert.equal(s.naval.fleets.some(f=>f.id===donor.id),false);
+ s=upgradeSave(structuredClone(s));
+ for(let i=0;i<4;i++)tick(s);
+ assert.equal(s.armies.find(a=>a.id==='pompey').region,'italiaS');
+ assert.equal(previewMarch(s,'pompey','epirus').ok,true);
+ assert.equal(moveArmy(s,'pompey','epirus').ok,true);
+ for(let i=0;i<3;i++)tick(s);
+ assert.equal(s.armies.find(a=>a.id==='pompey').region,'italiaS','a real hostile fleet can defeat the convoy and return the army');
+ assert.ok(s.naval.reports.some(report=>report.kind==='battle'&&report.transportDisruptions?.['senate-adriatic']));
+ assert.equal(s.armies.find(a=>a.id==='pompey').move,null);
 });
 test('shipyard labor pauses a paid hull and resumes after save reload; cancellation returns only reserved crew',()=>{
  const s=newGrandGame('senate'),port=s.regions.find(r=>r.id==='italiaS'),fleet=s.naval.fleets.find(f=>f.id==='senate-adriatic'),messages=[];
@@ -1428,6 +1455,24 @@ test('transports alone cannot impose a blockade and obsolete blockade orders end
  transportOnly.ships={transport:2};transportOnly.sailors=140;transportOnly.port=null;transportOnly.zone=portZone('italiaS');transportOnly.order=null;ai.factions.caesar.treasury=200;
  advanceNaval(ai);
  assert.notEqual(transportOnly.order?.kind,'blockade','the AI must not spend a turn issuing a powerless blockade');
+});
+test('an AI war fleet sorties from its own blockaded harbor without secret enemy strength',()=>{
+ const s=newGrandGame('senate');s.seed=811;
+ assert.deepEqual(reportedHostileFleets(s,'caesar'),[]);
+ assert.equal(orderFleet(s,'senate','senate-adriatic','blockade','cisalpine').ok,true);
+ tick(s);
+ assert.equal(isPortBlockaded(s,'cisalpine'),true);
+ assert.deepEqual(reportedHostileFleets(s,'caesar'),[],'the response uses the visible blockade, not hidden fleet intelligence');
+ assert.equal(s.naval.fleets.find(f=>f.id==='caesar-adriatic').order?.kind,'intercept');
+ tick(s);
+ assert.ok(s.naval.reports.some(report=>report.kind==='battle'&&report.participants.includes('senate-adriatic')&&report.participants.includes('caesar-adriatic')));
+ const own=s.naval.fleets.find(f=>f.id==='senate-adriatic');assert.ok(own.hull<100);
+ assert.equal(orderFleet(s,'senate',own.id,'return','italiaS').ok,true);
+ tick(s);
+ assert.equal(s.naval.fleets.find(f=>f.id===own.id).port,'italiaS');
+ assert.equal(isPortBlockaded(s,'cisalpine'),false);
+ const restored=upgradeSave(structuredClone(s));
+ assert.equal(restored.naval.reports.filter(report=>report.kind==='battle').length,s.naval.reports.filter(report=>report.kind==='battle').length);
 });
 test('coastal fortifications resist light blockades but not a supplied warship squadron',()=>{
  const s=newGrandGame('senate'),port=s.regions.find(r=>r.id==='t016'),unit=s.armies.find(a=>a.id==='italy'),enemy=s.naval.fleets.find(f=>f.owner==='caesar');
