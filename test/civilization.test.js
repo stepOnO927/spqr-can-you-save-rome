@@ -5,7 +5,7 @@ import {startResearch,startConstruction} from '../inventions.js';
 import {initializeCivilization,commissionCulturalEvent,fundEducation,knownForeignSpecialists,inviteForeignSpecialist,specialistRoles,aiCivilization,advanceCivilization,settleRecruitmentTravel} from '../civilization.js';
 import {advancePersonalDiplomacy} from '../personal-diplomacy.js?v=faces-name-disagreement-1';
 import {createFictionalPerson} from '../dynasties.js?v=faces-name-disagreement-1';
-import {religiousPolicy} from '../religion.js?v=faces-name-disagreement-1';
+import {advanceReligion,religiousPolicy} from '../religion.js?v=faces-name-disagreement-1';
 
 const advance=(s,months)=>{for(let i=0;i<months;i++)tick(s)};
 
@@ -200,9 +200,11 @@ test('an active religious council member cannot abandon an institution through a
  assert.equal(institution.leader,id);
 });
 
-test('an unaffiliated trained religious specialist can advise local policy after international recruitment',()=>{
- const s=newGame('egypt'),id=createFictionalPerson(s,{name:['Lucius Rufus','卢基乌斯·鲁弗斯'],faction:'senate',birthYear:-80,location:'roma'});
- s.world.characters[id].religiousWorks=2;
+test('an unaffiliated religious pupil trains, joins another court and advises local policy',()=>{
+ const s=newGame('egypt'),id=createFictionalPerson(s,{name:['Lucius Rufus','卢基乌斯·鲁弗斯'],faction:'senate',birthYear:s.year-20,location:'roma'}),college=s.world.religiousInstitutions.find(x=>x.id==='roman_college');
+ college.wealth=40;college.relations.senate=20;s.month=12;advanceReligion(s);s.year++;advanceReligion(s);
+ assert.equal(s.world.characters[id].religiousWorks,2);
+ assert.match(s.world.dynasties.lives[id].at(-1).en,/two years of recorded study/);
  assert.ok(specialistRoles(s,id).includes('religious'));
  s.wars=[];s.relations['egypt:senate']=80;s.factions.egypt.treasury=300;s.civilization.prestige.egypt=8;s.civilization.seed=0;
  s.knowledge.egypt.senate.reports.push({kind:'location',character:id,year:s.year,month:s.month,peopleNames:{[id]:['Lucius Rufus','卢基乌斯·鲁弗斯']}});

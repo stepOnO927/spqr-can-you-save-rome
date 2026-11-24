@@ -1,4 +1,4 @@
-import {createFictionalPerson,initializeDynasties} from './dynasties.js?v=faces-name-disagreement-1';
+import {createFictionalPerson,initializeDynasties,recordLifeEvent} from './dynasties.js?v=faces-name-disagreement-1';
 import {NAME_POOLS,generateFictionalName} from './fictional-names.js?v=faces-wheels-1';
 import {CHARACTER_CATALOG} from './characters.js?v=faces-name-disagreement-1';
 import {hasNationalIdea} from './national-ideas.js?v=grand-chessboard-2';
@@ -156,7 +156,7 @@ export function advanceReligion(s){
   // Annual projects spend the institution's own money and affect existing
   // theater capacity or a real local person's education, never a free army.
   if(s.month===12&&relation>=10&&o.priorities.includes('infrastructure')&&o.wealth>=20&&o.works<2){o.wealth-=12;o.works++;r.supply++;recordInstitutionWork(s,o,'infrastructure')}
-  else if(s.month===12&&relation>=0&&o.priorities.includes('education')&&o.wealth>=14){const pupil=Object.values(s.world.characters).find(c=>c.alive&&c.faction===r.owner&&c.location===r.id&&!c.institutionalOnly&&c.birthYear!=null&&s.year-c.birthYear>=0&&s.year-c.birthYear<25&&(c.education||0)<75);if(pupil){o.wealth-=6;pupil.education=Math.min(100,(pupil.education||0)+6);recordInstitutionWork(s,o,'education',{person:pupil.id})}}
+  else if(s.month===12&&relation>=0&&o.priorities.includes('education')&&o.wealth>=14){const pupil=Object.values(s.world.characters).find(c=>c.alive&&c.faction===r.owner&&c.location===r.id&&!c.institutionalOnly&&c.birthYear!=null&&s.year-c.birthYear>=0&&s.year-c.birthYear<25&&(c.education||0)<75);if(pupil){o.wealth-=6;pupil.education=Math.min(100,(pupil.education||0)+6);pupil.religiousWorks=(pupil.religiousWorks||0)+1;recordInstitutionWork(s,o,'education',{person:pupil.id});if(pupil.religiousWorks===2)recordLifeEvent(s,pupil.id,`Completed two years of recorded study with ${o.name[0]}.`,`在${o.name[1]}完成两年有记录的学习。`)}}
   // Competing civic and traditional priorities can displace the current
   // leader, but neither faction is inherently violent or conspiratorial.
   const direction=relation<0?2:-1;o.factions.civic=clamp(o.factions.civic+direction,0,100);o.factions.traditional=100-o.factions.civic;o.dispute=Math.abs(o.factions.civic-50)*2;
