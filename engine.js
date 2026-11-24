@@ -749,7 +749,7 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
       }
     }
   }
-  const reservedObjectives=jointReservedObjectives(s,owner);
+  const reservedObjectives=jointReservedObjectives(s,owner),reservedArmies=jointReservedArmies(s,owner);
   const enemies=s.regions.filter(r=>!reservedObjectives.has(r.id)&&isWar(s,owner,reportedControl(s,owner,r.id)?.owner));
   if(owner!=='rebels'&&!['caesar','senate'].includes(owner))respondToFrontierReports(s,owner,{issueOrder:issueMilitaryOrder,canCommand:a=>!planControlled(s,a.id)});
   // IMPERIUM: armies under an automatic operational plan or reorganizing follow that plan.
@@ -797,7 +797,7 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
        const fortReport=reportedFortification(s,owner,step),estimatedFort=fortReport&&!fortReport.stale?fortReport.band[0]:1;
        const assessment=(unit)=>assessAttack({ownMen:unit.men,morale:unit.morale,skill:unit.skill,experience:unit.experience,food:f.food,estimatedTotal:estimate,reportedTheaters:theaters,sightings,terrain:dest.terrain,fort:estimatedFort,difficulty:s.difficulty});
        if(!assessment(a).favorable&&here.owner===owner){
-        const support=s.armies.filter(b=>b!==a&&b.owner===owner&&!planControlled(s,b.id)&&!b.reorg&&b.region===a.region&&!b.move&&!b.siege&&b.men>0&&a.men+b.men<=15000&&a.men+b.men<=here.supply*1000).sort((x,y)=>y.men-x.men).find(b=>{const total=a.men+b.men;return assessment({men:total,morale:(a.morale*a.men+b.morale*b.men)/total,skill:(a.skill*a.men+b.skill*b.men)/total,experience:(a.experience*a.men+b.experience*b.men)/total}).favorable});
+        const support=s.armies.filter(b=>b!==a&&b.owner===owner&&!reservedArmies.has(b.id)&&b.region===a.region&&!b.move&&!b.siege&&b.men>0&&a.men+b.men<=15000&&a.men+b.men<=here.supply*1000).sort((x,y)=>y.men-x.men).find(b=>{const total=a.men+b.men;return assessment({men:total,morale:(a.morale*a.men+b.morale*b.men)/total,skill:(a.skill*a.men+b.skill*b.men)/total,experience:(a.experience*a.men+b.experience*b.men)/total}).favorable});
         if(support){const total=a.men+support.men;for(const property of ['morale','skill','experience'])a[property]=Math.round((a[property]*a.men+support[property]*support.men)/total*10)/10;a.men=total;(a.mergedFrom||=[]).push(support.id,...(support.mergedFrom||[]));s.armies=s.armies.filter(b=>b!==support)}
        }
        if(!assessment(a).favorable){heldForPreparation=true;if(here.owner===owner)break;continue}
