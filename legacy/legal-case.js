@@ -1,4 +1,4 @@
-import {claimReward} from './legacy-core.js?v=34';
+import {claimReward} from './legacy-core.js?v=35';
 
 // A fictional civic exercise. Both documents can disagree without proving fraud.
 export const BOUNDARY_CASE_ID='tiber-boundary';

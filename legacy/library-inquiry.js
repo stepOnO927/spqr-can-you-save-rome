@@ -1,4 +1,4 @@
-import {claimReward} from './legacy-core.js?v=37';
+import {claimReward} from './legacy-core.js?v=38';
 
 // An educational reading exercise. The exhibit and its dossier are modern
 // interpretations, not surviving objects from Caesar's siege.
