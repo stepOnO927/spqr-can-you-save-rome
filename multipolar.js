@@ -1,8 +1,9 @@
+import {knownTreatyDocuments,knownAlliance,knownRelation,knownAgreement as activeAgreement} from './treaty-observation.js?v=treaty-observation-1';
 import {isDeliveredReport} from './person-knowledge.js?v=dossier-archive-1';
 import {ROUTES} from './data.js?v=phase-x-1';
 import {reportedControl} from './control-intelligence.js?v=dossier-archive-1';
 import {reportedDiplomacy} from './diplomatic-knowledge.js?v=dossier-archive-1';
-import {activeAgreement,neutralityBlocksWar} from './agreements.js?v=dossier-archive-1';
+import {neutralityBlocksWar} from './agreements.js?v=dossier-archive-1';
 import {politicalMemoryAdjustment} from './political-memory.js?v=grand-chessboard-2';
 
 const pair=(a,b)=>[a,b].sort().join(':'),now=s=>s.year*12+s.month;
@@ -16,9 +17,9 @@ export function opportunityEvidenceSignature(s,actor){
   return [target,reports,sightings];
  });
  const diplomacy=reportedDiplomacy(s,actor).filter(x=>x.status==='active'&&now(s)-(x.year*12+x.month)>=0&&now(s)-(x.year*12+x.month)<=24).map(x=>[x.id,x.kind,x.type??null]).sort();
- const agreements=(s.agreements||[]).filter(x=>x.parties.includes(actor)&&x.status==='active').map(x=>[x.id,x.type]).sort();
- const relations=Object.entries(s.relations||{}).filter(([key])=>key.split(':').includes(actor)).sort(([a],[b])=>a.localeCompare(b));
- const alliances=(s.alliances||[]).filter(x=>x.includes(actor)).map(x=>[...x].sort()).sort();
+ const agreements=knownTreatyDocuments(s,actor,'agreement').map(x=>[x.id,x.type]).sort();
+ const relations=Object.entries(s.relations||{}).filter(([key])=>key.split(':').includes(actor)).map(([key])=>[key,knownRelation(s,actor,key.split(':').find(p=>p!==actor))]).sort(([a],[b])=>a.localeCompare(b));
+ const alliances=knownTreatyDocuments(s,actor,'alliance').map(x=>[...x.parties].sort()).sort();
  const ownArmies=s.armies.filter(a=>a.owner===actor&&a.men>0).map(a=>[a.id,a.region,Math.floor(a.men/5000)]).sort();
  // A changed report at an actual frontier can alter the set of opportunities.
  // Record only the observer's reported controller, never a foreign live owner.
@@ -40,12 +41,12 @@ export function assessOpportunities(s,actor,estimateStrength){
  const documents=reportedDiplomacy(s,actor).filter(d=>d.status==='active'&&now(s)-(d.year*12+d.month)>=0&&now(s)-(d.year*12+d.month)<=24);
  for(const document of documents.filter(d=>d.parties.includes(actor)))for(const target of document.parties)if(target!==actor&&target!=='rebels'&&!frontier.has(target))frontier.set(target,new Set());
  const ownStrength=s.armies.filter(a=>a.owner===actor&&a.men>0).reduce((n,a)=>n+a.men,0),personality=s.world.strategicPersonalities?.[actor]?.personality||'survivor';
- return [...frontier].filter(([target])=>s.factions[target]).map(([target,places])=>{
+ return [...frontier].map(([target,places])=>{
   const reports=(s.knowledge?.[actor]?.[target]?.reports||[]).filter(r=>isDeliveredReport(s,r)&&r.kind==='stability'&&['stable','strained','fragile'].includes(r.value)&&now(s)-((r.observationYear??r.year)*12+(r.observationMonth??r.month))>=0&&now(s)-((r.observationYear??r.year)*12+(r.observationMonth??r.month))<=24).sort((a,b)=>((b.observationYear??b.year)*12+(b.observationMonth??b.month))-((a.observationYear??a.year)*12+(a.observationMonth??a.month)));
   const sightings=Object.values(s.knowledge?.[actor]?.[target]?.sightings||{}).filter(x=>{const age=now(s)-((x.observationYear??x.year)*12+(x.observationMonth??x.month));return isDeliveredReport(s,x)&&Number.isFinite(age)&&age>=0&&age<=12});
   const border=places.size>0,distant=border?sightings.filter(x=>x.region&&!places.has(x.region)).length:0,frontierSightings=sightings.filter(x=>places.has(x.region)).length;
-  const knownWars=documents.filter(d=>d.kind==='war'&&d.parties.includes(target)).length,relation=s.relations[pair(actor,target)]??0,estimate=estimateStrength(s,actor,target),memory=politicalMemoryAdjustment(s,actor,target),allied=s.alliances.some(a=>a.includes(actor)&&a.includes(target)),treaty=!!activeAgreement(s,actor,target,'non_aggression')||neutralityBlocksWar(s,actor,target);
-  const commitments=(s.agreements||[]).filter(t=>t.parties.includes(actor)&&t.parties.includes(target)&&activeAgreement(s,actor,target,t.type)===t).map(t=>t.type),reportedSupport=documents.filter(d=>d.parties.includes(target)&&(d.kind==='alliance'||d.kind==='coalition'||d.type==='defensive'||d.type==='guarantee')).length;
+  const knownWars=documents.filter(d=>d.kind==='war'&&d.parties.includes(target)).length,relation=knownRelation(s,actor,target),estimate=estimateStrength(s,actor,target),memory=politicalMemoryAdjustment(s,actor,target),allied=knownAlliance(s,actor,target),treaty=!!activeAgreement(s,actor,target,'non_aggression')||neutralityBlocksWar(s,actor,target);
+  const commitments=knownTreatyDocuments(s,actor,'agreement').filter(t=>t.parties.includes(target)).map(t=>t.type),reportedSupport=documents.filter(d=>d.parties.includes(target)&&(d.kind==='alliance'||d.kind==='coalition'||d.type==='defensive'||d.type==='guarantee')).length;
   const suspectedSupport=new Set((s.knowledge?.[actor]?.[target]?.reports||[]).filter(r=>{const age=now(s)-((r.observationYear??r.year)*12+(r.observationMonth??r.month));return r.kind==='secret_treaty'&&isDeliveredReport(s,r)&&typeof r.value==='string'&&r.value!=='unknown'&&r.confidence!=='disputed'&&Number.isFinite(age)&&age>=0&&age<=24}).map(r=>r.value)).size;
   const ratio=ownStrength/Math.max(1000,estimate),readiness=f.food>=25&&f.treasury>=35&&f.stability>=40,preference=({conqueror:5,schemer:2,diplomat:-4,reformer:-3,survivor:-3}[personality]||0),instability=reports[0]?.value||'unknown';
   // Rumours and conflicting claims are useful leads, not established facts.

@@ -1,3 +1,4 @@
+import {rememberTreatyCopy,treatyDocument,knownAgreement,knownRelation,knownNeutralityBlocksWar,knownNeutralityBlocksAid,knownNeutralityConflict,knownAlliance,knownAgreementToRenounce,announceTreatyChange} from './treaty-observation.js?v=treaty-observation-1';
 import {rememberPoliticalEvent,politicalMemoryAdjustment} from './political-memory.js?v=grand-chessboard-2';
 import {hasNationalIdea} from './national-ideas.js?v=grand-chessboard-2';
 // Agreements supplement the existing full-alliance pairs; they do not copy them.
@@ -29,16 +30,12 @@ export function activeNeutralities(s){
  return (s.agreements||[]).filter(t=>t.type==='neutrality'&&t.status==='active'&&date(s)<t.expiresAt&&Array.isArray(t.parties)&&!atWar(s,...t.parties)&&t.terms?.neutral&&Array.isArray(t.terms.warParties)&&t.terms.warParties.length===2);
 }
 export function neutralityBlocksWar(s,actor,target){
- return activeNeutralities(s).some(t=>t.parties.includes(actor)&&t.parties.includes(target)||t.terms.neutral===actor&&t.terms.warParties.includes(target));
+ return knownNeutralityBlocksWar(s,actor,target);
 }
 export function neutralityBlocksAid(s,provider,recipient){
- return activeNeutralities(s).some(t=>t.terms.neutral===provider&&t.terms.warParties.includes(recipient));
+ return knownNeutralityBlocksAid(s,provider,recipient);
 }
-export function neutralityConflicts(s,owner,partner,type,{provider=owner}={}){
- if(type==='military_support')return provider===owner&&neutralityBlocksAid(s,owner,partner);
- if(!['full_alliance','defensive','offensive','guarantee','military_access'].includes(type)||type==='guarantee'&&provider!==owner)return false;
- return activeNeutralities(s).some(t=>t.terms.neutral===owner&&t.terms.warParties.includes(partner));
-}
+export function neutralityConflicts(s,owner,partner,type,options={}){return knownNeutralityConflict(s,owner,partner,type,options)}
 export function neutralityOfferProblem(s,actor,target,enemy,{recipientReview=false}={}){
  if(!s.factions[enemy]||new Set([actor,target,enemy]).size!==3||enemy==='rebels')return 'invalid';
  // The requester knows its own war. A recipient judges the dated proposal
@@ -47,8 +44,8 @@ export function neutralityOfferProblem(s,actor,target,enemy,{recipientReview=fal
  if(recipientReview){
   if(atWar(s,target,enemy)||atWar(s,actor,target))return 'belligerent';
   for(const other of [actor,enemy]){
-   if((s.alliances||[]).some(p=>p.includes(target)&&p.includes(other)))return 'obligations';
-   if(['defensive','offensive','military_access'].some(type=>activeAgreement(s,target,other,type)))return 'obligations';
+   if(knownAlliance(s,target,other))return 'obligations';
+   if(['defensive','offensive','military_access'].some(type=>knownAgreement(s,target,other,type)))return 'obligations';
    if(['guarantee','military_support'].some(type=>{const t=activeAgreement(s,target,other,type);return t&&(t.terms?.provider||t.parties[0])===target}))return 'obligations';
   }
  }
@@ -61,11 +58,11 @@ export function checkAgreement(s,actor,target,type,{evaluateRecipient=true,recip
  initializeAgreements(s);const def=AGREEMENT_TYPES[type];
  if(!def||actor===target||actor==='rebels'||target==='rebels'||!s.factions[actor]||!s.factions[target])return {ok:false,reason:'invalid'};
  if((!recipientReview&&!s.regions.some(r=>r.owner===actor))||!s.regions.some(r=>r.owner===target)||atWar(s,actor,target))return {ok:false,reason:'unavailable'};
- if(activeAgreement(s,actor,target,type))return {ok:false,reason:'existing'};
+ if((evaluateRecipient?knownAgreement(s,recipientReview?target:actor,recipientReview?actor:target,type):activeAgreement(s,actor,target,type)))return {ok:false,reason:'existing'};
  if(type==='neutrality'){const reason=neutralityOfferProblem(s,actor,target,enemy,{recipientReview})||(!recipientReview?neutralityOfferProblem(s,actor,target,enemy,{recipientReview:true}):null);if(reason)return {ok:false,reason}}
  if(neutralityConflicts(s,target,actor,type,{provider:actor})||!recipientReview&&neutralityConflicts(s,actor,target,type,{provider:actor}))return {ok:false,reason:'neutrality'};
  if(!recipientReview&&s.factions[actor].treasury<def.cost)return {ok:false,reason:'treasury'};
- const relation=s.relations[key(actor,target)]??0,offer=recipientReview?(credentials||{}):agreementCredentials(s,actor);
+ const relation=knownRelation(s,recipientReview?target:actor,recipientReview?actor:target),offer=recipientReview?(credentials||{}):agreementCredentials(s,actor);
  const credibility=Number.isFinite(offer.credibility)?Math.max(0,Math.min(100,offer.credibility)):100,credit=offer.diplomacy===4?4:0;
  // A received offer carries dated credentials. Missing legacy credentials
  // give no diplomacy bonus; never reconstruct them from foreign live policy.
@@ -78,13 +75,16 @@ export function proposeAgreement(s,actor,target,type,{secret=false,priorConsent=
  const check=checkAgreement(s,actor,target,type,{evaluateRecipient:!priorConsent,enemy});if(!check.ok)return check;const def=AGREEMENT_TYPES[type];
  s.factions[actor].treasury-=def.cost;
  const t={id:`agreement:${s.nextAgreementId||1}`,type,parties:[actor,target],start:{year:s.year,month:s.month},duration:def.duration,expiresAt:date(s)+def.duration,obligations:[...def.obligations],benefits:[...def.benefits],terms:type==='neutrality'?neutralityTerms(actor,target,enemy):['military_support','guarantee'].includes(type)?{provider:actor,recipient:target}:{kind:type,obligations:[...def.obligations],benefits:[...def.benefits]},termination:'expiry, mutual consent, or breach',diplomaticCost:def.cost,breachPenalty:20,secret:!!secret,status:'active'};
- s.nextAgreementId=(s.nextAgreementId||1)+1;s.agreements.push(t);rememberPoliticalEvent(s,target,actor,'negotiated_agreement',2);return {ok:true,agreement:t};
+ s.nextAgreementId=(s.nextAgreementId||1)+1;s.agreements.push(t);rememberTreatyCopy(s,treatyDocument(t));rememberPoliticalEvent(s,target,actor,'negotiated_agreement',2);return {ok:true,agreement:t};
 }
 export function terminateAgreement(s,id,actor,{mutual=false}={}){
- initializeAgreements(s);const t=s.agreements.find(x=>x.id===id);
- if(!t||t.status!=='active'||!t.parties.includes(actor))return {ok:false,reason:'unavailable'};
- t.status=mutual?'terminated':'breached';t.ended={year:s.year,month:s.month,actor};
- if(!mutual){s.diplomaticCredibility[actor]=Math.max(0,(s.diplomaticCredibility[actor]??100)-t.breachPenalty);for(const other of t.parties.filter(p=>p!==actor)){const k=key(actor,other);s.relations[k]=Math.max(-100,(s.relations[k]??0)-20);rememberPoliticalEvent(s,other,actor,'broken_treaty',-12)}}
+ initializeAgreements(s);const known=knownAgreementToRenounce(s,id,actor),t=s.agreements.find(x=>x.id===id);
+ if(!known)return {ok:false,reason:'unavailable'};
+ const ended={year:s.year,month:s.month,actor},status=mutual?'terminated':'breached';
+ if(t?.status==='active'&&t.parties.includes(actor)){t.status=status;t.ended=ended}
+ const document={...known,status,ended};
+ if(!mutual)s.diplomaticCredibility[actor]=Math.max(0,(s.diplomaticCredibility[actor]??100)-(known.breachPenalty??20));
+ announceTreatyChange(s,document,actor,{relationPenalty:mutual?0:20,memoryWeight:mutual?0:-12});
  return {ok:true};
 }
 export function advanceAgreements(s){

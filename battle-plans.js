@@ -1,6 +1,6 @@
 import {ROUTES,REGIONS} from './data.js?v=phase-x-1';
 import {reportedControl,reportedFortification,observeFortification} from './control-intelligence.js?v=dossier-archive-1';
-import {activeAgreement} from './agreements.js?v=dossier-archive-1';
+import {knownAgreement as activeAgreement,knownAlliance} from './treaty-observation.js?v=treaty-observation-1';
 import {politicalAmbition} from './conspiracies.js?v=dossier-archive-1';
 import {focusModifiers} from './national-focus.js?v=dossier-archive-1';
 import {armyStats,commanderSpecialty,commandConcentration} from './legion-designer.js?v=dossier-archive-1';
@@ -203,7 +203,7 @@ export function coordinationProblem(s,plan,{requireIdle=false}={}){
  if(!['active','preparing'].includes(plan.status))return 'plan_status';
  if(!s.factions[owner]||(s.world.dynasticGenerations?.[owner]||0)!==c.ownGeneration)return 'court';
  if(!isWar(s,owner,c.enemy)||(s.world.warGenerations?.[[owner,c.enemy].sort().join(':')]||0)!==c.warGeneration)return 'war';
- if(isWar(s,owner,c.partner)||!((s.alliances||[]).some(p=>p.includes(owner)&&p.includes(c.partner))||['defensive','offensive'].some(t=>activeAgreement(s,owner,c.partner,t))))return 'partnership';
+ if(isWar(s,owner,c.partner)||!(knownAlliance(s,owner,c.partner)||['defensive','offensive'].some(t=>activeAgreement(s,owner,c.partner,t))))return 'partnership';
  if(operationFingerprint(plan)!==c.signature)return 'orders';
  if(s.wars.some(w=>w.includes(owner)&&!c.wars.includes(w.find(p=>p!==owner))))return 'new_war';
  for(const r of plan.roles){const a=army(s,r.armyId);if(!a||a.owner!==owner||a.men<=0)return 'forces';if(a.move||a.siege)return 'engaged';if(requireIdle&&a.reorg)return 'reorganization';if(['offensive','siege'].includes(r.role)&&reportedControl(s,owner,r.target)?.owner!==c.enemy)return 'control'}

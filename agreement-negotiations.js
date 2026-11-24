@@ -1,3 +1,4 @@
+import {knownAgreement,knownAlliance} from './treaty-observation.js?v=treaty-observation-1';
 import {AGREEMENT_TYPES,neutralityOfferProblem,neutralityConflicts,agreementCredentials,activeAgreement,checkAgreement,proposeAgreement} from './agreements.js?v=dossier-archive-1';
 
 const COURIER_COST=2;
@@ -9,7 +10,7 @@ function roll(letter,salt){let h=((letter.seed??0)^salt)>>>0;for(const c of `${l
 export function sendAgreementProposal(s,actor,target,type,{secret=false,enemy=null}={}){
  const def=proposalDefinition(type),f=s.factions?.[actor];if(!def||!f||!s.factions?.[target]||actor===target||actor==='rebels'||target==='rebels')return {ok:false,reason:'invalid'};
  if(!s.regions.some(r=>r.owner===actor)||s.wars.some(w=>w.includes(actor)&&w.includes(target)))return {ok:false,reason:'unavailable'};
- if(type==='full_alliance'?s.alliances.some(a=>a.includes(actor)&&a.includes(target)):activeAgreement(s,actor,target,type))return {ok:false,reason:'existing'};
+ if(type==='full_alliance'?knownAlliance(s,actor,target):knownAgreement(s,actor,target,type))return {ok:false,reason:'existing'};
  s.world.agreementLetters||=[];if(s.world.agreementLetters.some(x=>x.actor===actor&&x.target===target&&x.status==='pending'))return {ok:false,reason:'pending'};
  if(f.treasury<COURIER_COST+def.cost)return {ok:false,reason:'treasury'};
  if(type==='neutrality'){const reason=neutralityOfferProblem(s,actor,target,enemy);if(reason)return {ok:false,reason}}

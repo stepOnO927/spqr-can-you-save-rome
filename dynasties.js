@@ -1,3 +1,4 @@
+import {knownRelation} from './treaty-observation.js?v=treaty-observation-1';
 import {visiblePersonName,storedCorrespondentName,isDeliveredReport,reportedPeople} from './person-knowledge.js?v=dossier-archive-1';
 import {CHARACTER_CATALOG,ageRange} from './characters.js?v=dossier-archive-1';
 import {startDynasticWar} from './civil-war.js?v=dossier-archive-1';
@@ -107,7 +108,7 @@ export function proposeMarriage(s,aId,bId,{knownNames={},delivered=false}={}){
  if(!eligibleAdult(s,aId)||!eligibleAdult(s,bId)||aId===bId||a.spouse||b.spouse)return {ok:false,reason:'eligibility'};
  if(a.sex!=='unknown'&&b.sex!=='unknown'&&a.sex===b.sex)return {ok:false,reason:'legal_status'};
  if(a.familyId===b.familyId||a.parents.includes(bId)||b.parents.includes(aId)||a.adoptiveParents.includes(bId)||b.adoptiveParents.includes(aId)||a.parents.some(id=>b.parents.includes(id))||a.adoptiveParents.some(id=>b.adoptiveParents.includes(id)))return {ok:false,reason:'kinship'};
- if(a.faction!==b.faction&&((s.relations[[a.faction,b.faction].sort().join(':')]??0)<0||s.wars.some(w=>w.includes(a.faction)&&w.includes(b.faction))))return {ok:false,reason:'diplomacy'};
+ if(a.faction!==b.faction&&(knownRelation(s,a.faction,b.faction)<0||s.wars.some(w=>w.includes(a.faction)&&w.includes(b.faction))))return {ok:false,reason:'diplomacy'};
  const display=id=>knownNames[id]||visiblePersonName(s,s.player,id)||['Unrecorded name','姓名未记录'];
  const chance=Math.max(.15,Math.min(.85,.5+(a.loyalty+b.loyalty-130)/400+(familyOf(s,aId).reputation+familyOf(s,bId).reputation-100)/500));
  if(roll(s)>=chance){record(s,aId,`A marriage proposal to ${display(bId)[0]} was declined.`,`与${display(bId)[1]}的婚事遭到拒绝。`);return {ok:false,reason:'declined'}}
@@ -262,7 +263,7 @@ export function makeWill(s,id,beneficiary,share=1){
  // relative abroad has died without a delivered report. A will is only a
  // nomination; a cross-border handover is resolved later by courier.
  if(!eligibleAdult(s,id)||!heir||(!heir.alive&&heir.faction===c.faction)||id===beneficiary||!Number.isFinite(share)||share<=0||share>1)return {ok:false,reason:'eligibility'};
- if(c.faction!==heir.faction){if(c.spouse!==beneficiary&&!c.children.includes(beneficiary))return {ok:false,reason:'foreign_heir'};if(s.wars.some(w=>w.includes(c.faction)&&w.includes(heir.faction))||(s.relations[pair(c.faction,heir.faction)]??0)<0)return {ok:false,reason:'diplomacy'}}
+ if(c.faction!==heir.faction){if(c.spouse!==beneficiary&&!c.children.includes(beneficiary))return {ok:false,reason:'foreign_heir'};if(s.wars.some(w=>w.includes(c.faction)&&w.includes(heir.faction))||knownRelation(s,c.faction,heir.faction)<0)return {ok:false,reason:'diplomacy'}}
  const beneficiaryName=visiblePersonName(s,c.faction,beneficiary)||['Unrecorded name','姓名未记录'];
  c.will={beneficiary,share,beneficiaryName:[...beneficiaryName],year:s.year,month:s.month};record(s,id,`Named ${beneficiaryName[0]} in a personal will.`,`在个人遗嘱中指定${beneficiaryName[1]}。`);return {ok:true};
 }

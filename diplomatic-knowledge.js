@@ -1,3 +1,4 @@
+import {observeOwnBilateralWar} from './treaty-observation.js?v=treaty-observation-1';
 import {ROUTES,FACTIONS} from './data.js?v=phase-x-1';
 import {reportedControl} from './control-intelligence.js?v=dossier-archive-1';
 
@@ -27,6 +28,7 @@ export function observeDiplomacy(s){
  for(const viewer of Object.keys(s.factions)){
   const records=s.world.diplomaticKnowledge[viewer]||={},seen=new Set();
   for(const doc of currentDocuments(s,viewer)){
+   if(doc.kind!=='war'&&doc.parties.includes(viewer))continue;
    if(!hasContact(s,viewer,doc.parties))continue;seen.add(doc.id);
    if(viewer===s.player&&doc.kind==='war'&&!doc.parties.includes(viewer)&&records[doc.id]?.status!=='active'){
     const [a,b]=doc.parties.map(id=>FACTIONS[id]?.short||[id,id]);
@@ -35,12 +37,12 @@ export function observeDiplomacy(s){
    if(viewer===s.player&&['alliance','coalition','agreement'].includes(doc.kind)&&!doc.parties.includes(viewer)&&records[doc.id]?.status!=='active')reportAgreementChange(s,doc);
    records[doc.id]={...doc,status:'active',year:s.year,month:s.month,source:doc.parties.includes(viewer)?'participant':'frontier'};
   }
-  for(const report of Object.values(records))if(report.status==='active'&&!seen.has(report.id)&&hasContact(s,viewer,report.parties)){
+  for(const report of Object.values(records))if(!report.participantCopy&&report.kind!=='private_standing'&&report.status==='active'&&!seen.has(report.id)&&hasContact(s,viewer,report.parties)){
    report.status='ended';report.year=s.year;report.month=s.month;
    if(viewer===s.player&&report.kind==='war'&&!report.parties.includes(viewer)){const [a,b]=report.parties.map(id=>FACTIONS[id]?.short||[id,id]);s.log.unshift({year:s.year,month:s.month,en:`Frontier reports that the war between ${a[0]} and ${b[0]} has ended; the report may become outdated.`,zh:`边境报告${a[1]}与${b[1]}的战争已经结束；消息可能过时。`});s.log=s.log.slice(0,80)}
    if(viewer===s.player&&['alliance','coalition','agreement'].includes(report.kind)&&!report.parties.includes(viewer))reportAgreementChange(s,report,true);
   }
-  const entries=Object.values(records).sort((a,b)=>(b.year*12+b.month)-(a.year*12+a.month));for(const stale of entries.slice(100))delete records[stale.id];
+  const entries=Object.values(records).sort((a,b)=>(b.year*12+b.month)-(a.year*12+a.month));for(const stale of entries.filter(r=>!r.participantCopy&&r.kind!=='private_standing').slice(100))delete records[stale.id];
  }
 }
-export function reportedDiplomacy(s,viewer){return Object.values(s.world?.diplomaticKnowledge?.[viewer]||{}).map(r=>({...r,parties:[...r.parties]}))}
+export function reportedDiplomacy(s,viewer){return Object.values(s.world?.diplomaticKnowledge?.[viewer]||{}).filter(r=>r.kind!=='private_standing'&&Array.isArray(r.parties)).map(r=>({...r,parties:[...r.parties]}))}

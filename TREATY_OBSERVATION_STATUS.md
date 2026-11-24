@@ -1,0 +1,11 @@
+# Observer-specific treaty records — development status
+
+This change is in development and must not replace the verified public beta until its cloud gates and player flows pass.
+
+The existing diplomatic knowledge records now retain each participant's signed copy. Automatic frontier observation does not overwrite participant copies from world truth. Actual agreements, alliances and coalitions remain the simulation's real effect records. The existing mailbox's scheduled events and couriers carry dated renunciation or departure notices; loss leaves stale beliefs. No independent diplomacy database or delivery queue is introduced.
+
+A local renunciation closes that court's copy immediately and arranges a fallible institutional notice. The other court's recorded promise and standing remain unchanged until receipt. The true relation penalty is held back from that observer's relation projection, and its private political memory changes only when the notice arrives. Explicitly renouncing a stale copy is still a local public decision and carries the stated cost, so the action does not reveal whether a remote renunciation already occurred. Own hostilities and a recorded term's expiry are local grounds to end a copy without a remote oracle.
+
+Government, the atlas's estimates and war controls, the power network, opportunity signatures, operational partners, frontier reactions and major diplomatic/character decision paths are being moved to these records. Legacy active documents are captured once on migration; pending proposals are not invented as signed copies. Unknown foreign survival is no longer a reason to remove an opportunity from an observer's reported candidate list. Scout warnings carry dispatch-time credibility rather than looking up a remote sender's later state.
+
+Remaining work before completion: verify every creation/mutation path and fixture expresses actual local knowledge; isolate confirmation/ratification observations in the existing proposal protocols; complete actual execution versus belief checks for war, access and aid; finish player-facing dated status and inquiry flows, old-save behavior and cloud browser evidence. Broad tests may reveal remaining direct-world reads and will be fixed without weakening the information invariant. This document is not a claim that all treaty privacy or Phase IX is complete.

@@ -1,7 +1,8 @@
+import {knownAgreement as activeAgreement,knownAlliance,knownRelation} from './treaty-observation.js?v=treaty-observation-1';
 import {ROUTES,FACTIONS,REGIONS} from './data.js?v=phase-x-1';
 import {reportedControl} from './control-intelligence.js?v=dossier-archive-1';
 import {reportedDiplomacy} from './diplomatic-knowledge.js?v=dossier-archive-1';
-import {activeAgreement} from './agreements.js?v=dossier-archive-1';
+
 import {rememberPoliticalEvent,politicalMemoryAdjustment} from './political-memory.js?v=grand-chessboard-2';
 import {isDeliveredReport} from './person-knowledge.js?v=dossier-archive-1';
 
@@ -25,7 +26,7 @@ export const MAX_WARNING_AGE=6,FRESH_SIGHTING=1,REPEAT_WINDOW=6;
 // Partners are judged only from the sender's own treaties, alliances and relation.
 export function warningPartners(s,actor){
  return Object.keys(s.factions).filter(p=>p!==actor&&p!=='rebels'&&holds(s,p)&&!isWar(s,actor,p)).filter(p=>
-  (s.alliances||[]).some(a=>a.includes(actor)&&a.includes(p))||PARTNER_TYPES.some(t=>activeAgreement(s,actor,p,t))||(s.relations[pair(actor,p)]??0)>=35);
+  knownAlliance(s,actor,p)||PARTNER_TYPES.some(t=>activeAgreement(s,actor,p,t))||knownRelation(s,actor,p)>=35);
 }
 // Candidates come from the sender's fresh sightings only. A threat counts when
 // the sender itself is at war with the sighted owner, or the sender has a dated
@@ -60,12 +61,12 @@ function composeWarnings(s,actor,letterMonths){
  if(sent.some(l=>l.sentYear*12+l.sentMonth===date(s)))return;
  const candidate=warningCandidates(s,actor).find(c=>!sent.some(l=>l.to===c.partner&&l.sighting.armyId===c.sighting.armyId&&date(s)-(l.sentYear*12+l.sentMonth)<REPEAT_WINDOW));
  if(!candidate)return;
- const allied=(s.alliances||[]).some(a=>a.includes(actor)&&a.includes(candidate.partner)),personality=s.world?.strategicPersonalities?.[actor]?.personality;
+ const allied=knownAlliance(s,actor,candidate.partner),personality=s.world?.strategicPersonalities?.[actor]?.personality;
  const chance=Math.min(.9,.45+(allied?.25:0)+(PARTNER_TYPES.some(t=>activeAgreement(s,actor,candidate.partner,t))?.15:0)-(personality==='schemer'?.2:0));
  if(roll(s,actor+candidate.partner,0x5a17)>=chance)return;
  f.treasury-=1;
  const duration=Math.max(1,Math.ceil((letterMonths?.[candidate.partner]||4)/2)),id=`warning:${s.nextWarningId||1}`;s.nextWarningId=(s.nextWarningId||1)+1;
- const letter={id,from:actor,to:candidate.partner,threat:candidate.threat,near:candidate.near,sighting:candidate.sighting,sentYear:s.year,sentMonth:s.month,duration,remaining:duration,status:'sent',history:[]};
+ const letter={id,from:actor,to:candidate.partner,threat:candidate.threat,near:candidate.near,sighting:candidate.sighting,sentYear:s.year,sentMonth:s.month,credentials:{credibility:s.diplomaticCredibility?.[actor]??100},duration,remaining:duration,status:'sent',history:[]};
  record(letter,'sent',s);s.warningLetters.unshift(letter);s.warningLetters=s.warningLetters.slice(0,120);
 }
 
@@ -76,9 +77,9 @@ export function judgeWarning(s,letter){
  const p=letter.to,local=new Set([letter.near,...neighbours(letter.near)]);
  const ownNearby=s.armies.filter(a=>a.owner===p&&a.men>0&&local.has(a.region)).reduce((n,a)=>n+a.men,0);
  const reported=(letter.sighting.strengthBand[0]+letter.sighting.strengthBand[1])/2;
- const trust=(s.relations[pair(p,letter.from)]??0)-(100-(s.diplomaticCredibility?.[letter.from]??100))*.4+politicalMemoryAdjustment(s,p,letter.from);
+ const trust=knownRelation(s,p,letter.from)-(100-(Number.isFinite(letter.credentials?.credibility)?Math.max(0,Math.min(100,letter.credentials.credibility)):100))*.4+politicalMemoryAdjustment(s,p,letter.from);
  if(trust<-10)return {kind:'dismissed',reason:'distrust',trust:Math.round(trust)};
- const pressure=reported/Math.max(1000,ownNearby),hostile=isWar(s,p,letter.threat)||(s.relations[pair(p,letter.threat)]??0)<=-20;
+ const pressure=reported/Math.max(1000,ownNearby),hostile=isWar(s,p,letter.threat)||knownRelation(s,p,letter.threat)<=-20;
  const chance=Math.min(.95,.25+(hostile?.3:0)+Math.min(.3,pressure*.15)+Math.max(0,trust)/200);
  if(roll(s,p+letter.id,0x7c31)<chance)return {kind:'heeded',reason:hostile?'known_hostility':'reported_pressure',trust:Math.round(trust)};
  return {kind:'noted',reason:'judged_low_threat',trust:Math.round(trust)};

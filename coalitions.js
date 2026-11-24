@@ -1,3 +1,4 @@
+import {knownTreatyDocuments,knownAlliance,knownRelation,rememberTreatyCopy,treatyDocument,announceTreatyChange} from './treaty-observation.js?v=treaty-observation-1';
 import {isDeliveredReport} from './person-knowledge.js?v=dossier-archive-1';
 import {ROUTES} from './data.js?v=phase-x-1';
 import {reportedControl} from './control-intelligence.js?v=dossier-archive-1';
@@ -6,7 +7,7 @@ import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2
 import {reportedDiplomacy} from './diplomatic-knowledge.js?v=dossier-archive-1';
 
 const pair=(a,b)=>[a,b].sort().join(':');
-const rel=(s,a,b)=>s.relations[pair(a,b)]??0;
+const rel=(s,a,b)=>knownRelation(s,a,b);
 const war=(s,a,b)=>s.wars.some(w=>w.includes(a)&&w.includes(b));
 const now=s=>s.year*12+s.month;
 const ownStrength=(s,a)=>s.armies.filter(x=>x.owner===a).reduce((n,x)=>n+x.men,0);
@@ -56,13 +57,17 @@ export function formCoalition(s,leader,members,target,estimateStrength,{allowPla
  if(consentingPlayer&&contributions[s.player])contributions[s.player].policy='diplomacy';
  const trust=Object.fromEntries(parties.flatMap((a,i)=>parties.slice(i+1).map(b=>[pair(a,b),Math.round((rel(s,a,b)+100)/2)])));
  const c={id:`coalition:${s.nextCoalitionId||1}`,leader,parties,target,objective:'defend_against_threat',start:{year:s.year,month:s.month},expiresAt:now(s)+36,status:'active',cohesion:70,trust,contributions,departures:[],obligations:['defend_members'],jointPlan:{target,kind:'coordinate_defense'},disagreements:[]};
- s.nextCoalitionId=(s.nextCoalitionId||1)+1;s.coalitions.push(c);return {ok:true,coalition:c};
+ s.nextCoalitionId=(s.nextCoalitionId||1)+1;s.coalitions.push(c);rememberTreatyCopy(s,treatyDocument(c,'coalition'));return {ok:true,coalition:c};
 }
 export function leaveCoalition(s,id,actor){
- const c=(s.coalitions||[]).find(x=>x.id===id&&x.status==='active');if(!c||!c.parties.includes(actor))return {ok:false,reason:'unavailable'};
- c.parties=c.parties.filter(x=>x!==actor);c.departures.push({actor,year:s.year,month:s.month});s.diplomaticCredibility||={};s.diplomaticCredibility[actor]=Math.max(0,(s.diplomaticCredibility[actor]??100)-15);
- for(const other of c.parties){const k=pair(actor,other);s.relations[k]=Math.max(-100,rel(s,actor,other)-15);rememberPoliticalEvent(s,other,actor,'coalition_departure',-8)}
- if(c.leader===actor)c.leader=c.parties[0];if(c.parties.length<3)c.status='dissolved';return {ok:true};
+ const known=knownTreatyDocuments(s,actor,'coalition').find(c=>c.id===id);if(!known)return {ok:false,reason:'unavailable'};
+ const c=(s.coalitions||[]).find(c=>c.id===id&&c.status==='active'&&c.parties.includes(actor));
+ if(c){c.parties=c.parties.filter(p=>p!==actor);c.departures.push({actor,year:s.year,month:s.month});if(c.leader===actor)c.leader=c.parties[0];if(c.parties.length<3)c.status='dissolved'}
+ s.diplomaticCredibility||={};s.diplomaticCredibility[actor]=Math.max(0,(s.diplomaticCredibility[actor]??100)-15);
+ const remaining=known.parties.filter(p=>p!==actor),document={...known,parties:remaining,leader:known.leader===actor?remaining[0]:known.leader,status:remaining.length<3?'dissolved':'active',ended:{year:s.year,month:s.month,actor}};
+ announceTreatyChange(s,document,actor,{relationPenalty:15,memoryKind:'coalition_departure',memoryWeight:-8,viewers:known.parties});
+ // The departing court has withdrawn even if its old copy was already stale.
+ s.world.diplomaticKnowledge[actor][id].status='withdrawn';return {ok:true};
 }
 export function advanceCoalitions(s){
  for(const c of s.coalitions||[]){
@@ -82,6 +87,6 @@ export function advanceCoalitions(s){
 // information. The shared threat only affects which known enemy they weigh
 // first; it does not give the coalition control over their orders.
 export function coalitionMilitaryObjective(s,actor){
- const c=(s.coalitions||[]).find(c=>c.status==='active'&&c.parties.includes(actor)&&c.contributions?.[actor]?.policy==='military'&&war(s,actor,c.target));
+ const c=knownTreatyDocuments(s,actor,'coalition').find(c=>c.contributions?.[actor]?.policy==='military'&&war(s,actor,c.target));
  return c?.target||null;
 }

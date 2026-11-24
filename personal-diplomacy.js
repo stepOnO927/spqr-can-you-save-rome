@@ -1,3 +1,4 @@
+import {knownRelation} from './treaty-observation.js?v=treaty-observation-1';
 import {reportedControl,observeArrival} from './control-intelligence.js?v=dossier-archive-1';
 import {initializeWorld, CHARACTER_CATALOG} from './characters.js?v=dossier-archive-1';
 import {ROUTES} from './data.js?v=phase-x-1';
@@ -86,7 +87,7 @@ export function advancePersonalDiplomacy(s){
  initializeWorld(s);for(const c of Object.values(s.world.characters)){const t=c.travel;if(!t)continue;if(!c.alive||c.missing||['seriously_ill','dying','deceased'].includes(c.health)){interruptJourney(s,c);continue}const next=t.legs[0],r=s.regions.find(x=>x.id===next?.to);if(!r){delete c.travel;continue}if(--t.remaining>0)continue;observeArrival(s,c.faction,next.to);if(atWar(s,c.faction,r.owner)){delete c.travel;if(c.faction===s.player)log(s,'A personal journey stopped on arrival: entry is no longer safe.','人物抵达途中核实了战区控制；因无法安全进入而中止行程。');continue}c.location=next.to;t.legs.shift();if(t.haltAfterLeg){delete c.travel;if(c.faction===s.player)log(s,`${CHARACTER_CATALOG[c.id].name[0]} stopped in ${r.name[0]} as ordered.`,`${CHARACTER_CATALOG[c.id].name[1]}按命令在${r.name[1]}停下。`)}else if(t.legs.length)t.remaining=t.legs[0].months;else{delete c.travel;if(c.faction===s.player)log(s,`${CHARACTER_CATALOG[c.id].name[0]} arrived in ${r.name[0]}.`,`${CHARACTER_CATALOG[c.id].name[1]}抵达${r.name[1]}。`)}}
  for(const m of s.meetings){
   if(m.status!=='pending'||--m.remaining>0)continue;
-  const a=s.world.characters[m.person],b=s.world.characters[m.target],q=random(s),personKey=[m.person,m.target].sort().join(':'),factionKey=[m.actor,m.targetFaction].sort().join(':'),trust=s.world.personalRelations[personKey]?.trust||0,relations=s.relations[factionKey]||0,declineLimit=Math.max(.25,Math.min(.7,.45-trust*.002-relations*.001));
+  const a=s.world.characters[m.person],b=s.world.characters[m.target],q=random(s),personKey=[m.person,m.target].sort().join(':'),factionKey=[m.actor,m.targetFaction].sort().join(':'),trust=s.world.personalRelations[personKey]?.trust||0,relations=knownRelation(s,m.targetFaction,m.actor),declineLimit=Math.max(.25,Math.min(.7,.45-trust*.002-relations*.001));
   // A lost or unanswered request is possible regardless of the recipient's
   // hidden condition. Silence must not prove that they were present and able.
   if(q<.2)m.status='no_reply';

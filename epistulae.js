@@ -91,7 +91,7 @@ export function sendLetter(s, spec) {
   const {senderId, senderInstitution, senderFaction, recipient, category = 'personal'} = spec;
   // A dispatched institutional letter can outlive its sending court; arrival
   // must not disclose a later, undiscovered disappearance.
-  const formerInstitutionalSender=['aid_result','coalition_offer','coalition_result','agreement_offer','agreement_confirmation','agreement_result','asylum_result','family_marriage_result','family_accord_result','agent_release_request','official_inquiry','peace','inquiry_result','personal_audience_result'].includes(spec.context?.kind)&&!senderId&&senderInstitution===senderFaction&&!!FACTIONS[senderFaction];
+  const formerInstitutionalSender=['aid_result','coalition_offer','coalition_result','agreement_offer','agreement_confirmation','agreement_result','asylum_result','family_marriage_result','family_accord_result','agent_release_request','official_inquiry','peace','inquiry_result','personal_audience_result','treaty_notice'].includes(spec.context?.kind)&&!senderId&&senderInstitution===senderFaction&&!!FACTIONS[senderFaction];
   if ((!s.factions?.[senderFaction]&&!formerInstitutionalSender) || !s.factions?.[recipient] || (senderFaction === recipient && category === 'diplomatic')) return {ok:false, reason:'faction'};
   if (senderId && (!s.world?.characters?.[senderId]||!s.world.characters[senderId].alive||s.world.characters[senderId].faction!==senderFaction)) return {ok:false, reason:'sender'};
   if (!senderId && senderInstitution !== senderFaction) return {ok:false, reason:'sender'};
@@ -656,6 +656,7 @@ export function advanceMail(s, actions = {}) {
   }
   for (const event of mail.events) {
     if (event.status !== 'scheduled' || event.date > now) continue;
+    if(event.type==='treaty_notice'){const result=sendLetter(s,event.spec);event.status=result.ok?'completed':'failed';if(result.ok)event.mailId=result.letter.id;continue}
     if (event.type === 'audit') {
       event.status='completed';
       const f=s.factions[s.player];
@@ -744,6 +745,7 @@ export function advanceMail(s, actions = {}) {
     if (m.delivery !== 'traveling' || m.arrival > now || ['strategic_reply','peace_reply'].includes(m.context?.kind)) continue;
     if(courierLost(s,m)){m.delivery='lost';continue}
     m.delivery = 'received';
+    if(m.context?.kind==='treaty_notice')actions.receiveTreatyNotice?.(s,m);
     if(m.recipient===s.player&&m.context?.kind==='support_result'&&m.context.transfer>0){s.factions[s.player].treasury+=m.context.transfer;m.context.transfer=0}
     if(m.recipient!==s.player&&m.context?.kind==='allied_support'){
       const enemy=m.context.enemy,ally=m.recipient,relation=s.relations[pair(ally,s.player)]||0;

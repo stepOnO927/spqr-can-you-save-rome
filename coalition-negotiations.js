@@ -1,11 +1,12 @@
+import {knownAgreement as activeAgreement,knownAlliance,knownRelation} from './treaty-observation.js?v=treaty-observation-1';
 import {coalitionInterest,formCoalition} from './coalitions.js?v=dossier-archive-1';
 import {reportedDiplomacy} from './diplomatic-knowledge.js?v=dossier-archive-1';
 import {reportedControl} from './control-intelligence.js?v=dossier-archive-1';
 import {ROUTES,FACTIONS} from './data.js?v=phase-x-1';
-import {agreementCredentials,activeAgreement,neutralityBlocksWar} from './agreements.js?v=dossier-archive-1';
+import {agreementCredentials,neutralityBlocksWar} from './agreements.js?v=dossier-archive-1';
 import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
 
-const relation=(s,a,b)=>s.relations[[a,b].sort().join(':')]??0;
+const relation=(s,a,b)=>knownRelation(s,a,b);
 export function canAddressCoalitionPartner(s,actor,target){
  return reportedDiplomacy(s,actor).some(d=>d.status==='active'&&(!Number.isFinite(d.year)||!Number.isFinite(d.month)||d.year*12+d.month<=s.year*12+s.month)&&d.parties.includes(actor)&&d.parties.includes(target))||s.regions.filter(r=>r.owner===actor).some(r=>ROUTES.some(([a,b])=>{const next=a===r.id?b:b===r.id?a:null;return next&&reportedControl(s,actor,next)?.owner===target}));
 }
@@ -19,11 +20,11 @@ export function coalitionDispatchProblem(s,leader,members,target){
  if(!s.factions[leader]||s.factions[leader].treasury<8)return {reason:'treasury'};
  if((s.world.coalitionInvitations||[]).some(x=>x.leader===leader&&x.target===target&&x.status==='pending'))return {reason:'pending'};
  if((s.world.coalitionInvitations||[]).some(x=>x.leader===leader&&x.target===target&&s.year*12+s.month-(x.sent.year*12+x.sent.month)<12))return {reason:'cooldown'};
- if(members.some(id=>s.wars.some(w=>w.includes(leader)&&w.includes(id)))||s.alliances.some(a=>a.includes(leader)&&a.includes(target))||activeAgreement(s,leader,target,'non_aggression')||neutralityBlocksWar(s,leader,target))return {reason:'conflict'};
+ if(members.some(id=>s.wars.some(w=>w.includes(leader)&&w.includes(id)))||knownAlliance(s,leader,target)||activeAgreement(s,leader,target,'non_aggression')||neutralityBlocksWar(s,leader,target))return {reason:'conflict'};
  return null;
 }
 export function coalitionOwnConflict(s,actor,parties,target){
- return parties.some(other=>other!==actor&&s.wars.some(w=>w.includes(actor)&&w.includes(other)))||s.alliances.some(a=>a.includes(actor)&&a.includes(target))||!!activeAgreement(s,actor,target,'non_aggression')||neutralityBlocksWar(s,actor,target);
+ return parties.some(other=>other!==actor&&s.wars.some(w=>w.includes(actor)&&w.includes(other)))||knownAlliance(s,actor,target)||!!activeAgreement(s,actor,target,'non_aggression')||neutralityBlocksWar(s,actor,target);
 }
 
 // A sender can address known courts without learning their private views.
