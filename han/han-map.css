@@ -1,4 +1,4 @@
-.han-map{--serif:"Noto Serif SC","Source Han Serif SC","Songti SC","STSong",Georgia,serif;--vermilion:#a2311f;--cinnabar:#c8492e;--warn:#b0381f;width:100%;height:100%;display:block;background:#3d5560}
+.han-map{--serif:"Noto Serif SC","Source Han Serif SC","Songti SC","STSong",Georgia,'SPQR CJK',serif;--vermilion:#a2311f;--cinnabar:#c8492e;--warn:#b0381f;width:100%;height:100%;display:block;background:#3d5560}
 @keyframes han-pulse{50%{opacity:.35}}
 .han-map .sea{fill:#3d5560}
 .han-map .land{fill:#e3d5b3}
@@ -26,11 +26,11 @@
 .han-map .river{fill:none;stroke:#4f7f93;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round;opacity:.9;pointer-events:stroke}
 .han-map .river.major{stroke-width:2.6}
 .han-map .frontier-wall{fill:none;stroke:#7a2a1a;stroke-width:2;stroke-dasharray:1 3.2;stroke-linecap:round;opacity:.9}
-.han-map .geo-label{font-family:var(--serif);font-size:.8em;text-anchor:middle;font-style:italic;pointer-events:none;paint-order:stroke;stroke:#efe4c999;stroke-width:.22em}
+.han-map .geo-label{font-family:var(--serif),'SPQR CJK';font-size:.8em;text-anchor:middle;font-style:italic;pointer-events:none;paint-order:stroke;stroke:#efe4c999;stroke-width:.22em}
 .han-map .geo-label.desert{fill:#8a6a32;letter-spacing:.25em}
 .han-map .geo-label.mountain{fill:#5e4a33;letter-spacing:.15em;font-size:.75em}
 .han-map .geo-label.plateau{fill:#6d5b45;letter-spacing:.5em;font-size:1.05em}
-.han-map .group-label{font-family:var(--serif);text-anchor:middle;pointer-events:none;paint-order:stroke;stroke:#f3ead4;stroke-width:.25em;fill:#2a1a10;font-size:1.2em;letter-spacing:.3em;font-weight:600}
+.han-map .group-label{font-family:var(--serif),'SPQR CJK';text-anchor:middle;pointer-events:none;paint-order:stroke;stroke:#f3ead4;stroke-width:.25em;fill:#2a1a10;font-size:1.2em;letter-spacing:.3em;font-weight:600}
 .han-map .route{stroke:#4a3826;stroke-width:1;opacity:.45;pointer-events:stroke}
 .han-map .r-river{stroke:#2f6680}
 .han-map .r-pass{stroke-dasharray:4 3}
@@ -44,13 +44,13 @@
 .han-map .seat.capital{fill:var(--vermilion);stroke:#f3ead4;stroke-width:1.5}
 .han-map .seat.kingdom{fill:#5a2a1a}
 .han-map .seat.steppe{fill:#4a4a2a}
-.han-map .region-label{font-family:var(--serif);font-size:.8em;text-anchor:middle;fill:#1c1411;paint-order:stroke;stroke:#f3ead4d9;stroke-width:.22em;pointer-events:none}
+.han-map .region-label{font-family:var(--serif),'SPQR CJK';font-size:.8em;text-anchor:middle;fill:#1c1411;paint-order:stroke;stroke:#f3ead4d9;stroke-width:.22em;pointer-events:none}
 .han-map .region-label.capital{font-size:.95em;font-weight:700}
 .han-map .region-label.steppe{font-style:italic}
 .han-map .target-ring{fill:none;stroke:var(--cinnabar);stroke-width:2.5;animation:han-pulse 1.2s infinite}
 .han-map .army{cursor:pointer}
 .han-map .army rect{stroke:#1c1411;stroke-width:1}
-.han-map .army .glyph{font-size:10px;fill:#fff8e6;text-anchor:middle;font-family:var(--serif);pointer-events:none}
+.han-map .army .glyph{font-size:10px;fill:#fff8e6;text-anchor:middle;font-family:var(--serif),'SPQR CJK';pointer-events:none}
 .han-map .army .count{font-size:9.5px;fill:#fff8e6;text-anchor:middle;pointer-events:none;font-weight:600}
 .han-map .army.selected rect:first-of-type{stroke:#fff8e6;stroke-width:2.2}
 .han-map .march{stroke:#fff8e6;stroke-width:1.6;stroke-dasharray:5 3;fill:none}
