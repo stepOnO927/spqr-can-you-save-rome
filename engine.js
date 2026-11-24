@@ -1,7 +1,7 @@
 import {advanceAgreementProposals,sendAgreementProposal} from './agreement-negotiations.js?v=dossier-archive-1';
 import {isDeliveredReport} from './person-knowledge.js?v=dossier-archive-1';
 import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=dossier-archive-1';
-import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,syncOfficialInquiryLetters,syncStrategicOfferLetters,syncCoalitionLetters,syncAgreementLetters,syncFamilyReplies,syncAgentReleaseLetters,strategicLetterSenderSnapshot,chronicleLetters} from './epistulae.js?v=dossier-archive-1';
+import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,courierMonths,syncPeaceLetters,syncOfficialInquiryLetters,syncStrategicOfferLetters,syncCoalitionLetters,syncAgreementLetters,syncFamilyReplies,syncAgentReleaseLetters,strategicLetterSenderSnapshot,chronicleLetters} from './epistulae.js?v=dossier-archive-1';
 import {advancePersonnel,reconcilePeacePersonnel} from './epistulae-personnel.js?v=dossier-archive-1';
 import {initializeMailReports,advanceMailReports} from './mail-reports.js?v=dossier-archive-1';
 import {initializeGovernments,advanceGovernments,deriveGovernment,validSuccessionPlan} from './governance.js?v=dossier-archive-1';
@@ -25,6 +25,7 @@ import {advanceFocuses,focusModifiers} from './national-focus.js?v=dossier-archi
 import {seedTemplates,formationCombatFactor,formationMarchDelta,formationSiegeReduction,formationUpkeepDelta,observeFormationRecon,advanceReorganizations,aiDesignFormations,aiRecruitFormation,aiReorganize,advanceCommandInfluence} from './legion-designer.js?v=dossier-archive-1';
 import {advanceBattlePlans,aiBattlePlans,planControlled} from './battle-plans.js?v=dossier-archive-1';
 import {shareAiOperation} from './operation-intelligence.js?v=operation-notices-1';
+import {advanceJointOperations,proposeAiJointOperation,hasJointCommitment} from './joint-operations.js?v=joint-operations-1';
 import {makePeaceTerms,peaceOfferRegions,peaceConcessionCredit,canSettlePeaceTerms,applyPeaceTransfer,peaceWarIsCurrent} from './peace-terms.js?v=territorial-peace-1';
 // IMPERIUM systems are on by default. A scenario or an isolated legacy test may set
 // world.imperium.enabled=false to run the pre-expansion AI unchanged.
@@ -723,7 +724,8 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
   if(owner!=='rebels'&&imperiumOn(s)){
     if((s.month+owner.length)%6===0||!s.world.aiFormationPlans?.[owner])aiDesignFormations(s,owner);
     if(strongPlanning||s.month%3===0)aiBattlePlans(s,owner,{estimatedStrength,log});
-    shareAiOperation(s,owner,{sendLetter,autoplayPlayer});
+    proposeAiJointOperation(s,owner,{sendLetter,courierMonths,autoplayPlayer});
+    if(!hasJointCommitment(s,owner))shareAiOperation(s,owner,{sendLetter,autoplayPlayer});
     // Reorganize quarterly, or soon after a lost battle when a battered army is safe at home.
     const beaten=(s.battles||[]).some(b=>(b.attackerWins?b.defender.owner:b.attacker.owner)===owner&&(s.year*12+s.month)-(b.year*12+b.month)<=2);
     if((s.month%4===2&&f.treasury>70||beaten&&f.treasury>35)&&(!strategy||!['recover','stabilize'].includes(strategy.goal)||beaten))aiReorganize(s,owner,{log});
@@ -968,6 +970,8 @@ export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
   advanceAgreementProposals(s,{autoplayPlayer,checkAlliance:canFormAlliance,concludeAlliance:(state,actor,target)=>diplomacy(state,actor,target,'alliance',{priorConsent:true})});syncAgreementLetters(s);
   if(!autoplayPlayer)syncCoalitionLetters(s);
   advanceMail(s,{proposeAgreement,diplomacy});
+  // Only mail received before the agreed launch month can release a reserved plan.
+  advanceJointOperations(s,{sendLetter,estimatedStrength,autoplayPlayer});
   for(const owner of Object.keys(s.factions).filter(id=>autoplayPlayer||id!==s.player)){
     const override=autoplayPlayer&&owner===s.player&&playerDifficulty;if(!override){aiTurn(s,owner,{autoplayPlayer});if(owner!=='rebels')aiInnovation(s,owner);continue}
     const originalDifficulty=s.difficulty,hadDifficulty=Object.prototype.hasOwnProperty.call(s,'difficulty');s.difficulty=playerDifficulty;
