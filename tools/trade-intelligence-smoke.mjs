@@ -7,7 +7,7 @@ try{
  await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
  await page.evaluate(async()=>{
   const e=await import('/engine.js?v=faces-name-disagreement-1'),c=await import('/character-system.js?v=faces-name-disagreement-1');
-  const s=e.newGame('caesar');s.alliances.push(['caesar','numidia']);s.agreements.push({id:'test-trade',type:'trade',status:'active',parties:['caesar','parthia'],expiresAt:s.year*12+s.month+12});
+  const s=e.newGame('caesar');s.alliances.push(['caesar','numidia']);s.agreements.push({id:'test-trade',type:'trade',status:'active',parties:['caesar','parthia'],expiresAt:s.year*12+s.month+12});{const {initializeAgreements}=await import('/agreements.js?v=focus-agreement-consent-1'),{rememberTreatyCopy,treatyDocument}=await import('/treaty-observation.js?v=treaty-observation-1');initializeAgreements(s);for(const t of s.agreements||[])if(t.status==='active')rememberTreatyCopy(s,treatyDocument(t));}
   c.addReport(s,'parthia','egypt',{kind:'health',character:'ptolemy',value:'ill',source:'spy',confidence:'unverified'});
   // Later arrival of an older forwarded claim must not replace the fresh observation.
   c.addReport(s,'parthia','egypt',{kind:'health',character:'ptolemy',value:'healthy',source:'exchange',originSource:'court',observationYear:-50,observationMonth:12,confidence:'unverified'});
@@ -30,7 +30,7 @@ try{
  await page.evaluate(async()=>{
   const e=await import('/engine.js?v=faces-name-disagreement-1'),c=await import('/character-system.js?v=faces-name-disagreement-1');let result;
   for(let i=0;i<60&&!result;i++){
-   const s=e.newGame('caesar');s.world.intelSeed=i*99991+53;s.alliances.push(['caesar','parthia']);
+   const s=e.newGame('caesar');s.world.intelSeed=i*99991+53;s.alliances.push(['caesar','parthia']);{const {initializeAgreements}=await import('/agreements.js?v=focus-agreement-consent-1'),{rememberTreatyCopy,treatyDocument}=await import('/treaty-observation.js?v=treaty-observation-1');initializeAgreements(s);for(const t of s.agreements||[])if(t.status==='active')rememberTreatyCopy(s,treatyDocument(t));}
    s.knowledge.parthia.egypt.reports=[{kind:'health',character:'ptolemy',value:'ill',source:'spy',confidence:'unverified'}];
    if(!c.queueMission(s,'caesar','egypt','exchange','health','parthia','ptolemy').ok)throw Error('exchange unavailable');
    for(let month=0;month<3;month++){s.month++;c.advanceOperations(s)}

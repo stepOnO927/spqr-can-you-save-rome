@@ -651,7 +651,12 @@ function arrive(s,a){
   const journey=a.move;
   const target=region(s,a.move.to);
   observeArrival(s,a.owner,target.id);
-  if(target.owner!==a.owner&&!isWar(s,a.owner,target.owner)&&!activeAgreement(s,a.owner,target.owner,'military_access')){a.move=null;a.order=null;if(a.owner===s.player)log(s,`${a.name[0]} stopped: entry into ${target.name[0]} is no longer permitted.`,`${a.name[1]}停止行军：当前不能进入${target.name[1]}。`);return}
+  if(target.owner!==a.owner&&!isWar(s,a.owner,target.owner)&&!activeAgreement(s,target.owner,a.owner,'military_access')){
+   // Permission is decided by the controller encountered at the frontier,
+   // not by an old paper held by the marching army's distant government.
+   const old=activeAgreement(s,a.owner,target.owner,'military_access');if(old)rememberTreatyCopy(s,{...old,status:'passage_denied',ended:{year:s.year,month:s.month} },[a.owner],{source:'frontier_encounter'});
+   a.move=null;a.order=null;if(a.owner===s.player)log(s,`${a.name[0]} stopped: passage was refused at ${target.name[0]}.`,`${a.name[1]}停止行军：在${target.name[1]}遭拒绝通行。`);return;
+  }
   const enemy=s.armies.find(other=>other.id!==a.id&&other.region===target.id&&other.owner!==a.owner&&isWar(s,a.owner,other.owner)&&!other.move);
   if(enemy){resolveBattle(s,a,enemy,target);return}
   a.journeyHistory||=[];a.journeyHistory.push({year:s.year,month:s.month,from:a.region,to:target.id,kind:'arrival',km:journey.km||null});a.journeyHistory=a.journeyHistory.slice(-80);
@@ -685,7 +690,9 @@ function advanceMarchConditions(s,a){
  if(shortage&&a.owner===s.player)log(s,`${a.name[0]} lacks ${shortage} provisions on the march.`,`${a.name[1]}行军补给短缺${shortage}份。`,{armyId:a.id,kind:'supply_shortage'});
  if(move.paused)return;
  const edge=estimateMarchEdge(s,a,a.region,move.to,{pace:move.pace});if(edge?.blocked){if(move.blocked!==edge.blocked&&a.owner===s.player)log(s,`${a.name[0]} halted: the pass is closed by snow.`,`${a.name[1]}暂停行军：山口因积雪封闭。`,{armyId:a.id,kind:'march_blocked'});move.blocked=edge.blocked;return}
- const target=region(s,move.to);if(target&&target.owner!==a.owner&&!isWar(s,a.owner,target.owner)&&!activeAgreement(s,a.owner,target.owner,'military_access')){a.move=null;a.order=null;if(a.owner===s.player)log(s,`${a.name[0]} stopped: entry into ${target.name[0]} is no longer permitted.`,`${a.name[1]}停止行军：当前不能进入${target.name[1]}。`,{armyId:a.id,kind:'march_blocked'});return}
+ // Foreign permission is checked on arrival at the frontier. Looking up
+ // today's remote controller during every travel tick would reveal changes
+ // before the army could encounter them.
  delete move.blocked;
  move.elapsed=(move.elapsed||0)+1;move.remaining--;move.progress=Math.min(1,move.elapsed/(move.totalMonths||move.elapsed));
 }

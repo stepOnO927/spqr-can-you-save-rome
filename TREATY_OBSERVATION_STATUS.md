@@ -28,8 +28,20 @@ arrives. The government ledger and correspondence explain unconfirmed receipt.
 Formal renunciations now use the existing urgent courier policy, preserving
 route-dependent travel and real loss instead of forcing delivery.
 
-Still required before release: multi-party coalition signing and dues;
-world-versus-belief execution for passage, aid and market diplomacy; dated
+Coalition follow-up: the leader signs its dated charter after all acceptances
+return. Members receive independent fallible copies, then sign and pay their
+own five-treasury dues locally. Unreceived charters cannot command another
+court's wallet or army. A court unable to sign posts a fallible departure notice;
+the leader's already received result is not rewritten. Contribution policies
+travel in dated acceptances and are not rebuilt from later foreign resources.
+These changes are undergoing cloud verification.
+
+Passage follow-up: march planning uses the army's received permission. The
+controller actually encountered at arrival decides whether entry is allowed.
+Refusal produces a frontier observation; travel ticks do not consult hidden
+changes to a remote controller's permission.
+
+Still required before release: remaining execution audit for aid and market diplomacy; dated
 status inquiries; full browser gates and actual beta verification. This is not
 a claim that the entire privacy audit or the user's overall goal is complete.
 
